@@ -10,6 +10,7 @@ Button {
     implicitHeight: 56
     padding: 10
     focusPolicy: Qt.NoFocus
+    property color accentColor: "#a9e8d5"
     property bool destructive: false
     property bool selected: false
     contentItem: Text {
@@ -23,8 +24,8 @@ Button {
     }
     background: Rectangle {
         radius: 12
-        color: control.down ? "#36516b" : control.destructive ? "#713c49" : control.selected ? "#294e57" : "#1c2c43"
-        border.color: control.destructive ? "#bf7383" : "#34465e"
+        color: control.down ? Qt.alpha(control.accentColor, 0.28) : control.destructive ? "#713c49" : control.selected ? Qt.alpha(control.accentColor, 0.18) : "#1c2c43"
+        border.color: control.destructive ? "#bf7383" : control.selected ? control.accentColor : "#34465e"
     }
     Accessible.name: text
 }

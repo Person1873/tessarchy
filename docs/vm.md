@@ -202,3 +202,20 @@ no backend/device is available. Tap the speaker for Quick Controls. Audio uses
 Quickshell's PipeWire integration when the launch-time PipeWire socket exists;
 otherwise controls are disabled. Start audio separately and restart Tessera to
 activate it later. Wireless/modem backend integration is still pending.
+
+## Adaptive shell and Settings
+
+Tap the top-right gear or the home mode badge to open Settings. Select Automatic,
+Phone, Tablet, or Desktop under Workspace mode. Automatic uses each output's
+logical size: shortest edge below 600 → Phone; otherwise width at least 1100 and
+height at least 650 → Desktop; remaining sizes → Tablet. The manual override is
+saved across restarts and applies to every output. It changes the shell layout
+and how new ordinary windows start, not the VM's actual resolution. Existing
+windows stay in place. Phone and Tablet start ordinary apps maximized; Desktop
+starts them tiled.
+
+Settings also offers Mint/Iris/Ice accents, bar opacity, wallpaper shade, clock
+format, navigation labels, reduced motion, logo replay, sound/connections, and
+confirmed session exit. Tap the home logo to replay its short assembly animation.
+Preferences are in guest `~/.config/tessarchy/shell.ini` and survive dev uninstall.
+The VM remains at the native 400×800 phone mode; no host configuration changed.

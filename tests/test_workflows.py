@@ -32,6 +32,8 @@ class Workflows(unittest.TestCase):
         preferences = self.home / 'config/tessarchy/preferences.lua'
         preferences.parent.mkdir(parents=True)
         preferences.write_text('-- mine')
+        shell_settings = preferences.with_name('shell.ini')
+        shell_settings.write_text('[Shell]\nlayoutMode=tablet\n')
         self.run_script('install-dev.sh')
         data = self.home / 'data/tessarchy'
         self.assertEqual((data / 'shell/shell.qml').read_bytes(),
@@ -41,6 +43,7 @@ class Workflows(unittest.TestCase):
         self.assertFalse(data.exists())
         self.assertEqual(sentinel.read_text(), 'existing config')
         self.assertEqual(preferences.read_text(), '-- mine')
+        self.assertEqual(shell_settings.read_text(), '[Shell]\nlayoutMode=tablet\n')
 
     def test_existing_launcher_refused_before_installing_data(self):
         launcher = self.home / '.local/bin/start-tessarchy'
@@ -135,6 +138,49 @@ class Workflows(unittest.TestCase):
         self.assertIn('readonly=on', result.stdout)
         self.assertEqual(disk.read_bytes(), b'keep running guest image')
         self.assertFalse(list((source / 'build').glob('source-share.*')))
+
+    def test_new_windows_follow_saved_mode_without_touching_dialogs(self):
+        import shutil
+        if not shutil.which('lua'):
+            self.skipTest('Lua interpreter unavailable')
+        folder = self.home / 'config/tessarchy'
+        folder.mkdir(parents=True)
+        script = r'''local callbacks, actions = {}, {}
+hl = {
+    monitor = function() end, config = function() end, bind = function() end,
+    on = function(name, callback) callbacks[name] = callback end,
+    dispatch = function(action) table.insert(actions, action) end,
+    dsp = { exec_cmd = function() end, exit = function() end,
+            window = { fullscreen = function(action) return action end } }
+}
+dofile(arg[1])
+local function check(mode, width, height, scale, transform, floating, fullscreen, expected)
+    local f = assert(io.open(os.getenv("XDG_CONFIG_HOME") .. "/tessarchy/shell.ini", "w"))
+    f:write("[Other]\nlayoutMode=desktop\n[Shell]\nlayoutMode=" .. mode .. "\n")
+    f:close()
+    actions = {}
+    local window = { floating = floating, fullscreen = fullscreen,
+        monitor = {width=width, height=height, scale=scale, transform=transform} }
+    callbacks["window.open"](window)
+    assert(#actions == expected, mode .. ": unexpected app startup policy")
+    if expected == 1 then
+        assert(actions[1].window == window and actions[1].mode == "maximized")
+    end
+end
+check("auto", 400, 800, 1, 0, false, 0, 1)
+check("auto", 800, 1280, 1, 0, false, 0, 1)
+check("auto", 1280, 800, 1, 0, false, 0, 0)
+check("auto", 1280, 800, 2, 0, false, 0, 1)
+check("auto", 1280, 800, 1, 1, false, 0, 1)
+check("desktop", 400, 800, 1, 0, false, 0, 0)
+check("phone", 1280, 800, 1, 0, false, 0, 1)
+check("invalid", 400, 800, 1, 0, false, 0, 1)
+check("phone", 400, 800, 1, 0, true, 0, 0)
+check("phone", 400, 800, 1, 0, false, 2, 0)
+'''
+        result = subprocess.run(['lua', '-', str(ROOT / 'session/hyprland.lua')],
+                                input=script, text=True, capture_output=True, env=self.env)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_iso_staging_preserves_boot_assets_and_account_databases(self):
         # Minimal fixture exercises our assembly, not upstream archiso validity.

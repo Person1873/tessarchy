@@ -2,6 +2,9 @@
 
 - `shell/artwork/tessarchy-mark.svg`: original Tessarchy tessellated T mark,
   authored as editable SVG for this project. Repository MIT license.
+- `shell/artwork/mark-face-0.svg` through `mark-face-5.svg`: the six paths from
+  the original mark, separated for the code-driven assembly animation. Same
+  provenance and license as the original SVG. No imported console artwork.
 - `shell/artwork/aurora-fold.png`: original wallpaper generated with OpenAI
   imagegen on 2026-10-16 for this project. Prompt: portrait mobile OS wallpaper,
   luminous glacier-mint and smoky teal folds, midnight navy, pale gold highlights,

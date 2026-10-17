@@ -6,7 +6,7 @@ TouchButton {
     required property string symbol
     Layout.fillWidth: true
     Layout.preferredWidth: 1
-    implicitHeight: 132
+    implicitHeight: 116
     contentItem: Item {
         Column {
             anchors.centerIn: parent
@@ -16,9 +16,12 @@ TouchButton {
                 width: 56
                 height: 56
                 radius: 18
-                color: control.symbol === "browser" ? "#4b668b" : "#2d6a64"
+                rotation: -4
+                color: Qt.alpha(control.accentColor, control.selected ? 0.4 : 0.18)
+                border.color: Qt.alpha(control.accentColor, 0.3)
                 Image {
                     anchors.centerIn: parent
+                    rotation: 4
                     source: "../icons/" + control.symbol + ".svg"
                     sourceSize.width: 28
                     sourceSize.height: 28
