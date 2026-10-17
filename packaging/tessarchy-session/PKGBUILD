@@ -5,7 +5,8 @@ pkgdesc='Tessarchy prototype Hyprland session'
 arch=('any')
 license=('MIT')
 depends=('tessera-shell=0.1.0' 'hyprland>=0.56' 'dbus' 'firefox' 'foot' 'ttf-dejavu')
-optdepends=('squeekboard: on-screen keyboard for touch text input')
+optdepends=('squeekboard: on-screen keyboard for touch text input'
+            'tessarchy-portal: touch file dialogs on Phone/Tablet')
 source=("tessarchy-$pkgver.tar.gz")
 sha256sums=('SKIP')
 package() {

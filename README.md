@@ -37,6 +37,11 @@ live image is in development.
   Foot, and GTK dark/light for apps launched through `tessarchy-run`.
 - Optional squeekboard on-screen keyboard: it appears for focused text fields, and
   a Keyboard navigation button shows or hides it in Phone/Tablet modes.
+- Touch file dialogs (optional `tessarchy-portal` package): on Phone/Tablet, apps'
+  Open/Save dialogs are drawn by Tessera full-screen instead of GTK's dialog,
+  which can't shrink below ~726 px. Portal-aware apps get it directly; GTK3 apps
+  launched through `tessarchy-run` are routed there by a GTK module. Desktop
+  keeps GTK's own dialog.
 - A scrollable window overview with application switching and maximize/restore.
 - Confirmation before closing a window or ending the session.
 - A dedicated Hyprland session, user installation, and reversible tty1 startup.

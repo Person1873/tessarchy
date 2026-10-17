@@ -101,6 +101,28 @@ ShellRoot {
         active: Quickshell.env("TESSARCHY_AUDIO") === "1"
         source: "components/AudioStatus.qml"
     }
+    // App file dialogs on Phone/Tablet (tessarchy-portal asks; see FilePicker).
+    readonly property var focusedScreen: Quickshell.screens.find(s => Hyprland.focusedMonitor && s.name === Hyprland.focusedMonitor.name) ?? Quickshell.screens[0]
+    FilePicker {
+        id: filePicker
+        screen: root.focusedScreen
+    }
+    IpcHandler {
+        target: "picker"
+        // "ok": the picker will answer on fifo; anything else: use GTK's dialog.
+        function pick(fifo: string, mode: string, multiple: string, folder: string, name: string, title: string, globs: string): string {
+            const screen = root.focusedScreen;
+            if (!screen || Policy.effectiveMode(shellPreferences.layoutMode, screen.width, screen.height) === "desktop")
+                return "desktop";
+            if (["open", "folder", "save"].indexOf(mode) < 0 || fifo.length === 0)
+                return "invalid";
+            filePicker.open({ fifo: fifo, mode: mode, multiple: multiple === "1", folder: folder, name: name, title: title, globs: globs });
+            return "ok";
+        }
+        function dismiss(fifo: string): void {
+            filePicker.dismiss(fifo);
+        }
+    }
     Variants {
         model: Quickshell.screens
         Scope {

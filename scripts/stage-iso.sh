@@ -39,6 +39,8 @@ cp -R -- "$root/shell" "$root/themes" "$airoot/usr/share/tessarchy/"
 cp -- "$root/session/hyprland.lua" "$airoot/usr/share/tessarchy/session/"
 install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessarchy-theme" "$root/session/tessarchy-run" "$airoot/usr/bin/"
 install -m644 "$root/session/tessarchy.desktop" "$airoot/usr/share/wayland-sessions/"
+# File dialogs (compiled here: needs gcc, make, pkgconf and gtk3 headers).
+make -s -C "$root/portal" O="$root/build/portal" DESTDIR="$airoot" PREFIX=/usr install
 cp -a "$root/iso/airootfs/." "$airoot/"
 # Releng uses zsh for its root rescue login. Our smaller package set uses Bash.
 sed -i 's|^\(root:[^:]*:0:0:[^:]*:[^:]*:\).*|\1/usr/bin/bash|' "$airoot/etc/passwd"

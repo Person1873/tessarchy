@@ -14,7 +14,9 @@ export TESSARCHY_DATA_DIR="$share"
 export PATH="$HOME/.local/bin:$PATH"
 # Stage the saved (or default) theme before anything reads it.
 tessarchy-theme apply || echo "Theme unavailable; using built-in colours" >&2
-export XDG_CURRENT_DESKTOP=Hyprland
+# Tessarchy first so xdg-desktop-portal reads tessarchy-portals.conf (file
+# dialogs to tessarchy-portal), then Hyprland's for everything else.
+export XDG_CURRENT_DESKTOP=Tessarchy:Hyprland
 export XDG_SESSION_DESKTOP=tessarchy
 export XDG_SESSION_TYPE=wayland
 exec dbus-run-session -- Hyprland --config "$share/session/hyprland.lua"

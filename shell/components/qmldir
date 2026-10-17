@@ -1,6 +1,7 @@
 AppTile AppTile.qml
 AudioStatus AudioStatus.qml
 BrandMark BrandMark.qml
+FilePicker FilePicker.qml
 Icon Icon.qml
 LevelSlider LevelSlider.qml
 NavButton NavButton.qml
