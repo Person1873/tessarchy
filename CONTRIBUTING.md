@@ -22,6 +22,9 @@ This runs Bash/Lua syntax checks where tools are installed, workflow tests,
 Hyprland configuration validation, and QML linting. It reports missing optional
 tools. Passing static checks does not prove that the shell renders or that an
 ISO boots. Follow the [manual checklist](docs/testing.md) for affected behavior.
+Pushes that add files under `.github/workflows/` require a token or key with the
+`workflow` scope; a GitHub Actions workflow runs the same script in an Arch
+container when that is enabled.
 
 ## Changes and reports
 
@@ -41,3 +44,8 @@ secure lock screen. Track planned input-method and device work in the roadmap.
 
 Generated VM disks, ISO images, downloaded packages, and build output stay out
 of Git. The project is licensed under the [MIT License](LICENSE).
+
+The Arch ISO fetcher defaults to the system Arch keyring. On other systems,
+`ARCH_ISO_KEYRING` can point to an explicitly provisioned trusted Arch keyring;
+signature verification remains mandatory. Refusal-path tests use a scratch
+keyring fixture and do not download or trust an image.

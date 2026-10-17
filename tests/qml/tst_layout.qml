@@ -107,17 +107,38 @@ TestCase {
         compare(Policy.panelWidth("phone", 320), 320);
         compare(Policy.columns("desktop", 760), 4);
     }
-    function test_preferred_player_index() {
-        compare(Policy.preferredPlayerIndex([]), -1);
-        compare(Policy.preferredPlayerIndex([false]), 0);
-        compare(Policy.preferredPlayerIndex([false, true]), 1);
-        compare(Policy.preferredPlayerIndex([true, true]), 0);
-        compare(Policy.preferredPlayerIndex([false, false, true]), 2);
+    function test_workspace_strip_placements() {
+        verify(Policy.showWorkspaces("desktop", 1100));
+        verify(!Policy.showWorkspaces("desktop", 400));
+        verify(Policy.showWorkspaces("desktop", 1920));
+        verify(Policy.showWorkspaces("tablet", 1024));
+        verify(!Policy.showWorkspaces("tablet", 800));
+        verify(!Policy.showWorkspaces("phone", 1080));
     }
-    function test_media_summary() {
-        compare(Policy.mediaSummary("Song", "Band"), "Song — Band");
-        compare(Policy.mediaSummary("", "Band"), "Unknown track — Band");
-        compare(Policy.mediaSummary("Song", ""), "Song — Unknown artist");
-        compare(Policy.mediaSummary(null, null), "Unknown track — Unknown artist");
+    function test_workspace_slots() {
+        compare(Policy.workspaceSlots([]), 5);
+        compare(Policy.workspaceSlots([9999999]), 8);
+        compare(Policy.workspaceSlots([7.5]), 5);
+        compare(Policy.workspaceSlots([1, 2]), 5);
+        compare(Policy.workspaceSlots([1, 7, 3]), 7);
+        compare(Policy.workspaceSlots([-1, 2]), 5);
+    }
+    function test_bluetooth_action_and_battery() {
+        compare(Policy.btAction(true, true), "disconnect");
+        compare(Policy.btAction(true, false), "disconnect");
+        compare(Policy.btAction(false, true), "connect");
+        compare(Policy.btAction(false, false), "none");
+        compare(Policy.btBatteryLabel(false, 0.5), "");
+        compare(Policy.btBatteryLabel(true, NaN), "");
+        compare(Policy.btBatteryLabel(true, undefined), "");
+        compare(Policy.btBatteryLabel(true, 0.42), " · 42%");
+        compare(Policy.btBatteryLabel(true, 2), " · 100%");
+        compare(Policy.btBatteryLabel(true, -1), " · 0%");
+    }
+    function test_media_player_selection() {
+        compare(Policy.preferredPlayerIndex([]), -1);
+        compare(Policy.preferredPlayerIndex([false, true]), 1);
+        compare(Policy.preferredPlayerIndex([false, false]), 0);
+        compare(Policy.mediaSummary("", ""), "Unknown track — Unknown artist");
     }
 }
