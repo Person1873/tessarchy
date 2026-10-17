@@ -7,8 +7,9 @@ Never include passwords, tokens, SSH private keys, or other credentials.
 
 ## Current user request
 
-Review the GitHub pull requests, resolve conflicts and defects, test the changes,
-and merge those that are ready. The earlier instruction to leave collaborators’
+Review all open GitHub pull requests in effort order. Merge the straightforward
+changes after checks pass; defer difficult or disruptive PRs for now (latest
+owner instruction). Resolve conflicts without regressing the current UI. The earlier instruction to leave collaborators’
 PRs unchanged was superseded by this explicit request to get them merged.
 Do not discard contributor changes simply because they conflict with the newer UI.
 The user also wants a large, current handoff file for another model when credits
@@ -55,7 +56,7 @@ run out. The file must stay in the Tessarchy directory.
 2. build/publish: branch feat/phone-shell. It was synchronized to the tested
    Alpha 2 tree with merge commit e71ae0e and pushed. That synchronization was
    used to complete PR #1.
-3. build/integration: branch review/pr-9-fix, with an UNCOMMITTED MERGE of
+3. build/integration: DEFERRED branch review/pr-9-fix, with an UNCOMMITTED MERGE of
    review/pr-7-fix into original #9. Preserve this work; do not reset or abort.
    Local checks passed after the latest Icon/theme changes (33 Python, 21 Qt).
    Final theme runtime review and commit/push are still pending.
@@ -65,7 +66,10 @@ run out. The file must stay in the Tessarchy directory.
 5. origin/main includes merged PRs #1 through #8 and #24. PR #7 main merge is
    bd34e999b43f7aaf067a26db18949544ee6f531d; #8 main merge is
    86699aec2002fba415b8a539dde06ba04943e695. Fetch before relying on the tip.
-6. Original PR heads remain under refs/remotes/review/pr-N. Fixed local
+6. build/quick-prs: branch review/pr-14-fix, clean reviewed screenshot head
+   c91b9eef6e9f3082eea81f89ff90373be3de711c, pushed to fork feat/screenshots.
+   Fixed #15/#17 heads remain in review/pr-15-fix and review/pr-17-fix.
+7. Original PR heads remain under refs/remotes/review/pr-N. Fixed local
    review/pr-N-fix branches preserve contributor history with merge commits.
 
 Useful commands:
@@ -146,17 +150,16 @@ was visually inspected and canceled, and native 400x800 portrait was restored.
 
 ## Current immediate next actions
 
-1. #24 is complete: all source/ISO CI checks passed, and main merge commit is
-   e2e4f124d131ab8b35a258e30e52072d6d6b409b. The development branch now includes
-   that main history. Push the final handoff update and share the main commit.
-2. Resume the preserved #9 merge in build/integration. Theme QML/static checks
-   pass; guest dark/light theme and launch-wrapper validation remain pending.
-3. Continue #10/#11/#20 dependency chain, then other unreviewed PRs. Keyboard
-   width exception is approved; retain >=48px key height.
-4. Synchronize build/live-iso with final main later; preserve this handoff and
-   both histories. Alpha 2 release assets and provenance remain unchanged.
-5. Guest is running the #24 candidate shell in 400x800 portrait. Existing QA
-   Foot windows remain open. No host settings or packages were changed.
+1. Finish #14 CI, merge only if all checks pass, then synchronize build/live-iso
+   with main and push this handoff/ranking. #15 and #17 are already merged.
+2. The latest owner request explicitly defers difficult/disruptive work. Do not
+   automatically resume #9 or its dependency chain. Full ranking: docs/pr-triage.md.
+3. Preserve the unfinished #9 merge in build/integration; no reset or abort.
+4. VM SSH control socket expired during this pass. The owner was asked for an
+   existing key/connection method asynchronously. No credentials were guessed,
+   no host/guest packages installed, and no new VM visual tests claimed.
+5. Alpha 2 assets/provenance are unchanged. Successful PR ISO CI does not mean
+   these changes are published, boot-tested, or physically validated.
 
 ## Pending PR inventory and dependency cautions
 
@@ -178,9 +181,9 @@ for the reviewed integration updates described here.
 - #12: Tablet split: two apps side by side with touch controls. Review pending. Original state: draft.
 - #13: Add notification pop-ups and an alert center. Review pending. Original state: open.
 - #14: Add full-screen screenshots from Quick controls and the Print key. Review pending. Original state: open.
-- #15: Add MPRIS media controls to the status bar and Quick controls. Review pending. Original state: open.
+- #15: Add MPRIS media controls to the status bar and Quick controls. Merged in this effort-ordered pass. Original state: open.
 - #16: Show live window previews in the app switcher. Review pending. Original state: open.
-- #17: Add a PipeWire audio panel to quick controls. Review pending. Original state: open.
+- #17: Add a PipeWire audio panel to quick controls. Merged in this effort-ordered pass. Original state: open.
 - #18: Add a battery and power-mode panel to quick controls. Review pending. Original state: open.
 - #19: Add display controls: brightness helper, keys and a night-light toggle. Review pending. Original state: open.
 - #20: Keep the keyboard hidden while a shell page is open. Review pending. Original state: draft.
@@ -473,3 +476,64 @@ Preserved #9 continuation details:
   retain the Bluetooth panel, PlainText labels and themed glass styling together.
 - The user's request for this turn (#24, Git update, handoff, shareable commit)
   is complete after the final handoff push. Other PRs remain authorized future work.
+
+## Effort-ordered PR pass
+
+The owner requested scanning all remaining PRs, sorting by ease, and skipping
+disruptive or difficult changes for now. The complete ranked assessment is
+docs/pr-triage.md. Current intended small batch: #15 media, #17 audio, #18 power,
+#14 screenshots, subject to review and passing checks. Other PRs remain open;
+#16 overlaps the existing card previews. Preserve #9's uncommitted merge.
+New worktree build/quick-prs is initially review/pr-15-fix, integrating current
+main into the original contributor head without rewriting history.
+
+## Easy-PR pass results, 2026-10-17
+
+All 15 remaining open PRs were scanned for incremental scope, dependency chains,
+conflicts with current UI, metadata compatibility and validation needs. Ranking
+and per-PR defer reasons are in docs/pr-triage.md. This pass takes #15, #17 and
+#14 only; #18 was initially considered easy but missing-service handling requires
+more work because installed PowerProfiles has no availability flag. Other open
+PRs remain unchanged; #16's old grid previews are superseded by current cards.
+
+#15 media — MERGED
+- Reviewed source: 00bad586201f68ce3604b160d6e2bfbd97b895e3.
+- Main merge: 81d798872121bf21329da53f55726702cdf51619.
+- CI: source 39077751343 (Ubuntu/Arch passed), ISO 39077751336 passed.
+- Local: 31 Python and 26 Qt Quick checks. Actual MediaPanel with mutable mock
+  player tested unsupported actions, control refusal, changes, seek and removal.
+- Current glass pull-down, icon actions, PlainText metadata, guarded MPRIS calls;
+  no top-bar crowding or obsolete status-page restoration.
+
+#17 audio — MERGED
+- Reviewed source: f8ff894408892a1765beaeb74d6a4dc99d0a3651.
+- Main merge: 97ffc6208c90f47c82399139b8428b5284cb5fe9.
+- CI: source 39077872284 (Ubuntu/Arch passed), ISO 39077872170 passed.
+- Local: 32 Python and 30 Qt Quick checks. Actual controls tested with mock nodes
+  and actual Quickshell/PipeWire wrapper started in an isolated no-service runtime.
+- Advanced section loads only when expanded and backend enabled. Track candidate
+  nodes before readiness filtering; display only ready output/audio playback
+  nodes; guarded output selection, bounded per-app volume and mute. Existing basic
+  volume controls remain. Capture/video streams excluded, metadata PlainText.
+
+#14 screenshots — reviewed/pushed, CI pending at this checkpoint
+- Reviewed source: c91b9eef6e9f3082eea81f89ff90373be3de711c.
+- CI: source 39078004550 and ISO 39078004547.
+- Local: 35 Python and 30 Qt Quick checks; parser/lint/staging passed.
+- Unique mktemp private 0600 files fix same-second overwrite. Partial files are
+  removed on capture failure; optional notification failure preserves captures.
+- Print binding and glass camera icon; drawer closes before a delayed capture.
+  Existing safe manifest and launcher refusal/modification checks preserved.
+- Stub tests cover duplicate timestamps, existing file preservation, permissions,
+  notification failure, capture errors, missing grim, argument refusal and staging.
+
+Limits for this pass: no real-player MPRIS, real-device PipeWire, actual screenshot
+capture or new VM visual/touch checks. The SSH socket expired and access was not
+available; controls have isolated component/backend tests instead. Hardware and
+end-to-end VM acceptance remain pending in docs/testing.md. No ISO release was
+published and no new boot claim made. Host fish/ShellCheck were skipped locally,
+then passed in the target CI jobs for the merged PRs.
+
+One-off local integration scripts are /tmp/tessarchy-pr15.py, pr17.py, pr14.py
+(with tessarchy- prefix). Do not rerun these over newer edits. Checks/logs are
+build/pr-review/pr15-check.log, pr17-check.log and pr14-check.log.
