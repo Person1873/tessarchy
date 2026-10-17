@@ -34,7 +34,8 @@ if command -v desktop-file-validate >/dev/null; then
 else echo "SKIP: desktop-file-validate unavailable"; fi
 if command -v Hyprland >/dev/null; then
     # Verification must not load the current user's preferences.
-    XDG_CONFIG_HOME="$scratch" Hyprland --verify-config -c "$root/session/hyprland.lua"
+    mkdir -m 700 "$scratch/runtime"
+    XDG_RUNTIME_DIR="$scratch/runtime" XDG_CONFIG_HOME="$scratch" Hyprland --verify-config -c "$root/session/hyprland.lua"
 else echo "SKIP: Hyprland config parser unavailable"; fi
 # Prefer the linter shipped with the installed Qt.
 if [[ -x /usr/lib/qt6/bin/qmllint ]]; then lint=/usr/lib/qt6/bin/qmllint; else lint=$(command -v qmllint || true); fi
