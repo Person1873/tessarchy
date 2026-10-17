@@ -271,7 +271,9 @@ support claim. Testers should begin in a disposable VM with a physical keyboard.
 ## Quiet Edge and card switcher — 2026-10-17
 
 Implemented in the development source and installed Arch VM; **not included in
-published Alpha 1**. No replacement ISO was built during this UI/website change.
+published Alpha 1**. No replacement tester ISO was published during this UI/website change.
+PR CI subsequently built an ISO successfully in run `39056992759`; that new
+artifact has not been boot-tested and is not presented as the published tester release.
 
 Actual validation:
 
