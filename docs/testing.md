@@ -333,3 +333,20 @@ Validated:
   the requested folder.
 
 Not checked: wxWidgets apps, hardware.
+
+## Keyboard key height, 2026-10-17
+
+Executed by an agent (Hermes, for person1873) in the QEMU VM at 720x1440,
+scale 1.8 (400x800 logical). Rule: keys >=48 logical px tall; width exempt
+(owner ruling, see AGENTS.md).
+
+- Before: squeekboard's default panel was 113 px, rows about 25 px. The VM
+  monitor reports 180x360 mm, so squeekboard picks its wide (tablet) layout.
+- `tessarchy-osk start` now sets squeekboard's height multipliers from the
+  focused monitor's mode, physical size and scale, mirroring squeekboard
+  1.43's sizing formula, for a >=224 px panel. In the VM: vertical 1.99,
+  horizontal 1.87; panel 224 px; rows measured from a screenshot at about
+  86 physical px (48 logical), all four rows intact.
+- Not checked: real phone hardware (formula predicts 1.07 for a 1080x2400,
+  70 mm panel), landscape in the VM, refitting after a scale or monitor change
+  without restarting the keyboard.

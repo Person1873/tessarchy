@@ -6,8 +6,59 @@
 set -euo pipefail
 # Its colours come from the gtk.css tessarchy-theme renders into that same
 # private config home; `restart` reloads them after a theme change.
-usage() { echo "Usage: $0 start | restart | show | hide | toggle" >&2; exit 2; }
-[[ $# == 1 ]] || usage
+usage() { echo "Usage: $0 start | restart | show | hide | toggle | fit W H WMM HMM SCALE" >&2; exit 2; }
+[[ $# == 1 || ${1-} == fit ]] || usage
+# Keys must be >=48 logical px tall (keyboard keys are exempt for width:
+# 10 QWERTY keys never fit 48 wide on a phone). squeekboard sizes its panel
+# from the output's physical size; its only knob is a height multiplier
+# (0.5-2.0). fit mirrors squeekboard 1.43's get_preferred_height_and_arrangement
+# (src/state.rs) for a mode of W x H px, WMM x HMM mm and Hyprland scale
+# SCALE, and prints the vertical and horizontal multipliers that give the
+# panel at least 224 logical px (4 rows of 48 plus gaps), never below 1.
+fit() {
+    awk -v w="$1" -v h="$2" -v wmm="$3" -v hmm="$4" -v scale="$5" 'BEGIN {
+        iscale = int(scale); if (iscale < scale) iscale++  # wl_output scale is whole
+        pw = w < h ? w : h; ph = w < h ? h : w; pmm = wmm < hmm ? wmm : hmm; qmm = wmm < hmm ? hmm : wmm
+        printf "%.2f %.2f\n", m(pw, ph, pmm, qmm), m(ph, pw, qmm, pmm)
+    }
+    function ceil(x) { return x == int(x) ? x : int(x) + 1 }
+    function min(a, b) { return a < b ? a : b }
+    function max(a, b) { return a > b ? a : b }
+    function m(W, H, WMM, HMM,    density, ideal, base, ratio, panel, need) {
+        density = WMM > 0 ? W / WMM : 720 / 65
+        ideal = ceil(9.48 * 4 * density)
+        base = WMM < HMM && min(WMM, HMM) < 115
+        ratio = base ? 7 / 12 : 5 / 16
+        if (W < H) panel = min(W * ratio, H / 2)
+        else if (!base) panel = min(max(H / 3, min(ideal, ceil(ratio * W))), H / 2)
+        else panel = H / 2
+        need = 224 * iscale / panel
+        return min(max(need, 1), 2)
+    }'
+}
+# Writes fit's multipliers for the focused monitor into the private keyfile.
+fit_focused() {
+    local line mode='' mm='' scale='' focused=''
+    while IFS= read -r line; do
+        if [[ $line =~ ^Monitor ]]; then
+            [[ $focused == yes ]] && break
+            mode='' mm='' scale='' focused=''
+        elif [[ $line =~ ^[[:space:]]+([0-9]+)x([0-9]+)@ && -z $mode ]]; then mode="${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+        elif [[ $line =~ physical\ size\ \(mm\):\ ([0-9]+)x([0-9]+) ]]; then mm="${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+        elif [[ $line =~ ^[[:space:]]+scale:\ ([0-9.]+) ]]; then scale=${BASH_REMATCH[1]}
+        elif [[ $line =~ ^[[:space:]]+focused:\ (yes|no) ]]; then focused=${BASH_REMATCH[1]}
+        fi
+    done < <(hyprctl monitors 2>/dev/null)
+    [[ $focused == yes && -n $mode && -n $mm && -n $scale ]] || return 0
+    local vertical horizontal
+    # shellcheck disable=SC2086
+    read -r vertical horizontal < <(fit $mode $mm "$scale")
+    awk -v v="$vertical" -v h="$horizontal" '
+        /^\[/ { skip = ($0 == "[sm/puri/Squeekboard]") }
+        !skip { print }
+        END { print "[sm/puri/Squeekboard]"; print "scale-in-vertical-screen-orientation=" v; print "scale-in-horizontal-screen-orientation=" h }
+    ' "$1" > "$1.new" && mv -- "$1.new" "$1"
+}
 bus=sm.puri.OSK0
 object=/sm/puri/OSK0
 set_visible() { busctl --user call "$bus" "$object" "$bus" SetVisible b "$1" >/dev/null; }
@@ -25,6 +76,7 @@ start)
         printf '%s\n' '[org/gnome/desktop/a11y/applications]' \
             'screen-keyboard-enabled=true' > "$keyfile"
     fi
+    fit_focused "$keyfile" || echo "Keyboard height not fitted" >&2
     export GSETTINGS_BACKEND=keyfile XDG_CONFIG_HOME=$state
     # Base built-in style on the theme's mode; gtk.css overrides the colours.
     if [[ $(cat -- "${state%/osk}/theme/mode" 2>/dev/null) == light ]]; then
@@ -48,5 +100,6 @@ toggle)
     visible=$(busctl --user get-property "$bus" "$object" "$bus" Visible)
     if [[ $visible == "b true" ]]; then set_visible false; else set_visible true; fi
     ;;
+fit) [[ $# == 6 ]] || usage; shift; fit "$@" ;;
 *) usage ;;
 esac

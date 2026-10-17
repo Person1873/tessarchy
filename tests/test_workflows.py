@@ -151,6 +151,18 @@ class Workflows(unittest.TestCase):
         self.assertEqual(run('foot', '-e', 'ls'), f'Adwaita|--config={config} -e ls')
         self.assertEqual(run('firefox'), 'Adwaita|')
 
+    def test_keyboard_fit_gives_48px_rows(self):
+        def fit(*mode):
+            result = subprocess.run([str(ROOT / 'session/tessarchy-osk'), 'fit', *map(str, mode)],
+                                    capture_output=True, text=True, check=True)
+            return result.stdout.split()
+        # QEMU's virtual monitor (180 mm wide: squeekboard's wide layout); measured 224 px panel.
+        self.assertEqual(fit(720, 1440, 180, 360, 1.8), ['1.99', '1.87'])
+        # A 1080x2400, 70 mm phone: compact layout, 630 px / scale 3 = 210, so 224/210.
+        self.assertEqual(fit(1080, 2400, 70, 155, 2.625), ['1.07', '1.24'])
+        # A tablet already has room: never shrink below squeekboard's own size.
+        self.assertEqual(fit(2560, 1600, 300, 190, 1.6), ['1.00', '1.00'])
+
     def test_portal_asks_shell_and_falls_back_to_gtk_in_desktop(self):
         import shutil
         need = ('cc', 'make', 'pkg-config', 'gdbus', 'dbus-run-session')
