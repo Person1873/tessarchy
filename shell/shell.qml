@@ -61,7 +61,7 @@ ShellRoot {
             readonly property string mode: Policy.effectiveMode(shellPreferences.layoutMode, modelData.width, modelData.height)
             readonly property bool isPhone: mode === "phone"
             readonly property int navHeight: isPhone ? 76 : 84
-            readonly property int launcherRows: Math.ceil(4 / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
+            readonly property int launcherRows: Math.ceil((panel.appEntries.length + 2) / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
             SystemClock {
                 id: clock
                 precision: SystemClock.Minutes
@@ -69,6 +69,9 @@ ShellRoot {
             PanelWindow {
                 id: panel
                 screen: surface.modelData
+                readonly property var appEntries: DesktopEntries.applications.values
+                    .filter(entry => !entry.noDisplay && entry.command.length > 0)
+                    .sort((a, b) => a.name.localeCompare(b.name))
                 property string page: ""
                 property var closeTarget: null
                 property bool keyboardSwitch: false
@@ -183,17 +186,19 @@ ShellRoot {
                                         columns: Policy.columns(surface.mode, width)
                                         columnSpacing: 12
                                         Layout.fillWidth: true
-                                        AppTile {
-                                            text: "Browser"
-                                            symbol: "browser"
-                                            accentColor: root.accentColor
-                                            onClicked: panel.launch(["firefox"])
-                                        }
-                                        AppTile {
-                                            text: "Terminal"
-                                            symbol: "terminal"
-                                            accentColor: root.accentColor
-                                            onClicked: panel.launch(["foot"])
+                                        Repeater {
+                                            model: panel.appEntries
+                                            delegate: AppTile {
+                                                required property var modelData
+                                                text: modelData.name
+                                                symbol: "browser"
+                                                iconSource: Quickshell.iconPath(modelData.icon, true)
+                                                accentColor: root.accentColor
+                                                onClicked: {
+                                                    panel.page = "";
+                                                    modelData.execute();
+                                                }
+                                            }
                                         }
                                         AppTile {
                                             text: "Settings"

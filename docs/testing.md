@@ -393,3 +393,55 @@ Actual validation:
 Earlier development-VM interaction tests remain separate from these ISO boot
 checks. Physical touch, network/radio/audio behavior, Secure Boot, phone
 hardware and application acceptance are still unverified in this exact image.
+
+
+## Script hardening and validation record, 2026-10-17
+
+Environment: Omarchy/Arch host, Hyprland 0.56.2, Quickshell 0.3.1, Qt 6.11.2
+(`/usr/lib/qt6/bin/qmllint`), desktop-file-utils 0.28, python 3.14, qemu absent.
+All work ran as the normal user; no host session config, `dist/`, `build/` or
+`vm/` content was disturbed beyond this project's own ignored directories.
+
+- The host had a stray `qmllint` (reports version "1.0") on PATH which fails
+  silently with exit 255 on the shell QML. `scripts/check.sh` now prefers
+  `/usr/lib/qt6/bin/qmllint` matched to the installed Qt before a PATH entry;
+  after the fix `./scripts/check.sh` exits 0, still reporting the known
+  PanelWindow warning.
+- `desktop-file-validate` on `session/tessarchy.desktop` flags the spec-valid
+  `DesktopNames` Wayland-session key as an extension-key error ("0.28"). The
+  check tolerates only that specific quirk and fails on any other finding.
+- Integration tests grew from nine to seventeen with stub-based checks:
+  `vm.sh plan` command printing, missing-disk, usage and `VM_SSH_PORT`
+  refusals; `fetch-arch-iso.sh` seeded-manifest stubs proving an existing
+  download is never overwritten and a failed download leaves no partial ISO or
+  download directory; `build-iso.sh` explicit archiso refusal;
+  `export-vm-source.sh` snapshot idempotence; `run-basic-vm.sh` missing-disk
+  refusal. All 17 tests pass (grep count 17 `. ok`).
+- Development install/uninstall now writes a `.tessarchy-dev-files` manifest;
+  tests confirm installed files are removed, untracked extras are preserved,
+  v1 markers still uninstall through the legacy fixed set, and the manifest
+  itself is removed. `cmp` launcher-modification refusal was unchanged and
+  still passes.
+- `./scripts/package.sh` was run unprivately with the current source: both
+  packages built (`--nodeps`, fakeroot). File lists and `.PKGINFO` were
+  inspected by bsdtar; nothing was installed.
+- The QML app launcher now derives entries from Quickshell `DesktopEntries`
+  (validated against installed `quickshell-core.qmltypes`: `applications`,
+  `noDisplay`, `command`, `execute`). Only qmllint validated it; no GUI run.
+
+Not performed: archiso staging/build, ISO boot, VM launch, shellcheck (still
+absent locally; covered if CI is enabled), touchscreen tests, guest installs.
+
+## PR 2 integration review — 2026-10-17
+
+Actual validation: resolved the app-drawer changes onto the Alpha 2 shell;
+checked installed DesktopEntry/iconPath QML metadata; `./scripts/check.sh`
+passed 26 Python tests and 19 Qt Quick results, Lua/Hyprland validation and
+qmllint (known PanelWindow metadata warnings only; ShellCheck unavailable).
+Scratch-HOME tests cover manifest install/uninstall, preserving unknown files,
+legacy installs, traversal and symlink-parent rejection before any removal.
+The development VM rendered the installed applications with their real icons
+and truncated long names within the glass launcher.
+
+Still planned/manual: additional desktop-entry command formats and theme changes.
+No host desktop configuration or dependencies changed.

@@ -36,7 +36,10 @@ VM_UEFI=1 ./scripts/vm.sh run dist/<actual-ISO-filename>.iso
 
 Prerequisites: internet, a consistent current Arch installation, administrator
 access for mkarchiso, and roughly 15–25GiB free disk. More than 2GiB memory is
-recommended for building. ISO builds are not bit-reproducible yet: repository
+recommended for building. `archiso` pulls in its own auxiliary tools, and
+`iso/packages.x86_64` includes `memtest86+`, whose EFI payload needs `mtools`
+on the build host. Hyprland's system-wide dependencies are resolved by pacman;
+shell-level guesses (`wlogout`, extras) are intentionally absent. ISO builds are not bit-reproducible yet: repository
 versions and date metadata change. Record `pacman -Q archiso`, build log and
 `build/iso-work/iso/arch/pkglist.x86_64.txt` if generated
 by your archiso version. No automatic system upgrades occur.
