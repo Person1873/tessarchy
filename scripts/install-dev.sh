@@ -15,5 +15,11 @@ mkdir -p -- "$data/session" "$bin"
 cp -R -- "$root/shell" "$data/"
 cp -- "$root/session/hyprland.lua" "$data/session/"
 cp -- "$root/session/start-tessarchy" "$root/session/tessera-shell" "$bin/"
-printf '%s\n' 'tessarchy-dev-v1' > "$marker"
+printf '%s\n' 'tessarchy-dev-v2' > "$marker"
+# Manifest of installed files so uninstall matches exactly what was installed
+# (relative to $data), including future components and icons.
+manifest=$data/.tessarchy-dev-files
+{
+    find "$data" -mindepth 1 \( -type f -o -type l \) ! -name '.tessarchy-dev-files' -printf '%P\n' | sort
+} > "$manifest"
 echo "Installed to $data. From a local TTY: $bin/start-tessarchy"
