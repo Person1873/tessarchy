@@ -11,6 +11,7 @@ hyprland
 quickshell
 firefox
 foot
+fish
 mesa
 xorg-xwayland
 xdg-desktop-portal-hyprland
@@ -21,3 +22,5 @@ wireplumber
 ttf-dejavu
 noto-fonts-emoji
 dbus
+python
+util-linux
