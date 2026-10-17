@@ -81,16 +81,24 @@ jobs:
           set -euo pipefail
           images=(dist/tessarchy-*.iso)
           [[ ${#images[@]} == 1 ]]
-          python3 scripts/boot-test-iso.py "${images[0]}" build/boot-bios --firmware bios &
+          accel=tcg
+          seconds=360
+          if [[ -e /dev/kvm ]]; then
+            sudo chmod a+rw /dev/kvm
+            accel=kvm
+            seconds=90
+          fi
+          echo "Boot capture: $accel, $seconds seconds per firmware"
+          python3 scripts/boot-test-iso.py "${images[0]}" build/boot-bios --firmware bios --accel "$accel" --seconds "$seconds" &
           bios=$!
-          python3 scripts/boot-test-iso.py "${images[0]}" build/boot-uefi --firmware uefi &
+          python3 scripts/boot-test-iso.py "${images[0]}" build/boot-uefi --firmware uefi --accel "$accel" --seconds "$seconds" &
           uefi=$!
           wait "$bios"
           wait "$uefi"
           cp build/boot-bios/final.png dist/boot-bios.png
           cp build/boot-uefi/final.png dist/boot-uefi.png
           tar -czf dist/boot-evidence.tar.gz -C build boot-bios boot-uefi
-          printf '%s\n' 'BIOS and UEFI captures collected in diskless QEMU/TCG with 2 GiB RAM.' 'Screenshots require review; capture completion alone is not a boot-success claim.' > dist/BOOT-TESTING.md
+          printf '%s\n' "BIOS and UEFI captures collected in diskless QEMU/$accel with 2 GiB RAM." 'Screenshots require review; capture completion alone is not a boot-success claim.' > dist/BOOT-TESTING.md
       - name: Create a draft tester prerelease
         env:
           GH_TOKEN: ${{ github.token }}
