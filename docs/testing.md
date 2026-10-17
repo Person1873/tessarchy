@@ -267,3 +267,25 @@ touch hardware, multiple monitors, session exit, physical-device compatibility
 and persistence acceptance. The installed development VM's broader tests above
 do not establish these as passing in the ISO. No secure locking or Secure Boot
 support claim. Testers should begin in a disposable VM with a physical keyboard.
+
+## Idle screen blanking, 2026-10-17
+
+Implemented, static validation only; live idle-cycle acceptance pending.
+
+- `session/hypridle.conf` configures one listener: 300 seconds to
+  `hyprctl dispatch dpms off` and `dpms on` on resume, with no lock command.
+  `session/hyprland.lua` starts `hypridle` with that config from the existing
+  `hyprland.start` autostart (the `tessarchy-hypridle` path resolution uses
+  `TESSARCHY_DATA_DIR` with the `/usr/share/tessarchy` fallback, and the whole
+  line is a fixed string plus that path - nothing user-supplied).
+- `scripts/boot-test-iso.py` now presses Enter before every capture, so a
+  blanked panel cannot masquerade as a failed boot in later evidence runs.
+- Validation: a Lua stub test invokes the session's `hyprland.start` callback
+  and asserts exactly one `tessera-shell` and one `hypridle` exec; a config
+  test asserts the timeout, both dpms commands, and the absence of
+  `lock_cmd`/`swaylock`; the staging test asserts `hypridle.conf` lands under
+  `/usr/share/tessarchy/session/` and `hypridle` joins the image packages.
+  11/11 workflow tests pass on the dev host.
+- Not performed: a real idle cycle (panel actually off after five minutes and
+  waking on input), inhibitor behavior with video players, and hypridle's
+  behavior when `hyprctl` is missing. These remain on the manual list.

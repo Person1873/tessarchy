@@ -31,6 +31,8 @@ live tester ISO.
   labels, and reduced motion.
 - Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
   controls. Wireless and modem backends remain to be connected.
+- The panel blanks after five idle minutes (hypridle, shipped in the live
+  image) and wakes on any input, with no lock screen and no locking claims.
 - An expandable launcher for Firefox and Foot.
 - A scrollable window overview with application switching and maximize/restore.
 - Confirmation before closing a window or ending the session.

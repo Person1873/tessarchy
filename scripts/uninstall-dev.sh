@@ -21,6 +21,6 @@ rm -f -- "$data/shell/shell.qml" "$data/shell/components/TouchButton.qml" "$data
 for icon in back home recents power browser terminal wifi cellular volume volume-muted battery settings phone tablet desktop auto controls; do rm -f -- "$data/shell/icons/$icon.svg"; done
 rm -f -- "$data/shell/artwork/aurora-fold.png" "$data/shell/artwork/tessarchy-mark.svg"
 for face in 0 1 2 3 4 5; do rm -f -- "$data/shell/artwork/mark-face-$face.svg"; done
-rm -f -- "$data/session/hyprland.lua" "$data/.tessarchy-dev-install"
+rm -f -- "$data/session/hyprland.lua" "$data/session/hypridle.conf" "$data/.tessarchy-dev-install"
 rmdir -- "$data/shell/artwork" "$data/shell/icons" "$data/shell/components" "$data/shell" "$data/session" "$data" 2>/dev/null || true
 echo "Development copy removed. ~/.config/tessarchy preferences retained."

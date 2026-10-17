@@ -43,8 +43,12 @@ The original T logo is built from six SVG faces. BrandMark animates assembly and
 rotation once, settles after 1.6 seconds, and supports tap/replay and reduced
 motion. It has no idle animation loop. The clock updates once per minute; mode
 selection is reactive, with no polling. Optional PipeWire integration is loaded
-only when the service socket exists at launch. No hardware Wi-Fi/modem control
-or secure locking is claimed.
+only when the service socket exists at launch. Screen idle behavior is owned by
+hypridle, started from the session's `hyprland.start` hook with Tessarchy's own
+config: after 300 seconds without input it runs `hyprctl dispatch dpms off`,
+and the next input brings the panel back. It honors idle inhibitors, configures
+no lock command, and no secure locking is claimed. No hardware Wi-Fi/modem
+control is claimed either.
 
 ## Verified against installed files, 2026-10-16
 
