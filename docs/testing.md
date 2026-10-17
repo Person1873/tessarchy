@@ -237,3 +237,17 @@ Settings captures. Hardware touch, real Wi-Fi/modem/audio/battery integration,
 multiple physical outputs, exhaustive fractional scaling, and ISO builds/boots
 remain pending. Auto detection classifies logical display size; it does not
 identify physical device type or available input hardware. No secure lock claim.
+
+## Live rootfs hardening, 2026-10-17
+
+Actually performed:
+
+- Staged profile now pins hostname `tessarchy`, en_US.UTF-8 generation, a plain
+  `us` virtual console, a live-console motd, a volatile journald drop-in
+  (64M runtime cap), a `systemd-timesyncd` enablement link, and a `docs/`
+  snapshot under `/usr/share/tessarchy/docs`; `noto-fonts-emoji` joined the
+  package list.
+- The ISO staging workflow test asserts each of those artifacts in the staged
+  profile, and `./scripts/check.sh` passes on the development host.
+- Not performed: building the image and reviewing the live console; autologin,
+  motd rendering and the volatile journal still need a real ISO boot.
