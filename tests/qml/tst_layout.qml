@@ -107,4 +107,20 @@ TestCase {
         compare(Policy.panelWidth("phone", 320), 320);
         compare(Policy.columns("desktop", 760), 4);
     }
+    function test_workspace_strip_placements() {
+        verify(Policy.showWorkspaces("desktop", 1100));
+        verify(!Policy.showWorkspaces("desktop", 400));
+        verify(Policy.showWorkspaces("desktop", 1920));
+        verify(Policy.showWorkspaces("tablet", 1024));
+        verify(!Policy.showWorkspaces("tablet", 800));
+        verify(!Policy.showWorkspaces("phone", 1080));
+    }
+    function test_workspace_slots() {
+        compare(Policy.workspaceSlots([]), 5);
+        compare(Policy.workspaceSlots([9999999]), 8);
+        compare(Policy.workspaceSlots([7.5]), 5);
+        compare(Policy.workspaceSlots([1, 2]), 5);
+        compare(Policy.workspaceSlots([1, 7, 3]), 7);
+        compare(Policy.workspaceSlots([-1, 2]), 5);
+    }
 }

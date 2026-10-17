@@ -1,10 +1,4 @@
-# Tessarchy live shell.
-#
-# The live user's login shell is fish, so this file replaces the equivalent
-# .bash_profile logic: start Tessera once on tty1 with no display or session
-# manager, and return to the prompt when the session ends. Nothing here is
-# used by a development install; the dev launcher works from any shell.
-
+# Start the live session once from an interactive tty1 login.
 set -g fish_greeting
 
 if status is-interactive
