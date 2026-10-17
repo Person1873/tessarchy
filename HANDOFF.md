@@ -55,13 +55,18 @@ run out. The file must stay in the Tessarchy directory.
 2. build/publish: branch feat/phone-shell. It was synchronized to the tested
    Alpha 2 tree with merge commit e71ae0e and pushed. That synchronization was
    used to complete PR #1.
-3. build/integration: active PR-review worktree. Currently branch review/pr-5-fix,
-   merging review/pr-4-fix into original PR #5. The sole docs/testing.md conflict
-   was resolved by retaining both historical validation sections. Checks running.
-4. origin/main now includes merged PRs #1, #2 and #3. Fetch before relying on its tip.
-5. Remote review/pr-N refs (under refs/remotes/review/) hold the original fetched
-   PR heads. Fixed local branches review/pr-2-fix and review/pr-3-fix preserve
-   contributor history and merge the newer baseline into those heads.
+3. build/integration: branch review/pr-9-fix, with an UNCOMMITTED MERGE of
+   review/pr-7-fix into original #9. Preserve this work; do not reset or abort.
+   Local checks passed after the latest Icon/theme changes (33 Python, 21 Qt).
+   Final theme runtime review and commit/push are still pending.
+4. build/bluetooth: branch review/pr-24-fix, head
+   eb77f7c64d7cde4076270000fa7f928fe20f2cf2, pushed to contributor
+   kriscrossapplesauce2004/tessarchy:feat/bluetooth. This is the current task.
+5. origin/main includes merged PRs #1 through #8. PR #7 main merge is
+   bd34e999b43f7aaf067a26db18949544ee6f531d; #8 main merge is
+   86699aec2002fba415b8a539dde06ba04943e695. Fetch before relying on the tip.
+6. Original PR heads remain under refs/remotes/review/pr-N. Fixed local
+   review/pr-N-fix branches preserve contributor history with merge commits.
 
 Useful commands:
 
@@ -141,31 +146,32 @@ was visually inspected and canceled, and native 400x800 portrait was restored.
 
 ## Current immediate next actions
 
-1. Check PR #4 CI for c5b4a1e; merge if it passes. Local checks passed 26 Python
-   and 21 Qt results; fish syntax skipped because no host fish is installed.
-2. Finish PR #5 checks in build/integration (review/pr-5-fix), document actual
-   results, commit and push to fork feat/rootfs-hardening; merge after CI passes.
-3. Integrate #6 portable checks while retaining #2 desktop validation and #4 fish
-   syntax checks. The proposed Ubuntu workflow lacks Quickshell; ensure lint
-   skips missing modules explicitly rather than masking real QML errors.
-4. Continue all remaining PRs in dependency order and update this file.
-5. Guest is restored to 400x800 portrait; the end-session confirmation was
-   canceled. A live Foot window remains for validation. No session was ended.
+1. Complete #24 CI/merge and update this checkpoint with the main merge commit.
+   Reviewed head eb77f7c64d7cde4076270000fa7f928fe20f2cf2 is already pushed.
+   Source run 39067988279 and ISO run 39067988276 are running; Ubuntu passed.
+2. Resume the preserved #9 merge in build/integration. Theme QML/static checks
+   pass; guest dark/light theme and launch-wrapper validation remain pending.
+3. Continue #10/#11/#20 dependency chain, then other unreviewed PRs. Keyboard
+   width exception is approved; retain >=48px key height.
+4. Synchronize build/live-iso with final main later; preserve this handoff and
+   both histories. Alpha 2 release assets and provenance remain unchanged.
+5. Guest is running the #24 candidate shell in 400x800 portrait. Existing QA
+   Foot windows remain open. No host settings or packages were changed.
 
 ## Pending PR inventory and dependency cautions
 
 All contributor PRs were retargeted from feat/phone-shell to main after #1
 merged, as their descriptions requested. Their heads were preserved except
-for the reviewed/fixed #2 and #3 updates described above.
+for the reviewed integration updates described here.
 
 - #1: Add Quiet Edge mobile shell, card switching and pull-down controls. Merged. Original state: draft.
 - #2: Harden install tooling and fill the app drawer from desktop entries. Merged. Original state: open.
 - #3: Add a desktop workspace strip, focused-window title and desktop keybindings. Merged. Original state: open.
-- #4: Bundle fish as the live user's login shell. Review pending. Original state: open.
-- #5: Harden the live rootfs identity and runtime defaults. Review pending. Original state: open.
-- #6: Make the source checks portable and add a checks workflow. Review pending. Original state: open.
-- #7: Integrate squeekboard as an optional on-screen keyboard. Review pending. Original state: draft.
-- #8: Keep Phone/Tablet apps maximized and fit oversized dialogs. Review pending. Original state: draft.
+- #4: Bundle fish as the live user's login shell. Merged. Original state: open.
+- #5: Harden the live rootfs identity and runtime defaults. Merged. Original state: open.
+- #6: Make the source checks portable and add a checks workflow. Merged. Original state: open.
+- #7: Integrate squeekboard as an optional on-screen keyboard. Merged. Original state: draft.
+- #8: Keep Phone/Tablet apps maximized and fit oversized dialogs. Merged. Original state: draft.
 - #9: Carry the system theme through shell, keyboard and apps (Omarchy themes). Review pending. Original state: draft.
 - #10: Touch file dialogs on Phone/Tablet (portal backend + GTK3 module). Review pending. Original state: draft.
 - #11: On-screen keyboard rows fit 48 logical px. Review pending. Original state: draft.
@@ -181,7 +187,7 @@ for the reviewed/fixed #2 and #3 updates described above.
 - #21: Blank the idle panel after five minutes with hypridle. Review pending. Original state: open.
 - #22: Rotate the focused display from Settings in 90° steps. Review pending. Original state: open.
 - #23: Connect Wi-Fi from Quick controls through NetworkManager. Review pending. Original state: open.
-- #24: Add Bluetooth quick controls to the shell. Review pending. Original state: open.
+- #24: Add Bluetooth quick controls to the shell. Reviewed/fixed and pushed; CI running. Original state: open.
 
 Important relationships:
 - #9 includes #7 (OSK); #10 includes #9/#7; #11 includes #10/#9/#7;
@@ -377,7 +383,7 @@ Keep release descriptions distinct from newly merged development features.
 - Confirm remote PR status and clean worktrees; do not delete contributors’ branches.
 - Update this handoff with final commit IDs, remaining blockers and exact next step.
 
-## Checkpoint after initial integrations
+## Historical checkpoint after initial integrations
 
 - #1, #2, #3 merged. #3 source head 5af78a4, ISO CI 39065662379 succeeded.
 - #4 reviewed and pushed as c5b4a1e on contributor feat/bundle-fish; CI pending.
@@ -385,7 +391,7 @@ Keep release descriptions distinct from newly merged development features.
 - Guest close and exit confirmations inspected; exit canceled; portrait restored.
 - HANDOFF.md first committed/pushed as 5b76b90 on build/live-iso.
 
-## Owner keyboard decision and CI checkpoint
+## Historical owner keyboard decision and CI checkpoint
 
 - The owner answered: “Allow narrower keys; keep key height at least 48 pixels.”
   AGENTS.md now records the exception explicitly. No further approval is needed.
@@ -396,3 +402,57 @@ Keep release descriptions distinct from newly merged development features.
   nil arguments when constructing mouse-resize bindings. Checks are rerunning.
 - Next: finish #8 runtime activation/dialog checks, then #7 keyboard and its
   dependent #9/#10/#11/#20 chain. All remaining independent PRs still need review.
+
+## Bluetooth #24 review checkpoint, 2026-10-17
+
+The owner explicitly prioritized #24, then requested the handoff update and a
+shareable commit link. Finish this scoped task before resuming other PR work.
+
+Reviewed source head: eb77f7c64d7cde4076270000fa7f928fe20f2cf2.
+https://github.com/kriscrossapplesauce2004/tessarchy/commit/eb77f7c64d7cde4076270000fa7f928fe20f2cf2
+PR: https://github.com/thediamondsaint/tessarchy/pull/24
+
+Changes:
+- Merged current main into the contributor branch without rewriting history.
+- Ported BluetoothPanel into current QuickSettings as an expandable glass
+  device section. Retained existing rfkill power tile and current AppSwitcher.
+  Did not add a misleading top-bar connected indicator for adapter power alone.
+- Discovery starts only while expanded and powered on, stops on hide, adapter
+  replacement or power-off, and does not stop pre-existing discovery that this
+  panel did not request. This is local request tracking, not a global D-Bus lock.
+- Guarded actions against missing/stale devices, transitional states, blocked
+  devices and unpaired connect requests; keyboard tab focus on new controls.
+- Device labels render plain text. Invalid battery readings stay unavailable.
+- Existing safe manifest installer/uninstaller retained; no hard-coded legacy
+  uninstall changes needed because the new component is covered by the manifest.
+- Pairing/passkey agents, forgetting and multiple-adapter selection are outside
+  this implementation. Use an external Bluetooth manager for pairing.
+
+Actual validation:
+- ./scripts/check.sh: 31 Python and 22 Qt Quick checks passed, plus Lua/parser
+  and QML lint. Host fish/ShellCheck unavailable; CI checks those tools.
+- Real Quickshell offscreen scratch-HOME harness loaded BluetoothPanel with mock
+  adapter/device objects; tested discovery lifecycle, replacement, preservation
+  of pre-existing discovery, and connection guards. The standalone Qt runner
+  cannot load Quickshell's statically embedded Bluetooth plugin; this separate
+  harness is run by Python when qs is available and skipped explicitly otherwise.
+- Installed Quickshell 0.3.1 Bluetooth qmltypes inspected. Known metadata warning:
+  Bluetooth.defaultAdapter has an unresolved BluetoothAdapter return type in
+  qmllint; real runtime loaded. PanelWindow lint warnings are also emitted.
+- Candidate shell deployed to existing guest; no adapter state visually inspected
+  in expanded pull-down. Tracked screenshot: assets/screenshots/phone-bluetooth.png
+  on review/pr-24-fix. Local captures/log: build/pr-review/pr24-*.png and
+  build/pr-review/pr24-check.log. VM backup: ~/tessarchy-backups/pr24-before/shell.
+- Guest has no BlueZ service/adapter; actual power, discovery, connection,
+  permissions, hot unplug and battery accuracy remain hardware acceptance work.
+- No new ISO release was produced, published or claimed boot-tested. PR CI's
+  image build does not make these changes part of published Alpha 2.
+
+Preserved #9 continuation details:
+- Full unresolved merge work remains in build/integration; local pr9-check.log
+  ended successfully. It has a safer owned-PID OSK restart, theme picker/palettes,
+  launcher wrapper and icon tint changes that are NOT yet committed or pushed.
+- Do not rerun /tmp/tessarchy-pr9-resolve.py or /tmp/tessarchy-pr9-safety.py blindly;
+  they would overwrite subsequent edits. Guest currently runs #24, not #9.
+- Verify new theme helper destinations before deployment, test dark/light themes
+  and wrapper launch in VM, then document, commit, push, pass CI and merge #9.
