@@ -34,7 +34,7 @@ jobs:
               pacman -Syu --noconfirm --needed archiso
               ./scripts/stage-iso.sh
               mkarchiso -v -w build/iso-work -o dist build/iso-profile 2>&1 | tee dist/build.log
-              cp build/iso-work/x86_64/airootfs/usr/share/archiso/pkglist.x86_64.txt dist/packages.txt
+              cp build/iso-work/iso/arch/pkglist.x86_64.txt dist/packages.txt
               printf "Commit: %s\nBuilt: %s\n" "$TESSARCHY_COMMIT" "$(date -u --iso-8601=seconds)" > dist/build-info.txt
               pacman -Q archiso >> dist/build-info.txt
               cd dist
