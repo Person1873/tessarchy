@@ -33,6 +33,8 @@ live image is in development.
 - An expandable launcher for Firefox and Foot.
 - A scrollable window overview with application switching and maximize/restore.
 - Confirmation before closing a window or ending the session.
+- Notification pop-ups and an alert center backed by Quickshell's
+  `org.freedesktop.Notifications` server, with a persisted "mute pop-ups" toggle.
 - A dedicated Hyprland session, user installation, and reversible tty1 startup.
 - A QEMU development workflow, local Arch package recipes, and an initial
   archiso staging/build pipeline.
