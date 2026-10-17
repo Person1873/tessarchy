@@ -34,6 +34,8 @@ def main():
         if firmware is None:
             parser.error('OVMF firmware is required for UEFI; install it explicitly')
     output = args.output.resolve()
+    if ',' in str(output) or ',' in str(iso):
+        parser.error('QEMU paths must not contain commas')
     output.mkdir(parents=True, exist_ok=False)
     qmp = output / 'qmp.sock'
     if len(str(qmp).encode()) >= 104:
