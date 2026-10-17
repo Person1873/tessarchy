@@ -1,0 +1,51 @@
+name: Build Tessarchy ISO
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/build-iso.yml'
+      - 'iso/**'
+      - 'shell/**'
+      - 'session/**'
+      - 'scripts/stage-iso.sh'
+      - 'scripts/boot-test-iso.py'
+
+permissions:
+  contents: read
+
+jobs:
+  live-iso:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check source workflows
+        run: ./scripts/check.sh
+      - name: Build Arch live image in disposable container
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          docker run --privileged --rm \
+            --volume "$PWD:/workspace" --workdir /workspace \
+            --env "TESSARCHY_COMMIT=$GITHUB_SHA" \
+            archlinux:base bash -euo pipefail -c '
+              pacman -Syu --noconfirm --needed archiso
+              ./scripts/stage-iso.sh
+              mkarchiso -v -w build/iso-work -o dist build/iso-profile 2>&1 | tee dist/build.log
+              cp build/iso-work/x86_64/airootfs/usr/share/archiso/pkglist.x86_64.txt dist/packages.txt
+              printf "Commit: %s\nBuilt: %s\n" "$TESSARCHY_COMMIT" "$(date -u --iso-8601=seconds)" > dist/build-info.txt
+              pacman -Q archiso >> dist/build-info.txt
+              cd dist
+              sha256sum tessarchy-*.iso > SHA256SUMS
+            '
+      - name: Upload live ISO and build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tessarchy-live-x86_64-${{ github.run_number }}
+          path: dist/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 3
