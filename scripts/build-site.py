@@ -26,7 +26,12 @@ def main():
             parser.error(f"Missing screenshot: {path}")
     releases = json.loads(args.releases.read_text()) if args.releases else []
     release = next((item for item in releases if not item.get("draft")), None)
-    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    commit = "source-snapshot"
+    if shutil.which("git"):
+        result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                                capture_output=True, text=True)
+        if result.returncode == 0:
+            commit = result.stdout.strip()
     output.mkdir(parents=True)
     for name in ("index.html", "style.css", "app.js"):
         shutil.copyfile(ROOT / "website" / name, output / name)

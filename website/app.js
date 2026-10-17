@@ -54,7 +54,8 @@ async function readJson(url) {
   try {
     const bundled = await readJson('project.json');
     showRelease(bundled.release);
-    document.querySelector('#build-stamp').textContent = 'Site built from ' + bundled.commit.slice(0, 7);
+    document.querySelector('#build-stamp').textContent = /^[a-f0-9]{40}$/.test(bundled.commit)
+      ? 'Site built from ' + bundled.commit.slice(0, 7) : 'Built from a source snapshot';
   } catch { /* The built-in links remain usable offline. */ }
   // Public metadata only. No credentials, trackers, or paid services.
   const results = await Promise.allSettled([
