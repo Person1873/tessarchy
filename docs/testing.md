@@ -148,3 +148,13 @@ Remaining manual checks: destructive close/session exit, multiple windows,
 restore/resize, 320×480 and tablet layouts, hardware touch and battery, tray menus,
 ISO build and BIOS/UEFI ISO boots. Back dismisses shell panels; it does not inject
 a browser/application Back key. Home opens the app launcher above running apps.
+
+## QEMU orientation correction, 2026-10-16
+
+The user reported that the rotated phone display appeared sideways in QEMU.
+The earlier screenshot validated the compositor rendering, not the viewer's
+orientation. Over SSH, backed up the guest preference and set Virtual-1 to
+1280×960@60, scale 2, transform 0. Reload succeeded; `hyprctl configerrors` is
+empty, and monitor state confirms transform 0 and 640×480 logical dimensions.
+The updated compositor screenshot is `build/phone-upright.png`. User confirmation
+of the viewer presentation is still pending. Host desktop configuration is unchanged.
