@@ -158,3 +158,42 @@ orientation. Over SSH, backed up the guest preference and set Virtual-1 to
 empty, and monitor state confirms transform 0 and 640×480 logical dimensions.
 The updated compositor screenshot is `build/phone-upright.png`. User confirmation
 of the viewer presentation is still pending. Host desktop configuration is unchanged.
+
+## Native phone view, artwork, and status controls, 2026-10-16
+
+Actually performed:
+
+- Backed up guest source, installed shell, and Tessarchy preferences under
+  `~/tessarchy-backups/` before deployment. No dependencies were installed.
+- Selected a native 400×800@60 mode at scale 1, transform 0, over guest SSH.
+  `hyprctl reload` succeeded and `configerrors` is empty; actual monitor state
+  confirms 400×800 with 48px status and 72px navigation reservations.
+- Made only the host's `QEMU (Tessarchy)` client float, then resized it to
+  350×700. No host compositor configuration was edited. Inspected the viewer
+  at its intermediate 390×700 size and final 350×700 size with the menu hidden:
+  the full upright phone content fits without clipping or letterboxing.
+- Generated and deployed an original wallpaper and editable SVG Tessarchy logo.
+  Inspected guest screenshots showing both, translucent status/navigation bars,
+  wireless/cellular unavailable indicators, volume and battery symbols.
+- Clicked Home/Back with guest uinput and inspected the final launcher and
+  wallpaper. Clicked the speaker and inspected Quick Controls: Wi-Fi
+  unavailable, no modem, no audio output; sound buttons are disabled. The guest
+  has no PipeWire service. Optional audio code loads only when its socket exists.
+- Host checks pass: nine workflow tests including scratch-HOME installation and
+  complete removal of the new artwork/components, Hyprland config verification,
+  Lua and QML checks. qmllint retains the known PanelWindow warning; shellcheck
+  remains unavailable. The final guest run of the same checks also passes.
+
+During restart, Quickshell 0.3.2 aborted (guest PID 1131). `coredumpctl info`
+shows SIGABRT in Qt's `QWindow::unsetCursor`/QQuickItem destruction path. Guest
+memory remained available and no OOM kill was shown. This supports a Qt/window
+teardown problem during restart; the exact upstream cause is unresolved.
+Quickshell's crash handler restarted the shell and opened a crash dialog. The
+old handler/dialog were stopped and the final configuration started cleanly.
+PipeWire separately reported missing context configuration before the optional
+backend guard was added; the core does not establish it as the crash cause.
+No core dump or crash memory was copied into the repository.
+
+Evidence: ignored `build/phone-branded.png`, `build/phone-controls.png`, and
+`build/vm-phone-window-final.png`. Live Wi-Fi/cellular backends, real audio adjustment,
+battery changes, hardware touch, and ISO builds/boots remain untested.

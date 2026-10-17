@@ -23,7 +23,9 @@ live image is in development.
 - A top status bar with clock, registered tray icons, battery status when available,
   and session controls.
 - A persistent Back/Home/Recents navigation bar with 56px touch targets.
-- A gradient home background and a tile launcher.
+- An original mint-and-navy wallpaper, Tessarchy logo, and tile launcher.
+- Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
+  controls. Wireless and modem backends remain to be connected.
 - An expandable launcher for Firefox and Foot.
 - A scrollable window overview with application switching and maximize/restore.
 - Confirmation before closing a window or ending the session.
