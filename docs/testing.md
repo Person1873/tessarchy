@@ -1631,5 +1631,8 @@ guest (720x1440, Hyprland 0.56.2, Quickshell 0.3.2, squeekboard, foot 1.28.0):
   to light.
 - Found and fixed: date/label text was unreadable over a bright theme wallpaper;
   a translucent theme-coloured card now sits behind the clock.
-- Not checked: Firefox's appearance under `GTK_THEME` (only dark/light is set,
-  not the palette); live OSC recolouring of an already-open Foot; real hardware.
+- A Foot opened under Catppuccin turned light in place after
+  `tessarchy-theme set tessera-light` (OSC 4/10/11/12 written to its pty).
+- Firefox follows dark/light only under `GTK_THEME`; it does not get the palette.
+- Window borders are not themed: this branch sets `border_size = 0`.
+- Not checked: real hardware.
