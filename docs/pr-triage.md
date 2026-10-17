@@ -7,9 +7,9 @@ PRs #1–#8 and #24 were already merged when this pass started.
 
 | Order | PR | Effort | Decision and reason |
 | --- | --- | --- | --- |
-| 1 | #15 Media controls | Low | Merged; integrated into the current pull-down; guard capabilities and player disappearance; use glass icon buttons. |
+| 1 | #15 Media controls | Low | Merged; glass pull-down icon controls with capability and player-disappearance guards. |
 | 2 | #17 Audio panel | Low–medium | Merged; current pull-down integration, readiness/tracking fixes, playback-only filtering and guarded writes. |
-| 3 | #14 Screenshots | Medium | Reviewed/fixed; CI running. Unique private files, failure cleanup and manifest safety; VM acceptance pending. |
+| 3 | #14 Screenshots | Medium | Merged; unique private files, failure cleanup and manifest safety. VM acceptance pending. |
 | 4 | #18 Power panel | Medium | Defer: installed PowerProfiles API exposes no availability flag; add reliable missing-service detection before enabling mode writes. |
 | 5 | #21 Idle blanking | Medium | Defer: changes session startup and display wake behavior; current Lua dispatch and capture wake input need validation. |
 | 6 | #23 Wi-Fi | Medium | Defer: scan ownership, connection lifecycle and NetworkManager acceptance need more work; no password agent. |
@@ -27,3 +27,8 @@ All changes must preserve the existing glass phone interface, application focus,
 48-pixel targets (approved keyboard-width exception only), and close/exit
 confirmations. Keep published Alpha 2 provenance unchanged. Record actual checks
 in docs/testing.md and current merge results in HANDOFF.md.
+
+Results: #15, #17 and #14 passed Ubuntu, Arch and ISO CI and were merged. The
+combined development tree passed 35 Python and 30 Qt Quick checks. Real-player,
+real-audio and screenshot/visual VM acceptance remains pending because the
+previous SSH control session expired. The other 12 PRs remain open and deferred.

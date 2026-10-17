@@ -51,7 +51,7 @@ run out. The file must stay in the Tessarchy directory.
 ## Worktrees and branch state
 
 1. Repository root: branch build/live-iso. It now includes main through merged
-   PR #24, plus this handoff. It is the website/development activity branch;
+   PRs #14/#15/#17, plus this handoff and the effort ranking. It is the website/development activity branch;
    historical Alpha 2 source remains available by its original commit/tag.
 2. build/publish: branch feat/phone-shell. It was synchronized to the tested
    Alpha 2 tree with merge commit e71ae0e and pushed. That synchronization was
@@ -63,7 +63,7 @@ run out. The file must stay in the Tessarchy directory.
 4. build/bluetooth: branch review/pr-24-fix, head
    eb77f7c64d7cde4076270000fa7f928fe20f2cf2, pushed to contributor
    kriscrossapplesauce2004/tessarchy:feat/bluetooth. PR #24 is merged; this worktree is clean.
-5. origin/main includes merged PRs #1 through #8 and #24. PR #7 main merge is
+5. origin/main includes merged PRs #1 through #8, #14, #15, #17 and #24. PR #7 main merge is
    bd34e999b43f7aaf067a26db18949544ee6f531d; #8 main merge is
    86699aec2002fba415b8a539dde06ba04943e695. Fetch before relying on the tip.
 6. build/quick-prs: branch review/pr-14-fix, clean reviewed screenshot head
@@ -150,14 +150,17 @@ was visually inspected and canceled, and native 400x800 portrait was restored.
 
 ## Current immediate next actions
 
-1. Finish #14 CI, merge only if all checks pass, then synchronize build/live-iso
-   with main and push this handoff/ranking. #15 and #17 are already merged.
-2. The latest owner request explicitly defers difficult/disruptive work. Do not
-   automatically resume #9 or its dependency chain. Full ranking: docs/pr-triage.md.
-3. Preserve the unfinished #9 merge in build/integration; no reset or abort.
+1. This effort-ordered pass is complete: #15, #17 and #14 merged; all three
+   passed Ubuntu/Arch/ISO CI. Combined root checks passed 35 Python/30 Qt results.
+2. Other 12 PRs remain open and deferred under the latest owner instruction.
+   The complete effort ranking and reasons are in docs/pr-triage.md.
+3. Preserve the unfinished #9 merge in build/integration; do not reset/abort or
+   automatically resume difficult/disruptive work. Update its baseline to current
+   main if and when theme work resumes, retaining Bluetooth/media/audio/camera.
 4. VM SSH control socket expired during this pass. The owner was asked for an
-   existing key/connection method asynchronously. No credentials were guessed,
-   no host/guest packages installed, and no new VM visual tests claimed.
+   existing key/connection method asynchronously; no response arrived. Real app,
+   audio-device and screenshot/visual acceptance remains pending. No credentials
+   were guessed and no host/guest packages installed.
 5. Alpha 2 assets/provenance are unchanged. Successful PR ISO CI does not mean
    these changes are published, boot-tested, or physically validated.
 
@@ -180,7 +183,7 @@ for the reviewed integration updates described here.
 - #11: On-screen keyboard rows fit 48 logical px. Review pending. Original state: draft.
 - #12: Tablet split: two apps side by side with touch controls. Review pending. Original state: draft.
 - #13: Add notification pop-ups and an alert center. Review pending. Original state: open.
-- #14: Add full-screen screenshots from Quick controls and the Print key. Review pending. Original state: open.
+- #14: Add full-screen screenshots from Quick controls and the Print key. Merged in this effort-ordered pass. Original state: open.
 - #15: Add MPRIS media controls to the status bar and Quick controls. Merged in this effort-ordered pass. Original state: open.
 - #16: Show live window previews in the app switcher. Review pending. Original state: open.
 - #17: Add a PipeWire audio panel to quick controls. Merged in this effort-ordered pass. Original state: open.
@@ -516,9 +519,10 @@ PRs remain unchanged; #16's old grid previews are superseded by current cards.
   nodes; guarded output selection, bounded per-app volume and mute. Existing basic
   volume controls remain. Capture/video streams excluded, metadata PlainText.
 
-#14 screenshots — reviewed/pushed, CI pending at this checkpoint
+#14 screenshots — MERGED
 - Reviewed source: c91b9eef6e9f3082eea81f89ff90373be3de711c.
-- CI: source 39078004550 and ISO 39078004547.
+- Main merge: 39d4379c4a1dda441e9b27c250543a6a6f57ec11.
+- CI: source 39078004550 (Ubuntu/Arch passed), ISO 39078004547 passed.
 - Local: 35 Python and 30 Qt Quick checks; parser/lint/staging passed.
 - Unique mktemp private 0600 files fix same-second overwrite. Partial files are
   removed on capture failure; optional notification failure preserves captures.
@@ -537,3 +541,17 @@ then passed in the target CI jobs for the merged PRs.
 One-off local integration scripts are /tmp/tessarchy-pr15.py, pr17.py, pr14.py
 (with tessarchy- prefix). Do not rerun these over newer edits. Checks/logs are
 build/pr-review/pr15-check.log, pr17-check.log and pr14-check.log.
+
+## Final easy-PR batch state
+
+- #15, #17 and #14 are merged. Other 12 open PRs were left unchanged/deferred.
+- Combined main commit: 39d4379c4a1dda441e9b27c250543a6a6f57ec11.
+  https://github.com/thediamondsaint/tessarchy/commit/39d4379c4a1dda441e9b27c250543a6a6f57ec11
+- Root build/live-iso merged main without conflicts and preserved both histories.
+- Final ./scripts/check.sh from the root passed 35 Python and 30 Qt Quick results.
+  Log: build/pr-review/easy-batch-final-check.log. Known Quickshell Bluetooth
+  metadata/PanelWindow lint warnings remain; no new runtime failure was hidden.
+- No additional images/screenshots or release assets were created in this pass.
+  Mock screenshots used for helper tests are not actual graphical captures.
+- Ranking and handoff are committed on build/live-iso and should be pushed before
+  handing control back. Read the top/current sections before historical entries.
