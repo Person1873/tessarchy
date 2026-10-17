@@ -1,0 +1,37 @@
+import QtQuick
+import QtQuick.Layouts
+
+TouchButton {
+    id: control
+    required property string symbol
+    property bool showLabel: true
+    Layout.fillWidth: true
+    Layout.preferredWidth: 1
+    padding: 4
+    background: Rectangle {
+        radius: 16
+        color: control.down ? "#36516b" : control.selected ? "#294e57" : "transparent"
+    }
+    contentItem: Item {
+        Column {
+            anchors.centerIn: parent
+            spacing: 2
+            opacity: control.enabled ? 1 : 0.35
+            Image {
+                anchors.horizontalCenter: parent.horizontalCenter
+                source: "../icons/" + control.symbol + ".svg"
+                sourceSize.width: 24
+                sourceSize.height: 24
+                width: 24
+                height: 24
+            }
+            Text {
+                visible: control.showLabel
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: control.text
+                color: control.selected ? "#a9e8d5" : "#d0dced"
+                font.pixelSize: 10
+            }
+        }
+    }
+}

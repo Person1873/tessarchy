@@ -105,3 +105,46 @@ untested. Before the initial Git commit, all nine workflow tests and available
 static checks passed again, with the previously documented qmllint warning and
 shellcheck skip. Generated VM images, downloaded data, packages and build output
 are excluded from Git.
+
+## Phone shell and SSH guest validation, 2026-10-16
+
+Actually performed by the agent on the existing Basic Arch qcow2 through SSH
+on host loopback port 2222. The VM runs with KVM, 2GiB RAM, Hyprland 0.56.2-4
+and Quickshell 0.3.2-1. Guest source and installed defaults were archived under
+`~/tessarchy-backups/` before updating; the host desktop configuration was not
+modified. No dependencies were installed.
+
+- `./scripts/check.sh` passed on host and guest: nine workflow tests (including
+  scratch-HOME install/uninstall), Lua parsing, Hyprland `--verify-config` and
+  QML checks. Shellcheck is unavailable. qmllint retains its PanelWindow backend
+  warning; an additional guest type-inference warning was resolved by using the
+  screen model directly. Installed host/guest QML metadata was inspected.
+- Guest `hyprctl reload` succeeds and `hyprctl configerrors` is empty.
+- The agent inspected guest screenshots at 664×480 landscape and 432×768 logical
+  portrait (1920×1080 output, transform 1, scale 2.5). Status and bottom navigation
+  reserve 48 and 72 logical pixels respectively. The final app tiles and dialogs
+  were inspected in portrait.
+- Injected pointer clicks through a temporary guest-only uinput device: Home
+  opens the launcher, Terminal launches Foot, and Recents shows the window.
+  Foot is maximized at position (0,48), size 432×648, between both bars. Opening
+  Recents keeps Foot as the active keyboard window. Close opens confirmation;
+  Cancel preserves Foot. The top power control opens session confirmation.
+- The gradient background, date/time, navigation icon alignment, launcher, recent
+  apps, and confirmation screens were visually inspected. Evidence is local in
+  ignored `build/phone-*.png`; no VM image or credentials are tracked.
+- The guest lacks UPower and desktop portals. Battery status shows an unavailable
+  indicator rather than an invented charge value. Live tray registration, tray
+  menus, battery changes, browser launch, actual touch, and session exit have not
+  been tested in this pass. The VM remains running.
+
+ISO/publishing result: pushing the existing `build/live-iso` branch was rejected
+by GitHub because the current OAuth login lacks the `workflow` scope. The workflow
+dispatch consequently returned 404. `archiso` is absent locally, local Docker
+access requires administrator authentication, and no build has run. No Tessarchy
+ISO artifact or ISO boot success is claimed. Grant the GitHub workflow scope,
+push the branch, and dispatch `.github/workflows/build-iso.yml` to continue.
+
+Remaining manual checks: destructive close/session exit, multiple windows,
+restore/resize, 320×480 and tablet layouts, hardware touch and battery, tray menus,
+ISO build and BIOS/UEFI ISO boots. Back dismisses shell panels; it does not inject
+a browser/application Back key. Home opens the app launcher above running apps.

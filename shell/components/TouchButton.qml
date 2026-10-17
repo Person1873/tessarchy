@@ -11,6 +11,7 @@ Button {
     padding: 10
     focusPolicy: Qt.NoFocus
     property bool destructive: false
+    property bool selected: false
     contentItem: Text {
         text: control.text
         color: control.enabled ? "#f0f5f5" : "#7a8589"
@@ -22,8 +23,8 @@ Button {
     }
     background: Rectangle {
         radius: 12
-        color: control.down ? "#35636c" : control.destructive ? "#713c49" : "#26383f"
-        border.color: control.destructive ? "#bf7383" : "#43575f"
+        color: control.down ? "#36516b" : control.destructive ? "#713c49" : control.selected ? "#294e57" : "#1c2c43"
+        border.color: control.destructive ? "#bf7383" : "#34465e"
     }
     Accessible.name: text
 }

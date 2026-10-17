@@ -20,7 +20,10 @@ live image is in development.
 
 ## What works today
 
-- A persistent bottom dock with 56px touch targets and no hover-only actions.
+- A top status bar with clock, registered tray icons, battery status when available,
+  and session controls.
+- A persistent Back/Home/Recents navigation bar with 56px touch targets.
+- A gradient home background and a tile launcher.
 - An expandable launcher for Firefox and Foot.
 - A scrollable window overview with application switching and maximize/restore.
 - Confirmation before closing a window or ending the session.
@@ -37,7 +40,7 @@ pending. Two development packages have been built locally; they are not yet
 published releases. **No Tessarchy ISO has been boot-tested or released.**
 
 Text input currently requires a physical keyboard. New non-floating windows
-initially maximize above the dock; restoring returns to ordinary tiling.
+initially maximize between the status and navigation bars; restoring returns to ordinary tiling.
 Continuous mobile window policy and tablet split layouts are planned. Exclusive
 fullscreen can hide the dock. There is no secure lock screen or on-screen
 keyboard integration yet. See the [validation record](docs/testing.md) for the
