@@ -289,3 +289,20 @@ and this one and reloaded with `hyprctl reload`.
 
 Not tested: dialogs that grow after mapping, Phone 400×800, real rotation or
 fractional scale, hardware touch, Desktop mode (intentionally unchanged).
+
+## Phone size (400x800), 2026-10-17
+
+Actually performed by an agent (Hermes, for person1873) in the same guest, with
+the output at scale 1.8 (720x1440 physical, 400x800 logical) via `hyprctl eval`:
+
+- Status bar, nav bar (Back/Home/Recents/Keyboard) and a maximized Foot fit
+  without clipping; Firefox maximized to 400x567 above the keyboard.
+- Firefox Save As does not fit: GTK3's file chooser will not go below 726
+  logical px, so it sits at x=-163 and its header bar (Cancel/Save) is off
+  screen. Setting `org.gtk.Settings.FileChooser` window-size to (360, 500) and
+  sidebar-width to 0 still reopened it at 726. Unresolved.
+- squeekboard picked its short tablet ("Wide") layout, 113 logical px tall. It
+  sizes from the output's reported physical size, and QEMU reports 180x360 mm;
+  a short side of 115 mm or more counts as a tablet. A real phone (about 65 mm
+  wide) should get the taller phone layout; not verified on hardware.
+- Reloading `hyprland.lua` resets the scale to 1; set it again after a reload.
