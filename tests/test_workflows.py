@@ -66,6 +66,164 @@ class Workflows(unittest.TestCase):
         self.run_script('uninstall-dev.sh')
         self.assertEqual(extra.read_text(), 'keep')
 
+    def test_uninstall_uses_install_manifest_and_preserves_unknown_extras(self):
+        self.run_script('install-dev.sh')
+        data = self.home / 'data/tessarchy'
+        manifest = data / '.tessarchy-dev-files'
+        listed = manifest.read_text().splitlines()
+        self.assertIn('shell/shell.qml', listed)
+        self.assertIn('session/hyprland.lua', listed)
+        self.assertIn('.tessarchy-dev-install', listed)
+        for entry in (data / 'shell').rglob('*'):
+            if entry.is_file():
+                self.assertIn(entry.relative_to(data).as_posix(), listed)
+        extra = data / 'shell/components/untracked-extra.qml'
+        extra.write_text('keep')
+        self.run_script('uninstall-dev.sh')
+        self.assertEqual(extra.read_text(), 'keep')
+        self.assertFalse((data / 'shell/shell.qml').exists())
+        self.assertFalse((data / 'session/hyprland.lua').exists())
+        self.assertFalse((data / '.tessarchy-dev-install').exists())
+        self.assertFalse((data / '.tessarchy-dev-files').exists())
+
+    def test_uninstall_legacy_marker_uses_fixed_v1_set(self):
+        data = self.home / 'data/tessarchy'
+        for relative in ('shell/shell.qml', 'shell/components/TouchButton.qml',
+                         'session/hyprland.lua'):
+            target = data / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text('installed')
+        marker = data / '.tessarchy-dev-install'
+        marker.write_text('tessarchy-dev-v1')
+        kept = data / 'shell/components/kept-extra.txt'
+        kept.write_text('keep')
+        self.run_script('uninstall-dev.sh')
+        self.assertFalse((data / 'shell/shell.qml').exists())
+        self.assertFalse((data / 'shell/components/TouchButton.qml').exists())
+        self.assertFalse((data / 'session/hyprland.lua').exists())
+        self.assertFalse((data / '.tessarchy-dev-install').exists())
+        self.assertEqual(kept.read_text(), 'keep')
+        # The untracked extra survives; everything installed under v1 goes.
+        self.assertTrue(kept.exists())
+        self.assertFalse((data / 'shell/shell.qml').exists())
+
+    def copy_repo(self, destination, directories):
+        import shutil
+        for directory in directories:
+            shutil.copytree(ROOT / directory, destination / directory)
+        for name in ('README.md', 'AGENTS.md', 'LICENSE'):
+            shutil.copy2(ROOT / name, destination / name)
+
+    def test_vm_plan_prints_command_refuses_missing_disk_and_bad_usage(self):
+        # plan mode only prints the command; qemu is not required to test refusals.
+        repo = self.home / 'source'
+        self.copy_repo(repo, ('scripts',))
+        command = [str(repo / 'scripts/vm.sh')]
+        disk = self.home / 'source/vm/tessarchy.qcow2'
+        result = subprocess.run(command + ['plan'], env=self.env,
+                                capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('init first', result.stderr)
+        disk.parent.mkdir(parents=True, exist_ok=True)
+        disk.write_text('disk')
+        result = subprocess.run(command + ['plan'], env=self.env,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(str(disk), result.stdout)
+        self.assertIn('virtio-vga', result.stdout)
+        result = subprocess.run(command + ['wat'], env=self.env,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2)
+        env = dict(self.env, VM_SSH_PORT='80')
+        result = subprocess.run(command + ['plan'], env=env,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('VM_SSH_PORT', result.stderr)
+
+    FAKE_CURL = ('#!/bin/bash\n'
+                 'out=""\n'
+                 'prev=""\n'
+                 'for a in "$@"; do\n'
+                 '    if [[ $prev == "-o" ]]; then out=$a; fi\n'
+                 '    prev=$a\n'
+                 'done\n'
+                 'case "$*" in\n'
+                 '    *sha256sums.txt*) cat "$TESSARCHY_FIXTURE_MANIFEST" > "$out";;\n'
+                 '    *) exit %s;;\n'
+                 'esac\n'
+                 'exit 0\n')
+
+    def stub_fetch_tools(self, fakebin, manifest, other_exit):
+        import shutil
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        manifest.write_text('1234567890abcdef' * 4 + ' *archlinux-2026.10.01-x86_64.iso\n')
+        fakecurl = fakebin / 'curl'
+        fakecurl.write_text(self.FAKE_CURL % other_exit)
+        fakecurl.chmod(0o755)
+        shutil.copy2('/usr/bin/gpgv', fakebin / 'gpgv')
+        shutil.copy2('/usr/bin/sha256sum', fakebin / 'sha256sum')
+
+    def test_fetch_iso_never_overwrites_existing_download(self):
+        repo = self.home / 'source'
+        self.copy_repo(repo, ('scripts',))
+        (repo / 'vm').mkdir()
+        existing = repo / 'vm/archlinux-2026.10.01-x86_64.iso'
+        existing.write_bytes(b'existing download')
+        fakebin = self.home / 'bin'
+        fakebin.mkdir()
+        self.stub_fetch_tools(fakebin, fakebin / 'manifest-fixtures/sha256sums.txt', 0)
+        env = dict(self.env, PATH=str(fakebin) + ':' + os.environ['PATH'],
+                   TESSARCHY_FIXTURE_MANIFEST=str(fakebin / 'manifest-fixtures/sha256sums.txt'))
+        result = subprocess.run([str(repo / 'scripts/fetch-arch-iso.sh')], env=env,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('already exists', result.stderr)
+        self.assertEqual(existing.read_bytes(), b'existing download')
+        self.assertFalse(list((repo / 'vm').glob('.download*')))
+
+    def test_fetch_iso_download_failure_leaves_no_partial_iso(self):
+        repo = self.home / 'source'
+        self.copy_repo(repo, ('scripts',))
+        (repo / 'vm').mkdir()
+        fakebin = self.home / 'bin'
+        fakebin.mkdir()
+        self.stub_fetch_tools(fakebin, fakebin / 'manifest-fixtures/sha256sums.txt', 22)
+        env = dict(self.env, PATH=str(fakebin) + ':' + os.environ['PATH'],
+                   TESSARCHY_FIXTURE_MANIFEST=str(fakebin / 'manifest-fixtures/sha256sums.txt'))
+        result = subprocess.run([str(repo / 'scripts/fetch-arch-iso.sh')], env=env,
+                                capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(list((repo / 'vm').glob('archlinux-*.iso')))
+        self.assertFalse(list((repo / 'vm').glob('.download*')))
+
+    def test_build_iso_requires_explicit_archiso_install(self):
+        self.run_script('build-iso.sh', expected=1)
+
+    def test_export_vm_source_keeps_existing_snapshot_idempotent(self):
+        repo = self.home / 'source'
+        self.copy_repo(repo, ('shell', 'session', 'scripts', 'packaging', 'iso',
+                              'docs', 'tests', 'assets'))
+        share = repo / 'build/vm-share/tessarchy'
+        def run():
+            return subprocess.run([str(repo / 'scripts/export-vm-source.sh')], env=self.env,
+                                  capture_output=True, text=True)
+        self.assertEqual(run().returncode, 0)
+        self.assertEqual((share / 'scripts/install-dev.sh').read_bytes(),
+                         (ROOT / 'scripts/install-dev.sh').read_bytes())
+        marker = share / 'README.md'
+        first = marker.read_bytes()
+        self.assertEqual(run().returncode, 0)
+        self.assertIn('Keeping existing snapshot', run().stdout)
+        self.assertEqual(marker.read_bytes(), first)
+
+    def test_basic_vm_launcher_refuses_missing_guest_disk(self):
+        repo = self.home / 'source'
+        self.copy_repo(repo, ('scripts', 'session'))
+        result = subprocess.run([str(repo / 'scripts/run-basic-vm.sh')], env=self.env,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('Missing basic Arch VM disk', result.stderr)
+
     def test_session_refuses_nested_graphical_launch(self):
         env = dict(self.env, WAYLAND_DISPLAY='wayland-test')
         result = subprocess.run([str(ROOT / 'session/start-tessarchy')], env=env,
