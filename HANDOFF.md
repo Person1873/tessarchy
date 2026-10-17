@@ -7,13 +7,15 @@ Never include passwords, tokens, SSH private keys, or other credentials.
 
 ## Current user request
 
-Review all open GitHub pull requests in effort order. Merge the straightforward
-changes after checks pass; defer difficult or disruptive PRs for now (latest
-owner instruction). Resolve conflicts without regressing the current UI. The earlier instruction to leave collaborators’
-PRs unchanged was superseded by this explicit request to get them merged.
-Do not discard contributor changes simply because they conflict with the newer UI.
-The user also wants a large, current handoff file for another model when credits
-run out. The file must stay in the Tessarchy directory.
+Build a phone-style login screen using a four-digit PIN, replacing terminal
+username/password entry. The owner explicitly chose “Use the PIN as the account
+password,” so use standard greetd/PAM rather than a separate PIN credential.
+The owner also restored VM access by supplying the existing credentials; do not
+repeat or save those values here. No new four-digit PIN has been chosen yet.
+
+The earlier effort-ordered PR pass is complete (#15/#17/#14 merged). The other
+12 PRs remain deferred; preserve #9's unfinished worktree. Keep this handoff
+updated and keep comments to one line, in standard technical English.
 
 ## Communication and working rules
 
@@ -50,7 +52,7 @@ run out. The file must stay in the Tessarchy directory.
 
 ## Worktrees and branch state
 
-1. Repository root: branch build/live-iso. It now includes main through merged
+1. Repository root: active branch feat/phone-login (branched from build/live-iso). It now includes main through merged
    PRs #14/#15/#17, plus this handoff and the effort ranking. It is the website/development activity branch;
    historical Alpha 2 source remains available by its original commit/tag.
 2. build/publish: branch feat/phone-shell. It was synchronized to the tested
@@ -150,19 +152,20 @@ was visually inspected and canceled, and native 400x800 portrait was restored.
 
 ## Current immediate next actions
 
-1. This effort-ordered pass is complete: #15, #17 and #14 merged; all three
-   passed Ubuntu/Arch/ISO CI. Combined root checks passed 35 Python/30 Qt results.
-2. Other 12 PRs remain open and deferred under the latest owner instruction.
-   The complete effort ranking and reasons are in docs/pr-triage.md.
-3. Preserve the unfinished #9 merge in build/integration; do not reset/abort or
-   automatically resume difficult/disruptive work. Update its baseline to current
-   main if and when theme work resumes, retaining Bluetooth/media/audio/camera.
-4. VM SSH control socket expired during this pass. The owner was asked for an
-   existing key/connection method asynchronously; no response arrived. Real app,
-   audio-device and screenshot/visual acceptance remains pending. No credentials
-   were guessed and no host/guest packages installed.
-5. Alpha 2 assets/provenance are unchanged. Successful PR ISO CI does not mean
-   these changes are published, boot-tested, or physically validated.
+1. Finish/push the phone-login candidate and its draft PR, run/inspect CI and
+   get explicit owner approval before installing greetd in the VM. AGENTS.md
+   says not to install dependencies automatically. Code, packages, protocol tests,
+   VM preview screenshots and activation/rollback plan are prepared for review.
+2. Ask for the chosen four-digit PIN or have the owner set it directly in the VM.
+   Never put it in Git, handoff, command arguments or logs. Activation requires
+   changing the account password; do not invent or publish a default PIN.
+3. Only after approval: install the missing greetd dependency and local packages,
+   configure arch as the account, back up tty1 autologin and switch to greetd.
+   Confirm session exit/restart before boot testing; preserve recovery SSH/TTY.
+4. Test real PAM failure/success and session return. Current screenshots/protocol
+   tests are previews/mocks, not proof of boot-time authentication.
+5. Other 12 PRs remain deferred. Preserve the unfinished #9 merge. Alpha 2 ISO
+   and published release evidence remain unchanged; no new ISO has been built.
 
 ## Pending PR inventory and dependency cautions
 
@@ -555,3 +558,38 @@ build/pr-review/pr15-check.log, pr17-check.log and pr14-check.log.
   Mock screenshots used for helper tests are not actual graphical captures.
 - Ranking and handoff are committed on build/live-iso and should be pushed before
   handing control back. Read the top/current sections before historical entries.
+
+## Phone login candidate checkpoint
+
+- Active root branch: feat/phone-login, based on the synchronized easy-PR batch.
+- New PinScreen: phone clock/date/logo, glass >=48px keys, four dots, delete icon,
+  keyboard input, auto-submit after exactly four digits, compact 320x568 layout.
+- New PinLoginController: one secret PAM challenge only; failure/extra/visible
+  challenges and passwordless success cannot launch a session. Fixed launch is
+  /usr/bin/start-tessarchy. Pending strings cleared after response/failure;
+  no secure memory-zeroing claim. 30-second deadline and 3-second retry delay.
+- New greeter entry point uses Quickshell Greetd; separate minimal Hyprland Lua
+  loads no user config. Launcher exits that compositor after QS exits so greetd
+  can start the real session. Failed cancellation requests a greeter restart.
+- Opt-in tessarchy-greeter package selects a namespaced greetd config through a
+  systemd drop-in. No PAM-stack override, service auto-enable or default PIN.
+  Source/package check scripts updated; normal dev installer/ISO boot path intact.
+- ./scripts/check.sh passed 42 Python and 37 Qt Quick results. Protocol integration
+  tests run real Quickshell with a fake greetd UNIX socket (not actual PAM).
+- Local package builds passed. Final artifacts: build/phone-login-packages-final/.
+  Earlier build/phone-login-packages/ is superseded. Packages were not installed.
+- VM SSH control socket vm/ssh-control restored with a four-hour control lifetime.
+  No credentials copied into files. greetd is absent; dry-run dependency plan
+  reports greetd and greetd-agreety. No package or account setting was changed.
+- Preview source is isolated in ~/tessarchy-login-review/shell; running preview
+  QS instance xg5vtr2nt (verify current PID/instance before acting). Existing real
+  Tessera and Foot QA windows remain. Preview is fullscreen and explicitly tagged
+  “Preview · sign-in disabled”; it does not authenticate or launch a session.
+- Native VM 400x800 restored after 320x568 visual check. Touch-simulated keypad
+  and synthetic keyboard entry worked, with masked dots and automatic clearing.
+- Tracked captures: assets/screenshots/login-preview-phone.png and
+  login-preview-small.png. Raw captures/logs/input helper: build/pr-review/phone-login-*
+  and build/pr-review/login-keys.py; guest helper /tmp/tessarchy-login-keys.py.
+- Activation and rollback plan: docs/phone-login.md. Real PAM/boot/session handoff
+  checks remain pending, as do credential selection and dependency permission.
+- No secure locking claim; this is a pre-session greeter, not an overlay lock.

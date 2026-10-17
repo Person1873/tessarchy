@@ -27,3 +27,8 @@ validation session. No hardware state is simulated in the controls capture.
 `phone-bluetooth.png` shows PR #24's expanded Bluetooth controls in the existing
 400x800 development VM, with the actual no-adapter state. It is development
 evidence, not a capture of the published Alpha 2 ISO.
+
+`login-preview-phone.png` (400x800) and `login-preview-small.png` (320x568)
+show the phone sign-in preview in the development VM. They are explicitly
+labelled preview: greetd/PAM boot login was not active for these captures. The
+small-screen capture contains only synthetic partial entry, not a real PIN.

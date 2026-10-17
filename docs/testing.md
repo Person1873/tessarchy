@@ -757,3 +757,42 @@ button in the VM, including whether the drawer is absent from captured pixels.
 VM SSH access has expired. These helper tests are not real image captures and
 there is no new ISO boot or release claim. Local fish/ShellCheck are unavailable;
 target CI covers those tools.
+
+## Phone PIN greeter candidate, 2026-10-17
+
+Actual validation:
+- `./scripts/check.sh` passed: 42 Python and 37 Qt Quick results, scratch
+  install/uninstall, Lua syntax, both session and greeter Hyprland config parsers,
+  and QML lint. Local fish/ShellCheck were unavailable; CI covers those tools.
+- Installed Quickshell 0.3.1 Greetd metadata and official API/protocol docs checked.
+- Real Quickshell Greetd module was exercised against an isolated mock UNIX
+  socket: single-secret success/fixed command, rejection, visible prompt, second
+  secret, passwordless success refusal and disconnect/deadline failure. No real
+  account or PAM authentication was used in these tests. The synthetic test PIN
+  did not appear in captured logs; Quickshell censored its secret response.
+- QML component tests cover exact four-digit entry, leading zero, duplicate
+  submission prevention, deletion, busy/unavailable clearing, minimum key size,
+  capability/state guards and refusal to launch before authentication succeeds.
+- Three local packages built without dependency installation: tessera-shell,
+  tessarchy-session, tessarchy-greeter. Final outputs/logs are under ignored
+  build/phone-login-packages-final/. These are candidates, not installed packages.
+- VM SSH access was restored using owner-provided credentials; credentials were
+  not written to repository files. The isolated preview was visually inspected
+  at 400x800 and 320x568. Keypad taps filled masked dots; deletion and synthetic
+  keyboard entry/automatic clear worked. Native 400x800 portrait was restored.
+- Captures: assets/screenshots/login-preview-phone.png and login-preview-small.png.
+  Preview logs show software rendering and a Qt Wayland text-input focus warning,
+  with no QML component-load failure. The preview explicitly cannot authenticate.
+
+Pending/manual acceptance:
+- greetd is missing in the VM. Installing it needs explicit permission under
+  AGENTS.md. No dependency, password, PAM, getty or display-manager setting was
+  changed. The owner selected a four-digit account password but has not chosen
+  the new PIN. Current account credentials remain unchanged.
+- Real PAM success/wrong PIN, greeter compositor exit and user-session handoff,
+  boot/session-exit return, failure recovery, actual account policy/rate limits
+  and touchscreen hardware. Follow docs/phone-login.md after approval.
+- Greeter packaging is opt-in and not enabled in ISO staging. Live-account PIN
+  enrollment is not implemented. Published Alpha 2 and boot evidence are unchanged.
+- This is pre-session authentication, not a Wayland session locker; no secure
+  locking claim. Do not call mock protocol success a real login or boot test.
