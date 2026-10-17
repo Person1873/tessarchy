@@ -81,3 +81,25 @@ added to Desktop mode. Without squeekboard nothing starts and no button appears.
 The guest test observed squeekboard load its terminal layout for Foot and its
 text layout for Firefox's address bar, so text-input content purpose reached it;
 the exact protocol traffic was not traced.
+
+## System theme
+
+Omarchy's model: the theme's `colors.toml` is the source, and each consumer gets
+a rendered file. `tessarchy-theme` searches `~/.config/tessarchy/themes`, the
+installed `themes/`, then `/usr/share/omarchy/themes`, and stages the choice in
+`$XDG_STATE_HOME/tessarchy/theme/`:
+
+- `colors.toml` (normalised palette) feeds the shell's `Theme` singleton through
+  a watched `FileView`, so the shell changes live. Icons are white SVGs tinted by
+  `Icon`.
+- `foot.ini` includes the user's own foot config, then sets the palette.
+  `tessarchy-run foot` uses it; already-open themed terminals are recoloured with
+  OSC 4/10/11/12.
+- `osk/gtk-3.0/gtk.css` sits in squeekboard's private config home. Its user CSS
+  provider (priority 800) overrides squeekboard's own (600). `tessarchy-osk
+  restart` reloads it.
+- `mode` (dark/light, or derived from background luminance) sets `GTK_THEME` /
+  `ADW_DEBUG_COLOR_SCHEME` for apps started through `tessarchy-run`. GTK apps get
+  only Adwaita dark/light, not the palette.
+- `wallpaper` names the theme's first background, which replaces the Tessera
+  artwork on the home screen.

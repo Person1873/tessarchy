@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 Slider {
     id: control
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     implicitHeight: 56
     Layout.minimumHeight: 56
     focusPolicy: Qt.NoFocus
@@ -15,7 +15,7 @@ Slider {
         width: control.availableWidth
         height: 4
         radius: 2
-        color: "#34465e"
+        color: Theme.selection
         Rectangle {
             width: control.visualPosition * parent.width
             height: parent.height
@@ -29,8 +29,8 @@ Slider {
         implicitWidth: 24
         implicitHeight: 24
         radius: 12
-        color: control.pressed ? "#ffffff" : control.accentColor
+        color: control.pressed ? Theme.text : control.accentColor
         border.width: 3
-        border.color: "#172b3b"
+        border.color: Theme.darkBackground
     }
 }

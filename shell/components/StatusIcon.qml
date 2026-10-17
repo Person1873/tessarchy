@@ -10,13 +10,10 @@ Item {
     Layout.preferredWidth: 18
     Layout.preferredHeight: 20
     Accessible.name: label + (strength < 0 ? " unavailable" : " connected")
-    Image {
+    Icon {
         anchors.centerIn: parent
-        width: 18
-        height: 18
-        source: "../icons/" + indicator.symbol + ".svg"
-        sourceSize.width: 18
-        sourceSize.height: 18
+        symbol: indicator.symbol
+        size: 18
         opacity: indicator.strength < 0 ? 0.35 : 1
     }
     Rectangle {
@@ -26,6 +23,6 @@ Item {
         height: 1.5
         radius: 1
         rotation: -45
-        color: "#879caa"
+        color: Theme.muted
     }
 }

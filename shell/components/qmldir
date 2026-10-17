@@ -1,0 +1,10 @@
+AppTile AppTile.qml
+AudioStatus AudioStatus.qml
+BrandMark BrandMark.qml
+Icon Icon.qml
+LevelSlider LevelSlider.qml
+NavButton NavButton.qml
+SettingsPage SettingsPage.qml
+StatusIcon StatusIcon.qml
+TouchButton TouchButton.qml
+singleton Theme Theme.qml

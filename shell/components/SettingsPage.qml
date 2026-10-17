@@ -8,7 +8,11 @@ ColumnLayout {
     required property string activeMode
     required property int displayWidth
     required property int displayHeight
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
+    // tessarchy-theme list rows: { name, mode, background, foreground, accent }.
+    property var themes: []
+    property string currentTheme: ""
+    signal themeRequested(string name)
     signal endSessionRequested
     signal controlsRequested
     signal replayRequested
@@ -27,7 +31,7 @@ ColumnLayout {
             Layout.fillWidth: true
             Text {
                 text: "TESSARCHY"
-                color: "#f0f5ff"
+                color: Theme.text
                 font {
                     pixelSize: 20
                     bold: true
@@ -36,7 +40,7 @@ ColumnLayout {
             }
             Text {
                 text: "One shell. Every screen."
-                color: "#8da7b9"
+                color: Theme.textMuted
                 font.pixelSize: 13
             }
         }
@@ -52,7 +56,7 @@ ColumnLayout {
     }
     Text {
         text: page.displayWidth + " × " + page.displayHeight + " logical pixels · " + page.activeMode
-        color: "#aabccb"
+        color: Theme.textMuted
         font.pixelSize: 13
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
@@ -101,7 +105,7 @@ ColumnLayout {
     }
     Text {
         text: "Automatic follows the usable display size, including rotation. Override it to keep a layout. New apps fill Phone/Tablet layouts; Desktop starts apps tiled. Existing windows stay in place."
-        color: "#8da7b9"
+        color: Theme.textMuted
         font.pixelSize: 13
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
@@ -115,43 +119,59 @@ ColumnLayout {
             letterSpacing: 2
         }
     }
-    RowLayout {
+    Text {
+        text: "Theme · shell, keyboard and apps"
+        color: Theme.textSecondary
+        font.pixelSize: 14
+    }
+    GridLayout {
+        columns: width >= 560 ? 3 : 2
+        columnSpacing: 10
+        rowSpacing: 10
         Layout.fillWidth: true
         Repeater {
-            model: [
-                {
-                    label: "Mint",
-                    value: "mint",
-                    color: "#a9e8d5"
-                },
-                {
-                    label: "Iris",
-                    value: "iris",
-                    color: "#c6b7ff"
-                },
-                {
-                    label: "Ice",
-                    value: "ice",
-                    color: "#99d7ff"
-                }
-            ]
+            model: page.themes
             delegate: TouchButton {
+                id: themeButton
                 required property var modelData
-                text: modelData.label
-                selected: page.preferences.accent === modelData.value
-                accentColor: modelData.color
+                text: modelData.name
+                Accessible.name: "Theme " + modelData.name
+                selected: page.currentTheme === modelData.name
+                accentColor: modelData.accent
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
-                onClicked: {
-                    page.preferences.accent = modelData.value;
-                    page.preferences.sync();
+                // Each button previews its theme's own palette.
+                contentItem: Text {
+                    text: themeButton.modelData.name
+                    color: themeButton.modelData.foreground
+                    font.pixelSize: 15
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
                 }
+                background: Rectangle {
+                    radius: 12
+                    color: themeButton.modelData.background
+                    border.width: themeButton.selected ? 3 : 1
+                    border.color: themeButton.selected ? themeButton.modelData.accent : Theme.selection
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottomMargin: 6
+                        width: parent.width * 0.4
+                        height: 4
+                        radius: 2
+                        color: themeButton.modelData.accent
+                    }
+                }
+                onClicked: page.themeRequested(modelData.name)
             }
         }
     }
     Text {
         text: "Bar opacity · " + Math.round(page.preferences.barOpacity * 100) + "%"
-        color: "#d0dced"
+        color: Theme.textSecondary
         font.pixelSize: 14
     }
     LevelSlider {
@@ -167,7 +187,7 @@ ColumnLayout {
     }
     Text {
         text: "Wallpaper shade · " + Math.round(page.preferences.wallpaperDim * 100) + "%"
-        color: "#d0dced"
+        color: Theme.textSecondary
         font.pixelSize: 14
     }
     LevelSlider {
@@ -258,8 +278,8 @@ ColumnLayout {
         onClicked: page.endSessionRequested()
     }
     Text {
-        text: "Tessera 0.1 · Experimental Arch session\nInitial text entry requires a physical keyboard."
-        color: "#8da7b9"
+        text: "Tessera 0.1 · Experimental Arch session"
+        color: Theme.textMuted
         font.pixelSize: 12
         Layout.fillWidth: true
         wrapMode: Text.WordWrap

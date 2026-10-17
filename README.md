@@ -26,11 +26,15 @@ live image is in development.
 - A persistent navigation bar with 56px touch targets and a compact desktop dock.
 - An original mint-and-navy wallpaper, animated tessellated logo, and responsive
   tile launcher.
-- Settings for layout mode, accent, opacity, wallpaper shade, clock, navigation
+- Settings for layout mode, system theme, opacity, wallpaper shade, clock, navigation
   labels, and reduced motion.
 - Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
   controls. Wireless and modem backends remain to be connected.
 - An expandable launcher for Firefox and Foot.
+- One system theme, Omarchy-style: a theme is a directory with an Omarchy
+  `colors.toml` (and optional `backgrounds/`), so Omarchy themes work unchanged.
+  `tessarchy-theme set <name>` (or Settings) restyles the shell, the keyboard,
+  Foot, and GTK dark/light for apps launched through `tessarchy-run`.
 - Optional squeekboard on-screen keyboard: it appears for focused text fields, and
   a Keyboard navigation button shows or hides it in Phone/Tablet modes.
 - A scrollable window overview with application switching and maximize/restore.

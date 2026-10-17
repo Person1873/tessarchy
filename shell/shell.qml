@@ -2,9 +2,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import QtCore
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.UPower
 import Quickshell.Services.SystemTray
@@ -14,18 +16,77 @@ import "LayoutPolicy.js" as Policy
 ShellRoot {
     id: root
     signal replayBrand
-    readonly property color accentColor: shellPreferences.accent === "iris" ? "#c6b7ff" : shellPreferences.accent === "ice" ? "#99d7ff" : "#a9e8d5"
+    readonly property color accentColor: Theme.accent
     Settings {
         id: shellPreferences
         location: "file://" + (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/tessarchy/shell.ini"
         category: "Shell"
         property string layoutMode: "auto"
-        property string accent: "mint"
         property bool reducedMotion: false
         property bool showLabels: true
         property bool use24Hour: true
         property real barOpacity: 0.32
         property real wallpaperDim: 0.12
+    }
+    // System theme: tessarchy-theme stages an Omarchy-format colors.toml (and
+    // optional wallpaper) here; the keyboard and apps render from the same file.
+    readonly property string themeDir: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/tessarchy/theme"
+    property string themeName: ""
+    property string themeBackground: ""
+    property var themes: []
+    function setTheme(name) {
+        themeSetter.command = ["tessarchy-theme", "set", name];
+        themeSetter.running = true;
+    }
+    FileView {
+        id: themeColors
+        path: root.themeDir + "/colors.toml"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            Theme.load(text());
+            themeNameFile.reload();
+        }
+    }
+    FileView {
+        id: themeNameFile
+        path: root.themeDir + "/name"
+        printErrors: false
+        onLoaded: {
+            root.themeName = text().trim();
+            themeWallpaperFile.reload();
+        }
+    }
+    FileView {
+        id: themeWallpaperFile
+        path: root.themeDir + "/wallpaper"
+        printErrors: false
+        onLoaded: {
+            const path = text().trim();
+            root.themeBackground = path.length > 0 ? "file://" + path : "";
+        }
+    }
+    Process {
+        id: themeSetter
+        onRunningChanged: if (!running)
+            themeColors.reload()
+    }
+    Process {
+        id: themeList
+        command: ["tessarchy-theme", "list"]
+        stdout: StdioCollector {
+            onStreamFinished: root.themes = text.split("\n").filter(line => line.length > 0).map(line => {
+                const field = line.split("\t");
+                return {
+                    name: field[0],
+                    mode: field[1],
+                    background: field[2],
+                    foreground: field[3],
+                    accent: field[4]
+                };
+            })
+        }
     }
     // Bind these when wireless/modem integrations land. Never invent a signal.
     property real wifiStrength: -1
@@ -78,7 +139,7 @@ ShellRoot {
                 Rectangle {
                     anchors.fill: parent
                     radius: surface.isPhone ? 0 : 24
-                    color: panel.expanded ? "#101b30" : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
+                    color: panel.expanded ? Theme.background : Qt.alpha(Theme.background, shellPreferences.barOpacity)
                     border.width: surface.isPhone ? 0 : 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
                 }
@@ -139,13 +200,13 @@ ShellRoot {
                                             text: "Browser"
                                             symbol: "browser"
                                             accentColor: root.accentColor
-                                            onClicked: panel.launch(["firefox"])
+                                            onClicked: panel.launch(["tessarchy-run", "firefox"])
                                         }
                                         AppTile {
                                             text: "Terminal"
                                             symbol: "terminal"
                                             accentColor: root.accentColor
-                                            onClicked: panel.launch(["foot"])
+                                            onClicked: panel.launch(["tessarchy-run", "foot"])
                                         }
                                         AppTile {
                                             text: "Settings"
@@ -162,7 +223,7 @@ ShellRoot {
                                     }
                                     Text {
                                         text: root.oskAvailable ? "Prototype · The keyboard opens for text fields; Keyboard shows or hides it." : "Prototype · Physical keyboard needed for text input."
-                                        color: "#b7c7cc"
+                                        color: Theme.textSecondary
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
                                     }
@@ -170,6 +231,8 @@ ShellRoot {
                                 Loader {
                                     visible: active
                                     active: panel.page === "settings"
+                                    onActiveChanged: if (active)
+                                        themeList.running = true
                                     Layout.fillWidth: true
                                     sourceComponent: SettingsPage {
                                         preferences: shellPreferences
@@ -177,6 +240,9 @@ ShellRoot {
                                         displayWidth: surface.modelData.width
                                         displayHeight: surface.modelData.height
                                         accentColor: root.accentColor
+                                        themes: root.themes
+                                        currentTheme: root.themeName
+                                        onThemeRequested: name => root.setTheme(name)
                                         onEndSessionRequested: panel.page = "session"
                                         onControlsRequested: panel.page = "status"
                                         onReplayRequested: root.replayBrand()
@@ -188,7 +254,7 @@ ShellRoot {
                                     Text {
                                         visible: Hyprland.toplevels.values.length === 0
                                         text: "No recent apps. Tap Home to launch one."
-                                        color: "#b7c7cc"
+                                        color: Theme.textSecondary
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
                                     }
@@ -239,7 +305,7 @@ ShellRoot {
                                     Layout.fillWidth: true
                                     Text {
                                         text: panel.closeTarget ? panel.closeTarget.title : "Window is no longer available."
-                                        color: "#f0f5f5"
+                                        color: Theme.text
                                         wrapMode: Text.WrapAnywhere
                                         Layout.fillWidth: true
                                     }
@@ -271,7 +337,7 @@ ShellRoot {
                                     spacing: 16
                                     Text {
                                         text: "CONNECTIONS"
-                                        color: "#8da7b9"
+                                        color: Theme.textMuted
                                         font {
                                             pixelSize: 11
                                             letterSpacing: 2
@@ -279,19 +345,19 @@ ShellRoot {
                                     }
                                     Text {
                                         text: root.wifiStrength < 0 ? "Wi-Fi · unavailable" : "Wi-Fi · connected"
-                                        color: "#f0f5ff"
+                                        color: Theme.text
                                         Layout.fillWidth: true
                                         wrapMode: Text.WordWrap
                                     }
                                     Text {
                                         text: root.cellularStrength < 0 ? "Cellular · no modem connected" : "Cellular · connected"
-                                        color: "#f0f5ff"
+                                        color: Theme.text
                                         Layout.fillWidth: true
                                         wrapMode: Text.WordWrap
                                     }
                                     Text {
                                         text: "SOUND"
-                                        color: "#8da7b9"
+                                        color: Theme.textMuted
                                         font {
                                             pixelSize: 11
                                             letterSpacing: 2
@@ -299,7 +365,7 @@ ShellRoot {
                                     }
                                     Text {
                                         text: root.audioAvailable ? (root.audioSink.audio.muted ? "Muted" : "Volume · " + root.volumePercent + "%") : "No audio output connected"
-                                        color: "#f0f5ff"
+                                        color: Theme.text
                                         Layout.fillWidth: true
                                         wrapMode: Text.WordWrap
                                     }
@@ -361,7 +427,7 @@ ShellRoot {
                                     Layout.fillWidth: true
                                     Text {
                                         text: "Save your work before ending Tessarchy. This closes the desktop session."
-                                        color: "#f0f5f5"
+                                        color: Theme.text
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
                                     }
@@ -441,7 +507,7 @@ ShellRoot {
                 }
                 implicitHeight: 48
                 exclusiveZone: 48
-                color: Qt.rgba(0.063, 0.106, 0.188, Math.min(1, shellPreferences.barOpacity + 0.12))
+                color: Qt.alpha(Theme.background, Math.min(1, shellPreferences.barOpacity + 0.12))
                 WlrLayershell.namespace: "tessera-status"
                 WlrLayershell.layer: WlrLayer.Top
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -452,7 +518,7 @@ ShellRoot {
                     spacing: surface.modelData.width < 360 ? 4 : 8
                     Text {
                         text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "hh:mm" : "h:mm AP")
-                        color: "#f0f5ff"
+                        color: Theme.text
                         font {
                             pixelSize: 16
                             bold: true
@@ -524,16 +590,15 @@ ShellRoot {
                     }
                     RowLayout {
                         spacing: 4
-                        Image {
-                            source: "icons/battery.svg"
-                            sourceSize.width: 22
-                            sourceSize.height: 22
+                        Icon {
+                            symbol: "battery"
+                            size: 22
                             opacity: UPower.displayDevice.isPresent ? 1 : 0.35
                         }
                         Text {
                             visible: surface.modelData.width >= 380
                             text: UPower.displayDevice.isPresent ? Math.round(UPower.displayDevice.percentage * 100) + "%" : "—"
-                            color: "#a9e8d5"
+                            color: Theme.accent
                             font.pixelSize: 11
                             Accessible.name: UPower.displayDevice.isPresent ? "Battery " + text : "Battery status unavailable"
                         }
@@ -562,24 +627,56 @@ ShellRoot {
                     right: true
                 }
                 exclusionMode: ExclusionMode.Ignore
-                color: "#101b30"
+                color: Theme.background
                 WlrLayershell.namespace: "tessera-home"
                 WlrLayershell.layer: WlrLayer.Background
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                // The theme's own wallpaper when it has one; otherwise the
+                // Tessera artwork for dark themes and a plain fill for light.
+                Image {
+                    id: themeWallpaper
+                    anchors.fill: parent
+                    source: root.themeBackground
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectCrop
+                    visible: status === Image.Ready
+                }
                 Image {
                     anchors.fill: parent
                     source: "artwork/aurora-fold.png"
                     fillMode: Image.PreserveAspectCrop
+                    visible: !themeWallpaper.visible && Theme.mode === "dark"
                 }
                 Rectangle {
                     anchors.fill: parent
-                    color: Qt.rgba(0.016, 0.05, 0.1, shellPreferences.wallpaperDim)
+                    color: Qt.alpha(Theme.darkerBackground, shellPreferences.wallpaperDim)
+                }
+                // Scrim behind the clock for a theme's own (unknown) wallpaper.
+                Rectangle {
+                    visible: homeClock.visible && themeWallpaper.visible
+                    x: homeClock.x - 24
+                    y: homeClock.y + 104
+                    width: homeClock.width + 48
+                    height: homeClock.height - 104 + 16
+                    radius: 28
+                    color: Qt.alpha(Theme.background, 0.55)
                 }
                 Column {
+                    id: homeClock
                     visible: !panel.expanded
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: Math.max(64, parent.height * (surface.isPhone ? 0.14 : 0.18))
                     spacing: 12
+                    // Theme wallpapers can be bright; keep the clock legible.
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: Theme.darkerBackground
+                        shadowBlur: 0.8
+                        shadowOpacity: 0.9
+                        shadowHorizontalOffset: 0
+                        shadowVerticalOffset: 1
+                    }
                     BrandMark {
                         id: homeBrand
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -596,7 +693,7 @@ ShellRoot {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "hh:mm" : "h:mm AP")
-                        color: "#f0f5ff"
+                        color: Theme.text
                         font {
                             pixelSize: surface.isPhone ? 58 : 72
                             weight: Font.Light
@@ -605,7 +702,7 @@ ShellRoot {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDateTime(clock.date, "dddd, MMMM d")
-                        color: "#a9e8d5"
+                        color: Theme.accent
                         font.pixelSize: 18
                     }
                     Text {
@@ -625,7 +722,7 @@ ShellRoot {
                         accentColor: root.accentColor
                         background: Rectangle {
                             radius: 24
-                            color: "#70101b30"
+                            color: Qt.alpha(Theme.background, 0.44)
                             border.color: Qt.alpha(root.accentColor, 0.25)
                         }
                         onClicked: panel.showPage("settings")

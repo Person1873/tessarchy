@@ -19,18 +19,18 @@ TouchButton {
                 rotation: -4
                 color: Qt.alpha(control.accentColor, control.selected ? 0.4 : 0.18)
                 border.color: Qt.alpha(control.accentColor, 0.3)
-                Image {
+                Icon {
                     anchors.centerIn: parent
                     rotation: 4
-                    source: "../icons/" + control.symbol + ".svg"
-                    sourceSize.width: 28
-                    sourceSize.height: 28
+                    symbol: control.symbol
+                    size: 28
+                    color: Theme.text
                 }
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: control.text
-                color: "#f0f5ff"
+                color: Theme.text
                 font.pixelSize: 16
             }
         }
