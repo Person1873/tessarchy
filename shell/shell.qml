@@ -405,6 +405,11 @@ ShellRoot {
             }
             PanelWindow {
                 id: statusBar
+                Timer {
+                    id: screenshotTimer
+                    interval: shellPreferences.reducedMotion ? 100 : 300
+                    onTriggered: Quickshell.execDetached(["tessera-screenshot"])
+                }
                 property bool drawerOpen: false
                 function toggleDrawer() {
                     drawerOpen = !drawerOpen;
@@ -632,6 +637,10 @@ ShellRoot {
                         accentColor: root.accentColor
                         audioSink: root.audioSink
                         audioBackendAvailable: audioLoader.active
+                        onScreenshotRequested: {
+                            statusBar.drawerOpen = false;
+                            screenshotTimer.restart();
+                        }
                         mediaPlayer: root.activePlayer
                         onDismissed: statusBar.drawerOpen = false
                         onSettingsRequested: { statusBar.drawerOpen = false; panel.showPage("settings"); }

@@ -25,7 +25,7 @@ if [[ $version == tessarchy-dev-v2 ]]; then
     done
 fi
 # Preserve launchers edited since installation; report instead of deleting them.
-for launcher in start-tessarchy tessera-shell tessarchy-osk; do
+for launcher in start-tessarchy tessera-shell tessarchy-osk tessera-screenshot; do
     target=$HOME/.local/bin/$launcher
     if [[ -e "$target" || -L "$target" ]]; then
         cmp -s -- "$root/session/$launcher" "$target" || {
@@ -33,7 +33,7 @@ for launcher in start-tessarchy tessera-shell tessarchy-osk; do
         }
     fi
 done
-rm -f -- "$HOME/.local/bin/start-tessarchy" "$HOME/.local/bin/tessera-shell" "$HOME/.local/bin/tessarchy-osk"
+rm -f -- "$HOME/.local/bin/start-tessarchy" "$HOME/.local/bin/tessera-shell" "$HOME/.local/bin/tessarchy-osk" "$HOME/.local/bin/tessera-screenshot"
 # Remove only files recorded by this installation.
 if [[ $version == tessarchy-dev-v2 ]]; then
     for relative in "${entries[@]}"; do rm -f -- "$data/$relative"; done

@@ -114,3 +114,9 @@ optional PipeWire panel and tracks nodes before inspecting their audio metadata.
 It lists ready audio outputs and playback audio streams only; closing the section
 releases the tracker. Writes validate current backend/node readiness and model
 membership. The shared basic mute/volume controls remain accessible above it.
+
+Screenshots use the fixed-argument tessera-screenshot helper. Print captures the
+full Wayland desktop; the pull-down camera action closes controls before a short
+capture delay. Each successful capture has a unique private PNG path under the
+configured pictures directory's Screenshots folder. Capture failure removes the
+partial output, and notification failure does not discard a saved capture.

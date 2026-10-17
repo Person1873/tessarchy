@@ -733,3 +733,27 @@ pull-down and are covered by the manifest installer.
 Pending: real PipeWire/WirePlumber output switching, per-app playback volume,
 backend restart/device removal, touch and VM visual inspection. VM SSH access
 has expired; no host/guest dependency was installed. No new ISO boot claim.
+
+## Screenshot PR #14 review, 2026-10-17
+
+Actual: `./scripts/check.sh` passed (35 Python, 30 Qt Quick checks), including
+scratch install/uninstall, staging, Lua/Hyprland parsing and QML lint. Tests use
+stub capture/notification tools in a scratch HOME; they verify two captures in
+the same second remain distinct, existing files survive, file mode is 0600,
+notification failure is optional, failed captures remove partial files, missing
+grim is reported, unexpected arguments are rejected and an existing unrelated
+screenshot helper is refused before installation. ISO staging includes the
+executable helper and declarative grim/libnotify packages. No host package was
+installed. Print is bound through the current Lua API.
+
+The pull-down has a glass camera icon. It closes the drawer and defers capture
+briefly so controls can repaint before grim runs. The helper is covered by
+launcher preflight and modified-launcher uninstall checks; manifest safety is
+retained. Screenshot paths use a unique mktemp name, fixing the original
+same-second overwrite risk.
+
+Pending: actual grim capture, notification appearance, Print key and camera
+button in the VM, including whether the drawer is absent from captured pixels.
+VM SSH access has expired. These helper tests are not real image captures and
+there is no new ISO boot or release claim. Local fish/ShellCheck are unavailable;
+target CI covers those tools.

@@ -87,6 +87,7 @@ class Workflows(unittest.TestCase):
         self.assertEqual(preferences.read_text(), '-- mine')
         self.assertEqual(shell_settings.read_text(), '[Shell]\nlayoutMode=tablet\n')
         self.assertFalse((self.home / '.local/bin/tessarchy-osk').exists())
+        self.assertFalse((self.home / '.local/bin/tessera-screenshot').exists())
 
     def osk(self, *args, path_tools=(), env=None):
         """Run tessarchy-osk with PATH limited to bash, mkdir and the given stubs."""
@@ -566,6 +567,61 @@ assert(#fire("window.open", dialog) == 0, "desktop dialogs are left alone")
                                 input=script, text=True, capture_output=True, env=self.env)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def screenshot_tools(self, grim_body=None):
+        import shutil
+        tools = self.home / 'capture-tools'
+        tools.mkdir()
+        for name in ('bash', 'mkdir', 'mktemp', 'rm', 'basename'):
+            (tools / name).symlink_to(shutil.which(name))
+        (tools / 'date').write_text('#!/bin/bash\nprintf 20261017-120000\n')
+        (tools / 'date').chmod(0o755)
+        if grim_body is not None:
+            (tools / 'grim').write_text('#!/bin/bash\n' + grim_body)
+            (tools / 'grim').chmod(0o755)
+        return dict(self.env, PATH=str(tools), XDG_PICTURES_DIR=str(self.home / 'pictures'))
+
+    def test_screenshots_are_unique_private_and_notification_is_optional(self):
+        env = self.screenshot_tools('printf png > "$1"\n')
+        tools = Path(env['PATH'])
+        (tools / 'notify-send').write_text('#!/bin/bash\nexit 1\n')
+        (tools / 'notify-send').chmod(0o755)
+        directory = self.home / 'pictures/Screenshots'
+        directory.mkdir(parents=True)
+        sentinel = directory / 'tessarchy-20261017-120000.png'
+        sentinel.write_text('unrelated existing screenshot')
+        paths = []
+        for _ in range(2):
+            result = subprocess.run([str(ROOT / 'session/tessera-screenshot')], env=env,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            path = Path(result.stdout.strip())
+            self.assertEqual(path.read_text(), 'png')
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            paths.append(path)
+        self.assertNotEqual(paths[0], paths[1])
+        self.assertEqual(sentinel.read_text(), 'unrelated existing screenshot')
+
+    def test_failed_screenshot_removes_partial_file_and_rejects_arguments(self):
+        env = self.screenshot_tools('printf partial > "$1"; exit 7\n')
+        command = [str(ROOT / 'session/tessera-screenshot')]
+        failed = subprocess.run(command, env=env, capture_output=True, text=True)
+        self.assertEqual(failed.returncode, 7)
+        self.assertEqual(list((self.home / 'pictures/Screenshots').iterdir()), [])
+        invalid = subprocess.run(command + ['unrelated.png'], env=env, capture_output=True)
+        self.assertEqual(invalid.returncode, 64)
+        (Path(env['PATH']) / 'grim').unlink()
+        missing = subprocess.run(command, env=env, capture_output=True, text=True)
+        self.assertNotEqual(missing.returncode, 0)
+        self.assertIn('grim is required', missing.stderr)
+
+    def test_existing_screenshot_helper_refused(self):
+        launcher = self.home / '.local/bin/tessera-screenshot'
+        launcher.parent.mkdir(parents=True)
+        launcher.write_text('unrelated helper')
+        self.run_script('install-dev.sh', expected=1)
+        self.assertEqual(launcher.read_text(), 'unrelated helper')
+        self.assertFalse((self.home / 'data/tessarchy').exists())
+
     def test_iso_staging_preserves_boot_assets_and_account_databases(self):
         # Minimal fixture exercises our assembly, not upstream archiso validity.
         repo = self.home / 'source'
@@ -610,6 +666,9 @@ assert(#fire("window.open", dialog) == 0, "desktop dialogs are left alone")
                       (profile / 'airootfs/etc/systemd/journald.conf.d/volatile.conf').read_text())
         self.assertTrue((profile / 'airootfs/usr/share/tessarchy/docs/iso.md').is_file())
         self.assertTrue((profile / 'airootfs/usr/bin/start-tessarchy').stat().st_mode & 0o111)
+        self.assertTrue((profile / 'airootfs/usr/bin/tessera-screenshot').stat().st_mode & 0o111)
+        self.assertIn('grim', (profile / 'packages.x86_64').read_text().splitlines())
+        self.assertIn('libnotify', (profile / 'packages.x86_64').read_text().splitlines())
         self.assertIn('u tess 1000 "Tessarchy live user" /home/tess /usr/bin/fish',
                       (profile / 'airootfs/etc/sysusers.d/tessarchy.conf').read_text())
         self.assertIn('fish', (profile / 'packages.x86_64').read_text().splitlines())
