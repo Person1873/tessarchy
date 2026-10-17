@@ -258,6 +258,19 @@ multiple physical outputs, exhaustive fractional scaling, and ISO builds/boots
 remain pending. Auto detection classifies logical display size; it does not
 identify physical device type or available input hardware. No secure lock claim.
 
+## Live rootfs hardening, 2026-10-17
+
+Actually performed:
+
+- Staged profile now pins hostname `tessarchy`, en_US.UTF-8 generation, a plain
+  `us` virtual console, a live-console motd, a volatile journald drop-in
+  (64M runtime cap), a `systemd-timesyncd` enablement link, and a `docs/`
+  snapshot under `/usr/share/tessarchy/docs`; `noto-fonts-emoji` joined the
+  package list.
+- The ISO staging workflow test asserts each of those artifacts in the staged
+  profile, and `./scripts/check.sh` passes on the development host.
+- Not performed: building the image and reviewing the live console; autologin,
+  motd rendering and the volatile journal still need a real ISO boot.
 ## First published tester ISO, 2026-10-17 UTC
 
 Actually performed:
@@ -516,3 +529,13 @@ fish package, sysusers shell, home profile and profile permission entries.
 The host has no fish executable, so fish syntax validation skipped locally.
 No dependencies were installed. The full live-image fish autologin/exit cycle
 remains a planned boot check; Alpha 2 is unchanged.
+
+## PR 5 integration review — 2026-10-17
+
+Actual validation: reviewed declarative hostname, locale, console, motd and
+volatile journal settings, time-sync enablement, emoji package and offline docs.
+`./scripts/check.sh` passed 26 Python tests and 21 Qt Quick results plus the
+available static checks. Scratch staging assertions verify the emitted files
+and service link. Fish and ShellCheck are unavailable locally. No dependencies
+were installed. Live locale generation, fish autologin and journal operation
+remain planned boot checks; the published Alpha 2 image is unchanged.
