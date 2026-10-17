@@ -364,3 +364,25 @@ Actual validation:
 
 Still planned/manual: physical touch and the selector on larger displays.
 The published Alpha 1 ISO does not contain this change.
+
+## Alpha 2 release rebuild — 2026-10-17
+
+Actual validation:
+
+- Reviewed open GitHub issues, pull-request status and Actions history. Recorded
+  the inventory in `docs/github-review.md`; pending collaborator PRs are unchanged.
+- Host `./scripts/check.sh` passed: 17 Python tests, 19 Qt Quick results, Lua
+  syntax, Hyprland configuration verification and qmllint. Known PanelWindow
+  metadata warnings remain; ShellCheck is unavailable locally.
+- Actions run 39063437439 built the ISO from
+  `aa8b59a73a8d5d6b1d3fab6c17272e68e0bfac58`, verified its checksum,
+  and captured diskless BIOS and non-Secure-Boot UEFI QEMU/KVM boots.
+- Inspected both final 1280×800 screenshots: Tessera's graphical home screen,
+  current wallpaper/logo, glass status bar and floating dock are visible.
+  Each guest used 2 GiB RAM, 2 vCPUs and virtio graphics, with no disk or NIC.
+- Package manifest identifies Hyprland 0.56.2-4, Quickshell 0.3.2-1, Python
+  3.14.8-1 and util-linux 2.42.4-1. Alpha 2 checksum matches the release digest.
+
+Earlier development-VM interaction tests remain separate from these ISO boot
+checks. Physical touch, network/radio/audio behavior, Secure Boot, phone
+hardware and application acceptance are still unverified in this exact image.

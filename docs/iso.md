@@ -47,7 +47,7 @@ remove only `build/iso-profile` and `build/iso-work` after mounts are released.
 The latter may require sudo because mkarchiso owns it. Scripts never recursively
 clean a privileged build directory themselves.
 
-## Tester prerelease, 2026-10-17 UTC
+## Alpha 1 tester prerelease, 2026-10-17 UTC
 
 [Alpha 1](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.1)
 contains the approximately 1 GiB `tessarchy-0.1.0-20261017-x86_64.iso`, checksum,
@@ -71,3 +71,33 @@ script deliberately does not infer GUI success from a running QEMU process.
 Application/device acceptance, networking/audio, touch, physical hardware,
 Secure Boot and persistence behavior were not tested in this exact image.
 Read the attached `BOOT-TESTING.md` and [validation record](testing.md).
+
+## Alpha 2 tester prerelease, 2026-10-17 UTC
+
+[Alpha 2](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2)
+updates the live image with Quiet Edge, the card switcher, mobile clock,
+pull-down radio controls, and the pull-down layout selector. It was built from
+`aa8b59a73a8d5d6b1d3fab6c17272e68e0bfac58` by
+[Actions run 39063437439](https://github.com/thediamondsaint/tessarchy/actions/runs/39063437439)
+using archiso 91-1. The image contains Hyprland 0.56.2-4 and Quickshell 0.3.2-1.
+Source API targets remain Hyprland 0.56 and Quickshell 0.3.1.
+
+The release ISO is `tessarchy-0.1.0-20261017-x86_64.iso` (1,070,628,864 bytes).
+Alpha 1 uses the same date-based filename; select the release tag and verify
+the checksum to distinguish images. Alpha 2 SHA-256:
+
+```text
+3bc2565684d9a2a1de62946f6f7d59117dafc71abf75d226be14b5214d9209ee
+```
+
+The checksum passed in CI and matches the release asset digest. Both final
+BIOS and non-Secure-Boot UEFI captures were inspected: Tessera reached its
+graphical home screen with the current glass status bar and floating dock.
+The disposable QEMU/KVM guests had 2 GiB RAM, 2 vCPUs, virtio graphics, no
+guest disk and no network adapter. Boot screenshots, capture commands, package
+manifest, source provenance and build log accompany the image.
+
+These are graphical boot smoke tests, not full application or device acceptance.
+Physical touch, real radio changes, networking, audio, Secure Boot and phone
+hardware remain unverified in this ISO. Contributor pull requests were left
+unchanged and are not included; see the [GitHub review](github-review.md).
