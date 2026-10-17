@@ -2,15 +2,31 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtCore
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.UPower
 import Quickshell.Services.SystemTray
 import "components"
+import "LayoutPolicy.js" as Policy
 
 ShellRoot {
     id: root
+    signal replayBrand
+    readonly property color accentColor: shellPreferences.accent === "iris" ? "#c6b7ff" : shellPreferences.accent === "ice" ? "#99d7ff" : "#a9e8d5"
+    Settings {
+        id: shellPreferences
+        location: "file://" + (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/tessarchy/shell.ini"
+        category: "Shell"
+        property string layoutMode: "auto"
+        property string accent: "mint"
+        property bool reducedMotion: false
+        property bool showLabels: true
+        property bool use24Hour: true
+        property real barOpacity: 0.32
+        property real wallpaperDim: 0.12
+    }
     // Bind these when wireless/modem integrations land. Never invent a signal.
     property real wifiStrength: -1
     property real cellularStrength: -1
@@ -27,6 +43,11 @@ ShellRoot {
         Scope {
             id: surface
             required property var modelData
+            readonly property string mode: Policy.effectiveMode(shellPreferences.layoutMode, modelData.width, modelData.height)
+            readonly property bool isPhone: mode === "phone"
+            readonly property int navHeight: isPhone ? 72 : 80
+            readonly property int launcherRows: Math.ceil(4 / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
+            readonly property string modeLabel: (shellPreferences.layoutMode === "auto" ? "Auto · " : "") + Policy.title(mode)
             SystemClock {
                 id: clock
                 precision: SystemClock.Minutes
@@ -39,12 +60,20 @@ ShellRoot {
                 readonly property bool expanded: page !== ""
                 anchors {
                     bottom: true
-                    left: true
-                    right: true
+                    left: surface.isPhone
+                    right: surface.isPhone
                 }
-                implicitHeight: expanded ? Math.min(620, surface.modelData.height - 64) : 72
-                exclusiveZone: 72
-                color: expanded ? "#ed101b30" : "#55101b30"
+                implicitWidth: Policy.panelWidth(surface.mode, surface.modelData.width)
+                implicitHeight: expanded ? Math.min(page === "apps" ? surface.launcherRows * 124 + 156 : surface.mode === "tablet" ? 740 : 640, surface.modelData.height - 64) : surface.navHeight
+                exclusiveZone: surface.navHeight
+                color: "transparent"
+                Rectangle {
+                    anchors.fill: parent
+                    radius: surface.isPhone ? 0 : 24
+                    color: panel.expanded ? "#101b30" : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
+                    border.width: surface.isPhone ? 0 : 1
+                    border.color: Qt.alpha(root.accentColor, 0.15)
+                }
                 WlrLayershell.namespace: "tessera"
                 WlrLayershell.layer: WlrLayer.Top
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -67,6 +96,8 @@ ShellRoot {
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 8
+                    anchors.leftMargin: surface.isPhone ? 12 : 16
+                    anchors.rightMargin: surface.isPhone ? 12 : 16
                     spacing: 8
                     ColumnLayout {
                         visible: panel.expanded
@@ -74,8 +105,8 @@ ShellRoot {
                         Layout.fillHeight: true
                         spacing: 8
                         Text {
-                            text: panel.page === "apps" ? "Your apps" : panel.page === "windows" ? "Recent apps" : panel.page === "close" ? "Close this window?" : panel.page === "status" ? "Quick controls" : "End this session?"
-                            color: "#b7eee0"
+                            text: panel.page === "apps" ? "Your space" : panel.page === "windows" ? "Recent apps" : panel.page === "close" ? "Close this window?" : panel.page === "status" ? "Quick controls" : panel.page === "settings" ? "Settings" : "End this session?"
+                            color: root.accentColor
                             font.pixelSize: 22
                             font.bold: true
                             Layout.fillWidth: true
@@ -93,18 +124,32 @@ ShellRoot {
                                     visible: panel.page === "apps"
                                     Layout.fillWidth: true
                                     GridLayout {
-                                        columns: 2
+                                        columns: Policy.columns(surface.mode, width)
                                         columnSpacing: 12
                                         Layout.fillWidth: true
                                         AppTile {
                                             text: "Browser"
                                             symbol: "browser"
+                                            accentColor: root.accentColor
                                             onClicked: panel.launch(["firefox"])
                                         }
                                         AppTile {
                                             text: "Terminal"
                                             symbol: "terminal"
+                                            accentColor: root.accentColor
                                             onClicked: panel.launch(["foot"])
+                                        }
+                                        AppTile {
+                                            text: "Settings"
+                                            symbol: "settings"
+                                            accentColor: root.accentColor
+                                            onClicked: panel.showPage("settings")
+                                        }
+                                        AppTile {
+                                            text: "Controls"
+                                            symbol: "controls"
+                                            accentColor: root.accentColor
+                                            onClicked: panel.showPage("status")
                                         }
                                     }
                                     Text {
@@ -112,6 +157,21 @@ ShellRoot {
                                         color: "#b7c7cc"
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
+                                    }
+                                }
+                                Loader {
+                                    visible: active
+                                    active: panel.page === "settings"
+                                    Layout.fillWidth: true
+                                    sourceComponent: SettingsPage {
+                                        preferences: shellPreferences
+                                        activeMode: Policy.title(surface.mode)
+                                        displayWidth: surface.modelData.width
+                                        displayHeight: surface.modelData.height
+                                        accentColor: root.accentColor
+                                        onEndSessionRequested: panel.page = "session"
+                                        onControlsRequested: panel.page = "status"
+                                        onReplayRequested: root.replayBrand()
                                     }
                                 }
                                 ColumnLayout {
@@ -235,6 +295,16 @@ ShellRoot {
                                         Layout.fillWidth: true
                                         wrapMode: Text.WordWrap
                                     }
+                                    LevelSlider {
+                                        Layout.fillWidth: true
+                                        from: 0
+                                        to: 1
+                                        value: root.audioAvailable ? root.audioSink.audio.volume : 0
+                                        enabled: root.audioAvailable
+                                        accentColor: root.accentColor
+                                        Accessible.name: "Output volume"
+                                        onMoved: root.audioSink.audio.volume = value
+                                    }
                                     RowLayout {
                                         Layout.fillWidth: true
                                         TouchButton {
@@ -260,6 +330,22 @@ ShellRoot {
                                             Layout.preferredWidth: 1
                                             onClicked: root.audioSink.audio.volume = Math.min(1, root.audioSink.audio.volume + 0.05)
                                         }
+                                    }
+                                }
+                                RowLayout {
+                                    visible: panel.page === "status"
+                                    Layout.fillWidth: true
+                                    TouchButton {
+                                        text: "Settings"
+                                        Layout.fillWidth: true
+                                        Layout.preferredWidth: 1
+                                        onClicked: panel.page = "settings"
+                                    }
+                                    TouchButton {
+                                        text: "Session…"
+                                        Layout.fillWidth: true
+                                        Layout.preferredWidth: 1
+                                        onClicked: panel.page = "session"
                                     }
                                 }
                                 ColumnLayout {
@@ -293,6 +379,8 @@ ShellRoot {
                         NavButton {
                             text: "Back"
                             symbol: "back"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
                             enabled: panel.expanded
                             onClicked: {
                                 panel.closeTarget = null;
@@ -300,16 +388,29 @@ ShellRoot {
                             }
                         }
                         NavButton {
-                            text: "Home"
+                            text: surface.mode === "desktop" ? "Apps" : "Home"
                             symbol: "home"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
                             selected: panel.page === "apps"
                             onClicked: panel.showPage("apps")
                         }
                         NavButton {
-                            text: "Recents"
+                            text: surface.mode === "desktop" ? "Windows" : "Recents"
                             symbol: "recents"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
                             selected: panel.page === "windows"
                             onClicked: panel.showPage("windows")
+                        }
+                        NavButton {
+                            visible: !surface.isPhone
+                            text: "Settings"
+                            symbol: "settings"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
+                            selected: panel.page === "settings"
+                            onClicked: panel.showPage("settings")
                         }
                     }
                 }
@@ -323,7 +424,7 @@ ShellRoot {
                 }
                 implicitHeight: 48
                 exclusiveZone: 48
-                color: "#80101b30"
+                color: Qt.rgba(0.063, 0.106, 0.188, Math.min(1, shellPreferences.barOpacity + 0.12))
                 WlrLayershell.namespace: "tessera-status"
                 WlrLayershell.layer: WlrLayer.Top
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -331,9 +432,9 @@ ShellRoot {
                     anchors.fill: parent
                     anchors.leftMargin: 18
                     anchors.rightMargin: 8
-                    spacing: 8
+                    spacing: surface.modelData.width < 360 ? 4 : 8
                     Text {
-                        text: Qt.formatDateTime(clock.date, "hh:mm")
+                        text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "hh:mm" : "h:mm AP")
                         color: "#f0f5ff"
                         font {
                             pixelSize: 16
@@ -343,9 +444,18 @@ ShellRoot {
                     Item {
                         Layout.fillWidth: true
                     }
+                    TouchButton {
+                        visible: surface.modelData.width >= 650
+                        text: surface.modeLabel
+                        implicitWidth: 170
+                        implicitHeight: 48
+                        Layout.minimumHeight: 48
+                        accentColor: root.accentColor
+                        onClicked: panel.showPage("settings")
+                    }
                     // Only registered application icons appear; no simulated signals.
                     RowLayout {
-                        Layout.maximumWidth: Math.max(0, surface.modelData.width - 330)
+                        Layout.maximumWidth: Math.max(0, surface.modelData.width - (surface.modelData.width >= 650 ? 540 : 370))
                         clip: true
                         spacing: 0
                         Repeater {
@@ -404,6 +514,7 @@ ShellRoot {
                             opacity: UPower.displayDevice.isPresent ? 1 : 0.35
                         }
                         Text {
+                            visible: surface.modelData.width >= 380
                             text: UPower.displayDevice.isPresent ? Math.round(UPower.displayDevice.percentage * 100) + "%" : "—"
                             color: "#a9e8d5"
                             font.pixelSize: 11
@@ -411,16 +522,17 @@ ShellRoot {
                         }
                     }
                     NavButton {
-                        text: "Session"
-                        symbol: "power"
+                        text: "Settings"
+                        symbol: "settings"
                         showLabel: false
                         implicitWidth: 48
                         implicitHeight: 48
                         Layout.minimumHeight: 48
                         Layout.fillWidth: false
                         Layout.preferredWidth: 48
-                        selected: panel.page === "session"
-                        onClicked: panel.showPage("session")
+                        accentColor: root.accentColor
+                        selected: panel.page === "settings"
+                        onClicked: panel.showPage("settings")
                     }
                 }
             }
@@ -444,26 +556,32 @@ ShellRoot {
                 }
                 Rectangle {
                     anchors.fill: parent
-                    color: "#18040d19"
+                    color: Qt.rgba(0.016, 0.05, 0.1, shellPreferences.wallpaperDim)
                 }
                 Column {
+                    visible: !panel.expanded
                     anchors.horizontalCenter: parent.horizontalCenter
-                    y: Math.max(80, parent.height * 0.17)
+                    y: Math.max(64, parent.height * (surface.isPhone ? 0.14 : 0.18))
                     spacing: 12
-                    Image {
+                    BrandMark {
+                        id: homeBrand
                         anchors.horizontalCenter: parent.horizontalCenter
-                        source: "artwork/tessarchy-mark.svg"
-                        sourceSize.width: 64
-                        sourceSize.height: 64
-                        width: 64
-                        height: 64
+                        width: 96
+                        height: 96
+                        reducedMotion: shellPreferences.reducedMotion
+                    }
+                    Connections {
+                        target: root
+                        function onReplayBrand() {
+                            homeBrand.replay();
+                        }
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: Qt.formatDateTime(clock.date, "hh:mm")
+                        text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "hh:mm" : "h:mm AP")
                         color: "#f0f5ff"
                         font {
-                            pixelSize: 64
+                            pixelSize: surface.isPhone ? 58 : 72
                             weight: Font.Light
                         }
                     }
@@ -475,9 +593,25 @@ ShellRoot {
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: "T E S S A R C H Y"
-                        color: "#97abc6"
-                        font.pixelSize: 12
+                        text: "TESSARCHY"
+                        color: root.accentColor
+                        font {
+                            pixelSize: 12
+                            bold: true
+                            letterSpacing: 5
+                        }
+                    }
+                    TouchButton {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: surface.modeLabel + "  ·  Change"
+                        implicitWidth: Math.min(surface.modelData.width - 32, 260)
+                        accentColor: root.accentColor
+                        background: Rectangle {
+                            radius: 24
+                            color: "#70101b30"
+                            border.color: Qt.alpha(root.accentColor, 0.25)
+                        }
+                        onClicked: panel.showPage("settings")
                     }
                 }
             }

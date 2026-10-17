@@ -10,7 +10,7 @@ TouchButton {
     padding: 4
     background: Rectangle {
         radius: 16
-        color: control.down ? "#8836516b" : control.selected ? "#66294e57" : "transparent"
+        color: control.down ? Qt.alpha(control.accentColor, 0.3) : control.selected ? Qt.alpha(control.accentColor, 0.15) : "transparent"
     }
     contentItem: Item {
         Column {
@@ -29,7 +29,7 @@ TouchButton {
                 visible: control.showLabel
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: control.text
-                color: control.selected ? "#a9e8d5" : "#d0dced"
+                color: control.selected ? control.accentColor : "#d0dced"
                 font.pixelSize: 10
             }
         }

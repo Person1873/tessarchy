@@ -22,8 +22,12 @@ live image is in development.
 
 - A top status bar with clock, registered tray icons, battery status when available,
   and session controls.
-- A persistent Back/Home/Recents navigation bar with 56px touch targets.
-- An original mint-and-navy wallpaper, Tessarchy logo, and tile launcher.
+- Automatic Phone/Tablet/Desktop shell layouts with a saved manual override.
+- A persistent navigation bar with 56px touch targets and a compact desktop dock.
+- An original mint-and-navy wallpaper, animated tessellated logo, and responsive
+  tile launcher.
+- Settings for layout mode, accent, opacity, wallpaper shade, clock, navigation
+  labels, and reduced motion.
 - Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
   controls. Wireless and modem backends remain to be connected.
 - An expandable launcher for Firefox and Foot.
@@ -36,13 +40,15 @@ live image is in development.
 ## Project status
 
 **Early prototype.** A user has confirmed that Tessera runs in the basic Arch
-QEMU guest. Nine automated workflow tests and available static checks pass.
+QEMU guest. Ten workflow tests, Qt Quick layout/motion checks, and available
+static checks pass.
 Detailed touchscreen, scaling, focus, and window-action acceptance tests remain
 pending. Two development packages have been built locally; they are not yet
 published releases. **No Tessarchy ISO has been boot-tested or released.**
 
-Text input currently requires a physical keyboard. New non-floating windows
-initially maximize between the status and navigation bars; restoring returns to ordinary tiling.
+Text input currently requires a physical keyboard. New ordinary windows maximize
+in Phone/Tablet modes and start tiled in Desktop mode. Existing windows stay in
+place when switching modes; restoring a maximized app returns to ordinary tiling.
 Continuous mobile window policy and tablet split layouts are planned. Exclusive
 fullscreen can hide the dock. There is no secure lock screen or on-screen
 keyboard integration yet. See the [validation record](docs/testing.md) for the

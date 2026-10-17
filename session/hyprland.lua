@@ -8,10 +8,34 @@ hl.config({
     input = { kb_layout = "us", follow_mouse = 0 },
     misc = { disable_hyprland_logo = true, force_default_wallpaper = 0 },
 })
--- Initial mobile policy: new non-floating apps maximize between the status and
--- navigation bars. Restoring returns to ordinary dwindle tiling. Dialogs retain
--- compositor defaults; continuous single-app enforcement is not implemented.
-hl.window_rule({ name = "tessarchy-initial-maximize", match = { float = false }, maximize = true })
+-- Read the same saved mode as Tessera when a new ordinary app opens.
+-- Existing windows and floating dialogs are left alone when modes change.
+local function shell_mode(monitor)
+    local config = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
+    local file = io.open(config .. "/tessarchy/shell.ini", "r")
+    local mode, section = "auto", ""
+    if file then
+        for line in file:lines() do
+            section = line:match("^%[([^%]]+)%]%s*$") or section
+            if section == "Shell" then
+                mode = line:match("^%s*layoutMode%s*=%s*(%a+)%s*$") or mode
+            end
+        end
+        file:close()
+    end
+    if mode == "phone" or mode == "tablet" or mode == "desktop" then return mode end
+    local width, height = monitor.width / monitor.scale, monitor.height / monitor.scale
+    if monitor.transform % 2 == 1 then width, height = height, width end
+    if math.min(width, height) < 600 then return "phone" end
+    if width >= 1100 and height >= 650 then return "desktop" end
+    return "tablet"
+end
+hl.on("window.open", function(window)
+    if window.floating or window.fullscreen ~= 0 or not window.monitor then return end
+    if shell_mode(window.monitor) ~= "desktop" then
+        hl.dispatch(hl.dsp.window.fullscreen({ window = window, mode = "maximized", action = "set" }))
+    end
+end)
 hl.on("hyprland.start", function ()
     hl.exec_cmd("tessera-shell")
 end)

@@ -197,3 +197,43 @@ No core dump or crash memory was copied into the repository.
 Evidence: ignored `build/phone-branded.png`, `build/phone-controls.png`, and
 `build/vm-phone-window-final.png`. Live Wi-Fi/cellular backends, real audio adjustment,
 battery changes, hardware touch, and ISO builds/boots remain untested.
+
+## Adaptive layouts, Settings, and logo animation, 2026-10-16
+
+Actually performed:
+
+- Archived guest source, installed defaults and preferences under
+  `~/tessarchy-backups/` before updating. Host compositor configuration was not
+  changed, and no dependencies were installed.
+- `./scripts/check.sh` passes on host and guest: ten workflow tests and fifteen
+  Qt Quick Test results (including fixture setup/cleanup). Tests cover auto-mode
+  thresholds, portrait/landscape geometry, narrow manual override, Lua app policy
+  with scaling/rotation and saved overrides, preservation of floating/fullscreen
+  windows, finite logo playback, reduced-motion cancellation, and scratch-HOME
+  install/uninstall preserving shell preferences and removing new assets.
+  Hyprland verification returns `config ok`; QML checks retain only the known
+  PanelWindow backend warning. Shellcheck remains unavailable.
+- Resized the running guest to 400×800 Phone, 800×1280 Tablet, 1280×800 Desktop,
+  and 320×480 Phone. Inspected Settings, header mode labels, adaptive navigation,
+  launcher columns, scrollable controls, and a Desktop override at phone size.
+  The final launcher uses row-based height rather than a mostly empty drawer.
+- Used guest uinput to select Desktop/Automatic and Iris appearance. The actual
+  `shell.ini` changed and the mode/accent loaded again after restarting Tessera.
+  Inspected the longer Settings page after scrolling, including appearance,
+  branded sliders, clock, labels, and motion controls.
+- Guest `hyprctl reload` succeeds and `configerrors` is empty with the new Lua
+  window-open policy. A temporary Foot test at 400×800 opens maximized at
+  (0,48), size 400×680, fullscreen flag 1. Two temporary Foot windows opened
+  at 1280×800 start tiled at (0,48) and (640,48), each 640×672, fullscreen
+  flag 0. The test apps run `sleep` and exit naturally, with no user work in them.
+- Rendered the actual BrandMark QML component offscreen into animation frames;
+  inspected intermediate and final frames and produced the local preview
+  `build/tessarchy-logo-animation.gif`. This is the component's animation, not
+  a generated mockup. It assembles six original faces with rotation, runs once
+  for 1.6 seconds, and settles. Qt tests verify no idle loop and reduced motion.
+
+Screenshots are ignored under `build/`, including adaptive/tablet/desktop and
+Settings captures. Hardware touch, real Wi-Fi/modem/audio/battery integration,
+multiple physical outputs, exhaustive fractional scaling, and ISO builds/boots
+remain pending. Auto detection classifies logical display size; it does not
+identify physical device type or available input hardware. No secure lock claim.
