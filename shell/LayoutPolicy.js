@@ -23,3 +23,14 @@ function columns(mode, width) {
 function panelWidth(mode, width) {
     return mode === "phone" ? width : Math.min(Math.max(0, width - 24), mode === "desktop" ? 760 : 720);
 }
+
+function duration(seconds) {
+    const total = Math.floor(Number(seconds) || 0);
+    if (!isFinite(total) || total <= 0) return "";
+    if (total < 60) return "less than a minute";
+    let minutes = Math.round(total / 60);
+    const hours = Math.floor(minutes / 60);
+    minutes = minutes % 60;
+    if (hours > 0) return hours + "h " + String(minutes).padStart(2, "0") + "m";
+    return minutes + "m";
+}

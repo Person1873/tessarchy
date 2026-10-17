@@ -107,4 +107,17 @@ TestCase {
         compare(Policy.panelWidth("phone", 320), 320);
         compare(Policy.columns("desktop", 760), 4);
     }
+    function test_duration_formatting() {
+        compare(Policy.duration(0), "");
+        compare(Policy.duration(-5), "");
+        compare(Policy.duration(undefined), "");
+        compare(Policy.duration(NaN), "");
+        compare(Policy.duration(30), "less than a minute");
+        compare(Policy.duration(90), "2m");
+        compare(Policy.duration(3540), "59m");
+        compare(Policy.duration(3599), "1h 00m");
+        compare(Policy.duration(3600), "1h 00m");
+        compare(Policy.duration(3660), "1h 01m");
+        compare(Policy.duration(7325), "2h 02m");
+    }
 }

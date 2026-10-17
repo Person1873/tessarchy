@@ -331,6 +331,18 @@ ShellRoot {
                                             onClicked: root.audioSink.audio.volume = Math.min(1, root.audioSink.audio.volume + 0.05)
                                         }
                                     }
+                                    Text {
+                                        text: "POWER"
+                                        color: "#8da7b9"
+                                        font {
+                                            pixelSize: 11
+                                            letterSpacing: 2
+                                        }
+                                    }
+                                    PowerPanel {
+                                        Layout.fillWidth: true
+                                        accentColor: root.accentColor
+                                    }
                                 }
                                 RowLayout {
                                     visible: panel.page === "status"
