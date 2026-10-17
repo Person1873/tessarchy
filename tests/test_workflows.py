@@ -9,6 +9,23 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Workflows(unittest.TestCase):
+    def test_site_builder_refuses_existing_output_and_bundles_originals(self):
+        import sys
+        import zipfile
+        destination = self.home / 'site'
+        command = [sys.executable, str(ROOT / 'scripts/build-site.py'),
+                   '--output', str(destination)]
+        result = subprocess.run(command, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        with zipfile.ZipFile(destination / 'assets/screenshots.zip') as archive:
+            self.assertEqual(archive.read('phone-switcher.png'),
+                             (ROOT / 'assets/screenshots/phone-switcher.png').read_bytes())
+        sentinel = destination / 'keep.txt'
+        sentinel.write_text('unrelated content')
+        result = subprocess.run(command, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(sentinel.read_text(), 'unrelated content')
+
     def setUp(self):
         self.scratch = tempfile.TemporaryDirectory(prefix='tessarchy-test-')
         self.addCleanup(self.scratch.cleanup)
@@ -147,6 +164,7 @@ class Workflows(unittest.TestCase):
         folder.mkdir(parents=True)
         script = r'''local callbacks, actions = {}, {}
 hl = {
+    layer_rule = function() end,
     monitor = function() end, config = function() end, bind = function() end,
     on = function(name, callback) callbacks[name] = callback end,
     dispatch = function(action) table.insert(actions, action) end,
