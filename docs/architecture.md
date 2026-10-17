@@ -43,8 +43,12 @@ The original T logo is built from six SVG faces. BrandMark animates assembly and
 rotation once, settles after 1.6 seconds, and supports tap/replay and reduced
 motion. It has no idle animation loop. The clock updates once per minute; mode
 selection is reactive, with no polling. Optional PipeWire integration is loaded
-only when the service socket exists at launch. No hardware Wi-Fi/modem control
-or secure locking is claimed.
+only when the service socket exists at launch. Brightness control probes the
+first backlight once at shell start (nothing is shown without one), writes
+through `session/tessera-brightness` (brightnessctl when present, else sysfs)
+with rapid changes coalesced into one call, and the brightness keys invoke the
+same helper, which is silent on machines with no backlight. No hardware
+Wi-Fi/modem control or secure locking is claimed.
 
 ## Verified against installed files, 2026-10-16
 

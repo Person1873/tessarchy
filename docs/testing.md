@@ -237,3 +237,24 @@ Settings captures. Hardware touch, real Wi-Fi/modem/audio/battery integration,
 multiple physical outputs, exhaustive fractional scaling, and ISO builds/boots
 remain pending. Auto detection classifies logical display size; it does not
 identify physical device type or available input hardware. No secure lock claim.
+
+## Screen brightness control, 2026-10-17
+
+Implemented, static validation only; backlight validation pending.
+
+- `session/tessera-brightness` reads (`get`), writes (`set 1-100`) and steps
+  (`up`/`down` by 10%) the first backlight device, preferring `brightnessctl`
+  (added to the live image) and falling back to sysfs. Invalid arguments exit
+  64 before touching any device; a machine with no backlight exits 3.
+- Quick controls gains a DISPLAY section that probes once at shell start and
+  stays hidden unless a percentage comes back; slider and −/Dim/Bright/+
+  controls coalesce rapid changes into one helper call. XF86MonBrightnessUp/
+  Down are bound to the helper in `session/hyprland.lua`.
+- Validation: argument-validation cases for all bad invocations (11/11
+  workflow tests), a Lua binding assertion that both brightness keys dispatch
+  `tessera-brightness up/down`, staging asserts the helper is executable and
+  `brightnessctl` ships in the image, and install/uninstall round-trips remove
+  every new file. 15/15 Qt Quick results on the dev host.
+- Not performed: actual backlight reads/writes (this host has no backlight),
+  key repeat behavior on hardware, and interaction with a real integrated
+  panel. These remain on the manual list.

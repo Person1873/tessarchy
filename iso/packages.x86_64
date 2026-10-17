@@ -18,5 +18,6 @@ xdg-desktop-portal-gtk
 pipewire
 pipewire-pulse
 wireplumber
+brightnessctl
 ttf-dejavu
 dbus

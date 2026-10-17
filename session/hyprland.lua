@@ -44,6 +44,9 @@ hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "to
 hl.bind("SUPER + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("tessera-shell"))
 hl.bind("SUPER + SHIFT + E", hl.dsp.exit())
+-- Brightness keys use the shipped helper; it is silent without a backlight.
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("tessera-brightness up"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("tessera-brightness down"), { locked = true, repeating = true })
 -- Preferences are user-owned, never installed over existing files.
 local home = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
 local preferences = home .. "/tessarchy/preferences.lua"

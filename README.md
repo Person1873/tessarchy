@@ -30,6 +30,8 @@ live image is in development.
   labels, and reduced motion.
 - Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
   controls. Wireless and modem backends remain to be connected.
+- Screen brightness in quick controls wherever a backlight exists, with
+  XF86MonBrightness keys wired to the same shipped helper.
 - An expandable launcher for Firefox and Foot.
 - A scrollable window overview with application switching and maximize/restore.
 - Confirmation before closing a window or ending the session.

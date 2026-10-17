@@ -45,6 +45,14 @@ class Workflows(unittest.TestCase):
         self.assertEqual(preferences.read_text(), '-- mine')
         self.assertEqual(shell_settings.read_text(), '[Shell]\nlayoutMode=tablet\n')
 
+    def test_brightness_helper_validates_arguments(self):
+        helper = ROOT / 'session/tessera-brightness'
+        for args in ([], ['bogus'], ['get', 'extra'], ['set'], ['set', '0'], ['set', '101'],
+                     ['set', 'abc'], ['set', '-5'], ['step', '10']):
+            result = subprocess.run([str(helper), *args], env=self.env,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 64, args)
+
     def test_existing_launcher_refused_before_installing_data(self):
         launcher = self.home / '.local/bin/start-tessarchy'
         launcher.parent.mkdir(parents=True)
@@ -145,15 +153,23 @@ class Workflows(unittest.TestCase):
             self.skipTest('Lua interpreter unavailable')
         folder = self.home / 'config/tessarchy'
         folder.mkdir(parents=True)
-        script = r'''local callbacks, actions = {}, {}
+        script = r'''local callbacks, actions, binds = {}, {}, {}
 hl = {
-    monitor = function() end, config = function() end, bind = function() end,
+    monitor = function() end, config = function() end,
+    bind = function(key, action, options) table.insert(binds, { key = key, action = action, options = options }) end,
     on = function(name, callback) callbacks[name] = callback end,
     dispatch = function(action) table.insert(actions, action) end,
-    dsp = { exec_cmd = function() end, exit = function() end,
+    dsp = { exec_cmd = function(command) return command end, exit = function() end,
             window = { fullscreen = function(action) return action end } }
 }
 dofile(arg[1])
+local brightness = {}
+for _, entry in ipairs(binds) do
+    if entry.key == "XF86MonBrightnessUp" then brightness.up = entry.action end
+    if entry.key == "XF86MonBrightnessDown" then brightness.down = entry.action end
+end
+assert(brightness.up == "tessera-brightness up", "brightness up binding missing")
+assert(brightness.down == "tessera-brightness down", "brightness down binding missing")
 local function check(mode, width, height, scale, transform, floating, fullscreen, expected)
     local f = assert(io.open(os.getenv("XDG_CONFIG_HOME") .. "/tessarchy/shell.ini", "w"))
     f:write("[Other]\nlayoutMode=desktop\n[Shell]\nlayoutMode=" .. mode .. "\n")
@@ -218,6 +234,8 @@ check("phone", 400, 800, 1, 0, false, 2, 0)
         self.assertNotIn('linux-firmware', (profile / 'packages.x86_64').read_text())
         self.assertTrue((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/systemd-networkd.service').is_symlink())
         self.assertTrue((profile / 'airootfs/usr/bin/start-tessarchy').stat().st_mode & 0o111)
+        self.assertTrue((profile / 'airootfs/usr/bin/tessera-brightness').stat().st_mode & 0o111)
+        self.assertIn('brightnessctl', (profile / 'packages.x86_64').read_text())
         self.assertIn('u tess 1000', (profile / 'airootfs/etc/sysusers.d/tessarchy.conf').read_text())
         result = subprocess.run(command, env=env, capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)

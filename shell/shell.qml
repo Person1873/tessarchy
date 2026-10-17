@@ -282,6 +282,20 @@ ShellRoot {
                                         wrapMode: Text.WordWrap
                                     }
                                     Text {
+                                        visible: brightnessControl.available
+                                        text: "DISPLAY"
+                                        color: "#8da7b9"
+                                        font {
+                                            pixelSize: 11
+                                            letterSpacing: 2
+                                        }
+                                    }
+                                    BrightnessControl {
+                                        id: brightnessControl
+                                        Layout.fillWidth: true
+                                        accentColor: root.accentColor
+                                    }
+                                    Text {
                                         text: "SOUND"
                                         color: "#8da7b9"
                                         font {
