@@ -9,11 +9,13 @@ See [Operation Tessarchy](../Operation-TESSARCHY.md) for the design brief.
 - Swipeable app cards, live previews when available, icon actions, confirmed close.
 - Automatic Phone/Tablet/Desktop layouts with saved overrides and appearance settings.
 - Original wallpaper, finite cube logo animation, reduced motion.
-- Experimental x86_64 Alpha 1 live ISO, observed BIOS/UEFI QEMU/KVM GUI boots.
+- Experimental x86_64 Alpha 2 live ISO, observed BIOS/UEFI QEMU/KVM GUI boots.
 - GitHub Pages project site, real screenshot pack, automatic repository deployments.
 
-The published Alpha 1 ISO predates Quiet Edge and the card switcher. New UI work
-is tested in the installed development VM until another ISO is built and booted.
+Alpha 2 includes Quiet Edge, the card switcher, and pull-down radio and layout
+controls. BIOS and non-Secure-Boot UEFI graphical boots were observed in
+diskless QEMU/KVM. Pending contributor pull requests remain outside this
+release; see the [GitHub review](github-review.md).
 
 ## Next implementation steps
 

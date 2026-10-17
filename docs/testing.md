@@ -346,3 +346,50 @@ These controls do not select networks, pair Bluetooth devices or provision mobil
 service. Airplane off unblocks detected radios; previous per-radio selections are
 not restored. No dependencies, services or host desktop configuration were installed
 or changed. This UI update is not included in the published Alpha 1 tester ISO.
+
+## Pull-down layout selector — 2026-10-17
+
+Actual validation:
+
+- `./scripts/check.sh` passed with 17 Python tests and 19 Qt Quick results;
+  known PanelWindow metadata warnings remain and ShellCheck is unavailable.
+- Installed the updated QML in the existing 400×800 development guest. Verified
+  that the home-screen mode button is absent and the glass pull-down shows
+  Auto, Phone, Tablet, and Desktop controls with targets at least 48px.
+- Clicked Desktop in the pull-down, observed the active label and desktop dock
+  update, and verified `layoutMode=desktop` persisted in the guest preferences.
+  Clicked Auto, verified `layoutMode=auto` and the Phone layout returned.
+- Collapsed the sheet using its handle and captured updated home and controls
+  screenshots directly from the guest. No host desktop configuration changed.
+
+Still planned/manual: physical touch and the selector on larger displays.
+The published Alpha 1 ISO does not contain this change.
+
+## Alpha 2 release rebuild — 2026-10-17
+
+Actual validation:
+
+- Reviewed open GitHub issues, pull-request status and Actions history. Recorded
+  the inventory in `docs/github-review.md`; pending collaborator PRs are unchanged.
+- Host `./scripts/check.sh` passed: 17 Python tests, 19 Qt Quick results, Lua
+  syntax, Hyprland configuration verification and qmllint. Known PanelWindow
+  metadata warnings remain; ShellCheck is unavailable locally.
+- Actions run 39063437439 built the ISO from
+  `aa8b59a73a8d5d6b1d3fab6c17272e68e0bfac58`, verified its checksum,
+  and captured diskless BIOS and non-Secure-Boot UEFI QEMU/KVM boots.
+- Inspected both final 1280×800 screenshots: Tessera's graphical home screen,
+  current wallpaper/logo, glass status bar and floating dock are visible.
+  Each guest used 2 GiB RAM, 2 vCPUs and virtio graphics, with no disk or NIC.
+- Downloaded the published Alpha 2 ISO and verified its complete local SHA-256
+  against `SHA256SUMS` and the GitHub release asset digest.
+- Corrected the GitHub Pages environment policy to permit `v*` release tags
+  alongside the existing `main` and `build/live-iso` branches. The release-event
+  deployment passed on retry; no collaborator access or branch history changed.
+- Built the website with public Alpha 2 metadata and verified its download
+  selection and all seven screenshot originals in the bundled ZIP.
+- Package manifest identifies Hyprland 0.56.2-4, Quickshell 0.3.2-1, Python
+  3.14.8-1 and util-linux 2.42.4-1. Alpha 2 checksum matches the release digest.
+
+Earlier development-VM interaction tests remain separate from these ISO boot
+checks. Physical touch, network/radio/audio behavior, Secure Boot, phone
+hardware and application acceptance are still unverified in this exact image.

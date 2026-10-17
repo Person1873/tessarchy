@@ -12,7 +12,7 @@ Selected ARM devices are a later goal with explicit hardware support. The
 project ships session source, development tooling and an experimental x86_64
 live tester ISO.
 
-[Download the tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.1) ·
+[Download the tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2) ·
 [Project website](https://thediamondsaint.github.io/tessarchy/) ·
 [Getting started](#quick-start-use-the-basic-arch-vm) ·
 [Architecture](docs/architecture.md) ·
@@ -31,7 +31,7 @@ live tester ISO.
 - Settings for layout mode, accent, opacity, wallpaper shade, clock, navigation
   labels, and reduced motion.
 - A pull-down glass panel with airplane mode, hardware-aware Wi-Fi/Bluetooth/
-  cellular radio switches, and optional PipeWire volume controls. Network
+  cellular radio switches, layout selection, and optional PipeWire volume controls. Network
   selection, pairing, and connection-strength backends remain planned; see
   [radio controls](docs/radio-controls.md).
 - An expandable launcher for Firefox and Foot.
@@ -43,16 +43,15 @@ live tester ISO.
 
 ## Project status
 
-**Early prototype.** A user has confirmed that Tessera runs in the basic Arch
-QEMU guest. Ten workflow tests, Qt Quick layout/motion checks, and available
-static checks pass.
-Detailed touchscreen, scaling, focus, and window-action acceptance tests remain
-pending. Two development packages have been built locally; they are not yet
-published packages. The [Alpha 1 tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.1)
-has been published and observed booting into Tessera in BIOS and UEFI QEMU/KVM.
-It is a disposable live environment, not an installer or a hardware-certified release.
-The published Alpha 1 ISO predates the Quiet Edge and card-switcher changes
-shown on the website; those are development-VM features.
+**Early prototype.** The current source passes 17 Python tests, 19 Qt Quick
+results, and available static checks. The [Alpha 2 tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2)
+has been observed booting into Tessera in BIOS and non-Secure-Boot UEFI QEMU/KVM.
+It includes Quiet Edge, the card switcher, the mobile status clock, and pull-down
+radio and layout controls. Checksums, package versions and boot evidence are
+attached to the release. It is a disposable live environment with no installer
+or persistence. Physical touchscreen and device acceptance testing remain
+pending. The [GitHub review](docs/github-review.md) lists pending contributions;
+collaborators’ unmerged features are not included in this ISO.
 
 Text input currently requires a physical keyboard. New ordinary windows maximize
 in Phone/Tablet modes and start tiled in Desktop mode. Existing windows stay in

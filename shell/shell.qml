@@ -62,7 +62,6 @@ ShellRoot {
             readonly property bool isPhone: mode === "phone"
             readonly property int navHeight: isPhone ? 76 : 84
             readonly property int launcherRows: Math.ceil(4 / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
-            readonly property string modeLabel: (shellPreferences.layoutMode === "auto" ? "Auto · " : "") + Policy.title(mode)
             SystemClock {
                 id: clock
                 precision: SystemClock.Minutes
@@ -408,18 +407,9 @@ ShellRoot {
                     Item {
                         Layout.fillWidth: true
                     }
-                    TouchButton {
-                        visible: surface.modelData.width >= 650
-                        text: surface.modeLabel
-                        implicitWidth: 170
-                        implicitHeight: 48
-                        Layout.minimumHeight: 48
-                        accentColor: root.accentColor
-                        onClicked: { statusBar.drawerOpen = false; panel.showPage("settings"); }
-                    }
                     // Only registered application icons appear; no simulated signals.
                     RowLayout {
-                        Layout.maximumWidth: Math.max(0, surface.modelData.width - (surface.modelData.width >= 650 ? 540 : 370))
+                        Layout.maximumWidth: Math.max(0, surface.modelData.width - 370)
                         clip: true
                         spacing: 0
                         Repeater {
@@ -518,6 +508,8 @@ ShellRoot {
                         id: quickSheet
                         width: parent.width
                         radios: radioBackend
+                        preferences: shellPreferences
+                        activeMode: Policy.title(surface.mode)
                         date: clock.date
                         use24Hour: shellPreferences.use24Hour
                         accentColor: root.accentColor
@@ -595,18 +587,6 @@ ShellRoot {
                             bold: true
                             letterSpacing: 5
                         }
-                    }
-                    TouchButton {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: surface.modeLabel + "  ·  Change"
-                        implicitWidth: Math.min(surface.modelData.width - 32, 260)
-                        accentColor: root.accentColor
-                        background: Rectangle {
-                            radius: 24
-                            color: "#70101b30"
-                            border.color: Qt.alpha(root.accentColor, 0.25)
-                        }
-                        onClicked: panel.showPage("settings")
                     }
                 }
             }
