@@ -8,7 +8,7 @@ published Alpha 1 ISO. The ISO predates Quiet Edge and the card switcher.
 - `phone-launcher.png`: glass app launcher, 400 × 800.
 - `phone-switcher.png`: real window previews and glass icon actions, 400 × 800.
 - `phone-settings.png`: saved layout and appearance controls, 400 × 800.
-- `phone-controls.png`: pull-down airplane/radio/volume panel, 400 × 800.
+- `phone-controls.png`: pull-down airplane/radio/volume panel and layout selector, 400 × 800.
 - `tablet-home.png`: automatic Tablet mode, 800 × 1280.
 - `desktop-home.png`: automatic Desktop mode, 1280 × 800.
 

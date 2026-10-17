@@ -9,6 +9,11 @@ The status clock uses compact semibold digits without a leading hour zero or
 AM/PM suffix. It follows the saved 12/24-hour choice; its accessible name and
 the expanded clock retain AM/PM when appropriate.
 
+The layout selector is in this sheet rather than on the home screen or status
+bar. Choose Auto, Phone, Tablet, or Desktop; the active layout is shown above
+the buttons. Manual choices persist, and Auto resumes size-based detection.
+The same preferences remain available in Settings.
+
 ## What the switches control
 
 `RadioBackend.qml` runs the installed Python helper with argument arrays. The

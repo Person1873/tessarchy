@@ -5,6 +5,8 @@ import QtQuick.Layouts
 ColumnLayout {
     id: sheet
     required property var radios
+    required property var preferences
+    required property string activeMode
     required property var date
     property bool use24Hour: true
     property color accentColor: "#a9e8d5"
@@ -56,6 +58,37 @@ ColumnLayout {
                 enabled: radio.available && !radio.hardBlocked && sheet.radios.state.canControl && !sheet.radios.busy
                 accentColor: sheet.accentColor
                 onClicked: sheet.radios.toggle(modelData.name)
+            }
+        }
+    }
+    Text {
+        text: "Layout · " + sheet.activeMode
+        color: "#a7bdc6"
+        font.pixelSize: 12
+    }
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 8
+        Repeater {
+            model: [
+                {value: "auto", label: "Auto", icon: "auto"},
+                {value: "phone", label: "Phone", icon: "phone"},
+                {value: "tablet", label: "Tablet", icon: "tablet"},
+                {value: "desktop", label: "Desktop", icon: "desktop"}
+            ]
+            delegate: NavButton {
+                required property var modelData
+                text: modelData.label
+                symbol: modelData.icon
+                implicitHeight: 56
+                Layout.minimumHeight: 56
+                selected: sheet.preferences.layoutMode === modelData.value
+                accentColor: sheet.accentColor
+                Accessible.name: modelData.value === "auto" ? "Automatic layout" : modelData.label + " layout"
+                onClicked: {
+                    sheet.preferences.layoutMode = modelData.value;
+                    sheet.preferences.sync();
+                }
             }
         }
     }

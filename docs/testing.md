@@ -346,3 +346,21 @@ These controls do not select networks, pair Bluetooth devices or provision mobil
 service. Airplane off unblocks detected radios; previous per-radio selections are
 not restored. No dependencies, services or host desktop configuration were installed
 or changed. This UI update is not included in the published Alpha 1 tester ISO.
+
+## Pull-down layout selector — 2026-10-17
+
+Actual validation:
+
+- `./scripts/check.sh` passed with 17 Python tests and 19 Qt Quick results;
+  known PanelWindow metadata warnings remain and ShellCheck is unavailable.
+- Installed the updated QML in the existing 400×800 development guest. Verified
+  that the home-screen mode button is absent and the glass pull-down shows
+  Auto, Phone, Tablet, and Desktop controls with targets at least 48px.
+- Clicked Desktop in the pull-down, observed the active label and desktop dock
+  update, and verified `layoutMode=desktop` persisted in the guest preferences.
+  Clicked Auto, verified `layoutMode=auto` and the Phone layout returned.
+- Collapsed the sheet using its handle and captured updated home and controls
+  screenshots directly from the guest. No host desktop configuration changed.
+
+Still planned/manual: physical touch and the selector on larger displays.
+The published Alpha 1 ISO does not contain this change.
