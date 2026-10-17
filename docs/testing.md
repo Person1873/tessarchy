@@ -1615,3 +1615,21 @@ source tree, rejection of edited/missing launcher originals, legacy uninstall
 and long/empty event messages. No host settings, development
 installation or running VM were modified. Fractional-scale acceptance on a
 physical display remains pending.
+
+## Keyboard suppression while a shell page stays open — PR #20
+
+The shell already calls `tessarchy-osk hide` when a panel page opens and when
+quick controls opens. That one-time call does not prevent squeekboard from
+reappearing if a text-input app behind the open panel takes focus: it maps a new
+`osk` layer. This branch also listens for Hyprland `openlayer>>osk` while a
+shell page or quick-controls drawer is open, and hides the keyboard again.
+The separate file picker layer is unaffected.
+
+Earlier development-VM validation on the original PR branch (2026-10-17,
+800×1600 logical at scale 0.9, four Foot windows, `TESSARCHY_OSK=1`): with
+Recents open, shifting app focus showed the keyboard after each change on the
+control shell (#11), but left it hidden after each change and after one second
+with this guard; closing Recents restored auto-show on focus. This evidence is
+for the old branch, **not** a live test of the current rebase. The current
+rebase was checked with `./scripts/check.sh` on the host; guest behaviour and
+physical touch still require separate acceptance.
