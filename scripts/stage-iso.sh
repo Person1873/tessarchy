@@ -8,8 +8,9 @@ profile=$root/build/iso-profile
 [[ ! -e "$profile" ]] || { echo "Move/remove $profile before staging a fresh profile" >&2; exit 1; }
 mkdir -p "$root/build"
 cp -a -- "$base" "$profile"
-cat "$root/iso/packages.x86_64" >> "$profile/packages.x86_64"
-sort -u -o "$profile/packages.x86_64" "$profile/packages.x86_64"
+# Keep releng's boot machinery, but deliberately replace its rescue-tool suite.
+# No broad firmware bundles: this first image targets virtual x86_64 hardware.
+sort -u "$root/iso/packages.x86_64" > "$profile/packages.x86_64"
 # Keep the installed releng bootloader layout, mkinitcpio hooks and permissions.
 cat >> "$profile/profiledef.sh" <<'PROFILE'
 
@@ -36,11 +37,17 @@ cp -- "$root/session/hyprland.lua" "$airoot/usr/share/tessarchy/session/"
 install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$airoot/usr/bin/"
 install -m644 "$root/session/tessarchy.desktop" "$airoot/usr/share/wayland-sessions/"
 cp -a "$root/iso/airootfs/." "$airoot/"
+# Releng uses zsh for its root rescue login. Our smaller package set uses Bash.
+sed -i 's|^\(root:[^:]*:0:0:[^:]*:[^:]*:\).*|\1/usr/bin/bash|' "$airoot/etc/passwd"
 # Create the live user via systemd-sysusers, preserving base account databases.
 mkdir -p "$airoot/home/tess"
 cp "$root/iso/airootfs/etc/skel/.bash_profile" "$airoot/home/tess/.bash_profile"
 # Releng may enable SSH for rescue. Keep network services out of this prototype.
 find "$airoot/etc/systemd/system" -type l -name 'sshd.service' -delete
+mkdir -p "$airoot/etc/systemd/system/multi-user.target.wants"
+ln -sf /usr/lib/systemd/system/systemd-networkd.service "$airoot/etc/systemd/system/multi-user.target.wants/"
+ln -sf /usr/lib/systemd/system/systemd-resolved.service "$airoot/etc/systemd/system/multi-user.target.wants/"
+ln -sf /run/systemd/resolve/stub-resolv.conf "$airoot/etc/resolv.conf"
 printf 'Tessarchy live prototype. tty1: tess autologin; no password login.\n' > "$airoot/etc/issue"
 echo "Profile staged: $profile"
 echo "Review it, then run ./scripts/build-iso.sh"

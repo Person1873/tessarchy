@@ -152,3 +152,70 @@ newly installed kernel/modules only match after restarting. This launcher uses
 host launcher is the clearest path. Keep `VM_SSH_PORT=2222` when relaunching if
 using SSH. Retry the mount after logging back in. If it still fails, capture the
 full mount/modprobe output and `uname -r` rather than installing random packages.
+
+## Agent-connected phone layout, 2026-10-16
+
+The existing Basic guest was started with `VM_SSH_PORT=2222`, updated over SSH,
+and left running with Tessera. Guest source and installed defaults were backed
+up in `~/tessarchy-backups/`. A guest-only preference selects a supported QEMU
+mode rotated into a 432×768 logical phone layout:
+
+```lua
+hl.monitor({ output = "Virtual-1", mode = "1920x1080@60", position = "auto", scale = 2.5, transform = 1 })
+```
+
+This is in `~/.config/tessarchy/preferences.lua` inside the VM. Remove that
+monitor override and run `hyprctl reload` in the guest to restore the default
+display. Keep `VM_SSH_PORT=2222` when launching again for continued SSH access.
+The top bar reserves 48px and navigation 72px. Home opens apps, Recents switches
+windows, Back dismisses shell panels, and the top power icon opens confirmation.
+See [actual results](testing.md#phone-shell-and-ssh-guest-validation-2026-10-16).
+
+The rotated preference above was subsequently reverted after the user reported
+that QEMU displayed the session sideways. The current guest uses an upright
+1280×960 output at scale 2 (640×480 logical), with `transform = 0`:
+
+```lua
+hl.monitor({ output = "Virtual-1", mode = "1280x960@60", position = "auto", scale = 2, transform = 0 })
+```
+
+The previous guest preference was backed up before replacing it. A portrait
+compositor screenshot alone does not establish upright presentation in QEMU.
+
+## Native phone framebuffer and floating viewer
+
+The current guest preference supersedes the earlier rotated/landscape settings:
+
+```lua
+hl.monitor({ output = "Virtual-1", mode = "400x800@60", position = "auto", scale = 1, transform = 0 })
+```
+
+The actual monitor state confirmed this native portrait mode on the existing
+virtio GPU. No rotation is applied. The current QEMU host window was made
+floating and resized to 350×700, within the host's 1366×768 display. These are
+runtime adjustments to that window only; no host Hyprland configuration or
+persistent window rule was written. QEMU's Ctrl+Alt+M toggles its menu bar.
+
+The shell includes a wallpaper, SVG Tessarchy mark, translucent navigation and
+status bars, and wireless/cellular indicator slots. Slashed, dim indicators mean
+no backend/device is available. Tap the speaker for Quick Controls. Audio uses
+Quickshell's PipeWire integration when the launch-time PipeWire socket exists;
+otherwise controls are disabled. Start audio separately and restart Tessera to
+activate it later. Wireless/modem backend integration is still pending.
+
+## Adaptive shell and Settings
+
+Tap the top-right gear or the home mode badge to open Settings. Select Automatic,
+Phone, Tablet, or Desktop under Workspace mode. Automatic uses each output's
+logical size: shortest edge below 600 → Phone; otherwise width at least 1100 and
+height at least 650 → Desktop; remaining sizes → Tablet. The manual override is
+saved across restarts and applies to every output. It changes the shell layout
+and how new ordinary windows start, not the VM's actual resolution. Existing
+windows stay in place. Phone and Tablet start ordinary apps maximized; Desktop
+starts them tiled.
+
+Settings also offers Mint/Iris/Ice accents, bar opacity, wallpaper shade, clock
+format, navigation labels, reduced motion, logo replay, sound/connections, and
+confirmed session exit. Tap the home logo to replay its short assembly animation.
+Preferences are in guest `~/.config/tessarchy/shell.ini` and survive dev uninstall.
+The VM remains at the native 400×800 phone mode; no host configuration changed.
