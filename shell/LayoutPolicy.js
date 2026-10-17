@@ -51,3 +51,33 @@ function btBatteryLabel(available, level) {
     if (!available || typeof level !== "number" || !isFinite(level)) return "";
     return " · " + Math.round(Math.max(0, Math.min(1, level)) * 100) + "%";
 }
+
+// Prefer a playing media player, then the first registered player.
+function preferredPlayerIndex(playing) {
+    for (let i = 0; i < playing.length; i++) if (playing[i]) return i;
+    return playing.length ? 0 : -1;
+}
+
+function mediaSummary(title, artist) {
+    return (title || "Unknown track") + " — " + (artist || "Unknown artist");
+}
+
+function nodeLabel(description, nickname, name) {
+    for (const value of [description, nickname, name]) {
+        if (value !== undefined && value !== null && String(value).trim()) return String(value).trim();
+    }
+    return "Unknown device";
+}
+
+function streamLabel(app, media, name) {
+    const label = nodeLabel(app, media, name);
+    return label === "Unknown device" ? "Unknown app" : label;
+}
+
+function playbackStream(mediaClass) {
+    return mediaClass === "Stream/Output/Audio";
+}
+
+function volumePercent(value) {
+    return Math.round(Math.max(0, Math.min(1, Number(value) || 0)) * 100);
+}
