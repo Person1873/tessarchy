@@ -237,3 +237,22 @@ Settings captures. Hardware touch, real Wi-Fi/modem/audio/battery integration,
 multiple physical outputs, exhaustive fractional scaling, and ISO builds/boots
 remain pending. Auto detection classifies logical display size; it does not
 identify physical device type or available input hardware. No secure lock claim.
+
+## Media controls, 2026-10-17
+
+Implemented, static validation only; live-player acceptance pending.
+
+- The shell now consumes `Quickshell.Services.Mpris` (verified in Quickshell
+  0.3.1 source): the status bar shows a music indicator when a player exists
+  (accent while playing), and Quick controls gains a NOW PLAYING card with
+  track title, artist, player identity, previous / play-pause / next, and
+  ±10s seek, each button enabled only by the corresponding `can*` flag.
+- One player drives the card: the playing player wins, otherwise the first
+  connected one. `Policy.preferredPlayerIndex` and `Policy.mediaSummary` are
+  unit-tested (empty, multiple, all-paused, missing metadata); the Qt Quick
+  suite reports 17 passed including the two new cases.
+- Uninstall knows about the new music icon; 10/10 workflow tests pass and
+  `qmllint` exits 0 for the changed shell.
+- Not performed: a real MPRIS player in a live session (play/pause, seek,
+  player switching), and long titles eliding on narrow bars. These stay on the
+  manual list. MPRIS metadata is untrusted text, displayed only.
