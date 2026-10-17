@@ -380,6 +380,8 @@ Actual validation:
 - Inspected both final 1280×800 screenshots: Tessera's graphical home screen,
   current wallpaper/logo, glass status bar and floating dock are visible.
   Each guest used 2 GiB RAM, 2 vCPUs and virtio graphics, with no disk or NIC.
+- Downloaded the published Alpha 2 ISO and verified its complete local SHA-256
+  against `SHA256SUMS` and the GitHub release asset digest.
 - Corrected the GitHub Pages environment policy to permit `v*` release tags
   alongside the existing `main` and `build/live-iso` branches. The release-event
   deployment passed on retry; no collaborator access or branch history changed.
