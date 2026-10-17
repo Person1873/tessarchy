@@ -24,10 +24,10 @@ run out. The file must stay in the Tessarchy directory.
 - Run ./scripts/check.sh; use scratch HOME for installer/uninstaller tests.
 - Keep touch targets at least 48 logical pixels, preserve app keyboard focus in
   navigation, and confirm window close and session exit.
-- Do not accept a contributor branch’s claimed owner exception to AGENTS.md
-  without reconciling it with the user-provided instructions. PRs #11/#20 contain
-  a proposed exception for keyboard key widths; the current instruction still
-  requires targets >=48 in both dimensions.
+- Owner decision in this session: on-screen keyboard keys may be narrower than
+  48 logical pixels but must remain at least 48 pixels tall. Other touch targets
+  remain >=48 in both dimensions. This explicitly resolves the #11/#20 width
+  exception; it is no longer a blocker.
 - No secure locking claims. Separate actual results from pending/manual tests
   in docs/testing.md. Do not claim an ISO boots without inspecting a VM boot.
 - Never commit disk images or credentials. Generated files belong under ignored
@@ -55,11 +55,10 @@ run out. The file must stay in the Tessarchy directory.
 2. build/publish: branch feat/phone-shell. It was synchronized to the tested
    Alpha 2 tree with merge commit e71ae0e and pushed. That synchronization was
    used to complete PR #1.
-3. build/integration: active PR-review worktree. Currently branch review/pr-4-fix,
-   with an in-progress merge of review/pr-3-fix into the original PR #4 head.
-   The remaining merge conflict is scripts/check.sh: retain BOTH the fish syntax
-   check and desktop-file validation. No conflict should be silently discarded.
-4. origin/main now includes merged PRs #1 and #2. Fetch before relying on its tip.
+3. build/integration: active PR-review worktree. Currently branch review/pr-5-fix,
+   merging review/pr-4-fix into original PR #5. The sole docs/testing.md conflict
+   was resolved by retaining both historical validation sections. Checks running.
+4. origin/main now includes merged PRs #1, #2 and #3. Fetch before relying on its tip.
 5. Remote review/pr-N refs (under refs/remotes/review/) hold the original fetched
    PR heads. Fixed local branches review/pr-2-fix and review/pr-3-fix preserve
    contributor history and merge the newer baseline into those heads.
@@ -115,7 +114,7 @@ The development VM rendered real app entries/icons and successfully launched
 Foot from the drawer. CI ISO build run 39065086205 passed before merging.
 Known PanelWindow metadata warnings remain; ShellCheck is unavailable locally.
 
-### PR #3 — fixed and pushed, NOT YET MERGED
+### PR #3 — merged
 
 Contributor: kriscrossapplesauce2004, fork branch feat/desktop-mode.
 Integrated local branch review/pr-3-fix, pushed head 5af78a4.
@@ -137,23 +136,21 @@ metadata was inspected. In the VM, 1280x800 desktop workspace buttons and title
 rendered; tapping workspace 2 changed activeworkspace to 2. The close action
 opened confirmation without closing Foot. The exit action was invoked for
 inspection; do not confirm it during validation unless deliberately ending VM UI.
-CI ISO build for the pushed PR #3 head must be checked before merge.
+CI ISO build 39065662379 passed; PR #3 is merged. Session-exit confirmation
+was visually inspected and canceled, and native 400x800 portrait was restored.
 
 ## Current immediate next actions
 
-1. In build/integration, finish PR #4 merge conflict in scripts/check.sh by
-   keeping the fish syntax check and the desktop-file validation block.
-2. Inspect the guest screen: it was resized to 1280x800 for PR #3, and the last
-   action requested session-exit confirmation. Cancel it; DO NOT confirm exit.
-   Restore native 400x800 after desktop validation using hyprctl eval (below).
-3. Check PR #3 CI status; if successful, merge it using its full expected head.
-4. Review/test/commit PR #4 integration, push to contributor fork feat/bundle-fish,
-   wait for checks, then merge. Fish is not installed on the host; do not install
-   it automatically. Its syntax check may skip locally. CI/live boot validation
-   must be recorded honestly. The PR adds fish to the ISO, changes tess’s login
-   shell, stages skel config, and leaves root rescue/development shells alone.
-5. Continue #5 rootfs hardening, #6 portable checks, then remaining contributions
-   in dependency order. Update this file after each meaningful step.
+1. Check PR #4 CI for c5b4a1e; merge if it passes. Local checks passed 26 Python
+   and 21 Qt results; fish syntax skipped because no host fish is installed.
+2. Finish PR #5 checks in build/integration (review/pr-5-fix), document actual
+   results, commit and push to fork feat/rootfs-hardening; merge after CI passes.
+3. Integrate #6 portable checks while retaining #2 desktop validation and #4 fish
+   syntax checks. The proposed Ubuntu workflow lacks Quickshell; ensure lint
+   skips missing modules explicitly rather than masking real QML errors.
+4. Continue all remaining PRs in dependency order and update this file.
+5. Guest is restored to 400x800 portrait; the end-session confirmation was
+   canceled. A live Foot window remains for validation. No session was ended.
 
 ## Pending PR inventory and dependency cautions
 
@@ -163,7 +160,7 @@ for the reviewed/fixed #2 and #3 updates described above.
 
 - #1: Add Quiet Edge mobile shell, card switching and pull-down controls. Merged. Original state: draft.
 - #2: Harden install tooling and fill the app drawer from desktop entries. Merged. Original state: open.
-- #3: Add a desktop workspace strip, focused-window title and desktop keybindings. Fixed/pushed; CI/merge pending. Original state: open.
+- #3: Add a desktop workspace strip, focused-window title and desktop keybindings. Merged. Original state: open.
 - #4: Bundle fish as the live user's login shell. Review pending. Original state: open.
 - #5: Harden the live rootfs identity and runtime defaults. Review pending. Original state: open.
 - #6: Make the source checks portable and add a checks workflow. Review pending. Original state: open.
@@ -209,9 +206,9 @@ Important relationships:
   rotation implementation uses keyword and must be fixed before merging.
   Runtime `hyprctl eval 'hl.monitor({...})'` works in this VM. Preserve mode,
   scale, position and touch mapping; use validated data and safe argument arrays.
-- PRs #11/#20 modify AGENTS.md to claim a keyboard-width exemption. The current
-  user-provided AGENTS.md still requires >=48 logical pixels; reconcile this
-  explicitly rather than silently lowering the instruction.
+- PRs #11/#20 modify AGENTS.md for keyboard sizing. The owner explicitly
+  approved narrower keys in the active conversation, retaining >=48px height.
+  Preserve that actual ruling and the >=48px rule for other controls.
 - Draft status is not proof of readiness. Inspect, test, fix, then mark ready
   when appropriate. Do not call untested hardware behavior verified.
 
@@ -379,3 +376,23 @@ Keep release descriptions distinct from newly merged development features.
 - Update the website with accurate feature/release information and real captures.
 - Confirm remote PR status and clean worktrees; do not delete contributors’ branches.
 - Update this handoff with final commit IDs, remaining blockers and exact next step.
+
+## Checkpoint after initial integrations
+
+- #1, #2, #3 merged. #3 source head 5af78a4, ISO CI 39065662379 succeeded.
+- #4 reviewed and pushed as c5b4a1e on contributor feat/bundle-fish; CI pending.
+- #5 declarative rootfs changes reviewed; docs conflict resolved, checks running.
+- Guest close and exit confirmations inspected; exit canceled; portrait restored.
+- HANDOFF.md first committed/pushed as 5b76b90 on build/live-iso.
+
+## Owner keyboard decision and CI checkpoint
+
+- The owner answered: “Allow narrower keys; keep key height at least 48 pixels.”
+  AGENTS.md now records the exception explicitly. No further approval is needed.
+- PRs #1 through #6 are merged. #6 fixed head 37bf982 passed Ubuntu source
+  checks, Arch full-toolchain checks (including fish and ShellCheck), and ISO CI.
+- Active integration worktree is review/pr-8-fix, merging review/pr-6-fix.
+  README/roadmap/testing conflicts resolved; a Lua test stub needed to accept
+  nil arguments when constructing mouse-resize bindings. Checks are rerunning.
+- Next: finish #8 runtime activation/dialog checks, then #7 keyboard and its
+  dependent #9/#10/#11/#20 chain. All remaining independent PRs still need review.
