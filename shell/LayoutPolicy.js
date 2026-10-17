@@ -23,3 +23,9 @@ function columns(mode, width) {
 function panelWidth(mode, width) {
     return mode === "phone" ? width : Math.min(Math.max(0, width - 24), mode === "desktop" ? 760 : 720);
 }
+
+// Hyprland monitor transforms: 0/1/2/3 are normal/90/180/270 degrees.
+function nextTransform(current) {
+    const value = Number.isInteger(current) ? current : 0;
+    return ((value + 1) % 4 + 4) % 4;
+}

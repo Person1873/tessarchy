@@ -28,7 +28,8 @@ live tester ISO.
 - An original mint-and-navy wallpaper, animated tessellated logo, and responsive
   tile launcher.
 - Settings for layout mode, accent, opacity, wallpaper shade, clock, navigation
-  labels, and reduced motion.
+  labels, reduced motion, and a screen-orientation control that rotates the
+  focused display in 90° steps.
 - Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
   controls. Wireless and modem backends remain to be connected.
 - An expandable launcher for Firefox and Foot.

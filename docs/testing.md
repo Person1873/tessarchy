@@ -267,3 +267,20 @@ touch hardware, multiple monitors, session exit, physical-device compatibility
 and persistence acceptance. The installed development VM's broader tests above
 do not establish these as passing in the ISO. No secure locking or Secure Boot
 support claim. Testers should begin in a disposable VM with a physical keyboard.
+
+## Screen rotation, 2026-10-17 UTC
+
+Actually performed:
+
+- `Policy.nextTransform` unit cases in `tests/qml/tst_layout.qml` (QML suite)
+  cover the 0→1→2→3→0 cycle, out-of-range and non-integer inputs.
+- A workflow test checks the Settings page wires `RotationControl`, the control
+  uses fixed-argv `Quickshell.execDetached(["hyprctl", "keyword", "monitor",
+  ...])`, and `uninstall-dev.sh` removes the new component.
+- Verified against Hyprland v0.56.2 `DispatcherTranslator.cpp` that no
+  keyword/monitor-transform dispatcher exists, so the runtime keyword form is
+  the supported path; the monitor keyword supports partial specs
+  (`<name>,transform,<n>`) that leave other settings untouched.
+- Not performed: rotating a real Hyprland session or checking touch input on a
+  rotated output. Requires hardware; the QEMU guest has a single virtual
+  monitor and TCG timing is too slow to judge input mapping.

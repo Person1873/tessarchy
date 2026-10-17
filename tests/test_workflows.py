@@ -182,6 +182,16 @@ check("phone", 400, 800, 1, 0, false, 2, 0)
                                 input=script, text=True, capture_output=True, env=self.env)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_rotation_control_installs_and_removes_cleanly(self):
+        uninstall = (ROOT / 'scripts/uninstall-dev.sh').read_text()
+        self.assertIn('RotationControl.qml', uninstall)
+        page = (ROOT / 'shell/components/SettingsPage.qml').read_text()
+        self.assertIn('RotationControl {', page)
+        control = (ROOT / 'shell/components/RotationControl.qml').read_text()
+        self.assertIn('Quickshell.execDetached([', control)
+        self.assertIn('"keyword", "monitor"', control)
+        self.assertIn('transform', control)
+
     def test_iso_staging_preserves_boot_assets_and_account_databases(self):
         # Minimal fixture exercises our assembly, not upstream archiso validity.
         repo = self.home / 'source'
