@@ -181,3 +181,24 @@ hl.monitor({ output = "Virtual-1", mode = "1280x960@60", position = "auto", scal
 
 The previous guest preference was backed up before replacing it. A portrait
 compositor screenshot alone does not establish upright presentation in QEMU.
+
+## Native phone framebuffer and floating viewer
+
+The current guest preference supersedes the earlier rotated/landscape settings:
+
+```lua
+hl.monitor({ output = "Virtual-1", mode = "400x800@60", position = "auto", scale = 1, transform = 0 })
+```
+
+The actual monitor state confirmed this native portrait mode on the existing
+virtio GPU. No rotation is applied. The current QEMU host window was made
+floating and resized to 350×700, within the host's 1366×768 display. These are
+runtime adjustments to that window only; no host Hyprland configuration or
+persistent window rule was written. QEMU's Ctrl+Alt+M toggles its menu bar.
+
+The shell includes a wallpaper, SVG Tessarchy mark, translucent navigation and
+status bars, and wireless/cellular indicator slots. Slashed, dim indicators mean
+no backend/device is available. Tap the speaker for Quick Controls. Audio uses
+Quickshell's PipeWire integration when the launch-time PipeWire socket exists;
+otherwise controls are disabled. Start audio separately and restart Tessera to
+activate it later. Wireless/modem backend integration is still pending.

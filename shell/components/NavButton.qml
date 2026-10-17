@@ -10,7 +10,7 @@ TouchButton {
     padding: 4
     background: Rectangle {
         radius: 16
-        color: control.down ? "#36516b" : control.selected ? "#294e57" : "transparent"
+        color: control.down ? "#8836516b" : control.selected ? "#66294e57" : "transparent"
     }
     contentItem: Item {
         Column {

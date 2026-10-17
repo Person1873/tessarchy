@@ -10,6 +10,18 @@ import Quickshell.Services.SystemTray
 import "components"
 
 ShellRoot {
+    id: root
+    // Bind these when wireless/modem integrations land. Never invent a signal.
+    property real wifiStrength: -1
+    property real cellularStrength: -1
+    readonly property var audioSink: audioLoader.item ? (audioLoader.item as AudioStatus).sink : null
+    readonly property bool audioAvailable: !!(audioSink && audioSink.ready && audioSink.audio)
+    readonly property int volumePercent: audioAvailable ? Math.round(audioSink.audio.volume * 100) : 0
+    Loader {
+        id: audioLoader
+        active: Quickshell.env("TESSARCHY_AUDIO") === "1"
+        source: "components/AudioStatus.qml"
+    }
     Variants {
         model: Quickshell.screens
         Scope {
@@ -32,7 +44,7 @@ ShellRoot {
                 }
                 implicitHeight: expanded ? Math.min(620, surface.modelData.height - 64) : 72
                 exclusiveZone: 72
-                color: "#101b30"
+                color: expanded ? "#ed101b30" : "#55101b30"
                 WlrLayershell.namespace: "tessera"
                 WlrLayershell.layer: WlrLayer.Top
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -62,7 +74,7 @@ ShellRoot {
                         Layout.fillHeight: true
                         spacing: 8
                         Text {
-                            text: panel.page === "apps" ? "Your apps" : panel.page === "windows" ? "Recent apps" : panel.page === "close" ? "Close this window?" : "End this session?"
+                            text: panel.page === "apps" ? "Your apps" : panel.page === "windows" ? "Recent apps" : panel.page === "close" ? "Close this window?" : panel.page === "status" ? "Quick controls" : "End this session?"
                             color: "#b7eee0"
                             font.pixelSize: 22
                             font.bold: true
@@ -186,6 +198,71 @@ ShellRoot {
                                     }
                                 }
                                 ColumnLayout {
+                                    visible: panel.page === "status"
+                                    Layout.fillWidth: true
+                                    spacing: 16
+                                    Text {
+                                        text: "CONNECTIONS"
+                                        color: "#8da7b9"
+                                        font {
+                                            pixelSize: 11
+                                            letterSpacing: 2
+                                        }
+                                    }
+                                    Text {
+                                        text: root.wifiStrength < 0 ? "Wi-Fi · unavailable" : "Wi-Fi · connected"
+                                        color: "#f0f5ff"
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                    }
+                                    Text {
+                                        text: root.cellularStrength < 0 ? "Cellular · no modem connected" : "Cellular · connected"
+                                        color: "#f0f5ff"
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                    }
+                                    Text {
+                                        text: "SOUND"
+                                        color: "#8da7b9"
+                                        font {
+                                            pixelSize: 11
+                                            letterSpacing: 2
+                                        }
+                                    }
+                                    Text {
+                                        text: root.audioAvailable ? (root.audioSink.audio.muted ? "Muted" : "Volume · " + root.volumePercent + "%") : "No audio output connected"
+                                        color: "#f0f5ff"
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                    }
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        TouchButton {
+                                            text: "−"
+                                            Accessible.name: "Decrease volume"
+                                            enabled: root.audioAvailable
+                                            Layout.fillWidth: true
+                                            Layout.preferredWidth: 1
+                                            onClicked: root.audioSink.audio.volume = Math.max(0, root.audioSink.audio.volume - 0.05)
+                                        }
+                                        TouchButton {
+                                            text: root.audioAvailable && root.audioSink.audio.muted ? "Unmute" : "Mute"
+                                            enabled: root.audioAvailable
+                                            Layout.fillWidth: true
+                                            Layout.preferredWidth: 1
+                                            onClicked: root.audioSink.audio.muted = !root.audioSink.audio.muted
+                                        }
+                                        TouchButton {
+                                            text: "+"
+                                            Accessible.name: "Increase volume"
+                                            enabled: root.audioAvailable
+                                            Layout.fillWidth: true
+                                            Layout.preferredWidth: 1
+                                            onClicked: root.audioSink.audio.volume = Math.min(1, root.audioSink.audio.volume + 0.05)
+                                        }
+                                    }
+                                }
+                                ColumnLayout {
                                     visible: panel.page === "session"
                                     Layout.fillWidth: true
                                     Text {
@@ -246,15 +323,15 @@ ShellRoot {
                 }
                 implicitHeight: 48
                 exclusiveZone: 48
-                color: "#101b30"
+                color: "#80101b30"
                 WlrLayershell.namespace: "tessera-status"
                 WlrLayershell.layer: WlrLayer.Top
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 16
+                    anchors.leftMargin: 18
                     anchors.rightMargin: 8
-                    spacing: 12
+                    spacing: 8
                     Text {
                         text: Qt.formatDateTime(clock.date, "hh:mm")
                         color: "#f0f5ff"
@@ -268,7 +345,7 @@ ShellRoot {
                     }
                     // Only registered application icons appear; no simulated signals.
                     RowLayout {
-                        Layout.maximumWidth: Math.max(48, surface.modelData.width - 230)
+                        Layout.maximumWidth: Math.max(0, surface.modelData.width - 330)
                         clip: true
                         spacing: 0
                         Repeater {
@@ -296,14 +373,42 @@ ShellRoot {
                             }
                         }
                     }
-                    Text {
-                        text: UPower.displayDevice.isPresent ? Math.round(UPower.displayDevice.percentage * 100) + "%" : "—"
-                        color: "#a9e8d5"
-                        font {
-                            pixelSize: 13
-                            bold: true
+                    StatusIcon {
+                        symbol: "cellular"
+                        label: "Cellular"
+                        strength: root.cellularStrength
+                    }
+                    StatusIcon {
+                        symbol: "wifi"
+                        label: "Wi-Fi"
+                        strength: root.wifiStrength
+                    }
+                    NavButton {
+                        text: root.audioAvailable ? "Volume " + root.volumePercent + "%" : "Quick controls · audio unavailable"
+                        symbol: root.audioAvailable && root.audioSink.audio.muted ? "volume-muted" : "volume"
+                        showLabel: false
+                        implicitWidth: 48
+                        implicitHeight: 48
+                        Layout.minimumHeight: 48
+                        Layout.fillWidth: false
+                        Layout.preferredWidth: 48
+                        selected: panel.page === "status"
+                        onClicked: panel.showPage("status")
+                    }
+                    RowLayout {
+                        spacing: 4
+                        Image {
+                            source: "icons/battery.svg"
+                            sourceSize.width: 22
+                            sourceSize.height: 22
+                            opacity: UPower.displayDevice.isPresent ? 1 : 0.35
                         }
-                        Accessible.name: UPower.displayDevice.isPresent ? "Battery " + text : "Battery status unavailable"
+                        Text {
+                            text: UPower.displayDevice.isPresent ? Math.round(UPower.displayDevice.percentage * 100) + "%" : "—"
+                            color: "#a9e8d5"
+                            font.pixelSize: 11
+                            Accessible.name: UPower.displayDevice.isPresent ? "Battery " + text : "Battery status unavailable"
+                        }
                     }
                     NavButton {
                         text: "Session"
@@ -332,26 +437,27 @@ ShellRoot {
                 WlrLayershell.namespace: "tessera-home"
                 WlrLayershell.layer: WlrLayer.Background
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                Image {
+                    anchors.fill: parent
+                    source: "artwork/aurora-fold.png"
+                    fillMode: Image.PreserveAspectCrop
+                }
                 Rectangle {
                     anchors.fill: parent
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0
-                            color: "#253b60"
-                        }
-                        GradientStop {
-                            position: 0.6
-                            color: "#18263f"
-                        }
-                        GradientStop {
-                            position: 1
-                            color: "#101b30"
-                        }
-                    }
+                    color: "#18040d19"
                 }
                 Column {
-                    anchors.centerIn: parent
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: Math.max(80, parent.height * 0.17)
                     spacing: 12
+                    Image {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        source: "artwork/tessarchy-mark.svg"
+                        sourceSize.width: 64
+                        sourceSize.height: 64
+                        width: 64
+                        height: 64
+                    }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDateTime(clock.date, "hh:mm")
