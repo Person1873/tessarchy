@@ -380,6 +380,11 @@ Actual validation:
 - Inspected both final 1280×800 screenshots: Tessera's graphical home screen,
   current wallpaper/logo, glass status bar and floating dock are visible.
   Each guest used 2 GiB RAM, 2 vCPUs and virtio graphics, with no disk or NIC.
+- Corrected the GitHub Pages environment policy to permit `v*` release tags
+  alongside the existing `main` and `build/live-iso` branches. The release-event
+  deployment passed on retry; no collaborator access or branch history changed.
+- Built the website with public Alpha 2 metadata and verified its download
+  selection and all seven screenshot originals in the bundled ZIP.
 - Package manifest identifies Hyprland 0.56.2-4, Quickshell 0.3.2-1, Python
   3.14.8-1 and util-linux 2.42.4-1. Alpha 2 checksum matches the release digest.
 
