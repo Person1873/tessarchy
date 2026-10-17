@@ -49,9 +49,9 @@ run out. The file must stay in the Tessarchy directory.
 
 ## Worktrees and branch state
 
-1. Repository root: branch build/live-iso. It contains the tested Alpha 2 source
-   and subsequent release documentation. Before adding this handoff its tip was
-   8c67414921621ce87f7ae1cf908a70b9266b4d27. This is the website/development branch.
+1. Repository root: branch build/live-iso. It now includes main through merged
+   PR #24, plus this handoff. It is the website/development activity branch;
+   historical Alpha 2 source remains available by its original commit/tag.
 2. build/publish: branch feat/phone-shell. It was synchronized to the tested
    Alpha 2 tree with merge commit e71ae0e and pushed. That synchronization was
    used to complete PR #1.
@@ -61,8 +61,8 @@ run out. The file must stay in the Tessarchy directory.
    Final theme runtime review and commit/push are still pending.
 4. build/bluetooth: branch review/pr-24-fix, head
    eb77f7c64d7cde4076270000fa7f928fe20f2cf2, pushed to contributor
-   kriscrossapplesauce2004/tessarchy:feat/bluetooth. This is the current task.
-5. origin/main includes merged PRs #1 through #8. PR #7 main merge is
+   kriscrossapplesauce2004/tessarchy:feat/bluetooth. PR #24 is merged; this worktree is clean.
+5. origin/main includes merged PRs #1 through #8 and #24. PR #7 main merge is
    bd34e999b43f7aaf067a26db18949544ee6f531d; #8 main merge is
    86699aec2002fba415b8a539dde06ba04943e695. Fetch before relying on the tip.
 6. Original PR heads remain under refs/remotes/review/pr-N. Fixed local
@@ -146,9 +146,9 @@ was visually inspected and canceled, and native 400x800 portrait was restored.
 
 ## Current immediate next actions
 
-1. Complete #24 CI/merge and update this checkpoint with the main merge commit.
-   Reviewed head eb77f7c64d7cde4076270000fa7f928fe20f2cf2 is already pushed.
-   Source run 39067988279 and ISO run 39067988276 are running; Ubuntu passed.
+1. #24 is complete: all source/ISO CI checks passed, and main merge commit is
+   e2e4f124d131ab8b35a258e30e52072d6d6b409b. The development branch now includes
+   that main history. Push the final handoff update and share the main commit.
 2. Resume the preserved #9 merge in build/integration. Theme QML/static checks
    pass; guest dark/light theme and launch-wrapper validation remain pending.
 3. Continue #10/#11/#20 dependency chain, then other unreviewed PRs. Keyboard
@@ -187,7 +187,7 @@ for the reviewed integration updates described here.
 - #21: Blank the idle panel after five minutes with hypridle. Review pending. Original state: open.
 - #22: Rotate the focused display from Settings in 90° steps. Review pending. Original state: open.
 - #23: Connect Wi-Fi from Quick controls through NetworkManager. Review pending. Original state: open.
-- #24: Add Bluetooth quick controls to the shell. Reviewed/fixed and pushed; CI running. Original state: open.
+- #24: Add Bluetooth quick controls to the shell. Merged; source and ISO CI passed. Original state: open.
 
 Important relationships:
 - #9 includes #7 (OSK); #10 includes #9/#7; #11 includes #10/#9/#7;
@@ -456,3 +456,20 @@ Preserved #9 continuation details:
   they would overwrite subsequent edits. Guest currently runs #24, not #9.
 - Verify new theme helper destinations before deployment, test dark/light themes
   and wrapper launch in VM, then document, commit, push, pass CI and merge #9.
+
+## Final Bluetooth #24 result
+
+- MERGED on main: e2e4f124d131ab8b35a258e30e52072d6d6b409b.
+  Shareable link: https://github.com/thediamondsaint/tessarchy/commit/e2e4f124d131ab8b35a258e30e52072d6d6b409b
+- Source CI 39067988279: Ubuntu and Arch jobs passed. Arch includes fish and
+  ShellCheck plus the real Quickshell mock-adapter harness.
+- ISO CI 39067988276 passed; tester-draft was intentionally skipped for this PR.
+- build/live-iso merged origin/main without conflicts, preserving handoff history.
+  Root ./scripts/check.sh passed again: 31 Python and 22 Qt checks; log is
+  build/pr-review/pr24-root-check.log. This was the final merged-tree validation.
+- Guest candidate remains active, native 400x800, pull-down closed after capture.
+- #9's unfinished merge is preserved. The next agent should finish that work
+  and then merge the newer main baseline (including #24) before pushing #9;
+  retain the Bluetooth panel, PlainText labels and themed glass styling together.
+- The user's request for this turn (#24, Git update, handoff, shareable commit)
+  is complete after the final handoff push. Other PRs remain authorized future work.
