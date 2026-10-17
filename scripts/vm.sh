@@ -28,24 +28,24 @@ fi
 case "$accel" in kvm) cpu=host;; tcg) cpu=max;; *) echo "VM_ACCEL must be auto, kvm or tcg" >&2; exit 2;; esac
 network=user,id=net0
 if [[ -n ${VM_SSH_PORT:-} ]]; then
-    [[ $VM_SSH_PORT =~ ^[1-9][0-9]{3,4}$ ]] && ((VM_SSH_PORT >= 1024 && VM_SSH_PORT <= 65535)) || {
-        echo "VM_SSH_PORT must be a port between 1024 and 65535" >&2; exit 2;
-    }
+    if [[ ! $VM_SSH_PORT =~ ^[1-9][0-9]{3,4}$ ]] || ((VM_SSH_PORT < 1024 || VM_SSH_PORT > 65535)); then
+        echo "VM_SSH_PORT must be a port between 1024 and 65535" >&2; exit 2
+    fi
     network+=",hostfwd=tcp:127.0.0.1:$VM_SSH_PORT-:22"
 fi
-cmd=(qemu-system-x86_64 -name Tessarchy -machine q35 -accel "$accel" -cpu "$cpu"
+cmd=(qemu-system-x86_64 -name Tessarchy -machine "q35" -accel "$accel" -cpu "$cpu"
     -m "${VM_RAM:-2048}" -smp "${VM_CPUS:-2}"
     -drive "file=$disk,format=qcow2,if=virtio"
     -device virtio-vga -display "${VM_DISPLAY:-gtk},gl=off"
     -device qemu-xhci -device usb-tablet
-    -netdev "$network" -device virtio-net-pci,netdev=net0
-    -nic none -boot menu=on -no-reboot)
+    -netdev "$network" -device "virtio-net-pci,netdev=net0"
+    -nic none -boot "menu=on" -no-reboot)
 if [[ ${VM_SHARE:-0} == 1 ]]; then
     share=${VM_SOURCE_SHARE:-$root/build/vm-share}
     [[ -d "$share" && "$share" != *,* ]] || { echo "Run ./scripts/export-vm-source.sh first" >&2; exit 1; }
     cmd+=(-virtfs "local,path=$share,mount_tag=tessarchy,security_model=none,readonly=on")
 fi
-if [[ -n "$iso" ]]; then cmd+=(-cdrom "$iso" -boot order=d,menu=on); fi
+if [[ -n "$iso" ]]; then cmd+=(-cdrom "$iso" -boot "order=d,menu=on"); fi
 # BIOS is the portable default. The staged live ISO retains releng BIOS + UEFI.
 if [[ ${VM_UEFI:-0} == 1 ]]; then
     code=${OVMF_CODE:-/usr/share/edk2/x64/OVMF_CODE.4m.fd}
