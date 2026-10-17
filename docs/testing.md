@@ -712,3 +712,24 @@ Pending: end-to-end MPRIS D-Bus behavior with real media applications, VM visual
 inspection and touch input. The previous VM SSH control socket expired and no
 new credentials/key were available at review time. Local fish and ShellCheck
 were unavailable; target CI covers them. No ISO boot claim or release change.
+
+## Audio PR #17 review, 2026-10-17
+
+Actual: `./scripts/check.sh` passed (32 Python, 30 Qt Quick checks), including
+scratch installs, Lua parsing and QML lint. Installed Quickshell 0.3.1 PipeWire
+metadata was checked for readiness, nodes, audio and preferred-default output.
+A scratch offscreen Quickshell instance loaded the real AudioPanel with no
+PipeWire service and reported unavailable state without writable controls.
+AudioControls was tested with mock nodes for backend loss, stale nodes,
+unsupported readiness, volume clamping/NaN and mute behavior. Playback filtering
+accepts only `Stream/Output/Audio`, excluding capture and video streams.
+
+The panel is loaded only when expanded with the existing audio backend enabled;
+its tracker follows candidates before filtering on audio readiness, and is
+destroyed when hidden. The original basic volume controls remain available.
+External metadata uses plain text. Device/app controls remain in the current
+pull-down and are covered by the manifest installer.
+
+Pending: real PipeWire/WirePlumber output switching, per-app playback volume,
+backend restart/device removal, touch and VM visual inspection. VM SSH access
+has expired; no host/guest dependency was installed. No new ISO boot claim.

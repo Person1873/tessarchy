@@ -61,3 +61,23 @@ function preferredPlayerIndex(playing) {
 function mediaSummary(title, artist) {
     return (title || "Unknown track") + " — " + (artist || "Unknown artist");
 }
+
+function nodeLabel(description, nickname, name) {
+    for (const value of [description, nickname, name]) {
+        if (value !== undefined && value !== null && String(value).trim()) return String(value).trim();
+    }
+    return "Unknown device";
+}
+
+function streamLabel(app, media, name) {
+    const label = nodeLabel(app, media, name);
+    return label === "Unknown device" ? "Unknown app" : label;
+}
+
+function playbackStream(mediaClass) {
+    return mediaClass === "Stream/Output/Audio";
+}
+
+function volumePercent(value) {
+    return Math.round(Math.max(0, Math.min(1, Number(value) || 0)) * 100);
+}

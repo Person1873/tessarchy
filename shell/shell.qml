@@ -631,6 +631,7 @@ ShellRoot {
                         use24Hour: shellPreferences.use24Hour
                         accentColor: root.accentColor
                         audioSink: root.audioSink
+                        audioBackendAvailable: audioLoader.active
                         mediaPlayer: root.activePlayer
                         onDismissed: statusBar.drawerOpen = false
                         onSettingsRequested: { statusBar.drawerOpen = false; panel.showPage("settings"); }

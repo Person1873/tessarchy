@@ -108,3 +108,9 @@ added to Desktop mode. Without squeekboard nothing starts and no button appears.
 The guest test observed squeekboard load its terminal layout for Foot and its
 text layout for Firefox's address bar, so text-input content purpose reached it;
 the exact protocol traffic was not traced.
+
+Advanced audio controls live in the pull-down. Expanding the section loads the
+optional PipeWire panel and tracks nodes before inspecting their audio metadata.
+It lists ready audio outputs and playback audio streams only; closing the section
+releases the tracker. Writes validate current backend/node readiness and model
+membership. The shared basic mute/volume controls remain accessible above it.

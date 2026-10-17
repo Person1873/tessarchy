@@ -141,4 +141,15 @@ TestCase {
         compare(Policy.preferredPlayerIndex([false, false]), 0);
         compare(Policy.mediaSummary("", ""), "Unknown track — Unknown artist");
     }
+    function test_audio_labels_and_stream_filter() {
+        compare(Policy.nodeLabel("", " Speakers ", "node"), "Speakers");
+        compare(Policy.nodeLabel(undefined, null, ""), "Unknown device");
+        compare(Policy.streamLabel("Browser", "Media", "node"), "Browser");
+        compare(Policy.streamLabel("", "", ""), "Unknown app");
+        verify(Policy.playbackStream("Stream/Output/Audio"));
+        for (const value of [undefined, "", "Stream/Input/Audio", "Stream/Output/Video"]) verify(!Policy.playbackStream(value));
+        compare(Policy.volumePercent(0.456), 46);
+        compare(Policy.volumePercent(2), 100);
+        compare(Policy.volumePercent(-1), 0);
+    }
 }

@@ -13,6 +13,8 @@ ColumnLayout {
     property var bluetoothAdapter: null
     property bool bluetoothExpanded: false
     property var mediaPlayer: null
+    property bool audioBackendAvailable: false
+    property bool audioExpanded: false
     property var audioSink: null
     readonly property bool audioAvailable: !!(audioSink && audioSink.ready && audioSink.audio)
     signal settingsRequested
@@ -138,6 +140,21 @@ ColumnLayout {
         text: sheet.audioAvailable ? "Volume · " + Math.round(sheet.audioSink.audio.volume * 100) + "%" : "Audio output unavailable"
         color: "#99afbe"; font.pixelSize: 11
         Layout.alignment: Qt.AlignHCenter
+    }
+    TouchButton {
+        text: sheet.audioExpanded ? "Hide audio devices and apps" : "Audio devices and apps"
+        focusPolicy: Qt.TabFocus
+        enabled: sheet.audioBackendAvailable
+        Layout.fillWidth: true
+        accentColor: sheet.accentColor
+        onClicked: sheet.audioExpanded = !sheet.audioExpanded
+    }
+    Loader {
+        Layout.fillWidth: true
+        active: sheet.visible && sheet.audioExpanded && sheet.audioBackendAvailable
+        visible: active
+        source: "AudioPanel.qml"
+        onLoaded: item.accentColor = Qt.binding(() => sheet.accentColor)
     }
     MediaPanel {
         player: sheet.mediaPlayer
