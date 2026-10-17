@@ -8,6 +8,7 @@ See [Operation Tessarchy](../Operation-TESSARCHY.md) for the design brief.
 - Pull-down radio switches and airplane mode, with hardware/permission state checks.
 - Swipeable app cards, live previews when available, icon actions, confirmed close.
 - Automatic Phone/Tablet/Desktop layouts with saved overrides and appearance settings.
+- Mobile apps re-maximize on activation; oversized dialogs request the usable area.
 - Original wallpaper, finite cube logo animation, reduced motion.
 - Experimental x86_64 Alpha 2 live ISO, observed BIOS/UEFI QEMU/KVM GUI boots.
 - GitHub Pages project site, real screenshot pack, automatic repository deployments.

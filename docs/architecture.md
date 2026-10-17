@@ -31,12 +31,16 @@ is interpolated into IPC or a shell command. App launch uses
 Quickshell.execDetached([executable]) per action, so no shared Process can drop
 rapid clicks. Startup executables in the Lua config are fixed strings.
 
-The Lua `window.open` handler reads the saved mode for each new ordinary window.
-It uses the same size thresholds, accounting for monitor scale/rotation. Mobile
-modes request maximization; Desktop leaves ordinary dwindle tiling. Floating
-windows and windows already fullscreen are left alone. A mode switch does not
-rearrange existing windows. Tablet split layouts and continuous mobile window
-policy remain future work. Multi-output navigation lists global windows;
+The Lua `window.open` and `window.active` handlers read the saved mode for each
+ordinary window. They use the same size thresholds, accounting for monitor
+scale/rotation. Mobile modes request maximization on open and on every
+activation, so switching apps or closing the top one leaves a maximized app;
+Desktop leaves ordinary dwindle tiling. Windows already fullscreen are left alone.
+Floating windows (dialogs) are not maximized: on `window.open` in mobile modes,
+one larger than the monitor's logical size minus `reserved` (bars and keyboard)
+is resized to fit and centered. The app may enforce a larger minimum (GTK's file
+chooser stays 726px wide on a 720px output). A mode switch does not rearrange
+existing windows. Tablet split layouts remain future work. Multi-output navigation lists global windows;
 per-output geometry is used for automatic mode and each new window's monitor.
 
 Desktop mode extends the same shell with standard desktop affordances rather

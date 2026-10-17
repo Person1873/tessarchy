@@ -404,6 +404,70 @@ check("phone", 400, 800, 1, 0, false, 2, 0)
                                 input=script, text=True, capture_output=True, env=self.env)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_mobile_policy_keeps_active_app_maximized_and_fits_dialogs(self):
+        import shutil
+        if not shutil.which('lua'):
+            self.skipTest('Lua interpreter unavailable')
+        (self.home / 'config/tessarchy').mkdir(parents=True)
+        script = r'''local callbacks, actions = {}, {}
+local function action(kind) return function(a) a = a or {}; a.kind = kind; return a end end
+hl = {
+    layer_rule = function() end,
+    monitor = function() end, config = function() end, bind = function() end,
+    on = function(name, callback) callbacks[name] = callback end,
+    dispatch = function(a) table.insert(actions, a) end,
+    dsp = { exec_cmd = function() end, exit = function() end, focus = function() end,
+            window = { fullscreen = action("fullscreen"), resize = action("resize"),
+                       center = action("center"), move = function() end,
+                       close = function() end, cycle_next = function() end,
+                       drag = function() end } }
+}
+dofile(arg[1])
+local function mode(m)
+    local f = assert(io.open(os.getenv("XDG_CONFIG_HOME") .. "/tessarchy/shell.ini", "w"))
+    f:write("[Shell]\nlayoutMode=" .. m .. "\n"); f:close()
+end
+local function monitor(w, h, transform, bottom)
+    return { width = w, height = h, scale = 1, transform = transform or 0,
+             reserved = { left = 0, right = 0, top = 48, bottom = bottom or 80 } }
+end
+local function fire(event, window) actions = {}; callbacks[event](window); return actions end
+mode("auto")
+-- Switching to (or surfacing) an ordinary app maximizes it on phones.
+local app = { floating = false, fullscreen = 0, monitor = monitor(720, 1440) }
+local a = fire("window.active", app)
+assert(#a == 1 and a[1].kind == "fullscreen" and a[1].mode == "maximized" and a[1].window == app)
+app.fullscreen = 1
+assert(#fire("window.active", app) == 0, "already maximized")
+assert(#fire("window.active", nil) == 0, "no active window")
+local desk = { floating = false, fullscreen = 0, monitor = monitor(1920, 1080) }
+assert(#fire("window.active", desk) == 0, "desktop keeps tiling")
+-- Oversized dialogs shrink to the area between bars and keyboard, then center.
+local dialog = { floating = true, fullscreen = 0, size = { x = 1232, y = 949 },
+                 monitor = monitor(720, 1440, 0, 305) }
+a = fire("window.open", dialog)
+assert(#a == 2 and a[1].kind == "resize" and a[1].window == dialog, "resize first")
+assert(a[1].x == 720 and a[1].y == 949, a[1].x .. "x" .. a[1].y)
+assert(a[2].kind == "center" and a[2].window == dialog)
+dialog.size = { x = 600, y = 1200 }
+a = fire("window.open", dialog)
+assert(a[1].x == 600 and a[1].y == 1087, "height limited by keyboard")
+-- Rotated phone: logical 800x400 minus bars.
+dialog.monitor = monitor(400, 800, 1); dialog.size = { x = 1000, y = 300 }
+a = fire("window.open", dialog)
+assert(a[1].x == 800 and a[1].y == 272, a[1].x .. "x" .. a[1].y)
+dialog.monitor = monitor(720, 1440); dialog.size = { x = 400, y = 300 }
+assert(#fire("window.open", dialog) == 0, "dialogs that fit are left alone")
+dialog.fullscreen = 2; dialog.size = { x = 1232, y = 949 }
+assert(#fire("window.open", dialog) == 0, "fullscreen stays untouched")
+dialog.fullscreen = 0
+dialog.size = { x = 1232, y = 949 }; mode("desktop")
+assert(#fire("window.open", dialog) == 0, "desktop dialogs are left alone")
+'''
+        result = subprocess.run(['lua', '-', str(ROOT / 'session/hyprland.lua')],
+                                input=script, text=True, capture_output=True, env=self.env)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_iso_staging_preserves_boot_assets_and_account_databases(self):
         # Minimal fixture exercises our assembly, not upstream archiso validity.
         repo = self.home / 'source'

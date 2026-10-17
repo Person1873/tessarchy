@@ -316,6 +316,44 @@ and persistence acceptance. The installed development VM's broader tests above
 do not establish these as passing in the ISO. No secure locking or Secure Boot
 support claim. Testers should begin in a disposable VM with a physical keyboard.
 
+## Mobile window policy, 2026-10-17
+
+Actually performed by an agent (Hermes, for person1873) in the development QEMU
+guest described above (720×1440, Auto · Tablet, Hyprland 0.56.2-4), with the
+installed `session/hyprland.lua` swapped between the `feat/phone-shell` version
+and this one and reloaded with `hyprctl reload`.
+
+- Two Foot windows, focus moved to the lower one: old config left both tiled at
+  720×543/544; new config maximized the focused one to 720×1087. Closing the
+  maximized window: the remaining one is maximized.
+- Restoring the active window (maximize unset) left it tiled; it was maximized
+  again only after focus moved to the other window and back.
+- Firefox Save As with GTK's remembered size forced to 1232×949: old config
+  placed it at x=-256, Cancel and Save off-screen; new config resized it to
+  726×996 (GTK's minimum width exceeds 720) at x=-3, both buttons visible.
+- `./scripts/check.sh`: new Lua-stub workflow test for activation, nil/desktop
+  windows, dialog fitting with keyboard reservation, rotation and Desktop mode.
+  It fails against the old config and passes now.
+
+Not tested: dialogs that grow after mapping, Phone 400×800, real rotation or
+fractional scale, hardware touch, Desktop mode (intentionally unchanged).
+
+## Phone size (400x800), 2026-10-17
+
+Actually performed by an agent (Hermes, for person1873) in the same guest, with
+the output at scale 1.8 (720x1440 physical, 400x800 logical) via `hyprctl eval`:
+
+- Status bar, nav bar (Back/Home/Recents/Keyboard) and a maximized Foot fit
+  without clipping; Firefox maximized to 400x567 above the keyboard.
+- Firefox Save As does not fit: GTK3's file chooser will not go below 726
+  logical px, so it sits at x=-163 and its header bar (Cancel/Save) is off
+  screen. Setting `org.gtk.Settings.FileChooser` window-size to (360, 500) and
+  sidebar-width to 0 still reopened it at 726. Unresolved.
+- squeekboard picked its short tablet ("Wide") layout, 113 logical px tall. It
+  sizes from the output's reported physical size, and QEMU reports 180x360 mm;
+  a short side of 115 mm or more counts as a tablet. A real phone (about 65 mm
+  wide) should get the taller phone layout; not verified on hardware.
+- Reloading `hyprland.lua` resets the scale to 1; set it again after a reload.
 ## Quiet Edge and card switcher — 2026-10-17
 
 Implemented in the development source and installed Arch VM; **not included in
@@ -565,3 +603,17 @@ not counted as successful API validation. The workflow adds an Ubuntu portable
 job and an Arch target-toolchain job running as a non-root user in a disposable
 container. No host or guest dependencies were installed. CI results must be
 checked separately; fish and ShellCheck are unavailable on the host.
+
+## PR 8 integration review — 2026-10-17
+
+Actual validation: inspected installed Hyprland Lua event/monitor metadata.
+`./scripts/check.sh` passed 27 Python tests and 21 Qt Quick results plus
+Lua/Hyprland and QML validation. The guest reloaded the candidate configuration
+without config errors. A new Foot opened maximized at 400×676; restoring it
+left it tiled at 400×338, and focusing the older Foot then the new one maximized
+each back to 400×676. The candidate retains confirmed close/exit bindings.
+Dialog requests now skip fullscreen windows and clamp unusable dimensions.
+
+Planned/manual: oversized real dialogs and application minimum-size behavior
+under the combined source, physical touch, fractional scaling and rotation.
+Earlier contributor dialog tests are recorded separately above. Alpha 2 is unchanged.

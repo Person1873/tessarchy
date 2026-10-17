@@ -32,12 +32,34 @@ local function shell_mode(monitor)
     if width >= 1100 and height >= 650 then return "desktop" end
     return "tablet"
 end
-hl.on("window.open", function(window)
-    if window.floating or window.fullscreen ~= 0 or not window.monitor then return end
+-- Re-maximize ordinary mobile windows when they become active.
+local function maximize_if_mobile(window)
+    if not window or window.floating or window.fullscreen ~= 0 or not window.monitor then return end
     if shell_mode(window.monitor) ~= "desktop" then
         hl.dispatch(hl.dsp.window.fullscreen({ window = window, mode = "maximized", action = "set" }))
     end
+end
+-- Request usable dimensions while respecting application minimum sizes.
+local function fit_dialog(window)
+    if not window or not window.floating or window.fullscreen ~= 0 or not window.monitor then return end
+    local size = window.size
+    if type(size) ~= "table" or not size.x or not size.y then return end
+    local monitor = window.monitor
+    if shell_mode(monitor) == "desktop" then return end
+    local width, height = monitor.width / monitor.scale, monitor.height / monitor.scale
+    if monitor.transform % 2 == 1 then width, height = height, width end
+    local reserved = type(monitor.reserved) == "table" and monitor.reserved or {}
+    width = math.max(1, math.floor(width - (reserved.left or 0) - (reserved.right or 0)))
+    height = math.max(1, math.floor(height - (reserved.top or 0) - (reserved.bottom or 0)))
+    if size.x <= width and size.y <= height then return end
+    hl.dispatch(hl.dsp.window.resize({ window = window, x = math.min(size.x, width), y = math.min(size.y, height) }))
+    hl.dispatch(hl.dsp.window.center({ window = window }))
+end
+hl.on("window.open", function(window)
+    maximize_if_mobile(window)
+    fit_dialog(window)
 end)
+hl.on("window.active", maximize_if_mobile)
 hl.on("hyprland.start", function ()
     hl.exec_cmd("tessera-shell")
 end)
