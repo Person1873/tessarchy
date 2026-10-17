@@ -4,7 +4,7 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$root"
 scratch=$(mktemp -d)
 trap 'rm -rf -- "$scratch"' EXIT
-for script in scripts/*.sh session/start-tessarchy session/tessera-shell packaging/*/PKGBUILD; do bash -n "$script"; done
+for script in scripts/*.sh session/start-tessarchy session/tessera-shell session/tessarchy-osk packaging/*/PKGBUILD; do bash -n "$script"; done
 python -m unittest discover -s tests -v
 if [[ -x /usr/lib/qt6/bin/qmltestrunner && -d /usr/lib/qt6/qml/QtTest ]]; then
     HOME="$scratch" XDG_CONFIG_HOME="$scratch/config" QT_QPA_PLATFORM=offscreen \
@@ -21,6 +21,6 @@ if [[ -n "$lint" ]] && command -v qs >/dev/null; then
     "$lint" -I /usr/lib/qt6/qml shell/shell.qml shell/components/*.qml
 else echo "SKIP: qmllint/Quickshell unavailable"; fi
 if command -v shellcheck >/dev/null; then
-    shellcheck scripts/*.sh session/start-tessarchy session/tessera-shell
+    shellcheck scripts/*.sh session/start-tessarchy session/tessera-shell session/tessarchy-osk
 else echo "SKIP: shellcheck unavailable"; fi
 echo "Available static/integration checks passed; GUI and ISO boot tests remain manual."

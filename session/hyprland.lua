@@ -38,6 +38,8 @@ hl.on("window.open", function(window)
 end)
 hl.on("hyprland.start", function ()
     hl.exec_cmd("tessera-shell")
+    -- Optional; exits quietly when squeekboard is not installed.
+    hl.exec_cmd("tessarchy-osk start")
 end)
 hl.bind("SUPER + Return", hl.dsp.exec_cmd("foot"))
 hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))

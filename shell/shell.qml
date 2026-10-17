@@ -30,6 +30,8 @@ ShellRoot {
     // Bind these when wireless/modem integrations land. Never invent a signal.
     property real wifiStrength: -1
     property real cellularStrength: -1
+    // squeekboard via tessarchy-osk; it also appears by itself for text fields.
+    readonly property bool oskAvailable: Quickshell.env("TESSARCHY_OSK") === "1"
     readonly property var audioSink: audioLoader.item ? (audioLoader.item as AudioStatus).sink : null
     readonly property bool audioAvailable: !!(audioSink && audioSink.ready && audioSink.audio)
     readonly property int volumePercent: audioAvailable ? Math.round(audioSink.audio.volume * 100) : 0
@@ -58,6 +60,12 @@ ShellRoot {
                 property string page: ""
                 property var closeTarget: null
                 readonly property bool expanded: page !== ""
+                // The keyboard is a separate top-layer surface that would cover
+                // the drawer, so shell pages dismiss it like an IME on Recents.
+                onExpandedChanged: {
+                    if (expanded && root.oskAvailable)
+                        Quickshell.execDetached(["tessarchy-osk", "hide"]);
+                }
                 anchors {
                     bottom: true
                     left: surface.isPhone
@@ -153,7 +161,7 @@ ShellRoot {
                                         }
                                     }
                                     Text {
-                                        text: "Prototype · Physical keyboard needed for text input."
+                                        text: root.oskAvailable ? "Prototype · The keyboard opens for text fields; Keyboard shows or hides it." : "Prototype · Physical keyboard needed for text input."
                                         color: "#b7c7cc"
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
@@ -411,6 +419,15 @@ ShellRoot {
                             accentColor: root.accentColor
                             selected: panel.page === "settings"
                             onClicked: panel.showPage("settings")
+                        }
+                        NavButton {
+                            // Panel never takes keyboard focus, so the app keeps its text field.
+                            visible: root.oskAvailable && surface.mode !== "desktop"
+                            text: "Keyboard"
+                            symbol: "keyboard"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
+                            onClicked: Quickshell.execDetached(["tessarchy-osk", "toggle"])
                         }
                     }
                 }

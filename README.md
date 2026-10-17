@@ -31,6 +31,8 @@ live image is in development.
 - Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
   controls. Wireless and modem backends remain to be connected.
 - An expandable launcher for Firefox and Foot.
+- Optional squeekboard on-screen keyboard: it appears for focused text fields, and
+  a Keyboard navigation button shows or hides it in Phone/Tablet modes.
 - A scrollable window overview with application switching and maximize/restore.
 - Confirmation before closing a window or ending the session.
 - A dedicated Hyprland session, user installation, and reversible tty1 startup.
@@ -40,18 +42,21 @@ live image is in development.
 ## Project status
 
 **Early prototype.** A user has confirmed that Tessera runs in the basic Arch
-QEMU guest. Ten workflow tests, Qt Quick layout/motion checks, and available
+QEMU guest. Thirteen workflow tests, Qt Quick layout/motion checks, and available
 static checks pass.
 Detailed touchscreen, scaling, focus, and window-action acceptance tests remain
 pending. Two development packages have been built locally; they are not yet
 published releases. **No Tessarchy ISO has been boot-tested or released.**
 
-Text input currently requires a physical keyboard. New ordinary windows maximize
+On-screen text input requires the optional `squeekboard` package; it has been
+exercised in the QEMU guest with Foot and Firefox through a virtual touchscreen,
+not yet on touch hardware. Without it, text input needs a physical keyboard.
+New ordinary windows maximize
 in Phone/Tablet modes and start tiled in Desktop mode. Existing windows stay in
 place when switching modes; restoring a maximized app returns to ordinary tiling.
 Continuous mobile window policy and tablet split layouts are planned. Exclusive
-fullscreen can hide the dock. There is no secure lock screen or on-screen
-keyboard integration yet. See the [validation record](docs/testing.md) for the
+fullscreen can hide the dock. There is no secure lock screen. See the
+[validation record](docs/testing.md) for the
 difference between implemented, user-tested, and planned behavior.
 
 ## Quick start: use the basic Arch VM
@@ -74,7 +79,7 @@ TCG is the slow fallback. Defaults are 2GiB RAM and 2 vCPUs.
 Log into the guest as `arch` (initial password `arch`). **Inside the guest**:
 
 ```bash
-sudo pacman -Syu --needed hyprland quickshell firefox foot mesa qt6-declarative qt6-wayland ttf-dejavu python
+sudo pacman -Syu --needed hyprland quickshell firefox foot mesa qt6-declarative qt6-wayland ttf-dejavu python squeekboard
 sudo poweroff
 ```
 
@@ -108,7 +113,8 @@ returns to the prompt. Omit the flag for manual startup. To undo the login hook:
 ./scripts/login-session.sh disable
 ```
 
-The hook does not affect other TTYs. Initial text input needs a physical keyboard.
+The hook does not affect other TTYs. Without squeekboard, text input needs a
+physical keyboard.
 The virtual USB tablet is an absolute mouse, not a multitouch touchscreen.
 See [VM setup](docs/vm.md) for recovery and the alternative stock-ISO route.
 

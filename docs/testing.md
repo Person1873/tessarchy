@@ -237,3 +237,42 @@ Settings captures. Hardware touch, real Wi-Fi/modem/audio/battery integration,
 multiple physical outputs, exhaustive fractional scaling, and ISO builds/boots
 remain pending. Auto detection classifies logical display size; it does not
 identify physical device type or available input hardware. No secure lock claim.
+
+## On-screen keyboard, 2026-10-17
+
+Actually performed by an agent (Hermes, for person1873) in a fresh official Basic
+Arch qcow2 (sha256 checked against the mirror's `.SHA256`) under QEMU/KVM, 4GiB,
+virtio-vga at 720×1440 scale 1 (Auto · Tablet), VNC/SSH on host loopback only.
+Guest packages: Hyprland 0.56.2-4, Quickshell 0.3.2-1, squeekboard 1.43.1-6,
+linux 7.2.10. Dependencies were installed explicitly in the guest only; tty1
+autologin was enabled in the guest for testing. The host desktop was not used.
+
+- `./scripts/check.sh` passes on host and guest: thirteen workflow tests (new:
+  optional keyboard wrapper with stub squeekboard/busctl and a restricted PATH,
+  private keyfile seeding without overwriting user edits, toggle in both
+  directions, session start order), fifteen Qt Quick results, `config ok`.
+  qmllint keeps the known PanelWindow warning; shellcheck is unavailable.
+- Input was driven with `scripts/guest-touch.py`, a uinput multitouch device
+  with `INPUT_PROP_DIRECT` inside the guest. These are real touch events through
+  libinput and Hyprland, but synthetic: not a hardware touchscreen test.
+- Session start launched squeekboard via `tessarchy-osk start`; its environment
+  showed `GSETTINGS_BACKEND=keyfile` and the private config directory, while the
+  guest's global `screen-keyboard-enabled` remained `false`.
+- Home → Terminal tile opened Foot maximized; the keyboard appeared by itself
+  with squeekboard's terminal layout (Esc/Tab/Ctrl/Alt/arrows). Foot resized
+  from 720×1312 to 720×1087 above the keyboard. `echo hi` and `ls` typed by
+  touch ran correctly. Firefox's address bar showed the text layout; Firefox
+  without a focused field left it hidden.
+- The Keyboard navigation button hid the keyboard (`osk` layer removed, Foot
+  back to 1312) and showed it again; Foot kept keyboard focus and received the
+  following keystrokes.
+- Defect found and fixed during the pass: with the keyboard visible, Recents
+  opened behind it. Opening any shell page now hides the keyboard; observed
+  `osk` layer count 1 → 0 and a fully visible Recents drawer.
+
+Not tested: hardware touch, GTK/Qt app text fields beyond Firefox, Phone mode
+at 400×800, rotation and fractional scale, Desktop mode (intentionally not
+changed), squeekboard theming, the ISO with squeekboard, and package installs.
+Hyprland also shows a "started without start-hyprland" warning banner for a
+short time after `start-tessarchy` launches it; this predates the keyboard
+work and is unchanged.

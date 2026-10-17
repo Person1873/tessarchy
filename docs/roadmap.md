@@ -5,10 +5,10 @@
    package recipes and VM workflow. Validate on the installed API versions.
 2. **Live image, started:** assemble a releng overlay; build and boot it, fix
    boot/user/graphics failures, test BIOS/UEFI, then package payloads properly.
-3. **Text input:** research compositor and input-method protocols; validate an
-   on-screen keyboard with Foot and Firefox, touch focus and resize behavior.
-   A physical keyboard is required until this is done. No keyboard is recommended
-   purely because it works under another compositor.
+3. **Text input, started:** squeekboard is integrated as an optional keyboard and
+   validated under Tessarchy's Hyprland in QEMU with Foot and Firefox, synthetic
+   touch, focus retention and app resizing. Remaining: real touch hardware, GTK
+   and Qt apps, rotation/scale, layout/theme matching Tessera, and Desktop mode.
 4. **Mobile policy:** continuous primary-window behavior, transient dialogs,
    rotation, scale presets and actual touchscreen tests. Current rule only
    maximizes on map; restore falls back to tiling.
