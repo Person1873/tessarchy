@@ -9,9 +9,11 @@ opinionated experience, Tessarchy is developing its own mobile-focused session.
 
 The first target is an x86_64 QEMU/KVM guest, followed by touchscreen tablets.
 Selected ARM devices are a later goal with explicit hardware support. The
-project currently ships session source and development tooling; a standalone
-live image is in development.
+project ships session source, development tooling and an experimental x86_64
+live tester ISO.
 
+[Download the tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2) ·
+[Project website](https://thediamondsaint.github.io/tessarchy/) ·
 [Getting started](#quick-start-use-the-basic-arch-vm) ·
 [Architecture](docs/architecture.md) ·
 [Roadmap](docs/roadmap.md) ·
@@ -23,47 +25,53 @@ live image is in development.
 - A top status bar with clock, registered tray icons, battery status when available,
   and session controls.
 - Automatic Phone/Tablet/Desktop shell layouts with a saved manual override.
-- A persistent navigation bar with 56px touch targets and a compact desktop dock.
+- Quiet Edge frosted glass bars, compact floating navigation, and at least 48px touch targets.
 - An original mint-and-navy wallpaper, animated tessellated logo, and responsive
   tile launcher.
 - Settings for layout mode, accent, opacity, wallpaper shade, clock, navigation
   labels, and reduced motion.
-- Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
-  controls. Wireless and modem backends remain to be connected.
-- An expandable launcher for Firefox and Foot.
-- Optional squeekboard on-screen keyboard: it appears for focused text fields, and
-  a Keyboard navigation button shows or hides it in Phone/Tablet modes.
-- A scrollable window overview with application switching and maximize/restore.
+- A pull-down glass panel with airplane mode, hardware-aware Wi-Fi/Bluetooth/
+  cellular radio switches, layout selection, and optional PipeWire volume controls. Network
+  selection, pairing, and connection-strength backends remain planned; see
+  [radio controls](docs/radio-controls.md).
+- An application drawer populated from installed desktop entries.
+- Swipeable app cards with real window previews, glass icon actions, and keyboard switching.
+- Desktop workspace buttons, focused-window titles, and keyboard controls.
 - Confirmation before closing a window or ending the session.
 - A dedicated Hyprland session, user installation, and reversible tty1 startup.
 - A QEMU development workflow, local Arch package recipes, and an initial
   archiso staging/build pipeline.
+- Fish bundled in the live image as the `tess` login shell, with the same
+  one-shot tty1 session start as the Bash profile.
 
 ## Project status
 
-**Early prototype.** A user has confirmed that Tessera runs in the basic Arch
-QEMU guest. Thirteen workflow tests, Qt Quick layout/motion checks, and available
-static checks pass.
-Detailed touchscreen, scaling, focus, and window-action acceptance tests remain
-pending. Two development packages have been built locally; they are not yet
-published releases. **No Tessarchy ISO has been boot-tested or released.**
+**Early prototype.** The current source passes 17 Python tests, 19 Qt Quick
+results, and available static checks. The [Alpha 2 tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2)
+has been observed booting into Tessera in BIOS and non-Secure-Boot UEFI QEMU/KVM.
+It includes Quiet Edge, the card switcher, the mobile status clock, and pull-down
+radio and layout controls. Checksums, package versions and boot evidence are
+attached to the release. It is a disposable live environment with no installer
+or persistence. Physical touchscreen and device acceptance testing remain
+pending. The [GitHub review](docs/github-review.md) lists pending contributions;
+collaborators’ unmerged features are not included in this ISO.
 
-On-screen text input requires the optional `squeekboard` package; it has been
-exercised in the QEMU guest with Foot and Firefox through a virtual touchscreen,
-not yet on touch hardware. Without it, text input needs a physical keyboard.
-New ordinary windows maximize
-in Phone/Tablet modes and start tiled in Desktop mode. Existing windows stay in
-place when switching modes; restoring a maximized app returns to ordinary tiling.
-Continuous mobile window policy and tablet split layouts are planned. Exclusive
-fullscreen can hide the dock. There is no secure lock screen. See the
-[validation record](docs/testing.md) for the
+An optional squeekboard on-screen keyboard supports text fields and a mobile
+Keyboard toggle. Without it, text input requires a physical keyboard. In Phone/Tablet modes ordinary
+windows maximize when they open and again whenever they become active; oversized
+dialogs request a size between the bars and are centered; application minimum
+sizes can still exceed a phone screen. Desktop mode starts windows
+tiled. A mode switch does not move the windows already open; restoring a maximized
+app keeps it tiled until focus moves elsewhere. Tablet split layouts are planned. Exclusive
+fullscreen can hide the dock. There is no secure lock screen; keyboard availability depends on squeekboard. See the [validation record](docs/testing.md) for the
 difference between implemented, user-tested, and planned behavior.
 
 ## Quick start: use the basic Arch VM
 
 The basic Arch qcow2 is now the preferred development route. The user has
 confirmed that the basic Arch image boots and Tessera runs in that guest.
-Detailed touch/device acceptance testing and ISO boot testing remain pending.
+Detailed touch/device acceptance testing remains pending. The separate tester
+ISO has a BIOS/UEFI graphical boot smoke test; see the release validation notes.
 
 Shut down the current guest with `sudo poweroff`. From the host repository:
 
@@ -79,7 +87,7 @@ TCG is the slow fallback. Defaults are 2GiB RAM and 2 vCPUs.
 Log into the guest as `arch` (initial password `arch`). **Inside the guest**:
 
 ```bash
-sudo pacman -Syu --needed hyprland quickshell firefox foot mesa qt6-declarative qt6-wayland ttf-dejavu python squeekboard
+sudo pacman -Syu --needed hyprland quickshell firefox foot mesa qt6-declarative qt6-wayland ttf-dejavu python
 sudo poweroff
 ```
 
@@ -113,8 +121,7 @@ returns to the prompt. Omit the flag for manual startup. To undo the login hook:
 ./scripts/login-session.sh disable
 ```
 
-The hook does not affect other TTYs. Without squeekboard, text input needs a
-physical keyboard.
+The hook does not affect other TTYs. Initial text input needs a physical keyboard.
 The virtual USB tablet is an absolute mouse, not a multitouch touchscreen.
 See [VM setup](docs/vm.md) for recovery and the alternative stock-ISO route.
 

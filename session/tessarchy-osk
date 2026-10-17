@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-# Optional on-screen keyboard for Tessarchy, backed by squeekboard.
-# squeekboard shows itself when an app enables text-input-v3 only if the GNOME
-# a11y key screen-keyboard-enabled is true. Rather than change the user's global
-# GNOME setting, run it with a private keyfile GSettings backend.
+# Use a private settings backend for the optional on-screen keyboard.
 set -euo pipefail
 usage() { echo "Usage: $0 start | show | hide | toggle" >&2; exit 2; }
 [[ $# == 1 ]] || usage

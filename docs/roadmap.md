@@ -1,20 +1,44 @@
 # Roadmap
 
-1. **Prototype, implemented with user-reported VM smoke test:** Tessera navigation,
-   apps, windows, maximize/restore, confirmed close/exit, namespaced user install,
-   package recipes and VM workflow. Validate on the installed API versions.
-2. **Live image, started:** assemble a releng overlay; build and boot it, fix
-   boot/user/graphics failures, test BIOS/UEFI, then package payloads properly.
-3. **Text input, started:** squeekboard is integrated as an optional keyboard and
-   validated under Tessarchy's Hyprland in QEMU with Foot and Firefox, synthetic
-   touch, focus retention and app resizing. Remaining: real touch hardware, GTK
-   and Qt apps, rotation/scale, layout/theme matching Tessera, and Desktop mode.
-4. **Mobile policy:** continuous primary-window behavior, transient dialogs,
-   rotation, scale presets and actual touchscreen tests. Current rule only
-   maximizes on map; restore falls back to tiling.
-5. **Tablet/docked:** optional two-app split and conventional tiling profiles.
-6. **Hardware:** explicit x86_64 tablets first; selected ARM devices only with
-   documented boot, graphics and input support.
+See [Operation Tessarchy](../Operation-TESSARCHY.md) for the design brief.
 
-Not in milestone 1: cellular/SMS, Android/Waydroid, secure lock screen, custom
-kernel, arbitrary Android phone ports, universal ARM images or production updates.
+## Implemented in the development branch
+
+- Quiet Edge: shallow frosted status bar, floating glass navigation, minimal icons.
+- Pull-down radio switches and airplane mode, with hardware/permission state checks.
+- Swipeable app cards, live previews when available, icon actions, confirmed close.
+- Automatic Phone/Tablet/Desktop layouts with saved overrides and appearance settings.
+- Optional on-screen keyboard with a private settings backend and focus-preserving toggle.
+- Mobile apps re-maximize on activation; oversized dialogs request the usable area.
+- Original wallpaper, finite cube logo animation, reduced motion.
+- Experimental x86_64 Alpha 2 live ISO, observed BIOS/UEFI QEMU/KVM GUI boots.
+- GitHub Pages project site, real screenshot pack, automatic repository deployments.
+
+Alpha 2 includes Quiet Edge, the card switcher, and pull-down radio and layout
+controls. BIOS and non-Secure-Boot UEFI graphical boots were observed in
+diskless QEMU/KVM. Pending contributor pull requests remain outside this
+release; see the [GitHub review](github-review.md).
+
+Desktop workspace navigation and keyboard management are implemented; broader
+tablet split layouts remain pending.
+
+## Next implementation steps
+
+1. Refine card transitions and physical touchscreen interactions; add configurable
+   gestures while retaining visible navigation and >=48px touch targets.
+2. Validate on-screen keyboard protocols, focus and resize with Foot and Firefox.
+3. Propose a narrow-screen default app set for approval before integration.
+4. Extend tablet split layouts, continuous mobile window policy and rotation.
+
+## Investigation, not device support
+
+- Verify exact OnePlus 7/8 models; consider 6/6T if compatibility is better.
+- Document boot, display, touch, graphics, Wi-Fi, charging, suspend, audio and
+  cellular status before recommending hardware or flashing anything.
+- Research existing dialers/messaging and modem integration separately.
+- Scope a WebUSB installer to one verified device with recovery instructions and
+  explicit confirmation before destructive operations.
+- Verify OpenRouter integration, pricing, privacy and budget limits before paid use.
+
+No universal ARM image, cellular/SMS support, secure lock, production update
+system, or phone flasher is currently claimed.

@@ -12,6 +12,7 @@ quickshell
 firefox
 foot
 squeekboard
+fish
 mesa
 xorg-xwayland
 xdg-desktop-portal-hyprland
@@ -20,4 +21,7 @@ pipewire
 pipewire-pulse
 wireplumber
 ttf-dejavu
+noto-fonts-emoji
 dbus
+python
+util-linux
