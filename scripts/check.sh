@@ -11,6 +11,7 @@ if [[ -x /usr/lib/qt6/bin/qmltestrunner && -d /usr/lib/qt6/qml/QtTest ]]; then
         /usr/lib/qt6/bin/qmltestrunner -input tests/qml
 else echo "SKIP: Qt Quick Test unavailable"; fi
 if command -v luac >/dev/null; then luac -p session/hyprland.lua session/preferences.example.lua; else echo "SKIP: luac unavailable"; fi
+if command -v fish >/dev/null; then fish -n iso/airootfs/etc/skel/.config/fish/config.fish; else echo "SKIP: fish unavailable"; fi
 if command -v desktop-file-validate >/dev/null; then
     # DesktopNames is valid for Wayland session entries; desktop-file-utils 0.28
     # still flags it. Tolerate only that quirk and fail on any other finding.

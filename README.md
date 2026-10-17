@@ -41,6 +41,8 @@ live tester ISO.
 - A dedicated Hyprland session, user installation, and reversible tty1 startup.
 - A QEMU development workflow, local Arch package recipes, and an initial
   archiso staging/build pipeline.
+- Fish bundled in the live image as the `tess` login shell, with the same
+  one-shot tty1 session start as the Bash profile.
 
 ## Project status
 

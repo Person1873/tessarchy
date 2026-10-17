@@ -232,6 +232,26 @@ Actually performed:
   a generated mockup. It assembles six original faces with rotation, runs once
   for 1.6 seconds, and settles. Qt tests verify no idle loop and reduced motion.
 
+## Bundled fish live shell, 2026-10-17
+
+Actually performed:
+
+- Added `fish` to `iso/packages.x86_64`, changed the sysusers shell for `tess`
+  to `/usr/bin/fish`, and gave the skel tree a fish profile: greeting off, two
+  abbreviations, and the same gated tty1 one-shot Tessera start as
+  `.bash_profile` (interactive only, tty1 only, no DISPLAY/WAYLAND_DISPLAY).
+- `scripts/stage-iso.sh` now copies the whole skel tree to `/home/tess` and
+  records `file_permissions` for the fish config; tmpfiles keeps the `.config`
+  directories owned by `tess`.
+- `fish -n` accepts the profile on the development host; `scripts/check.sh`
+  now runs that syntax check whenever fish is installed.
+- The ISO staging workflow test asserts fish in the package list, the fish
+  login shell, the staged profile path, and the profiledef permission entry;
+  all ten workflow tests pass on the development host.
+- Not performed: building and booting the live image, verifying autologin
+  lands in fish, or ending a session and returning to the fish prompt. Those
+  remain part of the pending ISO boot checklist.
+
 Screenshots are ignored under `build/`, including adaptive/tablet/desktop and
 Settings captures. Hardware touch, real Wi-Fi/modem/audio/battery integration,
 multiple physical outputs, exhaustive fractional scaling, and ISO builds/boots
@@ -486,3 +506,13 @@ Close and exit bindings route through the shell confirmations.
 
 Still planned/manual: real keyboard layouts, physical touch and many workspaces.
 This changes development source, not the already published Alpha 2 image.
+
+## PR 4 integration review — 2026-10-17
+
+Actual validation: reviewed tty1-only fish startup, live-user shell selection,
+skel staging and ownership; `./scripts/check.sh` passed 26 Python tests and
+21 Qt Quick results, Lua/Hyprland validation and QML lint. Staging tests confirm
+fish package, sysusers shell, home profile and profile permission entries.
+The host has no fish executable, so fish syntax validation skipped locally.
+No dependencies were installed. The full live-image fish autologin/exit cycle
+remains a planned boot check; Alpha 2 is unchanged.
