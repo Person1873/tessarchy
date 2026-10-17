@@ -12,6 +12,7 @@ ColumnLayout {
     property color accentColor: "#a9e8d5"
     property var bluetoothAdapter: null
     property bool bluetoothExpanded: false
+    property var mediaPlayer: null
     property var audioSink: null
     readonly property bool audioAvailable: !!(audioSink && audioSink.ready && audioSink.audio)
     signal settingsRequested
@@ -137,6 +138,11 @@ ColumnLayout {
         text: sheet.audioAvailable ? "Volume · " + Math.round(sheet.audioSink.audio.volume * 100) + "%" : "Audio output unavailable"
         color: "#99afbe"; font.pixelSize: 11
         Layout.alignment: Qt.AlignHCenter
+    }
+    MediaPanel {
+        player: sheet.mediaPlayer
+        accentColor: sheet.accentColor
+        Layout.fillWidth: true
     }
     Text {
         text: "Airplane mode switches all detected radios"

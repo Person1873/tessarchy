@@ -51,3 +51,13 @@ function btBatteryLabel(available, level) {
     if (!available || typeof level !== "number" || !isFinite(level)) return "";
     return " · " + Math.round(Math.max(0, Math.min(1, level)) * 100) + "%";
 }
+
+// Prefer a playing media player, then the first registered player.
+function preferredPlayerIndex(playing) {
+    for (let i = 0; i < playing.length; i++) if (playing[i]) return i;
+    return playing.length ? 0 : -1;
+}
+
+function mediaSummary(title, artist) {
+    return (title || "Unknown track") + " — " + (artist || "Unknown artist");
+}

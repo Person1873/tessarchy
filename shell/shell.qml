@@ -9,6 +9,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.UPower
+import Quickshell.Services.Mpris
 import Quickshell.Services.SystemTray
 import "components"
 import "LayoutPolicy.js" as Policy
@@ -63,6 +64,11 @@ ShellRoot {
         id: audioLoader
         active: Quickshell.env("TESSARCHY_AUDIO") === "1"
         source: "components/AudioStatus.qml"
+    }
+    readonly property var activePlayer: {
+        const players = Mpris.players.values;
+        const index = Policy.preferredPlayerIndex(players.map(player => player.isPlaying));
+        return index < 0 ? null : players[index];
     }
     Variants {
         model: Quickshell.screens
@@ -625,6 +631,7 @@ ShellRoot {
                         use24Hour: shellPreferences.use24Hour
                         accentColor: root.accentColor
                         audioSink: root.audioSink
+                        mediaPlayer: root.activePlayer
                         onDismissed: statusBar.drawerOpen = false
                         onSettingsRequested: { statusBar.drawerOpen = false; panel.showPage("settings"); }
                     }

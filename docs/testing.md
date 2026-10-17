@@ -697,3 +697,18 @@ Pending/manual:
 - Pairing/passkey agents, forgetting devices and adapter selection are not
   implemented. Use an external Bluetooth manager for pairing.
 - No new ISO was built or boot-tested during this PR review; Alpha 2 is unchanged.
+
+## Media PR #15 review, 2026-10-17
+
+Actual: `./scripts/check.sh` passed (31 Python, 26 Qt Quick checks), including
+scratch install/uninstall, current Lua parser and QML lint. Installed Quickshell
+0.3.1 MPRIS metadata was checked for capability properties, togglePlaying,
+previous/next and seek(double). The real MediaPanel was tested with a mutable
+mock player: unsupported actions, capability changes, control refusal, seek
+amounts and player disappearance. The panel uses plain-text metadata and glass
+icon controls in the current pull-down; the older status page is not restored.
+
+Pending: end-to-end MPRIS D-Bus behavior with real media applications, VM visual
+inspection and touch input. The previous VM SSH control socket expired and no
+new credentials/key were available at review time. Local fish and ShellCheck
+were unavailable; target CI covers them. No ISO boot claim or release change.

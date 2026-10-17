@@ -135,4 +135,10 @@ TestCase {
         compare(Policy.btBatteryLabel(true, 2), " · 100%");
         compare(Policy.btBatteryLabel(true, -1), " · 0%");
     }
+    function test_media_player_selection() {
+        compare(Policy.preferredPlayerIndex([]), -1);
+        compare(Policy.preferredPlayerIndex([false, true]), 1);
+        compare(Policy.preferredPlayerIndex([false, false]), 0);
+        compare(Policy.mediaSummary("", ""), "Unknown track — Unknown artist");
+    }
 }
