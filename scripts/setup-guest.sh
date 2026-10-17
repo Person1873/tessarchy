@@ -5,6 +5,7 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 [[ $EUID != 0 ]] || { echo "Run as the guest's normal user, not root" >&2; exit 1; }
 [[ ${1:-} == "" || ${1:-} == --autostart ]] || { echo "Usage: $0 [--autostart]" >&2; exit 2; }
 # Reject the Omarchy host even when the host itself is virtualized.
+# shellcheck source=/dev/null
 source /etc/os-release
 [[ ${ID:-} == arch ]] || { echo "This setup is for the Arch guest, not the host" >&2; exit 1; }
 virt=$(systemd-detect-virt --vm || true)
