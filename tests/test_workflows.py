@@ -61,6 +61,79 @@ class Workflows(unittest.TestCase):
         self.assertEqual(sentinel.read_text(), 'existing config')
         self.assertEqual(preferences.read_text(), '-- mine')
         self.assertEqual(shell_settings.read_text(), '[Shell]\nlayoutMode=tablet\n')
+        self.assertFalse((self.home / '.local/bin/tessarchy-osk').exists())
+
+    def osk(self, *args, path_tools=(), env=None):
+        """Run tessarchy-osk with PATH limited to bash, mkdir and the given stubs."""
+        import shutil
+        stubs = self.home / 'stubs'
+        stubs.mkdir(exist_ok=True)
+        for real in ('bash', 'mkdir'):
+            if not (stubs / real).exists():
+                (stubs / real).symlink_to(shutil.which(real) or f'/usr/bin/{real}')
+        for name, body in path_tools:
+            tool = stubs / name
+            tool.write_text('#!/bin/bash\n' + body)
+            tool.chmod(0o755)
+        run_env = dict(env or self.env, PATH=str(stubs),
+                       XDG_STATE_HOME=str(self.home / 'state'))
+        return subprocess.run([str(ROOT / 'session/tessarchy-osk'), *args], env=run_env,
+                              capture_output=True, text=True)
+
+    def test_osk_is_optional_and_keeps_gnome_settings_private(self):
+        missing = self.osk('start')
+        self.assertEqual(missing.returncode, 0, missing.stderr)
+        self.assertIn('squeekboard not installed', missing.stderr)
+        self.assertEqual(self.osk().returncode, 2)
+        self.assertEqual(self.osk('bogus').returncode, 2)
+        fake = ('squeekboard', 'printf "%s|%s\\n" "$GSETTINGS_BACKEND" "$XDG_CONFIG_HOME"\n')
+        self.assertEqual(self.osk('start', path_tools=[fake]).returncode, 1)
+        env = dict(self.env, WAYLAND_DISPLAY='wayland-test')
+        result = self.osk('start', path_tools=[fake], env=env)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        state = self.home / 'state/tessarchy/osk'
+        self.assertEqual(result.stdout.strip(), f'keyfile|{state}')
+        keyfile = state / 'glib-2.0/settings/keyfile'
+        self.assertIn('screen-keyboard-enabled=true', keyfile.read_text())
+        keyfile.write_text('[org/gnome/desktop/a11y/applications]\nscreen-keyboard-enabled=false\n')
+        self.osk('start', path_tools=[fake], env=env)
+        self.assertIn('=false', keyfile.read_text())
+        self.assertFalse((self.home / 'config/glib-2.0').exists())
+
+    def test_osk_toggle_flips_visibility(self):
+        log = self.home / 'busctl.log'
+        for current, expected in (('true', 'false'), ('false', 'true')):
+            busctl = ('busctl', f'echo "$*" >> {log}\n'
+                      f'[[ $2 == get-property ]] && echo "b {current}"\nexit 0\n')
+            result = self.osk('toggle', path_tools=[busctl])
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(log.read_text().splitlines()[-1].endswith(f'SetVisible b {expected}'))
+        self.osk('show', path_tools=[busctl])
+        self.assertTrue(log.read_text().splitlines()[-1].endswith('SetVisible b true'))
+
+    def test_session_start_launches_shell_and_optional_keyboard(self):
+        import shutil
+        if not shutil.which('lua'):
+            self.skipTest('Lua interpreter unavailable')
+        script = r'''local callbacks, commands = {}, {}
+hl = {
+    layer_rule = function() end,
+    monitor = function() end, config = function() end, bind = function() end,
+    on = function(name, callback) callbacks[name] = callback end,
+    exec_cmd = function(command) table.insert(commands, command) end,
+    dsp = { exec_cmd = function() end, exit = function() end, focus = function() end,
+            window = { fullscreen = function(action) return action end, resize = function() end,
+                       move = function() end, close = function() end,
+                       cycle_next = function() end, drag = function() end } }
+}
+dofile(arg[1])
+callbacks["hyprland.start"]()
+assert(commands[1] == "tessera-shell" and commands[2] == "tessarchy-osk start",
+       table.concat(commands, ","))
+'''
+        result = subprocess.run(['lua', '-', str(ROOT / 'session/hyprland.lua')],
+                                input=script, text=True, capture_output=True, env=self.env)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_existing_launcher_refused_before_installing_data(self):
         launcher = self.home / '.local/bin/start-tessarchy'

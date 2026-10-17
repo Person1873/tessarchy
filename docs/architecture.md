@@ -85,7 +85,23 @@ or secure locking is claimed.
   and [releng profile](https://github.com/archlinux/archiso/blob/master/configs/releng/profiledef.sh)
   inform the overlay; installed archiso supplies the actual bootloader files.
 
-No overlays claim secure locking. No lock button is included. A complete input
-method integration needs research into Hyprland's input-method-v2/text-input-v3,
-client toolkit support, focus behavior and whether the chosen keyboard actually
-implements the required protocols. Squeekboard/Maliit are not assumed compatible.
+No overlays claim secure locking. No lock button is included.
+
+## On-screen keyboard
+
+The session starts `tessarchy-osk start` after Tessera. When squeekboard is
+installed it runs as an ordinary client and reserves its own `osk` layer above
+the navigation bar, so maximized apps shrink rather than being covered.
+squeekboard shows itself for focused text fields only when the GNOME a11y key
+`screen-keyboard-enabled` is true. Rather than change that global user setting,
+the wrapper starts it with a keyfile GSettings backend under
+`$XDG_STATE_HOME/tessarchy/osk` (default `~/.local/state/tessarchy/osk`), seeded
+once with the key enabled. Users may edit that file; it is never overwritten.
+The Keyboard navigation button calls `tessarchy-osk toggle`, which uses
+squeekboard's `sm.puri.OSK0` D-Bus `Visible`/`SetVisible` on the session bus. Tessera
+panels never take keyboard focus, so the app keeps its text field. The button
+appears only when `tessera-shell` finds squeekboard and the wrapper, and is not
+added to Desktop mode. Without squeekboard nothing starts and no button appears.
+The guest test observed squeekboard load its terminal layout for Foot and its
+text layout for Firefox's address bar, so text-input content purpose reached it;
+the exact protocol traffic was not traced.

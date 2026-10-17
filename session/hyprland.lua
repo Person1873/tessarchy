@@ -62,6 +62,8 @@ end)
 hl.on("window.active", maximize_if_mobile)
 hl.on("hyprland.start", function ()
     hl.exec_cmd("tessera-shell")
+    -- Optional; exits quietly when squeekboard is not installed.
+    hl.exec_cmd("tessarchy-osk start")
 end)
 -- Same card switcher for touch and keyboard. Alt release commits selection.
 -- Keycodes 64/108 are left/right Alt in the configured evdev/US keymap.

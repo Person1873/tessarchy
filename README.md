@@ -56,14 +56,14 @@ or persistence. Physical touchscreen and device acceptance testing remain
 pending. The [GitHub review](docs/github-review.md) lists pending contributions;
 collaborators’ unmerged features are not included in this ISO.
 
-Text input currently requires a physical keyboard. In Phone/Tablet modes ordinary
+An optional squeekboard on-screen keyboard supports text fields and a mobile
+Keyboard toggle. Without it, text input requires a physical keyboard. In Phone/Tablet modes ordinary
 windows maximize when they open and again whenever they become active; oversized
 dialogs request a size between the bars and are centered; application minimum
 sizes can still exceed a phone screen. Desktop mode starts windows
 tiled. A mode switch does not move the windows already open; restoring a maximized
 app keeps it tiled until focus moves elsewhere. Tablet split layouts are planned. Exclusive
-fullscreen can hide the dock. There is no secure lock screen or on-screen
-keyboard integration yet. See the [validation record](docs/testing.md) for the
+fullscreen can hide the dock. There is no secure lock screen; keyboard availability depends on squeekboard. See the [validation record](docs/testing.md) for the
 difference between implemented, user-tested, and planned behavior.
 
 ## Quick start: use the basic Arch VM
