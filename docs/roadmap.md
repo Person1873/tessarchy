@@ -5,6 +5,7 @@ See [Operation Tessarchy](../Operation-TESSARCHY.md) for the design brief.
 ## Implemented in the development branch
 
 - Quiet Edge: shallow frosted status bar, floating glass navigation, minimal icons.
+- Pull-down radio switches and airplane mode, with hardware/permission state checks.
 - Swipeable app cards, live previews when available, icon actions, confirmed close.
 - Automatic Phone/Tablet/Desktop layouts with saved overrides and appearance settings.
 - Original wallpaper, finite cube logo animation, reduced motion.

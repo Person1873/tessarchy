@@ -14,6 +14,11 @@ import "LayoutPolicy.js" as Policy
 
 ShellRoot {
     id: root
+    signal controlsRequested
+    IpcHandler {
+        target: "controls"
+        function toggle(): void { root.controlsRequested(); }
+    }
     signal replayBrand
     signal switcherCommand(string action)
     IpcHandler {
@@ -36,7 +41,8 @@ ShellRoot {
         property real barOpacity: 0.22
         property real wallpaperDim: 0.12
     }
-    // Bind these when wireless/modem integrations land. Never invent a signal.
+    RadioBackend { id: radioBackend }
+    // Signal strength remains unavailable until a real connection backend is added.
     property real wifiStrength: -1
     property real cellularStrength: -1
     readonly property var audioSink: audioLoader.item ? (audioLoader.item as AudioStatus).sink : null
@@ -139,7 +145,7 @@ ShellRoot {
                         spacing: 8
                         Text {
                             visible: panel.page !== "windows"
-                            text: panel.page === "apps" ? "Your space" : panel.page === "close" ? "Close this window?" : panel.page === "status" ? "Quick controls" : panel.page === "settings" ? "Settings" : "End this session?"
+                            text: panel.page === "apps" ? "Your space" : panel.page === "close" ? "Close this window?" : panel.page === "settings" ? "Settings" : "End this session?"
                             color: root.accentColor
                             font.pixelSize: 22
                             font.bold: true
@@ -200,7 +206,7 @@ ShellRoot {
                                             text: "Controls"
                                             symbol: "controls"
                                             accentColor: root.accentColor
-                                            onClicked: panel.showPage("status")
+                                            onClicked: statusBar.toggleDrawer()
                                         }
                                     }
                                     Text {
@@ -221,7 +227,7 @@ ShellRoot {
                                         displayHeight: surface.modelData.height
                                         accentColor: root.accentColor
                                         onEndSessionRequested: panel.page = "session"
-                                        onControlsRequested: panel.page = "status"
+                                        onControlsRequested: statusBar.toggleDrawer()
                                         onReplayRequested: root.replayBrand()
                                     }
                                 }
@@ -257,97 +263,6 @@ ShellRoot {
                                     }
                                 }
                                 ColumnLayout {
-                                    visible: panel.page === "status"
-                                    Layout.fillWidth: true
-                                    spacing: 16
-                                    Text {
-                                        text: "CONNECTIONS"
-                                        color: "#8da7b9"
-                                        font {
-                                            pixelSize: 11
-                                            letterSpacing: 2
-                                        }
-                                    }
-                                    Text {
-                                        text: root.wifiStrength < 0 ? "Wi-Fi · unavailable" : "Wi-Fi · connected"
-                                        color: "#f0f5ff"
-                                        Layout.fillWidth: true
-                                        wrapMode: Text.WordWrap
-                                    }
-                                    Text {
-                                        text: root.cellularStrength < 0 ? "Cellular · no modem connected" : "Cellular · connected"
-                                        color: "#f0f5ff"
-                                        Layout.fillWidth: true
-                                        wrapMode: Text.WordWrap
-                                    }
-                                    Text {
-                                        text: "SOUND"
-                                        color: "#8da7b9"
-                                        font {
-                                            pixelSize: 11
-                                            letterSpacing: 2
-                                        }
-                                    }
-                                    Text {
-                                        text: root.audioAvailable ? (root.audioSink.audio.muted ? "Muted" : "Volume · " + root.volumePercent + "%") : "No audio output connected"
-                                        color: "#f0f5ff"
-                                        Layout.fillWidth: true
-                                        wrapMode: Text.WordWrap
-                                    }
-                                    LevelSlider {
-                                        Layout.fillWidth: true
-                                        from: 0
-                                        to: 1
-                                        value: root.audioAvailable ? root.audioSink.audio.volume : 0
-                                        enabled: root.audioAvailable
-                                        accentColor: root.accentColor
-                                        Accessible.name: "Output volume"
-                                        onMoved: root.audioSink.audio.volume = value
-                                    }
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        TouchButton {
-                                            text: "−"
-                                            Accessible.name: "Decrease volume"
-                                            enabled: root.audioAvailable
-                                            Layout.fillWidth: true
-                                            Layout.preferredWidth: 1
-                                            onClicked: root.audioSink.audio.volume = Math.max(0, root.audioSink.audio.volume - 0.05)
-                                        }
-                                        TouchButton {
-                                            text: root.audioAvailable && root.audioSink.audio.muted ? "Unmute" : "Mute"
-                                            enabled: root.audioAvailable
-                                            Layout.fillWidth: true
-                                            Layout.preferredWidth: 1
-                                            onClicked: root.audioSink.audio.muted = !root.audioSink.audio.muted
-                                        }
-                                        TouchButton {
-                                            text: "+"
-                                            Accessible.name: "Increase volume"
-                                            enabled: root.audioAvailable
-                                            Layout.fillWidth: true
-                                            Layout.preferredWidth: 1
-                                            onClicked: root.audioSink.audio.volume = Math.min(1, root.audioSink.audio.volume + 0.05)
-                                        }
-                                    }
-                                }
-                                RowLayout {
-                                    visible: panel.page === "status"
-                                    Layout.fillWidth: true
-                                    TouchButton {
-                                        text: "Settings"
-                                        Layout.fillWidth: true
-                                        Layout.preferredWidth: 1
-                                        onClicked: panel.page = "settings"
-                                    }
-                                    TouchButton {
-                                        text: "Session…"
-                                        Layout.fillWidth: true
-                                        Layout.preferredWidth: 1
-                                        onClicked: panel.page = "session"
-                                    }
-                                }
-                                ColumnLayout {
                                     visible: panel.page === "session"
                                     Layout.fillWidth: true
                                     Text {
@@ -380,8 +295,9 @@ ShellRoot {
                             symbol: "back"
                             showLabel: shellPreferences.showLabels
                             accentColor: root.accentColor
-                            enabled: panel.expanded
+                            enabled: panel.expanded || statusBar.drawerOpen
                             onClicked: {
+                                statusBar.drawerOpen = false;
                                 panel.closeTarget = null;
                                 panel.page = "";
                             }
@@ -415,35 +331,79 @@ ShellRoot {
                 }
             }
             PanelWindow {
+                id: statusBar
+                property bool drawerOpen: false
+                function toggleDrawer() {
+                    drawerOpen = !drawerOpen;
+                    if (drawerOpen) { panel.closeTarget = null; panel.page = ""; radioBackend.refresh(); }
+                }
+                Connections {
+                    target: root
+                    function onControlsRequested() {
+                        if (Hyprland.focusedMonitor && Hyprland.focusedMonitor.name === surface.modelData.name) statusBar.toggleDrawer();
+                    }
+                }
                 screen: surface.modelData
                 anchors {
                     top: true
                     left: true
                     right: true
                 }
-                implicitHeight: 48
+                implicitHeight: drawerOpen ? Math.min(surface.modelData.height - surface.navHeight - 12, quickSheet.implicitHeight + 76) : 48
                 exclusiveZone: 48
                 color: "transparent"
                 Rectangle {
                     anchors.fill: parent
-                    color: Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
+                    radius: statusBar.drawerOpen ? 28 : 0
+                    color: Qt.rgba(0.063, 0.106, 0.188, statusBar.drawerOpen ? 0.76 : shellPreferences.barOpacity)
                     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.alpha(root.accentColor, 0.1) }
                 }
                 WlrLayershell.namespace: "tessera-status"
                 WlrLayershell.layer: WlrLayer.Top
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                Item {
+                    id: statusHeader
+                    width: parent.width
+                    height: 48
+                    DragHandler {
+                        target: null
+                        xAxis.enabled: false
+                        dragThreshold: 6
+                        grabPermissions: PointerHandler.CanTakeOverFromAnything
+                        property bool triggered: false
+                        onActiveChanged: { if (active) triggered = false; }
+                        onActiveTranslationChanged: {
+                            // Expand before the pointer leaves the 48px input strip.
+                            if (!triggered && activeTranslation.y > 10 && !statusBar.drawerOpen) {
+                                triggered = true;
+                                statusBar.toggleDrawer();
+                            } else if (!triggered && activeTranslation.y < -10 && statusBar.drawerOpen) {
+                                triggered = true;
+                                statusBar.toggleDrawer();
+                            }
+                        }
+                    }
                 RowLayout {
                     anchors.fill: parent
                     anchors.leftMargin: 18
                     anchors.rightMargin: 8
                     spacing: surface.modelData.width < 360 ? 4 : 8
-                    Text {
-                        text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "hh:mm" : "h:mm AP")
-                        color: "#f0f5ff"
-                        font {
-                            pixelSize: 14
-                            weight: Font.DemiBold
+                    TouchButton {
+                        id: mobileClock
+                        text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "h:mm" : "h:mm AP").replace(/ [AP]M$/, "")
+                        Accessible.name: "Clock " + Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "h:mm" : "h:mm AP") + ", quick controls"
+                        Layout.minimumHeight: 48
+                        Layout.preferredWidth: 66
+                        implicitHeight: 48
+                        padding: 0
+                        background: Item {}
+                        contentItem: Text {
+                            text: mobileClock.text
+                            color: "#f0f5ff"
+                            verticalAlignment: Text.AlignVCenter
+                            font { pixelSize: 16; weight: Font.DemiBold; letterSpacing: 0.2 }
                         }
+                        onClicked: statusBar.toggleDrawer()
                     }
                     Item {
                         Layout.fillWidth: true
@@ -455,7 +415,7 @@ ShellRoot {
                         implicitHeight: 48
                         Layout.minimumHeight: 48
                         accentColor: root.accentColor
-                        onClicked: panel.showPage("settings")
+                        onClicked: { statusBar.drawerOpen = false; panel.showPage("settings"); }
                     }
                     // Only registered application icons appear; no simulated signals.
                     RowLayout {
@@ -487,6 +447,13 @@ ShellRoot {
                             }
                         }
                     }
+                    Image {
+                        visible: !!(radioBackend.state.airplane && radioBackend.state.airplane.enabled)
+                        Layout.preferredWidth: 18; Layout.preferredHeight: 18
+                        source: "icons/airplane.svg"
+                        sourceSize.width: 18; sourceSize.height: 18
+                        Accessible.name: "Airplane mode on"
+                    }
                     StatusIcon {
                         symbol: "cellular"
                         label: "Cellular"
@@ -506,8 +473,8 @@ ShellRoot {
                         Layout.minimumHeight: 48
                         Layout.fillWidth: false
                         Layout.preferredWidth: 48
-                        selected: panel.page === "status"
-                        onClicked: panel.showPage("status")
+                        selected: statusBar.drawerOpen
+                        onClicked: statusBar.toggleDrawer()
                     }
                     RowLayout {
                         spacing: 4
@@ -536,8 +503,32 @@ ShellRoot {
                         Layout.preferredWidth: 48
                         accentColor: root.accentColor
                         selected: panel.page === "settings"
-                        onClicked: panel.showPage("settings")
+                        onClicked: { statusBar.drawerOpen = false; panel.showPage("settings"); }
                     }
+                }
+                }
+                ScrollView {
+                    x: 16; y: 60
+                    width: parent.width - 32
+                    height: parent.height - y
+                    visible: statusBar.drawerOpen
+                    clip: true
+                    contentWidth: availableWidth
+                    QuickSettings {
+                        id: quickSheet
+                        width: parent.width
+                        radios: radioBackend
+                        date: clock.date
+                        use24Hour: shellPreferences.use24Hour
+                        accentColor: root.accentColor
+                        audioSink: root.audioSink
+                        onDismissed: statusBar.drawerOpen = false
+                        onSettingsRequested: { statusBar.drawerOpen = false; panel.showPage("settings"); }
+                    }
+                }
+                Connections {
+                    target: panel
+                    function onPageChanged() { if (panel.page !== "") statusBar.drawerOpen = false; }
                 }
             }
             PanelWindow {

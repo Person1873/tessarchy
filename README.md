@@ -30,8 +30,10 @@ live tester ISO.
   tile launcher.
 - Settings for layout mode, accent, opacity, wallpaper shade, clock, navigation
   labels, and reduced motion.
-- Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
-  controls. Wireless and modem backends remain to be connected.
+- A pull-down glass panel with airplane mode, hardware-aware Wi-Fi/Bluetooth/
+  cellular radio switches, and optional PipeWire volume controls. Network
+  selection, pairing, and connection-strength backends remain planned; see
+  [radio controls](docs/radio-controls.md).
 - An expandable launcher for Firefox and Foot.
 - Swipeable app cards with real window previews, glass icon actions, and keyboard switching.
 - Confirmation before closing a window or ending the session.

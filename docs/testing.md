@@ -314,3 +314,35 @@ classes and keymaps, multi-monitor keyboard routing, GPU-backed preview behavior
 performance on real mobile hardware, and a newly built/booted Quiet Edge ISO.
 The VM lacks UPower and desktop portal services and falls back from DMA-BUF to
 SHM preview buffers; these are not claims of working battery/network/audio devices.
+
+## Pull-down quick controls and mobile clock — 2026-10-17
+
+Actual validation in the installed development guest:
+
+- Restyled the status clock with compact semibold digits, no leading zero or
+  visible AM/PM suffix. Verified the saved 12-hour preference remains intact and
+  the expanded clock/accessibility text still identifies AM/PM.
+- Injected relative pointer drags from the status strip. A downward drag opened
+  the glass sheet to 400×549; an upward drag collapsed it to 400×48, verified
+  against compositor layer geometry. Tapping the clock also opened the sheet.
+  The exclusive zone stays at 48px and keyboard focus is not requested.
+- Confirmed the installed helper reports no Wi-Fi/Bluetooth/WWAN radios in this
+  QEMU guest. Airplane mode and each radio tile correctly show Unavailable and
+  remain disabled. No hardware state was simulated in the screenshot.
+- Six radio tests cover absent devices, soft/hard blocks, independent radios,
+  bulk airplane actions, permission failures, input validation and re-reading
+  partially changed hardware after a failed bulk command. Commands are mocked;
+  no host radio was changed. See docs/radio-controls.md for exact semantics.
+- Host and guest `./scripts/check.sh` passed: 17 Python tests and 19 Qt Quick
+  results, Lua/config validation and qmllint. Only the known PanelWindow metadata
+  warnings remain. ShellCheck was unavailable locally/in the guest.
+- Updated website preview rendered at 1440×1000 and 390×844, with working layout
+  tabs and screenshot dialog, no horizontal overflow or broken sourced images.
+  Added the real quick-controls image to the site's downloadable screenshot pack.
+
+Still unverified: physical touch input, real transmitter changes, radio permission
+policy on target hardware, modem-specific behavior and devices without rfkill.
+These controls do not select networks, pair Bluetooth devices or provision mobile
+service. Airplane off unblocks detected radios; previous per-radio selections are
+not restored. No dependencies, services or host desktop configuration were installed
+or changed. This UI update is not included in the published Alpha 1 tester ISO.

@@ -1,0 +1,110 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+
+ColumnLayout {
+    id: sheet
+    required property var radios
+    required property var date
+    property bool use24Hour: true
+    property color accentColor: "#a9e8d5"
+    property var audioSink: null
+    readonly property bool audioAvailable: !!(audioSink && audioSink.ready && audioSink.audio)
+    signal settingsRequested
+    signal dismissed
+    spacing: 14
+    Item {
+        Layout.fillWidth: true
+        implicitHeight: 64
+        Column {
+            anchors.left: parent.left
+            spacing: 4
+            Text {
+                text: Qt.formatDateTime(sheet.date, sheet.use24Hour ? "h:mm" : "h:mm AP")
+                color: "#f0f5ff"
+                font { pixelSize: 34; weight: Font.Light; letterSpacing: -1 }
+            }
+            Text { text: Qt.formatDateTime(sheet.date, "dddd, MMMM d"); color: "#a7bdc6"; font.pixelSize: 12 }
+        }
+        NavButton {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            width: 48; height: 48
+            text: "Settings"; symbol: "settings"; showLabel: false
+            onClicked: sheet.settingsRequested()
+        }
+    }
+    GridLayout {
+        Layout.fillWidth: true
+        columns: width >= 620 ? 4 : 2
+        columnSpacing: 10
+        rowSpacing: 10
+        Repeater {
+            model: [
+                {name: "airplane", title: "Airplane mode", icon: "airplane"},
+                {name: "wifi", title: "Wi-Fi", icon: "wifi"},
+                {name: "bluetooth", title: "Bluetooth", icon: "bluetooth"},
+                {name: "cellular", title: "Cellular", icon: "cellular"}
+            ]
+            delegate: RadioTile {
+                required property var modelData
+                readonly property var radio: sheet.radios.state[modelData.name] || {available: false, enabled: false, label: "Unavailable"}
+                text: modelData.title
+                symbol: modelData.icon
+                detail: radio.label
+                selected: radio.enabled
+                enabled: radio.available && !radio.hardBlocked && sheet.radios.state.canControl && !sheet.radios.busy
+                accentColor: sheet.accentColor
+                onClicked: sheet.radios.toggle(modelData.name)
+            }
+        }
+    }
+    Text {
+        visible: !!sheet.radios.state.error
+        Layout.fillWidth: true
+        text: sheet.radios.state.error || ""
+        color: "#ebbbbd"; font.pixelSize: 12; wrapMode: Text.WordWrap
+    }
+    RowLayout {
+        Layout.fillWidth: true
+        NavButton {
+            text: sheet.audioAvailable && sheet.audioSink.audio.muted ? "Unmute" : "Mute"
+            symbol: sheet.audioAvailable && sheet.audioSink.audio.muted ? "volume-muted" : "volume"
+            showLabel: false; Layout.fillWidth: false; Layout.preferredWidth: 48
+            enabled: sheet.audioAvailable
+            onClicked: sheet.audioSink.audio.muted = !sheet.audioSink.audio.muted
+        }
+        LevelSlider {
+            Layout.fillWidth: true
+            from: 0; to: 1
+            value: sheet.audioAvailable ? sheet.audioSink.audio.volume : 0
+            enabled: sheet.audioAvailable
+            accentColor: sheet.accentColor
+            Accessible.name: "Output volume"
+            onMoved: sheet.audioSink.audio.volume = value
+        }
+    }
+    Text {
+        text: sheet.audioAvailable ? "Volume · " + Math.round(sheet.audioSink.audio.volume * 100) + "%" : "Audio output unavailable"
+        color: "#99afbe"; font.pixelSize: 11
+        Layout.alignment: Qt.AlignHCenter
+    }
+    Text {
+        text: "Airplane mode switches all detected radios"
+        color: "#99afbe"; font.pixelSize: 10
+        Layout.alignment: Qt.AlignHCenter
+    }
+    TouchButton {
+        text: "Collapse quick controls"
+        Layout.fillWidth: true
+        implicitHeight: 48; Layout.minimumHeight: 48
+        background: Item {}
+        contentItem: Item { Rectangle { anchors.centerIn: parent; width: 40; height: 4; radius: 2; color: "#8eacb8" } }
+        onClicked: sheet.dismissed()
+        DragHandler {
+            target: null
+            xAxis.enabled: false
+            onActiveTranslationChanged: { if (activeTranslation.y < -28) sheet.dismissed(); }
+        }
+    }
+}
