@@ -232,12 +232,98 @@ Actually performed:
   a generated mockup. It assembles six original faces with rotation, runs once
   for 1.6 seconds, and settles. Qt tests verify no idle loop and reduced motion.
 
+## Bundled fish live shell, 2026-10-17
+
+Actually performed:
+
+- Added `fish` to `iso/packages.x86_64`, changed the sysusers shell for `tess`
+  to `/usr/bin/fish`, and gave the skel tree a fish profile: greeting off, two
+  abbreviations, and the same gated tty1 one-shot Tessera start as
+  `.bash_profile` (interactive only, tty1 only, no DISPLAY/WAYLAND_DISPLAY).
+- `scripts/stage-iso.sh` now copies the whole skel tree to `/home/tess` and
+  records `file_permissions` for the fish config; tmpfiles keeps the `.config`
+  directories owned by `tess`.
+- `fish -n` accepts the profile on the development host; `scripts/check.sh`
+  now runs that syntax check whenever fish is installed.
+- The ISO staging workflow test asserts fish in the package list, the fish
+  login shell, the staged profile path, and the profiledef permission entry;
+  all ten workflow tests pass on the development host.
+- Not performed: building and booting the live image, verifying autologin
+  lands in fish, or ending a session and returning to the fish prompt. Those
+  remain part of the pending ISO boot checklist.
+
 Screenshots are ignored under `build/`, including adaptive/tablet/desktop and
 Settings captures. Hardware touch, real Wi-Fi/modem/audio/battery integration,
 multiple physical outputs, exhaustive fractional scaling, and ISO builds/boots
 remain pending. Auto detection classifies logical display size; it does not
 identify physical device type or available input hardware. No secure lock claim.
 
+## On-screen keyboard, 2026-10-17
+
+Actually performed by an agent (Hermes, for person1873) in a fresh official Basic
+Arch qcow2 (sha256 checked against the mirror's `.SHA256`) under QEMU/KVM, 4GiB,
+virtio-vga at 720×1440 scale 1 (Auto · Tablet), VNC/SSH on host loopback only.
+Guest packages: Hyprland 0.56.2-4, Quickshell 0.3.2-1, squeekboard 1.43.1-6,
+linux 7.2.10. Dependencies were installed explicitly in the guest only; tty1
+autologin was enabled in the guest for testing. The host desktop was not used.
+
+- `./scripts/check.sh` passes on host and guest: thirteen workflow tests (new:
+  optional keyboard wrapper with stub squeekboard/busctl and a restricted PATH,
+  private keyfile seeding without overwriting user edits, toggle in both
+  directions, session start order), fifteen Qt Quick results, `config ok`.
+  qmllint keeps the known PanelWindow warning; shellcheck is unavailable.
+- Input was driven with `scripts/guest-touch.py`, a uinput multitouch device
+  with `INPUT_PROP_DIRECT` inside the guest. These are real touch events through
+  libinput and Hyprland, but synthetic: not a hardware touchscreen test.
+- Session start launched squeekboard via `tessarchy-osk start`; its environment
+  showed `GSETTINGS_BACKEND=keyfile` and the private config directory, while the
+  guest's global `screen-keyboard-enabled` remained `false`.
+- Home → Terminal tile opened Foot maximized; the keyboard appeared by itself
+  with squeekboard's terminal layout (Esc/Tab/Ctrl/Alt/arrows). Foot resized
+  from 720×1312 to 720×1087 above the keyboard. `echo hi` and `ls` typed by
+  touch ran correctly. Firefox's address bar showed the text layout; Firefox
+  without a focused field left it hidden.
+- The Keyboard navigation button hid the keyboard (`osk` layer removed, Foot
+  back to 1312) and showed it again; Foot kept keyboard focus and received the
+  following keystrokes.
+- Defect found and fixed during the pass: with the keyboard visible, Recents
+  opened behind it. Opening any shell page now hides the keyboard; observed
+  `osk` layer count 1 → 0 and a fully visible Recents drawer.
+
+Not tested: hardware touch, GTK/Qt app text fields beyond Firefox, Phone mode
+at 400×800, rotation and fractional scale, Desktop mode (intentionally not
+changed), squeekboard theming, the ISO with squeekboard, and package installs.
+Hyprland also shows a "started without start-hyprland" warning banner for a
+short time after `start-tessarchy` launches it; this predates the keyboard
+work and is unchanged.
+## Portable checks and a source-checks workflow, 2026-10-17
+
+Actually performed:
+
+- `scripts/check.sh` no longer assumes Arch paths: it accepts `python` or
+  `python3`, `luac` or `luac5.4`, and discovers Qt tools and the QML import
+  root under both `/usr/lib/qt6` and multiarch libdirs. `qmllint` now runs
+  whenever it is installed instead of additionally requiring Quickshell.
+- On this Ubuntu ARM host the full pass now executes: ten workflow tests, the
+  seventeen-result Qt Quick Test run, `luac -p`, `qmllint` (warnings only) and
+  `shellcheck`; only the Hyprland parser check skips.
+- Added `.github/workflows/checks.yml` running the same script on
+  ubuntu-24.04 with python3, lua5.4, fish, shellcheck and the Qt QML modules.
+- Not performed: observing the new workflow run on GitHub, and the pre-existing
+  `qs`-gated behavior change on a host with Quickshell installed.
+## Live rootfs hardening, 2026-10-17
+
+Actually performed:
+
+- Staged profile now pins hostname `tessarchy`, en_US.UTF-8 generation, a plain
+  `us` virtual console, a live-console motd, a volatile journald drop-in
+  (64M runtime cap), a `systemd-timesyncd` enablement link, and a `docs/`
+  snapshot under `/usr/share/tessarchy/docs`; `noto-fonts-emoji` joined the
+  package list.
+- The ISO staging workflow test asserts each of those artifacts in the staged
+  profile, and `./scripts/check.sh` passes on the development host.
+- Not performed: building the image and reviewing the live console; autologin,
+  motd rendering and the volatile journal still need a real ISO boot.
 ## First published tester ISO, 2026-10-17 UTC
 
 Actually performed:
@@ -268,6 +354,44 @@ and persistence acceptance. The installed development VM's broader tests above
 do not establish these as passing in the ISO. No secure locking or Secure Boot
 support claim. Testers should begin in a disposable VM with a physical keyboard.
 
+## Mobile window policy, 2026-10-17
+
+Actually performed by an agent (Hermes, for person1873) in the development QEMU
+guest described above (720×1440, Auto · Tablet, Hyprland 0.56.2-4), with the
+installed `session/hyprland.lua` swapped between the `feat/phone-shell` version
+and this one and reloaded with `hyprctl reload`.
+
+- Two Foot windows, focus moved to the lower one: old config left both tiled at
+  720×543/544; new config maximized the focused one to 720×1087. Closing the
+  maximized window: the remaining one is maximized.
+- Restoring the active window (maximize unset) left it tiled; it was maximized
+  again only after focus moved to the other window and back.
+- Firefox Save As with GTK's remembered size forced to 1232×949: old config
+  placed it at x=-256, Cancel and Save off-screen; new config resized it to
+  726×996 (GTK's minimum width exceeds 720) at x=-3, both buttons visible.
+- `./scripts/check.sh`: new Lua-stub workflow test for activation, nil/desktop
+  windows, dialog fitting with keyboard reservation, rotation and Desktop mode.
+  It fails against the old config and passes now.
+
+Not tested: dialogs that grow after mapping, Phone 400×800, real rotation or
+fractional scale, hardware touch, Desktop mode (intentionally unchanged).
+
+## Phone size (400x800), 2026-10-17
+
+Actually performed by an agent (Hermes, for person1873) in the same guest, with
+the output at scale 1.8 (720x1440 physical, 400x800 logical) via `hyprctl eval`:
+
+- Status bar, nav bar (Back/Home/Recents/Keyboard) and a maximized Foot fit
+  without clipping; Firefox maximized to 400x567 above the keyboard.
+- Firefox Save As does not fit: GTK3's file chooser will not go below 726
+  logical px, so it sits at x=-163 and its header bar (Cancel/Save) is off
+  screen. Setting `org.gtk.Settings.FileChooser` window-size to (360, 500) and
+  sidebar-width to 0 still reopened it at 726. Unresolved.
+- squeekboard picked its short tablet ("Wide") layout, 113 logical px tall. It
+  sizes from the output's reported physical size, and QEMU reports 180x360 mm;
+  a short side of 115 mm or more counts as a tablet. A real phone (about 65 mm
+  wide) should get the taller phone layout; not verified on hardware.
+- Reloading `hyprland.lua` resets the scale to 1; set it again after a reload.
 ## Quiet Edge and card switcher — 2026-10-17
 
 Implemented in the development source and installed Arch VM; **not included in
@@ -393,3 +517,183 @@ Actual validation:
 Earlier development-VM interaction tests remain separate from these ISO boot
 checks. Physical touch, network/radio/audio behavior, Secure Boot, phone
 hardware and application acceptance are still unverified in this exact image.
+
+
+## Script hardening and validation record, 2026-10-17
+
+Environment: Omarchy/Arch host, Hyprland 0.56.2, Quickshell 0.3.1, Qt 6.11.2
+(`/usr/lib/qt6/bin/qmllint`), desktop-file-utils 0.28, python 3.14, qemu absent.
+All work ran as the normal user; no host session config, `dist/`, `build/` or
+`vm/` content was disturbed beyond this project's own ignored directories.
+
+- The host had a stray `qmllint` (reports version "1.0") on PATH which fails
+  silently with exit 255 on the shell QML. `scripts/check.sh` now prefers
+  `/usr/lib/qt6/bin/qmllint` matched to the installed Qt before a PATH entry;
+  after the fix `./scripts/check.sh` exits 0, still reporting the known
+  PanelWindow warning.
+- `desktop-file-validate` on `session/tessarchy.desktop` flags the spec-valid
+  `DesktopNames` Wayland-session key as an extension-key error ("0.28"). The
+  check tolerates only that specific quirk and fails on any other finding.
+- Integration tests grew from nine to seventeen with stub-based checks:
+  `vm.sh plan` command printing, missing-disk, usage and `VM_SSH_PORT`
+  refusals; `fetch-arch-iso.sh` seeded-manifest stubs proving an existing
+  download is never overwritten and a failed download leaves no partial ISO or
+  download directory; `build-iso.sh` explicit archiso refusal;
+  `export-vm-source.sh` snapshot idempotence; `run-basic-vm.sh` missing-disk
+  refusal. All 17 tests pass (grep count 17 `. ok`).
+- Development install/uninstall now writes a `.tessarchy-dev-files` manifest;
+  tests confirm installed files are removed, untracked extras are preserved,
+  v1 markers still uninstall through the legacy fixed set, and the manifest
+  itself is removed. `cmp` launcher-modification refusal was unchanged and
+  still passes.
+- `./scripts/package.sh` was run unprivately with the current source: both
+  packages built (`--nodeps`, fakeroot). File lists and `.PKGINFO` were
+  inspected by bsdtar; nothing was installed.
+- The QML app launcher now derives entries from Quickshell `DesktopEntries`
+  (validated against installed `quickshell-core.qmltypes`: `applications`,
+  `noDisplay`, `command`, `execute`). Only qmllint validated it; no GUI run.
+
+Not performed: archiso staging/build, ISO boot, VM launch, shellcheck (still
+absent locally; covered if CI is enabled), touchscreen tests, guest installs.
+
+## PR 2 integration review — 2026-10-17
+
+Actual validation: resolved the app-drawer changes onto the Alpha 2 shell;
+checked installed DesktopEntry/iconPath QML metadata; `./scripts/check.sh`
+passed 26 Python tests and 19 Qt Quick results, Lua/Hyprland validation and
+qmllint (known PanelWindow metadata warnings only; ShellCheck unavailable).
+Scratch-HOME tests cover manifest install/uninstall, preserving unknown files,
+legacy installs, traversal and symlink-parent rejection before any removal.
+The development VM rendered the installed applications with their real icons
+and truncated long names within the glass launcher.
+
+Still planned/manual: additional desktop-entry command formats and theme changes.
+No host desktop configuration or dependencies changed.
+
+
+## Desktop mode workspace strip and keybindings, 2026-10-17
+
+Implemented, static validation only; GUI and guest acceptance pending.
+
+- `LayoutPolicy.js` gains `showWorkspaces(mode, width)` and
+  `workspaceSlots(ids)`; `tests/qml/tst_layout.qml` covers placement at
+  desktop/tablet/phone widths and slot extension beyond five workspaces.
+- The status bar renders numbered workspace buttons from
+  `Hyprland.workspaces`, highlights the focused/active workspace, and falls
+  back to a numeric-only `hl.dsp.focus` dispatch for not-yet-created
+  workspaces. Existing workspaces use `HyprlandWorkspace.activate()`.
+- Desktop shows the focused window title beside the tray (display-only text).
+- `session/hyprland.lua` adds fixed desktop bindings: Super+1-5,
+  Super+Shift+1-5, Super+Q, Super+Tab, directional focus and window move,
+  Super+drag/resize, and XF86Audio volume keys.
+- Performed on the development host (Ubuntu ARM, no Wayland session):
+  `luac -p` accepts the Lua config; `qmllint` (Qt 6.10) exits 0 for edited QML
+  with only unresolved-module warnings; the Qt Quick Test suite was run
+  directly against the multiarch Qt install and reports 17 passed, including
+  the new `test_workspace_slots` and `test_workspace_strip_placements`.
+  `scripts/check.sh` passes ten workflow tests with the documented skips
+  (Hyprland and Quickshell absent).
+- Not performed here: `Hyprland --verify-config`, Quickshell rendering,
+  workspace strip taps, keybinding behavior, multi-output focus, or reduced
+  width clipping. These require the Arch guest and remain on the manual list.
+
+## PR 3 integration review — 2026-10-17
+
+Actual validation: `./scripts/check.sh` passed 26 Python tests and 21 Qt Quick
+results, Lua/Hyprland validation and QML lint. Inspected installed Hyprland
+monitor/workspace/toplevel metadata. The guest rendered the desktop status
+strip and focused title at 1280×800, and the close shortcut's IPC action opened
+the confirmation page without closing Foot. The 400×800 status strip remains
+uncrowded. Active-window lookup falls back to the activated Wayland handle
+after shell restart. Workspace count is bounded and narrow overrides hide it.
+Close and exit bindings route through the shell confirmations.
+
+Still planned/manual: real keyboard layouts, physical touch and many workspaces.
+This changes development source, not the already published Alpha 2 image.
+
+## PR 4 integration review — 2026-10-17
+
+Actual validation: reviewed tty1-only fish startup, live-user shell selection,
+skel staging and ownership; `./scripts/check.sh` passed 26 Python tests and
+21 Qt Quick results, Lua/Hyprland validation and QML lint. Staging tests confirm
+fish package, sysusers shell, home profile and profile permission entries.
+The host has no fish executable, so fish syntax validation skipped locally.
+No dependencies were installed. The full live-image fish autologin/exit cycle
+remains a planned boot check; Alpha 2 is unchanged.
+
+## PR 5 integration review — 2026-10-17
+
+Actual validation: reviewed declarative hostname, locale, console, motd and
+volatile journal settings, time-sync enablement, emoji package and offline docs.
+`./scripts/check.sh` passed 26 Python tests and 21 Qt Quick results plus the
+available static checks. Scratch staging assertions verify the emitted files
+and service link. Fish and ShellCheck are unavailable locally. No dependencies
+were installed. Live locale generation, fish autologin and journal operation
+remain planned boot checks; the published Alpha 2 image is unchanged.
+
+## PR 6 integration review — 2026-10-17
+
+Actual validation: retained fish syntax and desktop-entry checks while adding
+Python/Lua/Qt discovery for Arch and Debian layouts. Local source checks passed
+26 Python tests, 21 Qt Quick results, Lua/Hyprland verification and QML lint.
+Full shell lint explicitly requires Quickshell metadata; missing imports are
+not counted as successful API validation. The workflow adds an Ubuntu portable
+job and an Arch target-toolchain job running as a non-root user in a disposable
+container. No host or guest dependencies were installed. CI results must be
+checked separately; fish and ShellCheck are unavailable on the host.
+
+## PR 8 integration review — 2026-10-17
+
+Actual validation: inspected installed Hyprland Lua event/monitor metadata.
+`./scripts/check.sh` passed 27 Python tests and 21 Qt Quick results plus
+Lua/Hyprland and QML validation. The guest reloaded the candidate configuration
+without config errors. A new Foot opened maximized at 400×676; restoring it
+left it tiled at 400×338, and focusing the older Foot then the new one maximized
+each back to 400×676. The candidate retains confirmed close/exit bindings.
+Dialog requests now skip fullscreen windows and clamp unusable dimensions.
+
+Planned/manual: oversized real dialogs and application minimum-size behavior
+under the combined source, physical touch, fractional scaling and rotation.
+Earlier contributor dialog tests are recorded separately above. Alpha 2 is unchanged.
+
+## PR 7 integration review — 2026-10-17
+
+Actual validation: reviewed the optional squeekboard wrapper, private GSettings
+backend, fixed D-Bus calls, helper packaging/staging and mobile toggle. Retained
+manifest-based install/uninstall safety and added the helper to preflight and
+cleanup lists. Opening either bottom pages or the new pull-down hides the OSK
+without requesting app keyboard focus. `./scripts/check.sh` passed 30 Python
+tests and 21 Qt Quick results plus available static/API checks. Stub tests cover
+missing backend, private settings preservation, show/hide/toggle and startup.
+
+Planned/manual: typing with the complete integrated source and the supported
+keyboard version, actual 400×800 sizing, focus across applications, and the new
+ISO. Earlier contributor VM results remain separate. The owner explicitly allows
+keyboard keys narrower than 48px, retaining >=48px key height. No dependencies
+were installed on the host or development guest; Alpha 2 is unchanged.
+
+## Bluetooth PR #24 integration, 2026-10-17
+
+Actual validation:
+- `./scripts/check.sh` passed: 31 Python integration tests and 22 Qt Quick
+  checks, scratch-HOME install/uninstall, Lua/Hyprland parsing and QML lint.
+- A new scratch, offscreen Quickshell harness exercised the real BluetoothPanel
+  with mock adapter/device objects: missing adapter, adapter replacement,
+  hidden/powered-off discovery cleanup, preserving pre-existing discovery, and
+  stale/busy/blocked/unpaired device action guards. This is not hardware testing.
+- Installed Quickshell 0.3.1 Bluetooth metadata checked for adapter state,
+  discovery, device actions and battery types. Its defaultAdapter metadata
+  produces an unresolved-type lint warning; the real shell loads successfully.
+- Existing portrait VM (400x800) loaded the candidate shell. The glass pull-down
+  and expanded “Bluetooth · no adapter available” state were visually inspected.
+  Capture: `assets/screenshots/phone-bluetooth.png`. Runtime logs showed the
+  expected absent BlueZ/UPower services and software-buffer fallback.
+- Local fish and ShellCheck were unavailable; target CI covers both.
+
+Pending/manual:
+- Physical adapter power/discovery, reconnect/disconnect, permission failures,
+  device battery accuracy and hot unplug during operations. No adapter or BlueZ
+  service is present in this VM; none of these hardware paths is claimed tested.
+- Pairing/passkey agents, forgetting devices and adapter selection are not
+  implemented. Use an external Bluetooth manager for pairing.
+- No new ISO was built or boot-tested during this PR review; Alpha 2 is unchanged.

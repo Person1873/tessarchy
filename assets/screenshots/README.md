@@ -23,3 +23,7 @@ captures alongside UI changes; do not substitute concept boards for VM evidence.
 The home and quick-controls captures include the newer compact 12-hour status
 clock. Other captures preserve the clock preference used during their original
 validation session. No hardware state is simulated in the controls capture.
+
+`phone-bluetooth.png` shows PR #24's expanded Bluetooth controls in the existing
+400x800 development VM, with the actual no-adapter state. It is development
+evidence, not a capture of the published Alpha 2 ISO.

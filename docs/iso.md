@@ -13,14 +13,24 @@ for now. The image includes both the boot methods of the installed releng
 profile; BIOS and UEFI must both be tested. It does not install onto a disk.
 
 The live user `tess` is created through systemd-sysusers with a locked password,
-no sudo grant, and tty1 autologin. tmpfiles establishes home ownership. A login
-profile starts Tessera once and returns to the TTY on exit. No secure locking or
+no sudo grant, tty1 autologin, and fish as the login shell (`fish` is added to
+the package list). tmpfiles and `file_permissions` establish home ownership for
+the Bash and fish login profiles; both start Tessera once on tty1 and return to
+the TTY on exit. Nothing in the fish profile is needed for development installs
+where Bash starts the session. No secure locking or
 login protection is provided. Releng's root rescue account remains available
 according to upstream defaults. SSH enablement links are removed from the
 staged profile; user-mode VM NAT exposes no forwarded ports. This is a disposable
 development live environment. Do not use it for sensitive work or install it as
 a daily driver. Package-provided services and sockets need review before any
 public release.
+
+The staged rootfs pins the hostname to `tessarchy`, generates the en_US.UTF-8
+locale, sets a live-console motd that points at `/usr/share/tessarchy/docs`
+(a snapshot of `docs/` staged into the image), keeps the journal volatile with
+a 64M runtime cap, and enables `systemd-timesyncd` alongside networkd so guests
+without a working RTC still get a sane clock. `noto-fonts-emoji` is included so
+browser pages render emoji. None of this changes development installs.
 
 ## Build explicitly on Arch
 
@@ -36,7 +46,10 @@ VM_UEFI=1 ./scripts/vm.sh run dist/<actual-ISO-filename>.iso
 
 Prerequisites: internet, a consistent current Arch installation, administrator
 access for mkarchiso, and roughly 15–25GiB free disk. More than 2GiB memory is
-recommended for building. ISO builds are not bit-reproducible yet: repository
+recommended for building. `archiso` pulls in its own auxiliary tools, and
+`iso/packages.x86_64` includes `memtest86+`, whose EFI payload needs `mtools`
+on the build host. Hyprland's system-wide dependencies are resolved by pacman;
+shell-level guesses (`wlogout`, extras) are intentionally absent. ISO builds are not bit-reproducible yet: repository
 versions and date metadata change. Record `pacman -Q archiso`, build log and
 `build/iso-work/iso/arch/pkglist.x86_64.txt` if generated
 by your archiso version. No automatic system upgrades occur.

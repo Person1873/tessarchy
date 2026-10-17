@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtCore
 import Quickshell
+import Quickshell.Bluetooth
 import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
@@ -20,6 +21,13 @@ ShellRoot {
         function toggle(): void { root.controlsRequested(); }
     }
     signal replayBrand
+    readonly property var activeWindow: Hyprland.activeToplevel || Hyprland.toplevels.values.find(window => window.wayland && window.wayland.activated) || null
+    signal actionRequested(string action)
+    IpcHandler {
+        target: "actions"
+        function closeWindow(): void { root.actionRequested("close"); }
+        function endSession(): void { root.actionRequested("exit"); }
+    }
     signal switcherCommand(string action)
     IpcHandler {
         target: "switcher"
@@ -42,9 +50,12 @@ ShellRoot {
         property real wallpaperDim: 0.12
     }
     RadioBackend { id: radioBackend }
+    readonly property var bluetoothAdapter: Bluetooth.defaultAdapter
     // Signal strength remains unavailable until a real connection backend is added.
     property real wifiStrength: -1
     property real cellularStrength: -1
+    // squeekboard via tessarchy-osk; it also appears by itself for text fields.
+    readonly property bool oskAvailable: Quickshell.env("TESSARCHY_OSK") === "1"
     readonly property var audioSink: audioLoader.item ? (audioLoader.item as AudioStatus).sink : null
     readonly property bool audioAvailable: !!(audioSink && audioSink.ready && audioSink.audio)
     readonly property int volumePercent: audioAvailable ? Math.round(audioSink.audio.volume * 100) : 0
@@ -61,7 +72,35 @@ ShellRoot {
             readonly property string mode: Policy.effectiveMode(shellPreferences.layoutMode, modelData.width, modelData.height)
             readonly property bool isPhone: mode === "phone"
             readonly property int navHeight: isPhone ? 76 : 84
-            readonly property int launcherRows: Math.ceil(4 / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
+            readonly property int launcherRows: Math.ceil((panel.appEntries.length + 2) / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
+            readonly property bool showWorkspaces: Policy.showWorkspaces(mode, modelData.width)
+            readonly property var workspaceIds: {
+                const ids = [];
+                const workspaces = Hyprland.workspaces.values;
+                for (let i = 0; i < workspaces.length; i++) ids.push(workspaces[i].id);
+                return ids;
+            }
+            readonly property int workspaceCount: Policy.workspaceSlots(workspaceIds)
+
+            // Hyprland.workspaces only holds existing workspaces; numbered slots
+            // may refer to one that has not been created yet.
+            function workspaceFor(id) {
+                const workspaces = Hyprland.workspaces.values;
+                for (let i = 0; i < workspaces.length; i++) {
+                    if (workspaces[i].id === id) return workspaces[i];
+                }
+                return null;
+            }
+            function switchWorkspace(id) {
+                const workspace = workspaceFor(id);
+                if (workspace) {
+                    // activate() handles both classic and Lua dispatch modes.
+                    workspace.activate();
+                    return;
+                }
+                if (Hyprland.usingLua) Hyprland.dispatch("hl.dsp.focus({ workspace = " + id + " })");
+                else Hyprland.dispatch("workspace " + id);
+            }
             SystemClock {
                 id: clock
                 precision: SystemClock.Minutes
@@ -69,10 +108,19 @@ ShellRoot {
             PanelWindow {
                 id: panel
                 screen: surface.modelData
+                readonly property var appEntries: DesktopEntries.applications.values
+                    .filter(entry => !entry.noDisplay && entry.command.length > 0)
+                    .sort((a, b) => a.name.localeCompare(b.name))
                 property string page: ""
                 property var closeTarget: null
                 property bool keyboardSwitch: false
                 readonly property bool expanded: page !== ""
+                // The keyboard is a separate top-layer surface that would cover
+                // the drawer, so shell pages dismiss it like an IME on Recents.
+                onExpandedChanged: {
+                    if (expanded && root.oskAvailable)
+                        Quickshell.execDetached(["tessarchy-osk", "hide"]);
+                }
                 anchors {
                     bottom: true
                     left: false
@@ -121,6 +169,15 @@ ShellRoot {
                             switcher.step(action === "previous" ? -1 : 1);
                             switcher.forceActiveFocus();
                         }
+                    }
+                }
+                Connections {
+                    target: root
+                    function onActionRequested(action) {
+                        if (!Hyprland.focusedMonitor || Hyprland.focusedMonitor.name !== surface.modelData.name) return;
+                        panel.keyboardSwitch = false;
+                        panel.closeTarget = action === "close" ? root.activeWindow : null;
+                        panel.page = action === "exit" ? "session" : panel.closeTarget ? "close" : "";
                     }
                 }
                 Connections {
@@ -183,17 +240,19 @@ ShellRoot {
                                         columns: Policy.columns(surface.mode, width)
                                         columnSpacing: 12
                                         Layout.fillWidth: true
-                                        AppTile {
-                                            text: "Browser"
-                                            symbol: "browser"
-                                            accentColor: root.accentColor
-                                            onClicked: panel.launch(["firefox"])
-                                        }
-                                        AppTile {
-                                            text: "Terminal"
-                                            symbol: "terminal"
-                                            accentColor: root.accentColor
-                                            onClicked: panel.launch(["foot"])
+                                        Repeater {
+                                            model: panel.appEntries
+                                            delegate: AppTile {
+                                                required property var modelData
+                                                text: modelData.name
+                                                symbol: "browser"
+                                                iconSource: Quickshell.iconPath(modelData.icon, true)
+                                                accentColor: root.accentColor
+                                                onClicked: {
+                                                    panel.page = "";
+                                                    modelData.execute();
+                                                }
+                                            }
                                         }
                                         AppTile {
                                             text: "Settings"
@@ -209,7 +268,7 @@ ShellRoot {
                                         }
                                     }
                                     Text {
-                                        text: "Prototype · Physical keyboard needed for text input."
+                                        text: root.oskAvailable ? "Prototype · The keyboard opens for text fields; Keyboard shows or hides it." : "Prototype · Physical keyboard needed for text input."
                                         color: "#b7c7cc"
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
@@ -326,6 +385,15 @@ ShellRoot {
                             selected: panel.page === "settings"
                             onClicked: panel.showPage("settings")
                         }
+                        NavButton {
+                            // Panel never takes keyboard focus, so the app keeps its text field.
+                            visible: root.oskAvailable && surface.mode !== "desktop"
+                            text: "Keyboard"
+                            symbol: "keyboard"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
+                            onClicked: Quickshell.execDetached(["tessarchy-osk", "toggle"])
+                        }
                     }
                 }
             }
@@ -334,7 +402,12 @@ ShellRoot {
                 property bool drawerOpen: false
                 function toggleDrawer() {
                     drawerOpen = !drawerOpen;
-                    if (drawerOpen) { panel.closeTarget = null; panel.page = ""; radioBackend.refresh(); }
+                    if (drawerOpen) {
+                        panel.closeTarget = null;
+                        panel.page = "";
+                        radioBackend.refresh();
+                        if (root.oskAvailable) Quickshell.execDetached(["tessarchy-osk", "hide"]);
+                    }
                 }
                 Connections {
                     target: root
@@ -404,8 +477,45 @@ ShellRoot {
                         }
                         onClicked: statusBar.toggleDrawer()
                     }
+                    RowLayout {
+                        visible: surface.showWorkspaces
+                        spacing: 4
+                        Repeater {
+                            model: surface.workspaceCount
+                            delegate: TouchButton {
+                                id: workspaceButton
+                                required property int index
+                                readonly property int workspaceId: index + 1
+                                readonly property var workspace: surface.workspaceFor(workspaceId)
+                                text: String(workspaceId)
+                                selected: workspace ? (workspace.focused || workspace.active) : false
+                                implicitWidth: 48
+                                implicitHeight: 48
+                                Layout.minimumWidth: 48
+                                Layout.minimumHeight: 48
+                                Layout.preferredWidth: 48
+                                padding: 0
+                                accentColor: root.accentColor
+                                Accessible.name: "Workspace " + workspaceId + (selected ? " active" : " inactive")
+                                Accessible.role: Accessible.Button
+                                onClicked: surface.switchWorkspace(workspaceId)
+                            }
+                        }
+                    }
                     Item {
                         Layout.fillWidth: true
+                    }
+                    // Focused window title; only meaningful in the desktop layout.
+                    Text {
+                        visible: surface.showWorkspaces && surface.mode === "desktop" && text.length > 0
+                        text: root.activeWindow ? (root.activeWindow.title || "") : ""
+                        color: "#d0dced"
+                        font.pixelSize: 13
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: 360
+                        Layout.leftMargin: 8
+                        Accessible.name: text.length > 0 ? "Focused window " + text : ""
                     }
                     // Only registered application icons appear; no simulated signals.
                     RowLayout {
@@ -505,6 +615,7 @@ ShellRoot {
                     clip: true
                     contentWidth: availableWidth
                     QuickSettings {
+                        bluetoothAdapter: root.bluetoothAdapter
                         id: quickSheet
                         width: parent.width
                         radios: radioBackend

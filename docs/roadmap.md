@@ -8,6 +8,8 @@ See [Operation Tessarchy](../Operation-TESSARCHY.md) for the design brief.
 - Pull-down radio switches and airplane mode, with hardware/permission state checks.
 - Swipeable app cards, live previews when available, icon actions, confirmed close.
 - Automatic Phone/Tablet/Desktop layouts with saved overrides and appearance settings.
+- Optional on-screen keyboard with a private settings backend and focus-preserving toggle.
+- Mobile apps re-maximize on activation; oversized dialogs request the usable area.
 - Original wallpaper, finite cube logo animation, reduced motion.
 - Experimental x86_64 Alpha 2 live ISO, observed BIOS/UEFI QEMU/KVM GUI boots.
 - GitHub Pages project site, real screenshot pack, automatic repository deployments.
@@ -16,6 +18,9 @@ Alpha 2 includes Quiet Edge, the card switcher, and pull-down radio and layout
 controls. BIOS and non-Secure-Boot UEFI graphical boots were observed in
 diskless QEMU/KVM. Pending contributor pull requests remain outside this
 release; see the [GitHub review](github-review.md).
+
+Desktop workspace navigation and keyboard management are implemented; broader
+tablet split layouts remain pending.
 
 ## Next implementation steps
 

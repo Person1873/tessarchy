@@ -34,12 +34,15 @@ live tester ISO.
   cellular radio switches, layout selection, and optional PipeWire volume controls. Network
   selection, pairing, and connection-strength backends remain planned; see
   [radio controls](docs/radio-controls.md).
-- An expandable launcher for Firefox and Foot.
+- An application drawer populated from installed desktop entries.
 - Swipeable app cards with real window previews, glass icon actions, and keyboard switching.
+- Desktop workspace buttons, focused-window titles, and keyboard controls.
 - Confirmation before closing a window or ending the session.
 - A dedicated Hyprland session, user installation, and reversible tty1 startup.
 - A QEMU development workflow, local Arch package recipes, and an initial
   archiso staging/build pipeline.
+- Fish bundled in the live image as the `tess` login shell, with the same
+  one-shot tty1 session start as the Bash profile.
 
 ## Project status
 
@@ -53,13 +56,14 @@ or persistence. Physical touchscreen and device acceptance testing remain
 pending. The [GitHub review](docs/github-review.md) lists pending contributions;
 collaborators’ unmerged features are not included in this ISO.
 
-Text input currently requires a physical keyboard. New ordinary windows maximize
-in Phone/Tablet modes and start tiled in Desktop mode. Existing windows stay in
-place when switching modes; restoring a maximized app returns to ordinary tiling.
-Returning through the switcher fills Phone/Tablet workspaces. Broader continuous
-mobile window policy and tablet split layouts are planned. Exclusive
-fullscreen can hide the dock. There is no secure lock screen or on-screen
-keyboard integration yet. See the [validation record](docs/testing.md) for the
+An optional squeekboard on-screen keyboard supports text fields and a mobile
+Keyboard toggle. Without it, text input requires a physical keyboard. In Phone/Tablet modes ordinary
+windows maximize when they open and again whenever they become active; oversized
+dialogs request a size between the bars and are centered; application minimum
+sizes can still exceed a phone screen. Desktop mode starts windows
+tiled. A mode switch does not move the windows already open; restoring a maximized
+app keeps it tiled until focus moves elsewhere. Tablet split layouts are planned. Exclusive
+fullscreen can hide the dock. There is no secure lock screen; keyboard availability depends on squeekboard. See the [validation record](docs/testing.md) for the
 difference between implemented, user-tested, and planned behavior.
 
 ## Quick start: use the basic Arch VM
