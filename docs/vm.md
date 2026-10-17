@@ -170,3 +170,14 @@ display. Keep `VM_SSH_PORT=2222` when launching again for continued SSH access.
 The top bar reserves 48px and navigation 72px. Home opens apps, Recents switches
 windows, Back dismisses shell panels, and the top power icon opens confirmation.
 See [actual results](testing.md#phone-shell-and-ssh-guest-validation-2026-10-16).
+
+The rotated preference above was subsequently reverted after the user reported
+that QEMU displayed the session sideways. The current guest uses an upright
+1280×960 output at scale 2 (640×480 logical), with `transform = 0`:
+
+```lua
+hl.monitor({ output = "Virtual-1", mode = "1280x960@60", position = "auto", scale = 2, transform = 0 })
+```
+
+The previous guest preference was backed up before replacing it. A portrait
+compositor screenshot alone does not establish upright presentation in QEMU.
