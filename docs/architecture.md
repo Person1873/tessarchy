@@ -4,12 +4,22 @@ Tessarchy is an Arch session, not Android/AOSP. Tessera runs as a normal user
 under Hyprland, using Quickshell's layer-shell panels and window integration.
 No privileged daemon or compositor fork is involved.
 
-A per-output PanelWindow reserves 72 logical pixels. It expands upward for the
-launcher, overview and confirmations without reserving the whole drawer area.
-Its top layer keeps navigation over maximized apps; keyboardFocus=None prevents
-navigation from acquiring application keyboard focus. Buttons use NoFocus.
-The drawer intercepts touches inside its bounds only; applications remain
-interactive elsewhere. There is no outside-click dismissal or keyboard search.
+A per-output status bar reserves 48 logical pixels. Navigation reserves 72 in
+Phone mode and 80 in Tablet/Desktop. Phone navigation spans the output;
+Tablet/Desktop use centered, rounded panels bounded to 720/760 pixels. Launcher
+columns and panel height follow available space, including manual modes on small
+screens. Settings is loaded only when opened. Panels never acquire application
+keyboard focus; buttons and sliders use NoFocus. No keyboard search or outside
+click dismissal is implemented.
+
+`LayoutPolicy.js` classifies logical screen geometry: a shortest edge below 600
+is Phone; otherwise a landscape width >=1100 and height >=650 is Desktop;
+remaining sizes are Tablet. This is a display-size heuristic, not physical device
+or input-hardware identification. Automatic mode is evaluated per output whenever
+geometry changes; an explicit override applies across outputs. The override and
+appearance preferences persist through QtCore Settings in
+`$XDG_CONFIG_HOME/tessarchy/shell.ini` (default `~/.config/tessarchy/shell.ini`).
+Dev uninstall preserves this user-owned file.
 
 Hyprland.toplevels supplies window identity/title/state; each `.wayland` handle
 provides activate(), close() and writable maximized. Close confirmation retains
@@ -21,12 +31,20 @@ is interpolated into IPC or a shell command. App launch uses
 Quickshell.execDetached([executable]) per action, so no shared Process can drop
 rapid clicks. Startup executables in the Lua config are fixed strings.
 
-The initial static rule maximizes new non-floating apps. It does not enforce a
-single-primary-app policy when focus changes, handle complex transient windows,
-or implement tablet splitting. Normal tiling can reappear after restoring.
-Multi-output panels show the same global window list. Focus/session exit affect
-the whole compositor. Minimum supported layout is 320×480 logical pixels;
-font/scaling and windows with large minimum sizes need real-device testing.
+The Lua `window.open` handler reads the saved mode for each new ordinary window.
+It uses the same size thresholds, accounting for monitor scale/rotation. Mobile
+modes request maximization; Desktop leaves ordinary dwindle tiling. Floating
+windows and windows already fullscreen are left alone. A mode switch does not
+rearrange existing windows. Tablet split layouts and continuous mobile window
+policy remain future work. Multi-output navigation lists global windows;
+per-output geometry is used for automatic mode and each new window's monitor.
+
+The original T logo is built from six SVG faces. BrandMark animates assembly and
+rotation once, settles after 1.6 seconds, and supports tap/replay and reduced
+motion. It has no idle animation loop. The clock updates once per minute; mode
+selection is reactive, with no polling. Optional PipeWire integration is loaded
+only when the service socket exists at launch. No hardware Wi-Fi/modem control
+or secure locking is claimed.
 
 ## Verified against installed files, 2026-10-16
 

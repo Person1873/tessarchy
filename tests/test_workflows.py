@@ -9,6 +9,23 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Workflows(unittest.TestCase):
+    def test_site_builder_refuses_existing_output_and_bundles_originals(self):
+        import sys
+        import zipfile
+        destination = self.home / 'site'
+        command = [sys.executable, str(ROOT / 'scripts/build-site.py'),
+                   '--output', str(destination)]
+        result = subprocess.run(command, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        with zipfile.ZipFile(destination / 'assets/screenshots.zip') as archive:
+            self.assertEqual(archive.read('phone-switcher.png'),
+                             (ROOT / 'assets/screenshots/phone-switcher.png').read_bytes())
+        sentinel = destination / 'keep.txt'
+        sentinel.write_text('unrelated content')
+        result = subprocess.run(command, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(sentinel.read_text(), 'unrelated content')
+
     def setUp(self):
         self.scratch = tempfile.TemporaryDirectory(prefix='tessarchy-test-')
         self.addCleanup(self.scratch.cleanup)
@@ -32,6 +49,8 @@ class Workflows(unittest.TestCase):
         preferences = self.home / 'config/tessarchy/preferences.lua'
         preferences.parent.mkdir(parents=True)
         preferences.write_text('-- mine')
+        shell_settings = preferences.with_name('shell.ini')
+        shell_settings.write_text('[Shell]\nlayoutMode=tablet\n')
         self.run_script('install-dev.sh')
         data = self.home / 'data/tessarchy'
         self.assertEqual((data / 'shell/shell.qml').read_bytes(),
@@ -41,6 +60,7 @@ class Workflows(unittest.TestCase):
         self.assertFalse(data.exists())
         self.assertEqual(sentinel.read_text(), 'existing config')
         self.assertEqual(preferences.read_text(), '-- mine')
+        self.assertEqual(shell_settings.read_text(), '[Shell]\nlayoutMode=tablet\n')
 
     def test_existing_launcher_refused_before_installing_data(self):
         launcher = self.home / '.local/bin/start-tessarchy'
@@ -85,6 +105,24 @@ class Workflows(unittest.TestCase):
         self.assertFalse((data / 'session/hyprland.lua').exists())
         self.assertFalse((data / '.tessarchy-dev-install').exists())
         self.assertFalse((data / '.tessarchy-dev-files').exists())
+
+    def test_uninstall_rejects_unsafe_manifest_before_removing_files(self):
+        self.run_script('install-dev.sh')
+        data = self.home / 'data/tessarchy'
+        manifest = data / '.tessarchy-dev-files'
+        original = manifest.read_text()
+        outside = self.home / 'outside'
+        outside.mkdir()
+        sentinel = outside / 'keep'
+        sentinel.write_text('keep')
+        (data / 'redirect').symlink_to(outside, target_is_directory=True)
+        for entry in ('../../outside/keep', '/outside/keep', 'redirect/keep', ''):
+            with self.subTest(entry=entry):
+                manifest.write_text(original + entry + '\n')
+                self.run_script('uninstall-dev.sh', expected=1)
+                self.assertEqual(sentinel.read_text(), 'keep')
+                self.assertTrue((self.home / '.local/bin/tessera-shell').exists())
+                self.assertTrue((data / 'shell/shell.qml').exists())
 
     def test_uninstall_legacy_marker_uses_fixed_v1_set(self):
         data = self.home / 'data/tessarchy'
@@ -294,6 +332,50 @@ class Workflows(unittest.TestCase):
         self.assertEqual(disk.read_bytes(), b'keep running guest image')
         self.assertFalse(list((source / 'build').glob('source-share.*')))
 
+    def test_new_windows_follow_saved_mode_without_touching_dialogs(self):
+        import shutil
+        if not shutil.which('lua'):
+            self.skipTest('Lua interpreter unavailable')
+        folder = self.home / 'config/tessarchy'
+        folder.mkdir(parents=True)
+        script = r'''local callbacks, actions = {}, {}
+hl = {
+    layer_rule = function() end,
+    monitor = function() end, config = function() end, bind = function() end,
+    on = function(name, callback) callbacks[name] = callback end,
+    dispatch = function(action) table.insert(actions, action) end,
+    dsp = { exec_cmd = function() end, exit = function() end,
+            window = { fullscreen = function(action) return action end } }
+}
+dofile(arg[1])
+local function check(mode, width, height, scale, transform, floating, fullscreen, expected)
+    local f = assert(io.open(os.getenv("XDG_CONFIG_HOME") .. "/tessarchy/shell.ini", "w"))
+    f:write("[Other]\nlayoutMode=desktop\n[Shell]\nlayoutMode=" .. mode .. "\n")
+    f:close()
+    actions = {}
+    local window = { floating = floating, fullscreen = fullscreen,
+        monitor = {width=width, height=height, scale=scale, transform=transform} }
+    callbacks["window.open"](window)
+    assert(#actions == expected, mode .. ": unexpected app startup policy")
+    if expected == 1 then
+        assert(actions[1].window == window and actions[1].mode == "maximized")
+    end
+end
+check("auto", 400, 800, 1, 0, false, 0, 1)
+check("auto", 800, 1280, 1, 0, false, 0, 1)
+check("auto", 1280, 800, 1, 0, false, 0, 0)
+check("auto", 1280, 800, 2, 0, false, 0, 1)
+check("auto", 1280, 800, 1, 1, false, 0, 1)
+check("desktop", 400, 800, 1, 0, false, 0, 0)
+check("phone", 1280, 800, 1, 0, false, 0, 1)
+check("invalid", 400, 800, 1, 0, false, 0, 1)
+check("phone", 400, 800, 1, 0, true, 0, 0)
+check("phone", 400, 800, 1, 0, false, 2, 0)
+'''
+        result = subprocess.run(['lua', '-', str(ROOT / 'session/hyprland.lua')],
+                                input=script, text=True, capture_output=True, env=self.env)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_iso_staging_preserves_boot_assets_and_account_databases(self):
         # Minimal fixture exercises our assembly, not upstream archiso validity.
         repo = self.home / 'source'
@@ -305,8 +387,8 @@ class Workflows(unittest.TestCase):
         base = self.home / 'releng'
         (base / 'airootfs/etc/systemd/system/multi-user.target.wants').mkdir(parents=True)
         (base / 'profiledef.sh').write_text('file_permissions=(["/etc/shadow"]="0:0:400")\n')
-        (base / 'packages.x86_64').write_text('base\nlinux\n')
-        (base / 'airootfs/etc/passwd').write_text('root:x:0:0:root:/root:/bin/bash\n')
+        (base / 'packages.x86_64').write_text('base\nlinux\nunused-rescue-tool\n')
+        (base / 'airootfs/etc/passwd').write_text('root:x:0:0:root:/root:/usr/bin/zsh\n')
         boot = base / 'efiboot/loader/entries'
         boot.mkdir(parents=True)
         (boot / 'arch.conf').write_text('retained boot asset')
@@ -319,12 +401,16 @@ class Workflows(unittest.TestCase):
         profile = repo / 'build/iso-profile'
         self.assertEqual((profile / 'efiboot/loader/entries/arch.conf').read_text(),
                          'retained boot asset')
-        self.assertEqual((profile / 'airootfs/etc/passwd').read_bytes(),
-                         (base / 'airootfs/etc/passwd').read_bytes())
+        self.assertEqual((profile / 'airootfs/etc/passwd').read_text(),
+                         'root:x:0:0:root:/root:/usr/bin/bash\n')
+        self.assertIn('/usr/bin/zsh', (base / 'airootfs/etc/passwd').read_text())
         self.assertFalse((profile / 'airootfs/etc/group').exists())
         self.assertFalse((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/sshd.service').is_symlink())
         self.assertTrue(ssh_link.is_symlink())
         self.assertIn('quickshell', (profile / 'packages.x86_64').read_text())
+        self.assertNotIn('unused-rescue-tool', (profile / 'packages.x86_64').read_text())
+        self.assertNotIn('linux-firmware', (profile / 'packages.x86_64').read_text())
+        self.assertTrue((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/systemd-networkd.service').is_symlink())
         self.assertTrue((profile / 'airootfs/usr/bin/start-tessarchy').stat().st_mode & 0o111)
         self.assertIn('u tess 1000', (profile / 'airootfs/etc/sysusers.d/tessarchy.conf').read_text())
         result = subprocess.run(command, env=env, capture_output=True, text=True)
