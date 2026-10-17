@@ -131,7 +131,7 @@ PanelWindow {
                 horizontalAlignment: Text.AlignHCenter
             }
             TouchButton {
-                implicitWidth: 96
+                implicitWidth: picker.request !== null && picker.request.multiple ? 128 : 96
                 selected: true
                 text: picker.confirmReplace.length > 0 ? "Replace" : picker.saving ? "Save" : picker.choosingFolder ? "Select" : picker.request !== null && picker.request.multiple ? "Open (" + picker.selected.length + ")" : "Open"
                 enabled: picker.saving ? nameField.text.trim().length > 0 : picker.choosingFolder || picker.selected.length > 0
@@ -232,7 +232,7 @@ PanelWindow {
             Text {
                 anchors.centerIn: parent
                 visible: list.count === 0
-                text: entries.status === FolderListModel.Loading ? "" : "Empty"
+                text: entries.status === FolderListModel.Loading ? "" : picker.choosingFolder ? "No folders" : "Empty"
                 color: Theme.textMuted
                 font.pixelSize: 15
             }
