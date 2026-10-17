@@ -17,6 +17,8 @@ for launcher in start-tessarchy tessera-shell; do
 done
 rm -f -- "$HOME/.local/bin/start-tessarchy" "$HOME/.local/bin/tessera-shell"
 # Remove only installed files, never user preferences or unrelated files.
-rm -f -- "$data/shell/shell.qml" "$data/shell/components/TouchButton.qml" "$data/session/hyprland.lua" "$data/.tessarchy-dev-install"
-rmdir -- "$data/shell/components" "$data/shell" "$data/session" "$data" 2>/dev/null || true
+rm -f -- "$data/shell/shell.qml" "$data/shell/components/TouchButton.qml" "$data/shell/components/NavButton.qml" "$data/shell/components/AppTile.qml"
+for icon in back home recents power browser terminal; do rm -f -- "$data/shell/icons/$icon.svg"; done
+rm -f -- "$data/session/hyprland.lua" "$data/.tessarchy-dev-install"
+rmdir -- "$data/shell/icons" "$data/shell/components" "$data/shell" "$data/session" "$data" 2>/dev/null || true
 echo "Development copy removed. ~/.config/tessarchy preferences retained."

@@ -152,3 +152,21 @@ newly installed kernel/modules only match after restarting. This launcher uses
 host launcher is the clearest path. Keep `VM_SSH_PORT=2222` when relaunching if
 using SSH. Retry the mount after logging back in. If it still fails, capture the
 full mount/modprobe output and `uname -r` rather than installing random packages.
+
+## Agent-connected phone layout, 2026-10-16
+
+The existing Basic guest was started with `VM_SSH_PORT=2222`, updated over SSH,
+and left running with Tessera. Guest source and installed defaults were backed
+up in `~/tessarchy-backups/`. A guest-only preference selects a supported QEMU
+mode rotated into a 432×768 logical phone layout:
+
+```lua
+hl.monitor({ output = "Virtual-1", mode = "1920x1080@60", position = "auto", scale = 2.5, transform = 1 })
+```
+
+This is in `~/.config/tessarchy/preferences.lua` inside the VM. Remove that
+monitor override and run `hyprctl reload` in the guest to restore the default
+display. Keep `VM_SSH_PORT=2222` when launching again for continued SSH access.
+The top bar reserves 48px and navigation 72px. Home opens apps, Recents switches
+windows, Back dismisses shell panels, and the top power icon opens confirmation.
+See [actual results](testing.md#phone-shell-and-ssh-guest-validation-2026-10-16).

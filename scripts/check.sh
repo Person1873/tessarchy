@@ -14,7 +14,7 @@ else echo "SKIP: Hyprland config parser unavailable"; fi
 lint=$(command -v qmllint || true)
 if [[ -z "$lint" && -x /usr/lib/qt6/bin/qmllint ]]; then lint=/usr/lib/qt6/bin/qmllint; fi
 if [[ -n "$lint" ]] && command -v qs >/dev/null; then
-    "$lint" -I /usr/lib/qt6/qml shell/shell.qml shell/components/TouchButton.qml
+    "$lint" -I /usr/lib/qt6/qml shell/shell.qml shell/components/*.qml
 else echo "SKIP: qmllint/Quickshell unavailable"; fi
 if command -v shellcheck >/dev/null; then
     shellcheck scripts/*.sh session/start-tessarchy session/tessera-shell
