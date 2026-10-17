@@ -11,7 +11,9 @@ Hyprland/Omarchy configuration or install dependencies automatically. Session
 configuration targets Hyprland 0.56 Lua and Quickshell 0.3.1. Check installed
 QML type metadata and `Hyprland --verify-config` when changing those APIs.
 
-Keep touch targets >=48 logical pixels, preserve keyboard focus in navigation,
+Keep touch targets >=48 logical pixels; on-screen keyboard keys may be narrower
+but must remain >=48 logical pixels tall (owner decision 2026-10-17). Preserve
+keyboard focus in navigation,
 and confirm close and exit. No secure locking claims. Record actual validation
 separately from planned/manual checks in docs/testing.md. Do not claim an ISO
 boots until it has booted in a VM. Never run image builds with host privileges

@@ -12,7 +12,8 @@ Selected ARM devices are a later goal with explicit hardware support. The
 project ships session source, development tooling and an experimental x86_64
 live tester ISO.
 
-[Download the tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.1) ·
+[Download the tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2) ·
+[Project website](https://thediamondsaint.github.io/tessarchy/) ·
 [Getting started](#quick-start-use-the-basic-arch-vm) ·
 [Architecture](docs/architecture.md) ·
 [Roadmap](docs/roadmap.md) ·
@@ -24,37 +25,45 @@ live tester ISO.
 - A top status bar with clock, registered tray icons, battery status when available,
   and session controls.
 - Automatic Phone/Tablet/Desktop shell layouts with a saved manual override.
-- A persistent navigation bar with 56px touch targets and a compact desktop dock.
+- Quiet Edge frosted glass bars, compact floating navigation, and at least 48px touch targets.
 - An original mint-and-navy wallpaper, animated tessellated logo, and responsive
   tile launcher.
 - Settings for layout mode, accent, opacity, wallpaper shade, clock, navigation
   labels, and reduced motion.
-- Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
-  controls. Wireless and modem backends remain to be connected.
-- An expandable launcher for Firefox and Foot.
-- A scrollable window overview with application switching and maximize/restore.
+- A pull-down glass panel with airplane mode, hardware-aware Wi-Fi/Bluetooth/
+  cellular radio switches, layout selection, and optional PipeWire volume controls. Network
+  selection, pairing, and connection-strength backends remain planned; see
+  [radio controls](docs/radio-controls.md).
+- An application drawer populated from installed desktop entries.
+- Swipeable app cards with real window previews, glass icon actions, and keyboard switching.
+- Desktop workspace buttons, focused-window titles, and keyboard controls.
 - Confirmation before closing a window or ending the session.
 - A dedicated Hyprland session, user installation, and reversible tty1 startup.
 - A QEMU development workflow, local Arch package recipes, and an initial
   archiso staging/build pipeline.
+- Fish bundled in the live image as the `tess` login shell, with the same
+  one-shot tty1 session start as the Bash profile.
 
 ## Project status
 
-**Early prototype.** A user has confirmed that Tessera runs in the basic Arch
-QEMU guest. Ten workflow tests, Qt Quick layout/motion checks, and available
-static checks pass.
-Detailed touchscreen, scaling, focus, and window-action acceptance tests remain
-pending. Two development packages have been built locally; they are not yet
-published packages. The [Alpha 1 tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.1)
-has been published and observed booting into Tessera in BIOS and UEFI QEMU/KVM.
-It is a disposable live environment, not an installer or a hardware-certified release.
+**Early prototype.** The current source passes 17 Python tests, 19 Qt Quick
+results, and available static checks. The [Alpha 2 tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2)
+has been observed booting into Tessera in BIOS and non-Secure-Boot UEFI QEMU/KVM.
+It includes Quiet Edge, the card switcher, the mobile status clock, and pull-down
+radio and layout controls. Checksums, package versions and boot evidence are
+attached to the release. It is a disposable live environment with no installer
+or persistence. Physical touchscreen and device acceptance testing remain
+pending. The [GitHub review](docs/github-review.md) lists pending contributions;
+collaborators’ unmerged features are not included in this ISO.
 
-Text input currently requires a physical keyboard. New ordinary windows maximize
-in Phone/Tablet modes and start tiled in Desktop mode. Existing windows stay in
-place when switching modes; restoring a maximized app returns to ordinary tiling.
-Continuous mobile window policy and tablet split layouts are planned. Exclusive
-fullscreen can hide the dock. There is no secure lock screen or on-screen
-keyboard integration yet. See the [validation record](docs/testing.md) for the
+An optional squeekboard on-screen keyboard supports text fields and a mobile
+Keyboard toggle. Without it, text input requires a physical keyboard. In Phone/Tablet modes ordinary
+windows maximize when they open and again whenever they become active; oversized
+dialogs request a size between the bars and are centered; application minimum
+sizes can still exceed a phone screen. Desktop mode starts windows
+tiled. A mode switch does not move the windows already open; restoring a maximized
+app keeps it tiled until focus moves elsewhere. Tablet split layouts are planned. Exclusive
+fullscreen can hide the dock. There is no secure lock screen; keyboard availability depends on squeekboard. See the [validation record](docs/testing.md) for the
 difference between implemented, user-tested, and planned behavior.
 
 ## Quick start: use the basic Arch VM

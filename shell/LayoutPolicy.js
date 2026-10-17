@@ -24,18 +24,30 @@ function panelWidth(mode, width) {
     return mode === "phone" ? width : Math.min(Math.max(0, width - 24), mode === "desktop" ? 760 : 720);
 }
 
-// What tapping a Bluetooth device row does: connected devices disconnect,
-// already-paired devices connect, everything else needs pairing first.
-function btAction(connected, paired) {
-    if (connected) return "disconnect";
-    if (paired) return "connect";
-    return "none";
+// Desktop keeps numbered workspaces one tap away; landscape tablets only once
+// the status bar has room beside the clock, tray and battery indicators.
+function showWorkspaces(mode, width) {
+    return (mode === "desktop" || mode === "tablet") && width >= 900;
 }
 
-// Quickshell reports Bluetooth battery as 0.0..1.0, only when available.
+// Workspaces 1-5 always have a slot. Higher numbered workspaces extend the
+// strip. Named workspaces have negative ids and are not numbered slots.
+function workspaceSlots(ids) {
+    let slots = 5;
+    for (let i = 0; i < ids.length; i++) {
+        if (Number.isInteger(ids[i]) && ids[i] > slots) slots = Math.min(8, ids[i]);
+    }
+    return slots;
+}
+
+// Connected devices can disconnect; only paired devices can connect.
+function btAction(connected, paired) {
+    if (connected) return "disconnect";
+    return paired ? "connect" : "none";
+}
+
+// Invalid battery readings are unavailable rather than a fabricated zero.
 function btBatteryLabel(available, level) {
-    if (!available) return "";
-    const value = Number(level);
-    const percent = Math.round(Math.max(0, Math.min(1, isFinite(value) ? value : 0)) * 100);
-    return " · " + percent + "%";
+    if (!available || typeof level !== "number" || !isFinite(level)) return "";
+    return " · " + Math.round(Math.max(0, Math.min(1, level)) * 100) + "%";
 }

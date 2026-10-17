@@ -107,19 +107,32 @@ TestCase {
         compare(Policy.panelWidth("phone", 320), 320);
         compare(Policy.columns("desktop", 760), 4);
     }
-    function test_bt_action_matrix() {
+    function test_workspace_strip_placements() {
+        verify(Policy.showWorkspaces("desktop", 1100));
+        verify(!Policy.showWorkspaces("desktop", 400));
+        verify(Policy.showWorkspaces("desktop", 1920));
+        verify(Policy.showWorkspaces("tablet", 1024));
+        verify(!Policy.showWorkspaces("tablet", 800));
+        verify(!Policy.showWorkspaces("phone", 1080));
+    }
+    function test_workspace_slots() {
+        compare(Policy.workspaceSlots([]), 5);
+        compare(Policy.workspaceSlots([9999999]), 8);
+        compare(Policy.workspaceSlots([7.5]), 5);
+        compare(Policy.workspaceSlots([1, 2]), 5);
+        compare(Policy.workspaceSlots([1, 7, 3]), 7);
+        compare(Policy.workspaceSlots([-1, 2]), 5);
+    }
+    function test_bluetooth_action_and_battery() {
         compare(Policy.btAction(true, true), "disconnect");
         compare(Policy.btAction(true, false), "disconnect");
         compare(Policy.btAction(false, true), "connect");
         compare(Policy.btAction(false, false), "none");
-    }
-    function test_bt_battery_label_only_when_available() {
         compare(Policy.btBatteryLabel(false, 0.5), "");
+        compare(Policy.btBatteryLabel(true, NaN), "");
+        compare(Policy.btBatteryLabel(true, undefined), "");
         compare(Policy.btBatteryLabel(true, 0.42), " · 42%");
-        compare(Policy.btBatteryLabel(true, 0), " · 0%");
-        compare(Policy.btBatteryLabel(true, 1), " · 100%");
-        compare(Policy.btBatteryLabel(true, 1.5), " · 100%");
-        compare(Policy.btBatteryLabel(true, -0.2), " · 0%");
-        compare(Policy.btBatteryLabel(true, undefined), " · 0%");
+        compare(Policy.btBatteryLabel(true, 2), " · 100%");
+        compare(Policy.btBatteryLabel(true, -1), " · 0%");
     }
 }
