@@ -1,20 +1,47 @@
 # Tessarchy
 
-Arch Linux + Hyprland + **Tessera**, a touch-first Quickshell session for small
-screens. This repository contains real prototype source and an experimental
-archiso staging pipeline. **No boot-tested Tessarchy ISO has been produced yet.** Two local development
-packages have been built in `dist/`; their installation and UI still need testing.
+**Touch-first Arch Linux, built around the Tessera shell.**
 
-Implemented: 56px touch buttons, persistent 72px bottom dock, Firefox/Foot
-launcher, scrollable window overview, maximize/restore, confirmed close and
-confirmed session exit. Native Quickshell handles target the selected window;
-launches use independent argument-vector executions. No universal Back button.
+Tessarchy is an experimental Linux environment for tablets and phone-sized
+screens. It brings together Arch Linux, Hyprland, and a Quickshell/QML shell
+with visible navigation and large touch targets. Inspired by Omarchy's cohesive,
+opinionated experience, Tessarchy is developing its own mobile-focused session.
 
-New non-floating windows initially maximize above the dock. Restore returns to
-normal tiling; there is no continuous mobile window policy. Floating dialogs,
-multiple maximized windows, and application sizing require VM/device validation.
-Exclusive fullscreen can cover the dock. This is not a secure lock screen.
-**Text input currently requires a physical keyboard.**
+The first target is an x86_64 QEMU/KVM guest, followed by touchscreen tablets.
+Selected ARM devices are a later goal with explicit hardware support. The
+project currently ships session source and development tooling; a standalone
+live image is in development.
+
+[Getting started](#quick-start-use-the-basic-arch-vm) ·
+[Architecture](docs/architecture.md) ·
+[Roadmap](docs/roadmap.md) ·
+[Testing](docs/testing.md) ·
+[Contributing](CONTRIBUTING.md)
+
+## What works today
+
+- A persistent bottom dock with 56px touch targets and no hover-only actions.
+- An expandable launcher for Firefox and Foot.
+- A scrollable window overview with application switching and maximize/restore.
+- Confirmation before closing a window or ending the session.
+- A dedicated Hyprland session, user installation, and reversible tty1 startup.
+- A QEMU development workflow, local Arch package recipes, and an initial
+  archiso staging/build pipeline.
+
+## Project status
+
+**Early prototype.** A user has confirmed that Tessera runs in the basic Arch
+QEMU guest. Nine automated workflow tests and available static checks pass.
+Detailed touchscreen, scaling, focus, and window-action acceptance tests remain
+pending. Two development packages have been built locally; they are not yet
+published releases. **No Tessarchy ISO has been boot-tested or released.**
+
+Text input currently requires a physical keyboard. New non-floating windows
+initially maximize above the dock; restoring returns to ordinary tiling.
+Continuous mobile window policy and tablet split layouts are planned. Exclusive
+fullscreen can hide the dock. There is no secure lock screen or on-screen
+keyboard integration yet. See the [validation record](docs/testing.md) for the
+difference between implemented, user-tested, and planned behavior.
 
 ## Quick start: use the basic Arch VM
 
