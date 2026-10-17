@@ -63,7 +63,10 @@ rotation once, settles after 1.6 seconds, and supports tap/replay and reduced
 motion. It has no idle animation loop. The clock updates once per minute; mode
 selection is reactive, with no polling. Optional PipeWire integration is loaded
 only when the service socket exists at launch. No hardware Wi-Fi/modem control
-or secure locking is claimed.
+or secure locking is claimed. Bluetooth quick controls bind only when BlueZ
+exposes an adapter: the pull-down panel toggles the radio, requests discovery only while
+expanded and powered on, and connects or disconnects already-paired devices; pairing,
+forgetting and passkey agents are out of scope.
 
 ## Verified against installed files, 2026-10-16
 

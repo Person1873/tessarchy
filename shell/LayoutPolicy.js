@@ -39,3 +39,15 @@ function workspaceSlots(ids) {
     }
     return slots;
 }
+
+// Connected devices can disconnect; only paired devices can connect.
+function btAction(connected, paired) {
+    if (connected) return "disconnect";
+    return paired ? "connect" : "none";
+}
+
+// Invalid battery readings are unavailable rather than a fabricated zero.
+function btBatteryLabel(available, level) {
+    if (!available || typeof level !== "number" || !isFinite(level)) return "";
+    return " · " + Math.round(Math.max(0, Math.min(1, level)) * 100) + "%";
+}

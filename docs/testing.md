@@ -671,3 +671,29 @@ keyboard version, actual 400×800 sizing, focus across applications, and the new
 ISO. Earlier contributor VM results remain separate. The owner explicitly allows
 keyboard keys narrower than 48px, retaining >=48px key height. No dependencies
 were installed on the host or development guest; Alpha 2 is unchanged.
+
+## Bluetooth PR #24 integration, 2026-10-17
+
+Actual validation:
+- `./scripts/check.sh` passed: 31 Python integration tests and 22 Qt Quick
+  checks, scratch-HOME install/uninstall, Lua/Hyprland parsing and QML lint.
+- A new scratch, offscreen Quickshell harness exercised the real BluetoothPanel
+  with mock adapter/device objects: missing adapter, adapter replacement,
+  hidden/powered-off discovery cleanup, preserving pre-existing discovery, and
+  stale/busy/blocked/unpaired device action guards. This is not hardware testing.
+- Installed Quickshell 0.3.1 Bluetooth metadata checked for adapter state,
+  discovery, device actions and battery types. Its defaultAdapter metadata
+  produces an unresolved-type lint warning; the real shell loads successfully.
+- Existing portrait VM (400x800) loaded the candidate shell. The glass pull-down
+  and expanded “Bluetooth · no adapter available” state were visually inspected.
+  Capture: `assets/screenshots/phone-bluetooth.png`. Runtime logs showed the
+  expected absent BlueZ/UPower services and software-buffer fallback.
+- Local fish and ShellCheck were unavailable; target CI covers both.
+
+Pending/manual:
+- Physical adapter power/discovery, reconnect/disconnect, permission failures,
+  device battery accuracy and hot unplug during operations. No adapter or BlueZ
+  service is present in this VM; none of these hardware paths is claimed tested.
+- Pairing/passkey agents, forgetting devices and adapter selection are not
+  implemented. Use an external Bluetooth manager for pairing.
+- No new ISO was built or boot-tested during this PR review; Alpha 2 is unchanged.

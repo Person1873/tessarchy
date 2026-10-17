@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtCore
 import Quickshell
+import Quickshell.Bluetooth
 import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
@@ -49,6 +50,7 @@ ShellRoot {
         property real wallpaperDim: 0.12
     }
     RadioBackend { id: radioBackend }
+    readonly property var bluetoothAdapter: Bluetooth.defaultAdapter
     // Signal strength remains unavailable until a real connection backend is added.
     property real wifiStrength: -1
     property real cellularStrength: -1
@@ -613,6 +615,7 @@ ShellRoot {
                     clip: true
                     contentWidth: availableWidth
                     QuickSettings {
+                        bluetoothAdapter: root.bluetoothAdapter
                         id: quickSheet
                         width: parent.width
                         radios: radioBackend

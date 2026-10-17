@@ -123,4 +123,16 @@ TestCase {
         compare(Policy.workspaceSlots([1, 7, 3]), 7);
         compare(Policy.workspaceSlots([-1, 2]), 5);
     }
+    function test_bluetooth_action_and_battery() {
+        compare(Policy.btAction(true, true), "disconnect");
+        compare(Policy.btAction(true, false), "disconnect");
+        compare(Policy.btAction(false, true), "connect");
+        compare(Policy.btAction(false, false), "none");
+        compare(Policy.btBatteryLabel(false, 0.5), "");
+        compare(Policy.btBatteryLabel(true, NaN), "");
+        compare(Policy.btBatteryLabel(true, undefined), "");
+        compare(Policy.btBatteryLabel(true, 0.42), " · 42%");
+        compare(Policy.btBatteryLabel(true, 2), " · 100%");
+        compare(Policy.btBatteryLabel(true, -1), " · 0%");
+    }
 }

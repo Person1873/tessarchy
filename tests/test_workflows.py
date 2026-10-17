@@ -9,6 +9,25 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Workflows(unittest.TestCase):
+    def test_bluetooth_component_lifecycle_and_action_guards(self):
+        import shutil
+        quickshell = shutil.which('qs')
+        if not quickshell:
+            self.skipTest('Quickshell runtime unavailable')
+        runtime = self.home / 'runtime'
+        runtime.mkdir(mode=0o700)
+        env = dict(self.env, QT_QPA_PLATFORM='offscreen', QT_QPA_PLATFORMTHEME='',
+                   XDG_RUNTIME_DIR=str(runtime))
+        shutil.copytree(ROOT / 'shell', self.home / 'shell')
+        harness = self.home / 'bluetooth.qml'
+        harness.write_text((ROOT / 'tests/quickshell/bluetooth.qml').read_text()
+                           .replace('../../shell/components', 'shell/components'))
+        result = subprocess.run([quickshell, '--no-color', '-p', str(harness)],
+                                env=env, capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('BLUETOOTH_TEST_PASS', result.stdout + result.stderr)
+        self.assertNotIn('BLUETOOTH_TEST_FAIL', result.stdout + result.stderr)
+
     def test_site_builder_refuses_existing_output_and_bundles_originals(self):
         import sys
         import zipfile

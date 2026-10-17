@@ -10,6 +10,8 @@ ColumnLayout {
     required property var date
     property bool use24Hour: true
     property color accentColor: "#a9e8d5"
+    property var bluetoothAdapter: null
+    property bool bluetoothExpanded: false
     property var audioSink: null
     readonly property bool audioAvailable: !!(audioSink && audioSink.ready && audioSink.audio)
     signal settingsRequested
@@ -60,6 +62,20 @@ ColumnLayout {
                 onClicked: sheet.radios.toggle(modelData.name)
             }
         }
+    }
+    TouchButton {
+        text: sheet.bluetoothExpanded ? "Hide Bluetooth devices" : "Bluetooth devices"
+        focusPolicy: Qt.TabFocus
+        Layout.fillWidth: true
+        accentColor: sheet.accentColor
+        Accessible.description: "Show paired devices and Bluetooth radio controls"
+        onClicked: sheet.bluetoothExpanded = !sheet.bluetoothExpanded
+    }
+    BluetoothPanel {
+        visible: sheet.bluetoothExpanded
+        adapter: sheet.bluetoothAdapter
+        accentColor: sheet.accentColor
+        Layout.fillWidth: true
     }
     Text {
         text: "Layout · " + sheet.activeMode

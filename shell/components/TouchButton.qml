@@ -14,6 +14,7 @@ Button {
     property bool destructive: false
     property bool selected: false
     contentItem: Text {
+        textFormat: Text.PlainText
         text: control.text
         color: control.enabled ? "#f0f5f5" : "#7a8589"
         font.pixelSize: 16
