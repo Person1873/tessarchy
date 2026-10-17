@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import QtCore
 import Quickshell
 import Quickshell.Bluetooth
@@ -47,13 +48,12 @@ ShellRoot {
         function accept(): void { root.switcherCommand("accept"); }
         function cancel(): void { root.switcherCommand("cancel"); }
     }
-    readonly property color accentColor: shellPreferences.accent === "iris" ? "#c6b7ff" : shellPreferences.accent === "ice" ? "#99d7ff" : "#a9e8d5"
+    readonly property color accentColor: Theme.accent
     Settings {
         id: shellPreferences
         location: "file://" + (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/tessarchy/shell.ini"
         category: "Shell"
         property string layoutMode: "auto"
-        property string accent: "mint"
         property bool reducedMotion: false
         property bool showLabels: false
         property bool use24Hour: true
@@ -70,6 +70,67 @@ ShellRoot {
     WeatherBackend { id: weatherBackend }
     readonly property var bluetoothAdapter: Bluetooth.defaultAdapter
     // Signal strength remains unavailable until a real connection backend is added.
+    // System theme: tessarchy-theme stages an Omarchy-format colors.toml (and
+    // optional wallpaper) here; the keyboard and apps render from the same file.
+    readonly property string themeDir: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/tessarchy/theme"
+    property string themeName: ""
+    property string themeBackground: ""
+    property var themes: []
+    function setTheme(name) {
+        themeSetter.command = ["tessarchy-theme", "set", name];
+        themeSetter.running = true;
+    }
+    FileView {
+        id: themeColors
+        path: root.themeDir + "/colors.toml"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            Theme.load(text());
+            themeNameFile.reload();
+        }
+    }
+    FileView {
+        id: themeNameFile
+        path: root.themeDir + "/name"
+        printErrors: false
+        onLoaded: {
+            root.themeName = text().trim();
+            themeWallpaperFile.reload();
+        }
+    }
+    FileView {
+        id: themeWallpaperFile
+        path: root.themeDir + "/wallpaper"
+        printErrors: false
+        onLoaded: {
+            const path = text().trim();
+            root.themeBackground = path.length > 0 ? "file://" + path : "";
+        }
+    }
+    Process {
+        id: themeSetter
+        onRunningChanged: if (!running)
+            themeColors.reload()
+    }
+    Process {
+        id: themeList
+        command: ["tessarchy-theme", "list"]
+        stdout: StdioCollector {
+            onStreamFinished: root.themes = text.split("\n").filter(line => line.length > 0).map(line => {
+                const field = line.split("\t");
+                return {
+                    name: field[0],
+                    mode: field[1],
+                    background: field[2],
+                    foreground: field[3],
+                    accent: field[4]
+                };
+            })
+        }
+    }
+    // Bind these when wireless/modem integrations land. Never invent a signal.
     property real wifiStrength: -1
     readonly property real cellularStrength: communications.state.cellular.signal === undefined ? -1 : communications.state.cellular.signal / 100
     // squeekboard via tessarchy-osk; it also appears by itself for text fields.
@@ -215,7 +276,7 @@ ShellRoot {
                     anchors.bottomMargin: panel.expanded ? 0 : (surface.mode === "desktop" ? 8 : 12)
                     width: panel.expanded ? expandedContent.width : parent.width
                     radius: panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
-                    color: panel.expanded ? (panel.page === "windows" ? "#b3101b30" : "#c2101b30") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
+                    color: Qt.alpha(Theme.background, panel.expanded ? (panel.page === "windows" ? 0.70 : 0.76) : shellPreferences.barOpacity)
                     border.width: 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
                 }
@@ -385,7 +446,7 @@ ShellRoot {
                                     }
                                     Text {
                                         text: root.oskAvailable ? "Prototype · The keyboard opens for text fields; Keyboard shows or hides it." : "Prototype · Physical keyboard needed for text input."
-                                        color: "#b7c7cc"
+                                        color: Theme.textSecondary
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
                                     }
@@ -426,6 +487,8 @@ ShellRoot {
                                 Loader {
                                     visible: active
                                     active: panel.page === "settings"
+                                    onActiveChanged: if (active)
+                                        themeList.running = true
                                     Layout.fillWidth: true
                                     sourceComponent: SettingsPage {
                                         backend: communications
@@ -436,6 +499,9 @@ ShellRoot {
                                         displayWidth: surface.modelData.width
                                         displayHeight: surface.modelData.height
                                         accentColor: root.accentColor
+                                        themes: root.themes
+                                        currentTheme: root.themeName
+                                        onThemeRequested: name => root.setTheme(name)
                                         onEndSessionRequested: panel.page = "session"
                                         onControlsRequested: statusBar.toggleDrawer()
                                         onReplayRequested: root.replayBrand()
@@ -457,7 +523,7 @@ ShellRoot {
                                     Layout.fillWidth: true
                                     Text {
                                         text: panel.closeTarget ? panel.closeTarget.title : "Window is no longer available."
-                                        color: "#f0f5f5"
+                                        color: Theme.text
                                         wrapMode: Text.WrapAnywhere
                                         Layout.fillWidth: true
                                     }
@@ -488,7 +554,7 @@ ShellRoot {
                                     Layout.fillWidth: true
                                     Text {
                                         text: "Save your work before ending Tessarchy. This closes the desktop session."
-                                        color: "#f0f5f5"
+                                        color: Theme.text
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
                                     }
@@ -736,7 +802,7 @@ ShellRoot {
                 Rectangle {
                     anchors.fill: parent
                     radius: statusBar.drawerOpen ? 28 : 0
-                    color: Qt.rgba(0.063, 0.106, 0.188, statusBar.drawerOpen ? 0.76 : shellPreferences.barOpacity)
+                    color: Qt.alpha(Theme.background, statusBar.drawerOpen ? 0.76 : shellPreferences.barOpacity)
                     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.alpha(root.accentColor, 0.1) }
                 }
                 WlrLayershell.namespace: "tessera-status"
@@ -966,7 +1032,7 @@ ShellRoot {
                     topRightRadius: 16
                     // Same frosted glass as the taskbar: a translucent accent
                     // fill the compositor blurs behind (namespace tessera-start).
-                    color: Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
+                    color: Qt.alpha(Theme.background, shellPreferences.barOpacity)
                     border.width: 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
                     // Blue header band, the Start menu's signature.
@@ -1080,24 +1146,56 @@ ShellRoot {
                     right: true
                 }
                 exclusionMode: ExclusionMode.Ignore
-                color: "#101b30"
+                color: Theme.background
                 WlrLayershell.namespace: "tessera-home"
                 WlrLayershell.layer: WlrLayer.Background
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                // The theme's own wallpaper when it has one; otherwise the
+                // Tessera artwork for dark themes and a plain fill for light.
+                Image {
+                    id: themeWallpaper
+                    anchors.fill: parent
+                    source: root.themeBackground
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectCrop
+                    visible: status === Image.Ready
+                }
                 Image {
                     anchors.fill: parent
                     source: "artwork/aurora-fold.png"
                     fillMode: Image.PreserveAspectCrop
+                    visible: !themeWallpaper.visible && Theme.mode === "dark"
                 }
                 Rectangle {
                     anchors.fill: parent
-                    color: Qt.rgba(0.016, 0.05, 0.1, shellPreferences.wallpaperDim)
+                    color: Qt.alpha(Theme.darkerBackground, shellPreferences.wallpaperDim)
+                }
+                // Scrim behind the clock for a theme's own (unknown) wallpaper.
+                Rectangle {
+                    visible: homeClock.visible && themeWallpaper.visible
+                    x: homeClock.x - 24
+                    y: homeClock.y + 104
+                    width: homeClock.width + 48
+                    height: homeClock.height - 104 + 16
+                    radius: 28
+                    color: Qt.alpha(Theme.background, 0.55)
                 }
                 Column {
+                    id: homeClock
                     visible: !panel.expanded
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: Math.max(64, parent.height * (surface.isPhone ? 0.14 : 0.18))
                     spacing: 12
+                    // Theme wallpapers can be bright; keep the clock legible.
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: Theme.darkerBackground
+                        shadowBlur: 0.8
+                        shadowOpacity: 0.9
+                        shadowHorizontalOffset: 0
+                        shadowVerticalOffset: 1
+                    }
                     BrandMark {
                         id: homeBrand
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -1114,7 +1212,7 @@ ShellRoot {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "hh:mm" : "h:mm AP")
-                        color: "#f0f5ff"
+                        color: Theme.text
                         font {
                             pixelSize: surface.isPhone ? 58 : 72
                             weight: Font.Light
@@ -1123,7 +1221,7 @@ ShellRoot {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDateTime(clock.date, "dddd, MMMM d")
-                        color: "#a9e8d5"
+                        color: Theme.accent
                         font.pixelSize: 18
                     }
                     Text {

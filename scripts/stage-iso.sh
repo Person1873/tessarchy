@@ -37,16 +37,18 @@ file_permissions+=(
   ["/usr/bin/tessera-brightness"]="0:0:755"
   ["/usr/bin/tessera-nightlight"]="0:0:755"
   ["/usr/bin/tessera-rotate"]="0:0:755"
+  ["/usr/bin/tessarchy-theme"]="0:0:755"
+  ["/usr/bin/tessarchy-run"]="0:0:755"
 )
 PROFILE
 airoot=$profile/airootfs
 mkdir -p "$airoot/usr/share/tessarchy/session" "$airoot/usr/bin" "$airoot/usr/share/wayland-sessions"
-cp -R -- "$root/shell" "$airoot/usr/share/tessarchy/"
+cp -R -- "$root/shell" "$root/themes" "$airoot/usr/share/tessarchy/"
 find "$airoot/usr/share/tessarchy/shell" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
 find "$airoot/usr/share/tessarchy/shell" -depth -type d -name __pycache__ -empty -delete
 cp -R -- "$root/docs" "$airoot/usr/share/tessarchy/"
 cp -- "$root/session/hyprland.lua" "$root/session/hypridle.conf" "$airoot/usr/share/tessarchy/session/"
-install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessera-brightness" "$root/session/tessera-nightlight" "$root/session/tessera-rotate" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"
+install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessarchy-theme" "$root/session/tessarchy-run" "$root/session/tessera-screenshot" "$root/session/tessera-brightness" "$root/session/tessera-nightlight" "$root/session/tessera-rotate" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"
 install -m644 "$root/session/tessarchy.desktop" "$airoot/usr/share/wayland-sessions/"
 cp -a "$root/iso/airootfs/." "$airoot/"
 # Convert the supplied clip for initramfs playback; no video decoder runs at boot.

@@ -1615,3 +1615,21 @@ source tree, rejection of edited/missing launcher originals, legacy uninstall
 and long/empty event messages. No host settings, development
 installation or running VM were modified. Fractional-scale acceptance on a
 physical display remains pending.
+
+
+## System theme, 2026-10-17
+
+Actually performed by an agent (Hermes, for person1873) in the development QEMU
+guest (720x1440, Hyprland 0.56.2, Quickshell 0.3.2, squeekboard, foot 1.28.0):
+
+- `tessarchy-theme apply` staged Tessera; shell icons and colours rendered as before.
+- Copied Omarchy's stock `catppuccin` directory unchanged into
+  `~/.config/tessarchy/themes`; `tessarchy-theme set catppuccin` recoloured the
+  running shell live, used its Totoro wallpaper, restarted squeekboard with
+  Catppuccin keys (blue Return), and `tessarchy-run foot` opened in its palette.
+- `tessera-light` switched the shell, Settings theme picker, keyboard and Foot
+  to light.
+- Found and fixed: date/label text was unreadable over a bright theme wallpaper;
+  a translucent theme-coloured card now sits behind the clock.
+- Not checked: Firefox's appearance under `GTK_THEME` (only dark/light is set,
+  not the palette); live OSC recolouring of an already-open Foot; real hardware.

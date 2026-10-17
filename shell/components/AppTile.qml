@@ -21,12 +21,15 @@ TouchButton {
                 rotation: 0
                 color: Qt.alpha(control.accentColor, control.selected ? 0.4 : 0.18)
                 border.color: Qt.alpha(control.accentColor, 0.3)
-                Image {
+                Icon {
                     anchors.centerIn: parent
                     rotation: 0
+                    symbol: control.symbol
+                    size: 28
+                    color: Theme.text
+                    // App icons keep their own colours; only glyphs are tinted.
                     source: control.iconSource || "../icons/" + control.symbol + ".svg"
-                    sourceSize.width: 28
-                    sourceSize.height: 28
+                    layer.enabled: control.iconSource === ""
                 }
             }
             Text {
@@ -35,7 +38,7 @@ TouchButton {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                color: "#f0f5ff"
+                color: Theme.text
                 font.pixelSize: 16
             }
         }

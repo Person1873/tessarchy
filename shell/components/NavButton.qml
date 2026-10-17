@@ -20,19 +20,17 @@ TouchButton {
             anchors.centerIn: parent
             spacing: 2
             opacity: control.enabled ? 1 : 0.35
-            Image {
+            Icon {
                 anchors.horizontalCenter: parent.horizontalCenter
-                source: "../icons/" + control.symbol + ".svg"
-                sourceSize.width: 21
-                sourceSize.height: 21
-                width: 21
-                height: 21
+                symbol: control.symbol
+                size: 21
+                color: control.selected ? control.accentColor : Theme.textSecondary
             }
             Text {
                 visible: control.showLabel
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: control.text
-                color: control.selected ? control.accentColor : "#d0dced"
+                color: control.selected ? control.accentColor : Theme.textSecondary
                 font.pixelSize: 10
             }
         }
