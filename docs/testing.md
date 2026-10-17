@@ -1691,6 +1691,26 @@ Validated:
 - `tests/test_workflows.py`: the real portal over a private D-Bus with a stub
   shell (pick, cancel, Desktop fallback, filter globs, FIFO cleanup).
 
-Not checked: multiple-file selection, folder mode from a real app, wxWidgets
-apps, GTK4/libadwaita apps (portal-aware, so expected to work, not run),
-hardware.
+- Follow-up, same VM: a plain GTK3 GtkFileChooserDialog (PyGObject script via
+  `tessarchy-run`) with select_multiple: two of three files ticked, Open (2)
+  returned both and the folder. SELECT_FOLDER: entered a subfolder, Select
+  returned it. Both started in the folder the app set; before a fix they
+  opened in $HOME, because GTK3 applies set_current_folder asynchronously and
+  the module asked the portal first (omalauncher's module has the same gap).
+- GTK4 (zenity 4.2.2): open and save went through the portal with no GTK
+  window; open returned the tapped file, save returned the suggested name in
+  the requested folder.
+
+Not checked: wxWidgets apps, hardware.
+
+Rebase verification (2026-10-19, isolated worktree, no VM changes):
+`./scripts/check.sh` passed (108 Python tests, one skipped; Qt 49 passed,
+0 failed, 0 skipped, 0 blacklisted); `make -s -C portal O=/tmp/pb-rb`
+built the portal. This does not revalidate the earlier live guest results above.
+
+Review decision: upstream's `LocalFilePicker.qml` is an in-shell browser for
+PhoneApp/SoundSettings, backed by their private file browser and limited to
+photo/audio selection. This PR's `FilePicker.qml` is a portal-backed app dialog
+with save, folder and multi-file handling. Keep both integrations for now;
+decide whether to share their navigation/list UI in a follow-up after aligning
+their backend interfaces. Do not replace either picker merely by renaming it.

@@ -36,10 +36,27 @@ typedef struct {
 
 #define PICKED "tessarchy-picked" /* GSList of GFile */
 #define PENDING "tessarchy-pending"
+#define REQUESTED "tessarchy-requested-folder" /* GFile the app set */
 
 static void (*parent_show)(GtkWidget *);
 static GSList *(*parent_get_files)(GtkFileChooser *);
 static GFile *(*parent_get_current_folder)(GtkFileChooser *);
+static gboolean (*parent_set_current_folder)(GtkFileChooser *, GFile *, GError **);
+
+/* GTK3 applies a new folder only after querying it, so a dialog sent to the portal straight after
+ * set_current_folder still reports none; remember what was asked for. */
+static gboolean set_current_folder(GtkFileChooser *chooser, GFile *folder, GError **error) {
+    if (folder) g_object_set_data_full(G_OBJECT(chooser), REQUESTED, g_object_ref(folder), g_object_unref);
+    return parent_set_current_folder(chooser, folder, error);
+}
+
+/* The folder to start in: GTK's own if it has one, else the one last requested. */
+static GFile *start_folder(GtkFileChooser *chooser) {
+    GFile *folder = parent_get_current_folder(chooser);
+    if (folder) return folder;
+    GFile *requested = g_object_get_data(G_OBJECT(chooser), REQUESTED);
+    return requested ? g_object_ref(requested) : NULL;
+}
 
 static void free_files(gpointer list) { g_slist_free_full(list, g_object_unref); }
 
@@ -60,7 +77,7 @@ static GFile *get_current_folder(GtkFileChooser *chooser) {
         GFile *parent = g_file_get_parent(first);
         if (parent) return parent;
     }
-    return parent_get_current_folder(chooser);
+    return start_folder(chooser);
 }
 
 /* The first of [ids] the dialog has a button for, else [fallback]. */
@@ -163,7 +180,7 @@ static gboolean ask_portal(GtkWidget *dialog) {
     if (gtk_file_chooser_get_select_multiple(chooser) && !save) g_variant_builder_add(&options, "{sv}", "multiple", g_variant_new_boolean(TRUE));
     if (action == GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER || action == GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER)
         g_variant_builder_add(&options, "{sv}", "directory", g_variant_new_boolean(TRUE));
-    GFile *folder = parent_get_current_folder(chooser);
+    GFile *folder = start_folder(chooser);
     gchar *folder_path = folder ? g_file_get_path(folder) : NULL;
     if (folder_path) g_variant_builder_add(&options, "{sv}", "current_folder", g_variant_new_bytestring(folder_path));
     g_free(folder_path);
@@ -215,4 +232,6 @@ G_MODULE_EXPORT void gtk_module_init(gint *argc, gchar ***argv) {
     iface->get_files = get_files;
     parent_get_current_folder = iface->get_current_folder;
     iface->get_current_folder = get_current_folder;
+    parent_set_current_folder = iface->set_current_folder;
+    iface->set_current_folder = set_current_folder;
 }
