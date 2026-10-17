@@ -53,6 +53,19 @@ class Workflows(unittest.TestCase):
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 64, args)
 
+    def test_nightlight_helper_validates_arguments(self):
+        import shutil
+        helper = ROOT / 'session/tessera-nightlight'
+        for args in ([], ['bogus'], ['on', 'extra'], ['off', 'extra'], ['status', 'extra']):
+            result = subprocess.run([str(helper), *args], env=self.env,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 64, args)
+        if shutil.which('hyprsunset') is None:
+            for args in (['status'], ['on']):
+                result = subprocess.run([str(helper), *args], env=self.env,
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 3, args)
+
     def test_existing_launcher_refused_before_installing_data(self):
         launcher = self.home / '.local/bin/start-tessarchy'
         launcher.parent.mkdir(parents=True)
@@ -235,6 +248,8 @@ check("phone", 400, 800, 1, 0, false, 2, 0)
         self.assertTrue((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/systemd-networkd.service').is_symlink())
         self.assertTrue((profile / 'airootfs/usr/bin/start-tessarchy').stat().st_mode & 0o111)
         self.assertTrue((profile / 'airootfs/usr/bin/tessera-brightness').stat().st_mode & 0o111)
+        self.assertTrue((profile / 'airootfs/usr/bin/tessera-nightlight').stat().st_mode & 0o111)
+        self.assertIn('hyprsunset', (profile / 'packages.x86_64').read_text())
         self.assertIn('brightnessctl', (profile / 'packages.x86_64').read_text())
         self.assertIn('u tess 1000', (profile / 'airootfs/etc/sysusers.d/tessarchy.conf').read_text())
         result = subprocess.run(command, env=env, capture_output=True, text=True)

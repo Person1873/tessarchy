@@ -7,7 +7,7 @@ data=${XDG_DATA_HOME:-$HOME/.local/share}/tessarchy
 [[ $(cat "$data/.tessarchy-dev-install") == tessarchy-dev-v1 ]] || exit 1
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 # Preserve launchers edited since installation; report instead of deleting them.
-for launcher in start-tessarchy tessera-shell tessera-brightness; do
+for launcher in start-tessarchy tessera-shell tessera-brightness tessera-nightlight; do
     target=$HOME/.local/bin/$launcher
     if [[ -e "$target" || -L "$target" ]]; then
         cmp -s -- "$root/session/$launcher" "$target" || {
@@ -15,9 +15,9 @@ for launcher in start-tessarchy tessera-shell tessera-brightness; do
         }
     fi
 done
-rm -f -- "$HOME/.local/bin/start-tessarchy" "$HOME/.local/bin/tessera-shell" "$HOME/.local/bin/tessera-brightness"
+rm -f -- "$HOME/.local/bin/start-tessarchy" "$HOME/.local/bin/tessera-shell" "$HOME/.local/bin/tessera-brightness" "$HOME/.local/bin/tessera-nightlight"
 # Remove only installed files, never user preferences or unrelated files.
-rm -f -- "$data/shell/shell.qml" "$data/shell/components/TouchButton.qml" "$data/shell/components/NavButton.qml" "$data/shell/components/AppTile.qml" "$data/shell/components/StatusIcon.qml" "$data/shell/components/AudioStatus.qml" "$data/shell/components/BrightnessControl.qml" "$data/shell/components/BrandMark.qml" "$data/shell/components/SettingsPage.qml" "$data/shell/components/LevelSlider.qml" "$data/shell/LayoutPolicy.js"
+rm -f -- "$data/shell/shell.qml" "$data/shell/components/TouchButton.qml" "$data/shell/components/NavButton.qml" "$data/shell/components/AppTile.qml" "$data/shell/components/StatusIcon.qml" "$data/shell/components/AudioStatus.qml" "$data/shell/components/BrightnessControl.qml" "$data/shell/components/NightLightToggle.qml" "$data/shell/components/BrandMark.qml" "$data/shell/components/SettingsPage.qml" "$data/shell/components/LevelSlider.qml" "$data/shell/LayoutPolicy.js"
 for icon in back home recents power browser terminal wifi cellular volume volume-muted battery settings phone tablet desktop auto controls; do rm -f -- "$data/shell/icons/$icon.svg"; done
 rm -f -- "$data/shell/artwork/aurora-fold.png" "$data/shell/artwork/tessarchy-mark.svg"
 for face in 0 1 2 3 4 5; do rm -f -- "$data/shell/artwork/mark-face-$face.svg"; done

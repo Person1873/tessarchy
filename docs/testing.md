@@ -255,6 +255,16 @@ Implemented, static validation only; backlight validation pending.
   `tessera-brightness up/down`, staging asserts the helper is executable and
   `brightnessctl` ships in the image, and install/uninstall round-trips remove
   every new file. 15/15 Qt Quick results on the dev host.
+- `session/tessera-nightlight` manages hyprsunset through a runtime pid
+  file with on/off/status, validates arguments before touching anything, and
+  exits 3 when hyprsunset is absent; the DISPLAY section shows a persisted
+  night-light toggle once a probe sees the helper and backend, and the pref
+  re-applies on shell start.
+- Validation adds: bad-argument exit codes for both helpers, a
+  hyprsunset-absent `status`/`on` exit-3 check, staging asserts both helpers
+  are executable and `brightnessctl`/`hyprsunset` ship in the image, and the
+  install/uninstall round-trip removes every new file (12/12 workflow tests).
 - Not performed: actual backlight reads/writes (this host has no backlight),
-  key repeat behavior on hardware, and interaction with a real integrated
-  panel. These remain on the manual list.
+  key repeat behavior on hardware, a real hyprsunset run (the toggle path was
+  validated only up to "binary missing"), and interaction with a real
+  integrated panel. These remain on the manual list.

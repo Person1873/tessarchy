@@ -47,7 +47,10 @@ only when the service socket exists at launch. Brightness control probes the
 first backlight once at shell start (nothing is shown without one), writes
 through `session/tessera-brightness` (brightnessctl when present, else sysfs)
 with rapid changes coalesced into one call, and the brightness keys invoke the
-same helper, which is silent on machines with no backlight. No hardware
+same helper, which is silent on machines with no backlight. The night-light
+toggle starts and stops hyprsunset through `session/tessera-nightlight` (pid
+file in the runtime directory, fixed 4000K command), hidden when hyprsunset is
+missing, and re-applied from the stored preference on shell start. No hardware
 Wi-Fi/modem control or secure locking is claimed.
 
 ## Verified against installed files, 2026-10-16

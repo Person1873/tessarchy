@@ -26,6 +26,7 @@ ShellRoot {
         property bool use24Hour: true
         property real barOpacity: 0.32
         property real wallpaperDim: 0.12
+        property bool nightLight: false
     }
     // Bind these when wireless/modem integrations land. Never invent a signal.
     property real wifiStrength: -1
@@ -282,7 +283,7 @@ ShellRoot {
                                         wrapMode: Text.WordWrap
                                     }
                                     Text {
-                                        visible: brightnessControl.available
+                                        visible: brightnessControl.available || nightLightToggle.available
                                         text: "DISPLAY"
                                         color: "#8da7b9"
                                         font {
@@ -294,6 +295,13 @@ ShellRoot {
                                         id: brightnessControl
                                         Layout.fillWidth: true
                                         accentColor: root.accentColor
+                                    }
+                                    NightLightToggle {
+                                        id: nightLightToggle
+                                        Layout.fillWidth: true
+                                        accentColor: root.accentColor
+                                        nightLight: shellPreferences.nightLight
+                                        onNightLightChanged: shellPreferences.nightLight = nightLight
                                     }
                                     Text {
                                         text: "SOUND"
