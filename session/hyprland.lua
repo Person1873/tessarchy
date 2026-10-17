@@ -44,6 +44,8 @@ hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "to
 hl.bind("SUPER + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("tessera-shell"))
 hl.bind("SUPER + SHIFT + E", hl.dsp.exit())
+-- Full-screen capture through the shipped helper; it notifies on success.
+hl.bind("Print", hl.dsp.exec_cmd("tessera-screenshot"))
 -- Preferences are user-owned, never installed over existing files.
 local home = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
 local preferences = home .. "/tessarchy/preferences.lua"

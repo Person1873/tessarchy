@@ -33,6 +33,9 @@ live image is in development.
 - An expandable launcher for Firefox and Foot.
 - A scrollable window overview with application switching and maximize/restore.
 - Confirmation before closing a window or ending the session.
+- Full-screen screenshots from Quick controls or the Print key, saved to
+  Pictures/Screenshots and confirmed with a desktop notification when one
+  is available.
 - A dedicated Hyprland session, user installation, and reversible tty1 startup.
 - A QEMU development workflow, local Arch package recipes, and an initial
   archiso staging/build pipeline.
@@ -74,7 +77,7 @@ TCG is the slow fallback. Defaults are 2GiB RAM and 2 vCPUs.
 Log into the guest as `arch` (initial password `arch`). **Inside the guest**:
 
 ```bash
-sudo pacman -Syu --needed hyprland quickshell firefox foot mesa qt6-declarative qt6-wayland ttf-dejavu python
+sudo pacman -Syu --needed hyprland quickshell firefox foot mesa qt6-declarative qt6-wayland ttf-dejavu python grim libnotify
 sudo poweroff
 ```
 
@@ -117,7 +120,7 @@ See [VM setup](docs/vm.md) for recovery and the alternative stock-ISO route.
 Dependencies are **a separate explicit opt-in step**, never installed by scripts:
 
 ```bash
-sudo pacman -S --needed hyprland quickshell firefox foot mesa qt6-declarative qt6-wayland ttf-dejavu
+sudo pacman -S --needed hyprland quickshell firefox foot mesa qt6-declarative qt6-wayland ttf-dejavu grim libnotify
 ./scripts/check.sh
 ./scripts/install-dev.sh
 ```
