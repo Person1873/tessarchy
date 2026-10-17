@@ -1,0 +1,7 @@
+/build/
+/dist/
+/vm/
+__pycache__/
+.env
+.env.*
+!.env.example

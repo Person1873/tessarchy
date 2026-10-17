@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Tessarchy (prototype)
+Comment=Tessera touch-first development session
+Exec=start-tessarchy
+Type=Application
+DesktopNames=Hyprland

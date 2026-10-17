@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ -n ${WAYLAND_DISPLAY:-} || -n ${DISPLAY:-} ]]; then
+    echo "Start Tessarchy from a local TTY, outside an existing graphical session." >&2
+    exit 1
+fi
+for tool in Hyprland qs dbus-run-session; do
+    command -v "$tool" >/dev/null || { echo "Missing dependency: $tool" >&2; exit 1; }
+done
+share=${TESSARCHY_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/tessarchy}
+if [[ ! -f "$share/session/hyprland.lua" ]]; then share=/usr/share/tessarchy; fi
+[[ -f "$share/session/hyprland.lua" ]] || { echo "Session defaults not installed" >&2; exit 1; }
+export TESSARCHY_DATA_DIR="$share"
+export PATH="$HOME/.local/bin:$PATH"
+export XDG_CURRENT_DESKTOP=Hyprland
+export XDG_SESSION_DESKTOP=tessarchy
+export XDG_SESSION_TYPE=wayland
+exec dbus-run-session -- Hyprland --config "$share/session/hyprland.lua"
