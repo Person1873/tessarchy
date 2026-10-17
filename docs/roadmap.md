@@ -17,6 +17,9 @@ controls. BIOS and non-Secure-Boot UEFI graphical boots were observed in
 diskless QEMU/KVM. Pending contributor pull requests remain outside this
 release; see the [GitHub review](github-review.md).
 
+Desktop workspace navigation and keyboard management are implemented; broader
+tablet split layouts remain pending.
+
 ## Next implementation steps
 
 1. Refine card transitions and physical touchscreen interactions; add configurable

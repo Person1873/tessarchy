@@ -34,8 +34,9 @@ live tester ISO.
   cellular radio switches, layout selection, and optional PipeWire volume controls. Network
   selection, pairing, and connection-strength backends remain planned; see
   [radio controls](docs/radio-controls.md).
-- An expandable launcher for Firefox and Foot.
+- An application drawer populated from installed desktop entries.
 - Swipeable app cards with real window previews, glass icon actions, and keyboard switching.
+- Desktop workspace buttons, focused-window titles, and keyboard controls.
 - Confirmation before closing a window or ending the session.
 - A dedicated Hyprland session, user installation, and reversible tty1 startup.
 - A QEMU development workflow, local Arch package recipes, and an initial

@@ -445,3 +445,44 @@ and truncated long names within the glass launcher.
 
 Still planned/manual: additional desktop-entry command formats and theme changes.
 No host desktop configuration or dependencies changed.
+
+
+## Desktop mode workspace strip and keybindings, 2026-10-17
+
+Implemented, static validation only; GUI and guest acceptance pending.
+
+- `LayoutPolicy.js` gains `showWorkspaces(mode, width)` and
+  `workspaceSlots(ids)`; `tests/qml/tst_layout.qml` covers placement at
+  desktop/tablet/phone widths and slot extension beyond five workspaces.
+- The status bar renders numbered workspace buttons from
+  `Hyprland.workspaces`, highlights the focused/active workspace, and falls
+  back to a numeric-only `hl.dsp.focus` dispatch for not-yet-created
+  workspaces. Existing workspaces use `HyprlandWorkspace.activate()`.
+- Desktop shows the focused window title beside the tray (display-only text).
+- `session/hyprland.lua` adds fixed desktop bindings: Super+1-5,
+  Super+Shift+1-5, Super+Q, Super+Tab, directional focus and window move,
+  Super+drag/resize, and XF86Audio volume keys.
+- Performed on the development host (Ubuntu ARM, no Wayland session):
+  `luac -p` accepts the Lua config; `qmllint` (Qt 6.10) exits 0 for edited QML
+  with only unresolved-module warnings; the Qt Quick Test suite was run
+  directly against the multiarch Qt install and reports 17 passed, including
+  the new `test_workspace_slots` and `test_workspace_strip_placements`.
+  `scripts/check.sh` passes ten workflow tests with the documented skips
+  (Hyprland and Quickshell absent).
+- Not performed here: `Hyprland --verify-config`, Quickshell rendering,
+  workspace strip taps, keybinding behavior, multi-output focus, or reduced
+  width clipping. These require the Arch guest and remain on the manual list.
+
+## PR 3 integration review — 2026-10-17
+
+Actual validation: `./scripts/check.sh` passed 26 Python tests and 21 Qt Quick
+results, Lua/Hyprland validation and QML lint. Inspected installed Hyprland
+monitor/workspace/toplevel metadata. The guest rendered the desktop status
+strip and focused title at 1280×800, and the close shortcut's IPC action opened
+the confirmation page without closing Foot. The 400×800 status strip remains
+uncrowded. Active-window lookup falls back to the activated Wayland handle
+after shell restart. Workspace count is bounded and narrow overrides hide it.
+Close and exit bindings route through the shell confirmations.
+
+Still planned/manual: real keyboard layouts, physical touch and many workspaces.
+This changes development source, not the already published Alpha 2 image.
