@@ -13,6 +13,7 @@ project ships session source, development tooling and an experimental x86_64
 live tester ISO.
 
 [Download the tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.1) ·
+[Project website](https://thediamondsaint.github.io/tessarchy/) ·
 [Getting started](#quick-start-use-the-basic-arch-vm) ·
 [Architecture](docs/architecture.md) ·
 [Roadmap](docs/roadmap.md) ·
@@ -24,7 +25,7 @@ live tester ISO.
 - A top status bar with clock, registered tray icons, battery status when available,
   and session controls.
 - Automatic Phone/Tablet/Desktop shell layouts with a saved manual override.
-- A persistent navigation bar with 56px touch targets and a compact desktop dock.
+- Quiet Edge frosted glass bars, compact floating navigation, and at least 48px touch targets.
 - An original mint-and-navy wallpaper, animated tessellated logo, and responsive
   tile launcher.
 - Settings for layout mode, accent, opacity, wallpaper shade, clock, navigation
@@ -32,7 +33,7 @@ live tester ISO.
 - Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
   controls. Wireless and modem backends remain to be connected.
 - An expandable launcher for Firefox and Foot.
-- A scrollable window overview with application switching and maximize/restore.
+- Swipeable app cards with real window previews, glass icon actions, and keyboard switching.
 - Confirmation before closing a window or ending the session.
 - A dedicated Hyprland session, user installation, and reversible tty1 startup.
 - A QEMU development workflow, local Arch package recipes, and an initial
@@ -48,11 +49,14 @@ pending. Two development packages have been built locally; they are not yet
 published packages. The [Alpha 1 tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.1)
 has been published and observed booting into Tessera in BIOS and UEFI QEMU/KVM.
 It is a disposable live environment, not an installer or a hardware-certified release.
+The published Alpha 1 ISO predates the Quiet Edge and card-switcher changes
+shown on the website; those are development-VM features.
 
 Text input currently requires a physical keyboard. New ordinary windows maximize
 in Phone/Tablet modes and start tiled in Desktop mode. Existing windows stay in
 place when switching modes; restoring a maximized app returns to ordinary tiling.
-Continuous mobile window policy and tablet split layouts are planned. Exclusive
+Returning through the switcher fills Phone/Tablet workspaces. Broader continuous
+mobile window policy and tablet split layouts are planned. Exclusive
 fullscreen can hide the dock. There is no secure lock screen or on-screen
 keyboard integration yet. See the [validation record](docs/testing.md) for the
 difference between implemented, user-tested, and planned behavior.

@@ -16,12 +16,12 @@ TouchButton {
                 width: 56
                 height: 56
                 radius: 18
-                rotation: -4
+                rotation: 0
                 color: Qt.alpha(control.accentColor, control.selected ? 0.4 : 0.18)
                 border.color: Qt.alpha(control.accentColor, 0.3)
                 Image {
                     anchors.centerIn: parent
-                    rotation: 4
+                    rotation: 0
                     source: "../icons/" + control.symbol + ".svg"
                     sourceSize.width: 28
                     sourceSize.height: 28

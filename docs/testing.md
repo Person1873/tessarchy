@@ -267,3 +267,48 @@ touch hardware, multiple monitors, session exit, physical-device compatibility
 and persistence acceptance. The installed development VM's broader tests above
 do not establish these as passing in the ISO. No secure locking or Secure Boot
 support claim. Testers should begin in a disposable VM with a physical keyboard.
+
+## Quiet Edge and card switcher — 2026-10-17
+
+Implemented in the development source and installed Arch VM; **not included in
+published Alpha 1**. No replacement ISO was built during this UI/website change.
+
+Actual validation:
+
+- Reopened the existing QEMU/KVM guest with 2 GiB RAM and 2 vCPUs; retained native
+  400×800 portrait output. Made its host window float using runtime dispatches;
+  no host Hyprland/Omarchy configuration files were changed.
+- Verified installed Quickshell QML type metadata for screencopy, desktop entries,
+  IPC and layer keyboard focus, and Hyprland Lua metadata for layer rules/binds.
+  Guest reload/configerrors was clean with the Tessera-only frosted layer rule.
+- Visually inspected status bar, floating navigation, launcher, settings and
+  card switcher. Switcher headings/instructions are absent; return/close actions
+  are glass icon controls with accessible names and >=48px targets. App names
+  and window titles remain visible. Close still opens an explicit confirmation;
+  Cancel returned to the switcher without closing a window.
+- Injected a real relative pointer drag through the guest's uinput interface and
+  observed selection move between two real Foot cards. Window previews rendered
+  through shared-memory screencopy; unavailable previews have an explicit fallback.
+- Tested Alt+Tab using guest key input. Verified a change from the Project notes
+  window (PID 503) to the development terminal (PID 502), with the selected app
+  maximized at 400×676 below/above the reserved bars after releasing Alt. Fixed
+  selection drift during dock expansion and deferred activation until the layer
+  keyboard grab is released. Left/right and Enter were exercised in the switcher.
+- Captured real development-VM screenshots at Phone 400×800, Tablet 800×1280,
+  Desktop 1280×800, then restored the guest to 400×800. Source originals and
+  capture limitations are in `assets/screenshots/README.md`.
+- `./scripts/check.sh` passed on the host and guest: workflow safety tests,
+  19 Qt Quick test results including lifecycle setup/cleanup, Lua syntax,
+  `Hyprland --verify-config`, and qmllint. Known PanelWindow type-metadata
+  warnings remain; ShellCheck was unavailable locally and in the guest.
+- Website preview returned HTTP 200. Chromium/ChromeDriver rendered the site at
+  1440×1000 and 390×844, with no horizontal overflow or broken sourced images.
+  Layout tabs and screenshot dialog open/close worked; JavaScript syntax passed.
+  The website builder also checks refusal to overwrite an existing destination
+  and exact original screenshot bytes in the downloadable ZIP.
+
+Still planned/manual: physical touch, multi-touch swipe tuning, additional app
+classes and keymaps, multi-monitor keyboard routing, GPU-backed preview behavior,
+performance on real mobile hardware, and a newly built/booted Quiet Edge ISO.
+The VM lacks UPower and desktop portal services and falls back from DMA-BUF to
+SHM preview buffers; these are not claims of working battery/network/audio devices.

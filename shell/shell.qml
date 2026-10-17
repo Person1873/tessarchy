@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QtCore
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.UPower
 import Quickshell.Services.SystemTray
@@ -14,6 +15,14 @@ import "LayoutPolicy.js" as Policy
 ShellRoot {
     id: root
     signal replayBrand
+    signal switcherCommand(string action)
+    IpcHandler {
+        target: "switcher"
+        function next(): void { root.switcherCommand("next"); }
+        function previous(): void { root.switcherCommand("previous"); }
+        function accept(): void { root.switcherCommand("accept"); }
+        function cancel(): void { root.switcherCommand("cancel"); }
+    }
     readonly property color accentColor: shellPreferences.accent === "iris" ? "#c6b7ff" : shellPreferences.accent === "ice" ? "#99d7ff" : "#a9e8d5"
     Settings {
         id: shellPreferences
@@ -22,9 +31,9 @@ ShellRoot {
         property string layoutMode: "auto"
         property string accent: "mint"
         property bool reducedMotion: false
-        property bool showLabels: true
+        property bool showLabels: false
         property bool use24Hour: true
-        property real barOpacity: 0.32
+        property real barOpacity: 0.22
         property real wallpaperDim: 0.12
     }
     // Bind these when wireless/modem integrations land. Never invent a signal.
@@ -45,7 +54,7 @@ ShellRoot {
             required property var modelData
             readonly property string mode: Policy.effectiveMode(shellPreferences.layoutMode, modelData.width, modelData.height)
             readonly property bool isPhone: mode === "phone"
-            readonly property int navHeight: isPhone ? 72 : 80
+            readonly property int navHeight: isPhone ? 76 : 84
             readonly property int launcherRows: Math.ceil(4 / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
             readonly property string modeLabel: (shellPreferences.layoutMode === "auto" ? "Auto · " : "") + Policy.title(mode)
             SystemClock {
@@ -57,34 +66,57 @@ ShellRoot {
                 screen: surface.modelData
                 property string page: ""
                 property var closeTarget: null
+                property bool keyboardSwitch: false
                 readonly property bool expanded: page !== ""
                 anchors {
                     bottom: true
-                    left: surface.isPhone
-                    right: surface.isPhone
+                    left: false
+                    right: false
                 }
-                implicitWidth: Policy.panelWidth(surface.mode, surface.modelData.width)
-                implicitHeight: expanded ? Math.min(page === "apps" ? surface.launcherRows * 124 + 156 : surface.mode === "tablet" ? 740 : 640, surface.modelData.height - 64) : surface.navHeight
+                implicitWidth: expanded ? Policy.panelWidth(surface.mode, surface.modelData.width) : Math.min(surface.modelData.width - 32, surface.isPhone ? 272 : 360)
+                implicitHeight: expanded ? Math.min(page === "windows" ? surface.modelData.height - 60 : page === "apps" ? surface.launcherRows * 124 + 156 : surface.mode === "tablet" ? 740 : 640, surface.modelData.height - 64) : surface.navHeight
                 exclusiveZone: surface.navHeight
                 color: "transparent"
                 Rectangle {
                     anchors.fill: parent
-                    radius: surface.isPhone ? 0 : 24
-                    color: panel.expanded ? "#101b30" : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
-                    border.width: surface.isPhone ? 0 : 1
+                    anchors.bottomMargin: panel.expanded ? 0 : 12
+                    radius: 26
+                    color: panel.expanded ? (panel.page === "windows" ? "#b3101b30" : "#c2101b30") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
+                    border.width: 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
                 }
                 WlrLayershell.namespace: "tessera"
                 WlrLayershell.layer: WlrLayer.Top
-                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.keyboardFocus: panel.keyboardSwitch && panel.page === "windows" ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
                 function showPage(name) {
+                    if (name === "windows" && page !== "windows") switcher.selectActive();
+                    keyboardSwitch = false;
                     closeTarget = null;
                     page = page === name ? "" : name;
                 }
                 function launch(command) {
                     Quickshell.execDetached(command);
                     page = "";
+                }
+                onPageChanged: { if (page !== "windows") keyboardSwitch = false; }
+                Connections {
+                    target: root
+                    function onSwitcherCommand(action) {
+                        if (!Hyprland.focusedMonitor || Hyprland.focusedMonitor.name !== surface.modelData.name) return;
+                        if (action === "accept") {
+                            if (panel.keyboardSwitch && panel.page === "windows") switcher.activateCurrent();
+                        } else if (action === "cancel") {
+                            if (panel.keyboardSwitch) panel.page = "";
+                        } else {
+                            const opening = panel.page !== "windows";
+                            if (opening) switcher.selectActive();
+                            panel.keyboardSwitch = true;
+                            panel.page = "windows";
+                            switcher.step(action === "previous" ? -1 : 1);
+                            switcher.forceActiveFocus();
+                        }
+                    }
                 }
                 Connections {
                     target: panel.closeTarget
@@ -95,7 +127,8 @@ ShellRoot {
                 }
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 8
+                    anchors.margins: 12
+                    anchors.bottomMargin: panel.expanded ? 12 : 18
                     anchors.leftMargin: surface.isPhone ? 12 : 16
                     anchors.rightMargin: surface.isPhone ? 12 : 16
                     spacing: 8
@@ -105,14 +138,32 @@ ShellRoot {
                         Layout.fillHeight: true
                         spacing: 8
                         Text {
-                            text: panel.page === "apps" ? "Your space" : panel.page === "windows" ? "Recent apps" : panel.page === "close" ? "Close this window?" : panel.page === "status" ? "Quick controls" : panel.page === "settings" ? "Settings" : "End this session?"
+                            visible: panel.page !== "windows"
+                            text: panel.page === "apps" ? "Your space" : panel.page === "close" ? "Close this window?" : panel.page === "status" ? "Quick controls" : panel.page === "settings" ? "Settings" : "End this session?"
                             color: root.accentColor
                             font.pixelSize: 22
                             font.bold: true
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                         }
+                        AppSwitcher {
+                            id: switcher
+                            visible: panel.page === "windows"
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            windows: Hyprland.toplevels.values
+                            fillApp: surface.mode !== "desktop"
+                            accentColor: root.accentColor
+                            reducedMotion: shellPreferences.reducedMotion
+                            onActivated: panel.page = ""
+                            onDismissed: panel.page = ""
+                            onCloseRequested: target => {
+                                panel.closeTarget = target;
+                                panel.page = "close";
+                            }
+                        }
                         ScrollView {
+                            visible: panel.page !== "windows"
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             clip: true
@@ -172,58 +223,6 @@ ShellRoot {
                                         onEndSessionRequested: panel.page = "session"
                                         onControlsRequested: panel.page = "status"
                                         onReplayRequested: root.replayBrand()
-                                    }
-                                }
-                                ColumnLayout {
-                                    visible: panel.page === "windows"
-                                    Layout.fillWidth: true
-                                    Text {
-                                        visible: Hyprland.toplevels.values.length === 0
-                                        text: "No recent apps. Tap Home to launch one."
-                                        color: "#b7c7cc"
-                                        wrapMode: Text.WordWrap
-                                        Layout.fillWidth: true
-                                    }
-                                    Repeater {
-                                        model: Hyprland.toplevels
-                                        delegate: ColumnLayout {
-                                            id: windowRow
-                                            required property var modelData
-                                            readonly property var handle: modelData.wayland
-                                            Layout.fillWidth: true
-                                            spacing: 4
-                                            TouchButton {
-                                                text: (windowRow.modelData.activated ? "● " : "") + (windowRow.modelData.title || "Untitled window")
-                                                Layout.fillWidth: true
-                                                enabled: windowRow.handle !== null
-                                                onClicked: {
-                                                    windowRow.handle.activate();
-                                                    panel.page = "";
-                                                }
-                                            }
-                                            RowLayout {
-                                                Layout.fillWidth: true
-                                                TouchButton {
-                                                    text: windowRow.handle && windowRow.handle.maximized ? "Restore" : "Maximize"
-                                                    Layout.fillWidth: true
-                                                    Layout.preferredWidth: 1
-                                                    enabled: windowRow.handle !== null
-                                                    onClicked: {
-                                                        windowRow.handle.maximized = !windowRow.handle.maximized;
-                                                    }
-                                                }
-                                                TouchButton {
-                                                    text: "Close…"
-                                                    Layout.fillWidth: true
-                                                    Layout.preferredWidth: 1
-                                                    enabled: windowRow.handle !== null
-                                                    onClicked: {
-                                                        panel.closeTarget = windowRow.handle;
-                                                        panel.page = "close";
-                                                    }
-                                                }
-                                            }
-                                        }
                                     }
                                 }
                                 ColumnLayout {
@@ -374,7 +373,7 @@ ShellRoot {
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 56
+                        Layout.preferredHeight: 48
                         spacing: 8
                         NavButton {
                             text: "Back"
@@ -424,7 +423,12 @@ ShellRoot {
                 }
                 implicitHeight: 48
                 exclusiveZone: 48
-                color: Qt.rgba(0.063, 0.106, 0.188, Math.min(1, shellPreferences.barOpacity + 0.12))
+                color: "transparent"
+                Rectangle {
+                    anchors.fill: parent
+                    color: Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
+                    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.alpha(root.accentColor, 0.1) }
+                }
                 WlrLayershell.namespace: "tessera-status"
                 WlrLayershell.layer: WlrLayer.Top
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -437,8 +441,8 @@ ShellRoot {
                         text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "hh:mm" : "h:mm AP")
                         color: "#f0f5ff"
                         font {
-                            pixelSize: 16
-                            bold: true
+                            pixelSize: 14
+                            weight: Font.DemiBold
                         }
                     }
                     Item {
