@@ -107,28 +107,49 @@ TestCase {
         compare(Policy.panelWidth("phone", 320), 320);
         compare(Policy.columns("desktop", 760), 4);
     }
-    function test_audio_labels() {
-        compare(Policy.nodeLabel("Built-in Audio", "speakers", "alsa_output.pci"), "Built-in Audio");
-        compare(Policy.nodeLabel("", "speakers", "alsa_output.pci"), "speakers");
-        compare(Policy.nodeLabel("   ", "", "alsa_output.pci"), "alsa_output.pci");
-        compare(Policy.nodeLabel("", "", ""), "Unknown device");
-        compare(Policy.nodeLabel(undefined, null, undefined), "Unknown device");
-        compare(Policy.streamLabel("Firefox", "Playing", "node-1"), "Firefox");
-        compare(Policy.streamLabel("", "", "node-1"), "node-1");
-        compare(Policy.streamLabel(undefined, undefined, undefined), "Unknown app");
+    function test_workspace_strip_placements() {
+        verify(Policy.showWorkspaces("desktop", 1100));
+        verify(!Policy.showWorkspaces("desktop", 400));
+        verify(Policy.showWorkspaces("desktop", 1920));
+        verify(Policy.showWorkspaces("tablet", 1024));
+        verify(!Policy.showWorkspaces("tablet", 800));
+        verify(!Policy.showWorkspaces("phone", 1080));
     }
-    function test_playback_stream_filter() {
+    function test_workspace_slots() {
+        compare(Policy.workspaceSlots([]), 5);
+        compare(Policy.workspaceSlots([9999999]), 8);
+        compare(Policy.workspaceSlots([7.5]), 5);
+        compare(Policy.workspaceSlots([1, 2]), 5);
+        compare(Policy.workspaceSlots([1, 7, 3]), 7);
+        compare(Policy.workspaceSlots([-1, 2]), 5);
+    }
+    function test_bluetooth_action_and_battery() {
+        compare(Policy.btAction(true, true), "disconnect");
+        compare(Policy.btAction(true, false), "disconnect");
+        compare(Policy.btAction(false, true), "connect");
+        compare(Policy.btAction(false, false), "none");
+        compare(Policy.btBatteryLabel(false, 0.5), "");
+        compare(Policy.btBatteryLabel(true, NaN), "");
+        compare(Policy.btBatteryLabel(true, undefined), "");
+        compare(Policy.btBatteryLabel(true, 0.42), " · 42%");
+        compare(Policy.btBatteryLabel(true, 2), " · 100%");
+        compare(Policy.btBatteryLabel(true, -1), " · 0%");
+    }
+    function test_media_player_selection() {
+        compare(Policy.preferredPlayerIndex([]), -1);
+        compare(Policy.preferredPlayerIndex([false, true]), 1);
+        compare(Policy.preferredPlayerIndex([false, false]), 0);
+        compare(Policy.mediaSummary("", ""), "Unknown track — Unknown artist");
+    }
+    function test_audio_labels_and_stream_filter() {
+        compare(Policy.nodeLabel("", " Speakers ", "node"), "Speakers");
+        compare(Policy.nodeLabel(undefined, null, ""), "Unknown device");
+        compare(Policy.streamLabel("Browser", "Media", "node"), "Browser");
+        compare(Policy.streamLabel("", "", ""), "Unknown app");
         verify(Policy.playbackStream("Stream/Output/Audio"));
-        verify(!Policy.playbackStream("Stream/Input/Audio"));
-        verify(Policy.playbackStream(undefined));
-        verify(Policy.playbackStream(""));
-    }
-    function test_volume_percent_clamps() {
+        for (const value of [undefined, "", "Stream/Input/Audio", "Stream/Output/Video"]) verify(!Policy.playbackStream(value));
         compare(Policy.volumePercent(0.456), 46);
-        compare(Policy.volumePercent(0), 0);
-        compare(Policy.volumePercent(1), 100);
-        compare(Policy.volumePercent(-0.5), 0);
         compare(Policy.volumePercent(2), 100);
-        compare(Policy.volumePercent(undefined), 0);
+        compare(Policy.volumePercent(-1), 0);
     }
 }
