@@ -8,6 +8,7 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.UPower
 import Quickshell.Services.SystemTray
+import Quickshell.Bluetooth
 import "components"
 import "LayoutPolicy.js" as Policy
 
@@ -30,6 +31,10 @@ ShellRoot {
     // Bind these when wireless/modem integrations land. Never invent a signal.
     property real wifiStrength: -1
     property real cellularStrength: -1
+    // Bluetooth binds only when BlueZ exposes an adapter; never invent one.
+    readonly property var bluetoothAdapter: Bluetooth.defaultAdapter
+    readonly property bool bluetoothAvailable: root.bluetoothAdapter !== null
+    readonly property bool bluetoothOn: root.bluetoothAvailable && root.bluetoothAdapter.enabled
     readonly property var audioSink: audioLoader.item ? (audioLoader.item as AudioStatus).sink : null
     readonly property bool audioAvailable: !!(audioSink && audioSink.ready && audioSink.audio)
     readonly property int volumePercent: audioAvailable ? Math.round(audioSink.audio.volume * 100) : 0
@@ -281,6 +286,11 @@ ShellRoot {
                                         Layout.fillWidth: true
                                         wrapMode: Text.WordWrap
                                     }
+                                    BluetoothPanel {
+                                        Layout.fillWidth: true
+                                        accentColor: root.accentColor
+                                        adapter: root.bluetoothAdapter
+                                    }
                                     Text {
                                         text: "SOUND"
                                         color: "#8da7b9"
@@ -492,6 +502,12 @@ ShellRoot {
                         symbol: "wifi"
                         label: "Wi-Fi"
                         strength: root.wifiStrength
+                    }
+                    StatusIcon {
+                        symbol: "bluetooth"
+                        label: "Bluetooth"
+                        strength: root.bluetoothOn ? 0 : -1
+                        available: root.bluetoothAvailable
                     }
                     NavButton {
                         text: root.audioAvailable ? "Volume " + root.volumePercent + "%" : "Quick controls · audio unavailable"

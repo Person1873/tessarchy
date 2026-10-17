@@ -267,3 +267,28 @@ touch hardware, multiple monitors, session exit, physical-device compatibility
 and persistence acceptance. The installed development VM's broader tests above
 do not establish these as passing in the ISO. No secure locking or Secure Boot
 support claim. Testers should begin in a disposable VM with a physical keyboard.
+
+## Bluetooth quick controls, 2026-10-17 UTC
+
+Actually performed:
+
+- Added a Bluetooth quick-controls panel bound to Quickshell's Bluetooth
+  service (BlueZ). It appears in the shell's CONNECTIONS section and shows an
+  explicit "Bluetooth · no adapter available" state whenever no adapter is
+  present, so the ISO (which does not ship BlueZ) stays honest.
+- The panel toggles the adapter radio, enables discovery while visible, lists
+  known devices (connected first, then by name) with reported battery levels,
+  and connects or disconnects already-paired devices via the `btAction`
+  policy (`connect`/`disconnect`/`none`). Unpaired rows are disabled and say
+  pairing must happen outside the shell.
+- The connect/disconnect matrix and battery formatting are unit-tested in
+  `tests/qml/tst_layout.qml`; `tests/test_workflows.py` checks the wiring,
+  the no-adapter message and that no `pair(`/`forget(` API is called. The
+  status-bar icon is lit whenever an adapter exists, independent of radio
+  state.
+
+Not performed: no Bluetooth adapter exists on the development host and the
+image ships without BlueZ, so toggling, discovery, connect/disconnect,
+battery accuracy and pairing were not exercised. A live ISO boot to confirm
+the panel renders its no-adapter state is planned for the next ISO build and
+has not been performed for this branch.

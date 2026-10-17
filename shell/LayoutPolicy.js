@@ -23,3 +23,19 @@ function columns(mode, width) {
 function panelWidth(mode, width) {
     return mode === "phone" ? width : Math.min(Math.max(0, width - 24), mode === "desktop" ? 760 : 720);
 }
+
+// What tapping a Bluetooth device row does: connected devices disconnect,
+// already-paired devices connect, everything else needs pairing first.
+function btAction(connected, paired) {
+    if (connected) return "disconnect";
+    if (paired) return "connect";
+    return "none";
+}
+
+// Quickshell reports Bluetooth battery as 0.0..1.0, only when available.
+function btBatteryLabel(available, level) {
+    if (!available) return "";
+    const value = Number(level);
+    const percent = Math.round(Math.max(0, Math.min(1, isFinite(value) ? value : 0)) * 100);
+    return " · " + percent + "%";
+}
