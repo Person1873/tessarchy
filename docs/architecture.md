@@ -41,7 +41,7 @@ per-output geometry is used for automatic mode and each new window's monitor.
 
 Desktop mode extends the same shell with standard desktop affordances rather
 than a second configuration. The status bar shows numbered workspace slots
-(1-5, extended by higher existing ids) unless the output is too narrow; a tap
+(1-5, extended through 8 by higher existing ids) unless the output is too narrow; a tap
 activates the workspace. Named workspaces have negative ids and get no slot.
 When a workspace exists, `HyprlandWorkspace.activate()` is used because it
 correctly emits Lua or classic dispatchers depending on `Hyprland.usingLua`;
@@ -51,7 +51,8 @@ focused window title sits next to the tray and is display-only; no title text
 reaches IPC or shells. The Lua config adds fixed keybindings
 (Super+1-5, Super+Shift+1-5, Super+Q, Super+Tab, directional focus/move,
 Super+left-drag/resize, and XF86Audio* volume keys). All are fixed strings and
-safe in every layout mode; volume keys require wpctl at press time.
+safe in every layout mode; close/exit shortcuts open the shell confirmation
+pages, and volume keys require wpctl at press time.
 
 The original T logo is built from six SVG faces. BrandMark animates assembly and
 rotation once, settles after 1.6 seconds, and supports tap/replay and reduced

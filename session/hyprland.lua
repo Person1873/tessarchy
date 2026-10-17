@@ -3,11 +3,13 @@
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
 hl.config({
     general = { gaps_in = 0, gaps_out = 0, border_size = 0, layout = "dwindle" },
-    decoration = { rounding = 18, blur = { enabled = false }, shadow = { enabled = false } },
+    decoration = { rounding = 18, blur = { enabled = true, size = 4, passes = 2 }, shadow = { enabled = false } },
     animations = { enabled = false },
     input = { kb_layout = "us", follow_mouse = 0 },
     misc = { disable_hyprland_logo = true, force_default_wallpaper = 0 },
 })
+-- Frost only Tessera glass surfaces; leave applications unchanged.
+hl.layer_rule({ match = { namespace = "tessera(-status)?" }, blur = true, ignore_alpha = 0.01 })
 -- Read the same saved mode as Tessera when a new ordinary app opens.
 -- Existing windows and floating dialogs are left alone when modes change.
 local function shell_mode(monitor)
@@ -39,11 +41,18 @@ end)
 hl.on("hyprland.start", function ()
     hl.exec_cmd("tessera-shell")
 end)
+-- Same card switcher for touch and keyboard. Alt release commits selection.
+-- Keycodes 64/108 are left/right Alt in the configured evdev/US keymap.
+-- These bindings remain available while the switcher has an exclusive layer grab.
+hl.bind("ALT + Tab", hl.dsp.exec_cmd("tessera-shell ipc call switcher next"), { locked = true })
+hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("tessera-shell ipc call switcher previous"), { locked = true })
+hl.bind("code:64", hl.dsp.exec_cmd("tessera-shell ipc call switcher accept"), { release = true, ignore_mods = true, locked = true })
+hl.bind("code:108", hl.dsp.exec_cmd("tessera-shell ipc call switcher accept"), { release = true, ignore_mods = true, locked = true })
 hl.bind("SUPER + Return", hl.dsp.exec_cmd("foot"))
 hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
 hl.bind("SUPER + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("tessera-shell"))
-hl.bind("SUPER + SHIFT + E", hl.dsp.exit())
+hl.bind("SUPER + SHIFT + E", hl.dsp.exec_cmd("tessera-shell ipc call actions endSession"))
 -- Desktop mode: numbered workspaces, directional focus and window moving.
 -- These bindings are harmless in the touch layouts and mirror the workspace
 -- strip in the status bar.
@@ -52,7 +61,7 @@ for i = 1, 5 do
     hl.bind("SUPER + " .. key, hl.dsp.focus({ workspace = i }))
     hl.bind("SUPER + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
 end
-hl.bind("SUPER + Q", hl.dsp.window.close())
+hl.bind("SUPER + Q", hl.dsp.exec_cmd("tessera-shell ipc call actions closeWindow"))
 hl.bind("SUPER + Tab", hl.dsp.window.cycle_next())
 hl.bind("SUPER + left", hl.dsp.focus({ direction = "left" }))
 hl.bind("SUPER + right", hl.dsp.focus({ direction = "right" }))
