@@ -195,6 +195,7 @@ class Workflows(unittest.TestCase):
         import shutil
         manifest.parent.mkdir(parents=True, exist_ok=True)
         manifest.write_text('1234567890abcdef' * 4 + ' *archlinux-2026.10.01-x86_64.iso\n')
+        (fakebin / 'test-keyring.gpg').write_bytes(b'fixture: verification is never reached')
         fakecurl = fakebin / 'curl'
         fakecurl.write_text(self.FAKE_CURL % other_exit)
         fakecurl.chmod(0o755)
@@ -211,7 +212,8 @@ class Workflows(unittest.TestCase):
         fakebin.mkdir()
         self.stub_fetch_tools(fakebin, fakebin / 'manifest-fixtures/sha256sums.txt', 0)
         env = dict(self.env, PATH=str(fakebin) + ':' + os.environ['PATH'],
-                   TESSARCHY_FIXTURE_MANIFEST=str(fakebin / 'manifest-fixtures/sha256sums.txt'))
+                   TESSARCHY_FIXTURE_MANIFEST=str(fakebin / 'manifest-fixtures/sha256sums.txt'),
+                   ARCH_ISO_KEYRING=str(fakebin / 'test-keyring.gpg'))
         result = subprocess.run([str(repo / 'scripts/fetch-arch-iso.sh')], env=env,
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 1)
@@ -227,7 +229,8 @@ class Workflows(unittest.TestCase):
         fakebin.mkdir()
         self.stub_fetch_tools(fakebin, fakebin / 'manifest-fixtures/sha256sums.txt', 22)
         env = dict(self.env, PATH=str(fakebin) + ':' + os.environ['PATH'],
-                   TESSARCHY_FIXTURE_MANIFEST=str(fakebin / 'manifest-fixtures/sha256sums.txt'))
+                   TESSARCHY_FIXTURE_MANIFEST=str(fakebin / 'manifest-fixtures/sha256sums.txt'),
+                   ARCH_ISO_KEYRING=str(fakebin / 'test-keyring.gpg'))
         result = subprocess.run([str(repo / 'scripts/fetch-arch-iso.sh')], env=env,
                                 capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)

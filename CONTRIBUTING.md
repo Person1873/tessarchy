@@ -44,3 +44,8 @@ secure lock screen. Track planned input-method and device work in the roadmap.
 
 Generated VM disks, ISO images, downloaded packages, and build output stay out
 of Git. The project is licensed under the [MIT License](LICENSE).
+
+The Arch ISO fetcher defaults to the system Arch keyring. On other systems,
+`ARCH_ISO_KEYRING` can point to an explicitly provisioned trusted Arch keyring;
+signature verification remains mandatory. Refusal-path tests use a scratch
+keyring fixture and do not download or trust an image.
