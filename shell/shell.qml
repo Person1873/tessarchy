@@ -33,6 +33,11 @@ ShellRoot {
                 Quickshell.execDetached(command);
                 page = "";
             }
+            function appEntries() {
+                return DesktopEntries.applications.values
+                    .filter(entry => !entry.noDisplay && entry.command.length > 0)
+                    .sort((a, b) => a.name.localeCompare(b.name));
+            }
             Connections {
                 target: panel.closeTarget
                 function onClosed() { panel.closeTarget = null; panel.page = "windows"; }
@@ -67,15 +72,24 @@ ShellRoot {
                             ColumnLayout {
                                 visible: panel.page === "apps"
                                 Layout.fillWidth: true
-                                TouchButton {
-                                    text: "Firefox"
+                                Text {
+                                    visible: panel.appEntries().length === 0
+                                    text: "No applications found in the system menus."
+                                    color: "#b7c7cc"
+                                    wrapMode: Text.WordWrap
                                     Layout.fillWidth: true
-                                    onClicked: panel.launch(["firefox"])
                                 }
-                                TouchButton {
-                                    text: "Foot terminal"
-                                    Layout.fillWidth: true
-                                    onClicked: panel.launch(["foot"])
+                                Repeater {
+                                    model: panel.appEntries()
+                                    delegate: TouchButton {
+                                        required property var modelData
+                                        text: modelData.name
+                                        Layout.fillWidth: true
+                                        onClicked: {
+                                            panel.page = "";
+                                            modelData.execute();
+                                        }
+                                    }
                                 }
                                 Text {
                                     text: "Prototype · Physical keyboard needed for text input."
