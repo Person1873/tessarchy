@@ -147,8 +147,8 @@ class Workflows(unittest.TestCase):
         base = self.home / 'releng'
         (base / 'airootfs/etc/systemd/system/multi-user.target.wants').mkdir(parents=True)
         (base / 'profiledef.sh').write_text('file_permissions=(["/etc/shadow"]="0:0:400")\n')
-        (base / 'packages.x86_64').write_text('base\nlinux\n')
-        (base / 'airootfs/etc/passwd').write_text('root:x:0:0:root:/root:/bin/bash\n')
+        (base / 'packages.x86_64').write_text('base\nlinux\nunused-rescue-tool\n')
+        (base / 'airootfs/etc/passwd').write_text('root:x:0:0:root:/root:/usr/bin/zsh\n')
         boot = base / 'efiboot/loader/entries'
         boot.mkdir(parents=True)
         (boot / 'arch.conf').write_text('retained boot asset')
@@ -161,12 +161,16 @@ class Workflows(unittest.TestCase):
         profile = repo / 'build/iso-profile'
         self.assertEqual((profile / 'efiboot/loader/entries/arch.conf').read_text(),
                          'retained boot asset')
-        self.assertEqual((profile / 'airootfs/etc/passwd').read_bytes(),
-                         (base / 'airootfs/etc/passwd').read_bytes())
+        self.assertEqual((profile / 'airootfs/etc/passwd').read_text(),
+                         'root:x:0:0:root:/root:/usr/bin/bash\n')
+        self.assertIn('/usr/bin/zsh', (base / 'airootfs/etc/passwd').read_text())
         self.assertFalse((profile / 'airootfs/etc/group').exists())
         self.assertFalse((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/sshd.service').is_symlink())
         self.assertTrue(ssh_link.is_symlink())
         self.assertIn('quickshell', (profile / 'packages.x86_64').read_text())
+        self.assertNotIn('unused-rescue-tool', (profile / 'packages.x86_64').read_text())
+        self.assertNotIn('linux-firmware', (profile / 'packages.x86_64').read_text())
+        self.assertTrue((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/systemd-networkd.service').is_symlink())
         self.assertTrue((profile / 'airootfs/usr/bin/start-tessarchy').stat().st_mode & 0o111)
         self.assertIn('u tess 1000', (profile / 'airootfs/etc/sysusers.d/tessarchy.conf').read_text())
         result = subprocess.run(command, env=env, capture_output=True, text=True)

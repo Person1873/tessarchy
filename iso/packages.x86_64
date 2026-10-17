@@ -1,9 +1,17 @@
+base
+linux
+mkinitcpio
+mkinitcpio-archiso
+syslinux
+grub
+edk2-shell
+memtest86+
+memtest86+-efi
 hyprland
 quickshell
 firefox
 foot
 mesa
-vulkan-swrast
 xorg-xwayland
 xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk
@@ -11,6 +19,4 @@ pipewire
 pipewire-pulse
 wireplumber
 ttf-dejavu
-noto-fonts
 dbus
-sudo
