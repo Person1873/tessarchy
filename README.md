@@ -49,10 +49,11 @@ published packages. The [Alpha 1 tester ISO](https://github.com/thediamondsaint/
 has been published and observed booting into Tessera in BIOS and UEFI QEMU/KVM.
 It is a disposable live environment, not an installer or a hardware-certified release.
 
-Text input currently requires a physical keyboard. New ordinary windows maximize
-in Phone/Tablet modes and start tiled in Desktop mode. Existing windows stay in
-place when switching modes; restoring a maximized app returns to ordinary tiling.
-Continuous mobile window policy and tablet split layouts are planned. Exclusive
+Text input currently requires a physical keyboard. In Phone/Tablet modes ordinary
+windows maximize when they open and again whenever they become active; oversized
+dialogs are shrunk and centered between the bars. Desktop mode starts windows
+tiled. A mode switch does not move the windows already open; restoring a maximized
+app keeps it tiled until focus moves elsewhere. Tablet split layouts are planned. Exclusive
 fullscreen can hide the dock. There is no secure lock screen or on-screen
 keyboard integration yet. See the [validation record](docs/testing.md) for the
 difference between implemented, user-tested, and planned behavior.

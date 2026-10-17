@@ -267,3 +267,25 @@ touch hardware, multiple monitors, session exit, physical-device compatibility
 and persistence acceptance. The installed development VM's broader tests above
 do not establish these as passing in the ISO. No secure locking or Secure Boot
 support claim. Testers should begin in a disposable VM with a physical keyboard.
+
+## Mobile window policy, 2026-10-17
+
+Actually performed by an agent (Hermes, for person1873) in the development QEMU
+guest described above (720×1440, Auto · Tablet, Hyprland 0.56.2-4), with the
+installed `session/hyprland.lua` swapped between the `feat/phone-shell` version
+and this one and reloaded with `hyprctl reload`.
+
+- Two Foot windows, focus moved to the lower one: old config left both tiled at
+  720×543/544; new config maximized the focused one to 720×1087. Closing the
+  maximized window: the remaining one is maximized.
+- Restoring the active window (maximize unset) left it tiled; it was maximized
+  again only after focus moved to the other window and back.
+- Firefox Save As with GTK's remembered size forced to 1232×949: old config
+  placed it at x=-256, Cancel and Save off-screen; new config resized it to
+  726×996 (GTK's minimum width exceeds 720) at x=-3, both buttons visible.
+- `./scripts/check.sh`: new Lua-stub workflow test for activation, nil/desktop
+  windows, dialog fitting with keyboard reservation, rotation and Desktop mode.
+  It fails against the old config and passes now.
+
+Not tested: dialogs that grow after mapping, Phone 400×800, real rotation or
+fractional scale, hardware touch, Desktop mode (intentionally unchanged).

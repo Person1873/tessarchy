@@ -9,9 +9,10 @@
    on-screen keyboard with Foot and Firefox, touch focus and resize behavior.
    A physical keyboard is required until this is done. No keyboard is recommended
    purely because it works under another compositor.
-4. **Mobile policy:** continuous primary-window behavior, transient dialogs,
-   rotation, scale presets and actual touchscreen tests. Current rule only
-   maximizes on map; restore falls back to tiling.
+4. **Mobile policy, started:** apps re-maximize on activation and oversized
+   dialogs fit the usable area (QEMU-tested with Foot and Firefox's GTK file
+   chooser). Remaining: dialogs that resize after mapping, rotation and scale
+   presets on real outputs, and actual touchscreen tests.
 5. **Tablet/docked:** optional two-app split and conventional tiling profiles.
 6. **Hardware:** explicit x86_64 tablets first; selected ARM devices only with
    documented boot, graphics and input support.
