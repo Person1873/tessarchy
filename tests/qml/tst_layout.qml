@@ -107,4 +107,28 @@ TestCase {
         compare(Policy.panelWidth("phone", 320), 320);
         compare(Policy.columns("desktop", 760), 4);
     }
+    function test_audio_labels() {
+        compare(Policy.nodeLabel("Built-in Audio", "speakers", "alsa_output.pci"), "Built-in Audio");
+        compare(Policy.nodeLabel("", "speakers", "alsa_output.pci"), "speakers");
+        compare(Policy.nodeLabel("   ", "", "alsa_output.pci"), "alsa_output.pci");
+        compare(Policy.nodeLabel("", "", ""), "Unknown device");
+        compare(Policy.nodeLabel(undefined, null, undefined), "Unknown device");
+        compare(Policy.streamLabel("Firefox", "Playing", "node-1"), "Firefox");
+        compare(Policy.streamLabel("", "", "node-1"), "node-1");
+        compare(Policy.streamLabel(undefined, undefined, undefined), "Unknown app");
+    }
+    function test_playback_stream_filter() {
+        verify(Policy.playbackStream("Stream/Output/Audio"));
+        verify(!Policy.playbackStream("Stream/Input/Audio"));
+        verify(Policy.playbackStream(undefined));
+        verify(Policy.playbackStream(""));
+    }
+    function test_volume_percent_clamps() {
+        compare(Policy.volumePercent(0.456), 46);
+        compare(Policy.volumePercent(0), 0);
+        compare(Policy.volumePercent(1), 100);
+        compare(Policy.volumePercent(-0.5), 0);
+        compare(Policy.volumePercent(2), 100);
+        compare(Policy.volumePercent(undefined), 0);
+    }
 }
