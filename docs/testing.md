@@ -258,6 +258,21 @@ multiple physical outputs, exhaustive fractional scaling, and ISO builds/boots
 remain pending. Auto detection classifies logical display size; it does not
 identify physical device type or available input hardware. No secure lock claim.
 
+## Portable checks and a source-checks workflow, 2026-10-17
+
+Actually performed:
+
+- `scripts/check.sh` no longer assumes Arch paths: it accepts `python` or
+  `python3`, `luac` or `luac5.4`, and discovers Qt tools and the QML import
+  root under both `/usr/lib/qt6` and multiarch libdirs. `qmllint` now runs
+  whenever it is installed instead of additionally requiring Quickshell.
+- On this Ubuntu ARM host the full pass now executes: ten workflow tests, the
+  seventeen-result Qt Quick Test run, `luac -p`, `qmllint` (warnings only) and
+  `shellcheck`; only the Hyprland parser check skips.
+- Added `.github/workflows/checks.yml` running the same script on
+  ubuntu-24.04 with python3, lua5.4, fish, shellcheck and the Qt QML modules.
+- Not performed: observing the new workflow run on GitHub, and the pre-existing
+  `qs`-gated behavior change on a host with Quickshell installed.
 ## Live rootfs hardening, 2026-10-17
 
 Actually performed:
@@ -539,3 +554,14 @@ available static checks. Scratch staging assertions verify the emitted files
 and service link. Fish and ShellCheck are unavailable locally. No dependencies
 were installed. Live locale generation, fish autologin and journal operation
 remain planned boot checks; the published Alpha 2 image is unchanged.
+
+## PR 6 integration review — 2026-10-17
+
+Actual validation: retained fish syntax and desktop-entry checks while adding
+Python/Lua/Qt discovery for Arch and Debian layouts. Local source checks passed
+26 Python tests, 21 Qt Quick results, Lua/Hyprland verification and QML lint.
+Full shell lint explicitly requires Quickshell metadata; missing imports are
+not counted as successful API validation. The workflow adds an Ubuntu portable
+job and an Arch target-toolchain job running as a non-root user in a disposable
+container. No host or guest dependencies were installed. CI results must be
+checked separately; fish and ShellCheck are unavailable on the host.
