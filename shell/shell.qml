@@ -48,6 +48,34 @@ ShellRoot {
             readonly property int navHeight: isPhone ? 72 : 80
             readonly property int launcherRows: Math.ceil(4 / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
             readonly property string modeLabel: (shellPreferences.layoutMode === "auto" ? "Auto · " : "") + Policy.title(mode)
+            readonly property bool showWorkspaces: Policy.showWorkspaces(mode, modelData.width)
+            readonly property var workspaceIds: {
+                const ids = [];
+                const workspaces = Hyprland.workspaces.values;
+                for (let i = 0; i < workspaces.length; i++) ids.push(workspaces[i].id);
+                return ids;
+            }
+            readonly property int workspaceCount: Policy.workspaceSlots(workspaceIds)
+
+            // Hyprland.workspaces only holds existing workspaces; numbered slots
+            // may refer to one that has not been created yet.
+            function workspaceFor(id) {
+                const workspaces = Hyprland.workspaces.values;
+                for (let i = 0; i < workspaces.length; i++) {
+                    if (workspaces[i].id === id) return workspaces[i];
+                }
+                return null;
+            }
+            function switchWorkspace(id) {
+                const workspace = workspaceFor(id);
+                if (workspace) {
+                    // activate() handles both classic and Lua dispatch modes.
+                    workspace.activate();
+                    return;
+                }
+                if (Hyprland.usingLua) Hyprland.dispatch("hl.dsp.focus({ workspace = " + id + " })");
+                else Hyprland.dispatch("workspace " + id);
+            }
             SystemClock {
                 id: clock
                 precision: SystemClock.Minutes
@@ -441,8 +469,47 @@ ShellRoot {
                             bold: true
                         }
                     }
+                    // Desktop-grade workspace switching; the strip stays hidden
+                    // where the status bar has no room for it.
+                    RowLayout {
+                        visible: surface.showWorkspaces
+                        spacing: 4
+                        Repeater {
+                            model: surface.workspaceCount
+                            delegate: TouchButton {
+                                id: workspaceButton
+                                required property int index
+                                readonly property int workspaceId: index + 1
+                                readonly property var workspace: surface.workspaceFor(workspaceId)
+                                text: String(workspaceId)
+                                selected: workspace ? (workspace.focused || workspace.active) : false
+                                implicitWidth: 48
+                                implicitHeight: 48
+                                Layout.minimumWidth: 48
+                                Layout.minimumHeight: 48
+                                Layout.preferredWidth: 48
+                                padding: 0
+                                accentColor: root.accentColor
+                                Accessible.name: "Workspace " + workspaceId + (selected ? " active" : " inactive")
+                                Accessible.role: Accessible.Button
+                                onClicked: surface.switchWorkspace(workspaceId)
+                            }
+                        }
+                    }
                     Item {
                         Layout.fillWidth: true
+                    }
+                    // Focused window title; only meaningful in the desktop layout.
+                    Text {
+                        visible: surface.mode === "desktop" && text.length > 0
+                        text: Hyprland.activeToplevel ? (Hyprland.activeToplevel.title || "") : ""
+                        color: "#d0dced"
+                        font.pixelSize: 13
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: 360
+                        Layout.leftMargin: 8
+                        Accessible.name: text.length > 0 ? "Focused window " + text : ""
                     }
                     TouchButton {
                         visible: surface.modelData.width >= 650

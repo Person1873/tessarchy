@@ -32,6 +32,9 @@ live image is in development.
   controls. Wireless and modem backends remain to be connected.
 - An expandable launcher for Firefox and Foot.
 - A scrollable window overview with application switching and maximize/restore.
+- A Desktop layout mode with a workspace strip, focused-window title, ordinary
+  tiling for new apps, and keyboard shortcuts for workspaces, focus, moving,
+  closing, dragging and resizing windows.
 - Confirmation before closing a window or ending the session.
 - A dedicated Hyprland session, user installation, and reversible tty1 startup.
 - A QEMU development workflow, local Arch package recipes, and an initial

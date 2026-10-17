@@ -237,3 +237,29 @@ Settings captures. Hardware touch, real Wi-Fi/modem/audio/battery integration,
 multiple physical outputs, exhaustive fractional scaling, and ISO builds/boots
 remain pending. Auto detection classifies logical display size; it does not
 identify physical device type or available input hardware. No secure lock claim.
+
+## Desktop mode workspace strip and keybindings, 2026-10-17
+
+Implemented, static validation only; GUI and guest acceptance pending.
+
+- `LayoutPolicy.js` gains `showWorkspaces(mode, width)` and
+  `workspaceSlots(ids)`; `tests/qml/tst_layout.qml` covers placement at
+  desktop/tablet/phone widths and slot extension beyond five workspaces.
+- The status bar renders numbered workspace buttons from
+  `Hyprland.workspaces`, highlights the focused/active workspace, and falls
+  back to a numeric-only `hl.dsp.focus` dispatch for not-yet-created
+  workspaces. Existing workspaces use `HyprlandWorkspace.activate()`.
+- Desktop shows the focused window title beside the tray (display-only text).
+- `session/hyprland.lua` adds fixed desktop bindings: Super+1-5,
+  Super+Shift+1-5, Super+Q, Super+Tab, directional focus and window move,
+  Super+drag/resize, and XF86Audio volume keys.
+- Performed on the development host (Ubuntu ARM, no Wayland session):
+  `luac -p` accepts the Lua config; `qmllint` (Qt 6.10) exits 0 for edited QML
+  with only unresolved-module warnings; the Qt Quick Test suite was run
+  directly against the multiarch Qt install and reports 17 passed, including
+  the new `test_workspace_slots` and `test_workspace_strip_placements`.
+  `scripts/check.sh` passes ten workflow tests with the documented skips
+  (Hyprland and Quickshell absent).
+- Not performed here: `Hyprland --verify-config`, Quickshell rendering,
+  workspace strip taps, keybinding behavior, multi-output focus, or reduced
+  width clipping. These require the Arch guest and remain on the manual list.

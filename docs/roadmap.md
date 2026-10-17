@@ -12,7 +12,10 @@
 4. **Mobile policy:** continuous primary-window behavior, transient dialogs,
    rotation, scale presets and actual touchscreen tests. Current rule only
    maximizes on map; restore falls back to tiling.
-5. **Tablet/docked:** optional two-app split and conventional tiling profiles.
+5. **Tablet/docked, partly implemented:** Desktop mode now offers ordinary
+   tiling, a workspace strip, a focused-window title and keyboard window
+   management (responsive, but not yet user-tested). Optional two-app split
+   layouts and a docked profile remain to do.
 6. **Hardware:** explicit x86_64 tablets first; selected ARM devices only with
    documented boot, graphics and input support.
 

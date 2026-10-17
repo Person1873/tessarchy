@@ -23,3 +23,20 @@ function columns(mode, width) {
 function panelWidth(mode, width) {
     return mode === "phone" ? width : Math.min(Math.max(0, width - 24), mode === "desktop" ? 760 : 720);
 }
+
+// Desktop keeps numbered workspaces one tap away; landscape tablets only once
+// the status bar has room beside the clock, tray and battery indicators.
+function showWorkspaces(mode, width) {
+    if (mode === "desktop") return true;
+    return mode === "tablet" && width >= 900;
+}
+
+// Workspaces 1-5 always have a slot. Higher numbered workspaces extend the
+// strip. Named workspaces have negative ids and are not numbered slots.
+function workspaceSlots(ids) {
+    let slots = 5;
+    for (let i = 0; i < ids.length; i++) {
+        if (ids[i] > slots) slots = ids[i];
+    }
+    return slots;
+}

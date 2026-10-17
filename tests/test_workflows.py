@@ -145,15 +145,38 @@ class Workflows(unittest.TestCase):
             self.skipTest('Lua interpreter unavailable')
         folder = self.home / 'config/tessarchy'
         folder.mkdir(parents=True)
-        script = r'''local callbacks, actions = {}, {}
+        script = r'''local callbacks, actions, binds = {}, {}, {}
 hl = {
-    monitor = function() end, config = function() end, bind = function() end,
+    monitor = function() end, config = function() end,
+    bind = function(keys, dispatcher, flags) binds[keys] = { dispatcher = dispatcher, flags = flags } end,
     on = function(name, callback) callbacks[name] = callback end,
     dispatch = function(action) table.insert(actions, action) end,
-    dsp = { exec_cmd = function() end, exit = function() end,
-            window = { fullscreen = function(action) return action end } }
+    dsp = { exec_cmd = function(command) return { exec = command } end, exit = function() end,
+            focus = function(target) return target end,
+            window = { fullscreen = function(action) return action end,
+                       close = function() return {} end,
+                       cycle_next = function() return {} end,
+                       move = function(target) return target end,
+                       drag = function() return {} end,
+                       resize = function() return {} end } }
 }
 dofile(arg[1])
+-- Desktop bindings stay present and are built from fixed keys and dispatchers.
+for i = 1, 5 do
+    assert(binds["SUPER + " .. i], "missing workspace bind " .. i)
+    assert(binds["SUPER + " .. i].dispatcher.workspace == i, "workspace bind targets wrong workspace")
+    assert(binds["SUPER + SHIFT + " .. i], "missing move-to-workspace bind " .. i)
+    assert(binds["SUPER + SHIFT + " .. i].dispatcher.workspace == i, "move bind targets wrong workspace")
+end
+for _, name in ipairs({ "SUPER + Q", "SUPER + Tab", "SUPER + left", "SUPER + right",
+    "SUPER + up", "SUPER + down", "SUPER + SHIFT + left", "SUPER + SHIFT + right",
+    "SUPER + SHIFT + up", "SUPER + SHIFT + down" }) do
+    assert(binds[name], "missing desktop bind: " .. name)
+end
+assert(binds["SUPER + mouse:272"].flags.mouse == true, "drag bind must be a mouse bind")
+assert(binds["SUPER + mouse:273"].flags.mouse == true, "resize bind must be a mouse bind")
+assert(binds["XF86AudioMute"].flags.locked == true and binds["XF86AudioMute"].flags.repeating == true,
+    "volume keys must work on the lock screen and repeat")
 local function check(mode, width, height, scale, transform, floating, fullscreen, expected)
     local f = assert(io.open(os.getenv("XDG_CONFIG_HOME") .. "/tessarchy/shell.ini", "w"))
     f:write("[Other]\nlayoutMode=desktop\n[Shell]\nlayoutMode=" .. mode .. "\n")
