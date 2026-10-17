@@ -54,6 +54,7 @@ for launcher in "${launchers[@]}"; do
         }
     fi
 done
+
 for launcher in "${launchers[@]}"; do rm -f -- "$HOME/.local/bin/$launcher"; done
 # Remove only files recorded by this installation.
 if [[ $version != tessarchy-dev-v1 ]]; then

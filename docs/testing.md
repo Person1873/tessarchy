@@ -1665,3 +1665,32 @@ made about app-owned title bar theming. It remained dark after changing theme
 because it was opened directly (not through the themed Foot launcher).
 Guest lacks tessera-brightness/nightlight and UPower; those warnings were
 already present and do not block rendering. Physical hardware not checked.
+
+## Touch file dialogs, 2026-10-17
+
+Executed by an agent (Hermes, for person1873) in the QEMU VM, Phone size
+(720x1440 at scale 1.8 = 400x800 logical), Firefox 158 launched with
+`tessarchy-run`, xdg-desktop-portal 1.22.1, xdg-desktop-portal-gtk 1.15.3.
+
+Mechanism (adapted from omalauncher's portal and GTK3 module, MIT):
+`libtessarchy-filechooser.so` (GTK_MODULES) sends plain GtkFileChooserDialogs
+through the file chooser portal; `tessarchy-portals.conf` routes FileChooser to
+`tessarchy-portal`, which asks the shell (`tessera-shell ipc call picker pick`).
+In Desktop mode the shell answers `desktop` and the request goes to
+xdg-desktop-portal-gtk unchanged.
+
+Validated:
+- Ctrl+S in Firefox: the Tessera picker opened with Firefox's suggested name
+  (Untitled.html) and folder (~/Downloads); no GTK dialog appeared. Save wrote
+  ~/Downloads/Untitled.html.
+- Cancel: the picker closed, Firefox kept no dialog, nothing was written.
+- Ctrl+O: the picker listed Untitled.html; tapping it opened
+  file:///home/arch/Downloads/Untitled.html. The keyboard is hidden for
+  Open/folder pickers, since only Save types.
+- layoutMode=desktop: Ctrl+S gave GTK's own floating Save As (746x394).
+- `tests/test_workflows.py`: the real portal over a private D-Bus with a stub
+  shell (pick, cancel, Desktop fallback, filter globs, FIFO cleanup).
+
+Not checked: multiple-file selection, folder mode from a real app, wxWidgets
+apps, GTK4/libadwaita apps (portal-aware, so expected to work, not run),
+hardware.

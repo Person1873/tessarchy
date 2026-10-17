@@ -9,6 +9,7 @@ BrightnessControl BrightnessControl.qml
 CellularSettings CellularSettings.qml
 CommunicationBackend CommunicationBackend.qml
 ContactAvatar ContactAvatar.qml
+FilePicker FilePicker.qml
 GlassCombo GlassCombo.qml
 GlassField GlassField.qml
 Icon Icon.qml
