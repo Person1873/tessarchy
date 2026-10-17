@@ -25,3 +25,5 @@ noto-fonts-emoji
 dbus
 python
 util-linux
+grim
+libnotify

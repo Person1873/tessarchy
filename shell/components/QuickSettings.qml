@@ -17,6 +17,7 @@ ColumnLayout {
     property bool audioExpanded: false
     property var audioSink: null
     readonly property bool audioAvailable: !!(audioSink && audioSink.ready && audioSink.audio)
+    signal screenshotRequested
     signal settingsRequested
     signal dismissed
     spacing: 14
@@ -155,6 +156,15 @@ ColumnLayout {
         visible: active
         source: "AudioPanel.qml"
         onLoaded: item.accentColor = Qt.binding(() => sheet.accentColor)
+    }
+    NavButton {
+        text: "Screenshot"
+        symbol: "camera"
+        showLabel: false
+        focusPolicy: Qt.TabFocus
+        Layout.fillWidth: true
+        accentColor: sheet.accentColor
+        onClicked: sheet.screenshotRequested()
     }
     MediaPanel {
         player: sheet.mediaPlayer

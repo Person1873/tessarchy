@@ -199,3 +199,9 @@ use `SKIP` checksums; release packaging and version pinning are future work.
 - `docs/`: architecture, VM, ISO, roadmap and manual test checklist.
 
 See [testing status](docs/testing.md) for what was actually checked.
+
+Development screenshot controls: press Print or use the camera icon in the
+pull-down. Captures are saved as unique private PNGs in
+`${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots`. This requires grim; desktop
+notifications are optional. These development changes are not part of the
+already-published Alpha 2 image.

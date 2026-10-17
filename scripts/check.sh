@@ -4,7 +4,7 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$root"
 scratch=$(mktemp -d)
 trap 'rm -rf -- "$scratch"' EXIT
-for script in scripts/*.sh session/start-tessarchy session/tessera-shell session/tessarchy-osk packaging/*/PKGBUILD; do bash -n "$script"; done
+for script in scripts/*.sh session/start-tessarchy session/tessera-shell session/tessarchy-osk session/tessera-screenshot packaging/*/PKGBUILD; do bash -n "$script"; done
 # Arch ships only python; Debian/Ubuntu split out python3. Accept either.
 py=$(command -v python || command -v python3 || true)
 [[ -n "$py" ]] || { echo "FAIL: neither python nor python3 is installed" >&2; exit 1; }
@@ -47,6 +47,6 @@ if [[ -n "$lint" ]] && command -v qs >/dev/null; then
     fi
 else echo "SKIP: complete QML lint requires qmllint and Quickshell type metadata"; fi
 if command -v shellcheck >/dev/null; then
-    shellcheck scripts/*.sh session/start-tessarchy session/tessera-shell session/tessarchy-osk
+    shellcheck scripts/*.sh session/start-tessarchy session/tessera-shell session/tessarchy-osk session/tessera-screenshot
 else echo "SKIP: shellcheck unavailable"; fi
 echo "Available static/integration checks passed; GUI and ISO boot tests remain manual."
