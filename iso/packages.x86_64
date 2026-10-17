@@ -20,3 +20,5 @@ pipewire-pulse
 wireplumber
 ttf-dejavu
 dbus
+python
+util-linux

@@ -9,7 +9,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SHOTS = ("phone-home", "phone-launcher", "phone-switcher", "phone-settings",
-         "tablet-home", "desktop-home")
+         "tablet-home", "desktop-home", "phone-controls")
 
 
 def main():
