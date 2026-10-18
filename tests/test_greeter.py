@@ -1,6 +1,7 @@
 """Isolated greetd protocol tests; synthetic credentials, no real PAM or users."""
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import socket
@@ -12,7 +13,18 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def credential_logs(text):
+    # Quickshell hashes the config path; a random hash can contain the synthetic PIN.
+    return re.sub(r'(?m)^\s*INFO: Shell ID: "[0-9a-f]{32}" Path ID "[0-9a-f]{32}"\n?', '', text)
+
+
 class PhoneGreeter(unittest.TestCase):
+    def test_generated_identity_is_ignored_but_plaintext_credentials_are_not(self):
+        identity = '0' * 14 + '0123' + 'a' * 14
+        log = f'  INFO: Shell ID: "{identity}" Path ID "{identity}"\n'
+        self.assertNotIn('0123', credential_logs(log))
+        self.assertIn('0123', credential_logs(log + 'DEBUG: {"response":"0123"}'))
+
     def exchange(self, scenario):
         quickshell = shutil.which('qs')
         if not quickshell:
@@ -111,7 +123,7 @@ ShellRoot {
                             send({'type': 'success'})
                         output, errors = process.communicate(timeout=8)
                         self.assertEqual(process.returncode, 0, output + errors)
-                        self.assertNotIn('0123', output + errors)
+                        self.assertNotIn('0123', credential_logs(output + errors))
                         self.assertNotIn('LOGIN_TEST_FAILED', output + errors)
                         if scenario == 'failure':
                             self.assertIn('LOGIN_REJECTION_MESSAGE_OK', output + errors)
