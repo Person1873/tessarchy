@@ -2,7 +2,10 @@
 -- This is loaded explicitly, never over the user's Hyprland config.
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
 hl.config({
-    general = { gaps_in = 0, gaps_out = 0, border_size = 0, layout = "dwindle" },
+    general = { gaps_in = 0, gaps_out = 0, border_size = 0, layout = "dwindle",
+                -- Let windows be resized by dragging an edge or corner, with a
+                -- finger-sized grab area (borders are invisible in this theme).
+                resize_on_border = true, extend_border_grab_area = 24 },
     decoration = { rounding = 18, blur = { enabled = true, size = 4, passes = 2 }, shadow = { enabled = false } },
     animations = { enabled = false },
     input = { kb_layout = "us", follow_mouse = 0 },
