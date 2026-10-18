@@ -1219,3 +1219,26 @@ it. Hyprland reported no config errors. `./scripts/check.sh` passed 73 Python
 tests, 46 Qt Quick results, QML lint and both Hyprland config checks; fish and
 shellcheck were unavailable. Desktop/Tablet runtime checks remain pending;
 the published Alpha 3 ISO has not been rebuilt for this fix.
+
+## On-screen keyboard key height, 2026-10-18
+
+Stock squeekboard layouts size their panel from the output width, so the
+400x800 phone geometry produced key rows shorter than the 48 logical-pixel
+touch target (about 29 px per row at 400 px wide, four rows). `session/tessarchy-osk`
+now derives the portrait panel multiplier from the focused output's logical
+short side and writes `scale-in-vertical-screen-orientation` into the private
+keyfile, targeting a panel that keeps every key row at or above 48 px. The
+setting applies to portrait outputs; landscape panels are already tall enough.
+
+Actual measurement in the development VM, from Hyprland `layers` geometry and
+framebuffer row analysis of QMP captures:
+
+- 400x800 scale 1: multiplier 1.80, panel 225 px, four rows of 50, 50, 50, 51 px.
+- 360x800 scale 1: multiplier clamps to the 2.00 maximum, key rows 50 px.
+
+`./scripts/check.sh` covers the multiplier calculation with stubbed
+`hyprctl`/`gsettings` (400 px to 1.80, 800 px at scale 2 to 1.80, 300 px to the
+clamped 2.00). squeekboard caps the multiplier at 2.00, so outputs below about
+346 logical px wide cannot reach 48 px keys through this setting and need a
+custom layout; that limit is a documented remaining gap. Hardware touch
+acceptance remains pending.
