@@ -33,13 +33,14 @@ jobs:
     container: archlinux:base-devel
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
       - name: Install target toolchain in the disposable CI container
         run: |
           pacman -Syu --noconfirm --needed git python lua fish shellcheck ffmpeg \
             qt6-declarative quickshell hyprland desktop-file-utils ttf-dejavu
           useradd --create-home checker
-          chown -R checker:checker "$GITHUB_WORKSPACE"
+      - uses: actions/checkout@v4
+      - name: Give the build user ownership of the checkout
+        run: chown -R checker:checker "$GITHUB_WORKSPACE"
       - name: Check as a non-root development user
         run: runuser -u checker -- ./scripts/check.sh
       - name: Build tablet install packages without installing them
