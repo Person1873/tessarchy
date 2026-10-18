@@ -1620,8 +1620,10 @@ physical display remains pending.
 
 - The taskbar background now fills its 64px reserved area, centering the 48px
   Start button vertically. Tray controls use consistent 18px glyphs inside 48px
-  targets; volume/settings images keep their intrinsic size instead of stretching
-  to fill a button. The settings stroke matches the other system glyphs.
+  targets. A shared TrayButton tints interactive and third-party icons to the
+  same pale mint; NetworkManager uses an outlined monitor glyph. System glyphs
+  share a 1.8px stroke and consistent spacing. Disconnected radios retain their
+  slash and accessible state label without fading the desktop glyph.
 - Start apps render as an icon and plain-text label over the menu's glass, with
   no blue tile or icon backing. Tab focus has an outline; pointer opening leaves
   the app grid unboxed. Escape and outside input dismiss Start, and changing

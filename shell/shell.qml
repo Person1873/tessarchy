@@ -601,6 +601,7 @@ ShellRoot {
                             Layout.fillWidth: false
                             Layout.preferredWidth: 48
                             text: "Windows"; symbol: "recents"; showLabel: false
+                            iconSize: 18
                             accentColor: root.accentColor
                             selected: panel.page === "windows"
                             onClicked: panel.showPage("windows")
@@ -609,6 +610,7 @@ ShellRoot {
                             Layout.fillWidth: false
                             Layout.preferredWidth: 48
                             text: "Settings"; symbol: "settings"; showLabel: false
+                            iconSize: 18
                             accentColor: root.accentColor
                             selected: panel.page === "settings"
                             onClicked: panel.showPage("settings")
@@ -668,24 +670,13 @@ ShellRoot {
                                 }
                                 Repeater {
                                     model: SystemTray.items
-                                    delegate: TouchButton {
+                                    delegate: TrayButton {
                                         id: taskTrayButton
                                         required property var modelData
-                                        Layout.minimumHeight: 48
-                                        Layout.minimumWidth: 48
-                                        implicitHeight: 48
-                                        implicitWidth: 48
-                                        Layout.preferredWidth: 48
-                                        text: ""
-                                        background: Rectangle { color: "transparent" }
+                                        accentColor: root.accentColor
+                                        icon.source: /nm-applet|networkmanager|network manager/i.test(modelData.id + " " + modelData.title)
+                                            ? "icons/network-wired.svg" : modelData.icon
                                         Accessible.name: modelData.title || "Tray item"
-                                        contentItem: Image {
-                                            source: taskTrayButton.modelData.icon
-                                            sourceSize.width: 18
-                                            sourceSize.height: 18
-                                            opacity: 0.8
-                                            fillMode: Image.Pad
-                                        }
                                         onClicked: {
                                             if (modelData.hasMenu)
                                                 modelData.display(taskTrayButton.QsWindow.window, 0, 48);
