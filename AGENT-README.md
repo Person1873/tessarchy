@@ -178,6 +178,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T63 | Done | Codex | feat/desktop-taskbar | Desktop mode uses a full-width taskbar with window tasks; the app tray left the status strip |
 | T64 | Done | Codex | feat/xp-glass-taskbar | Windows-XP-style glass taskbar: Start pill, bevelled task buttons and a sunken tray |
 | T65 | Done | Codex | feat/start-menu-windowed-desktop | XP-style Start menu opens above the Start button and toggles shut; Desktop windows open windowed by default with a Settings toggle for tiling |
+| T66 | Done | Codex | fix/repository-audit | Fractional OSK scales, source-independent dev uninstall and bounded Tessy payloads; 97 Python / 49 Qt checks |
 | T59 | Done | Codex / contributor | PR #28 | Offline BIOS/UEFI live boots passed; contributor history preserved |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |
 

@@ -59,6 +59,26 @@ class Tessy(unittest.TestCase):
         self.assertIsNone(tessy.build_message("watch", {}, SERVER, REPO))
         self.assertEqual(tessy.short("abcdef1234"), "abcdef1")
 
+    def test_long_push_and_pr_announcements_fit_discord_embed_limits(self):
+        event = {'ref': 'refs/heads/' + 'branch' * 50,
+                 'commits': [{'id': 'a' * 40, 'message': 'x' * 6000, 'url': SERVER}] * 8,
+                 'pusher': {'name': 'pusher' * 400}}
+        push = tessy.build_message('push', event, SERVER, REPO)['embeds'][0]
+        pr = tessy.build_message('pull_request', {'action': 'opened', 'pull_request':
+                                 {'number': 123, 'title': 't' * 256}}, SERVER, REPO)['embeds'][0]
+        for embed in (push, pr):
+            self.assertLessEqual(len(embed['title']), 256)
+            self.assertLessEqual(len(embed.get('description', '')), 4096)
+            self.assertLessEqual(len(embed['footer']['text']), 2048)
+            self.assertLessEqual(sum(len(value) for value in
+                (embed['title'], embed.get('description', ''), embed['footer']['text'])), 6000)
+        self.assertIn('and 3 more commit(s)', push['description'])
+
+    def test_empty_commit_message_has_a_usable_fallback(self):
+        event = {'commits': [{'id': 'a' * 40, 'message': '', 'url': SERVER}]}
+        payload = tessy.build_message('push', event, SERVER, REPO)
+        self.assertIn('No commit message', payload['embeds'][0]['description'])
+
     def test_bot_transport_is_preferred_and_drops_the_username(self):
         url, headers, transform = tessy.transport({"DISCORD_BOT_TOKEN": "t0ken",
                                                    "DISCORD_CHANNEL_ID": "123",

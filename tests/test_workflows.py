@@ -187,7 +187,9 @@ class Workflows(unittest.TestCase):
         fake_osk = ('squeekboard', 'exit 0\n')
         # width, height, monitor scale, expected portrait panel multiplier.
         cases = (('400', '800', '1', '1.80'), ('800', '1600', '2', '1.80'),
-                 ('300', '600', '1', '2.00'))
+                 ('300', '600', '1', '2.00'),
+                 ('600', '1200', '1.5', '1.80'), ('600', '1200', '1.50', '1.80'),
+                 ('500', '1000', '1.25', '1.80'))
         for width, height, scale, expected in cases:
             hypr = ('hyprctl', f'echo \'[{{"width":{width},"height":{height},"scale":{scale}}}]\'\n')
             gsettings = ('gsettings', f'echo "$*" >> {log}\n')
@@ -300,6 +302,35 @@ assert(#commands == 4, "unexpected extra autostart commands")
         self.run_script('uninstall-dev.sh', expected=1)
         self.assertEqual(launcher.read_text(), 'modified')
         self.assertTrue((self.home / 'data/tessarchy/.tessarchy-dev-install').exists())
+
+    def test_uninstall_after_source_update_uses_installed_launcher_versions(self):
+        import shutil
+        self.run_script('install-dev.sh')
+        updated = self.home / 'updated-source'
+        (updated / 'scripts').mkdir(parents=True)
+        (updated / 'session').mkdir()
+        shutil.copy2(ROOT / 'scripts/uninstall-dev.sh', updated / 'scripts')
+        (updated / 'session/start-tessarchy').write_text('#!/bin/bash\necho newer version\n')
+        result = subprocess.run([str(updated / 'scripts/uninstall-dev.sh')], env=self.env,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse((self.home / '.local/bin/start-tessarchy').exists())
+        self.assertFalse((self.home / 'data/tessarchy').exists())
+
+    def test_uninstall_missing_launcher_snapshot_preserves_installation(self):
+        self.run_script('install-dev.sh')
+        data = self.home / 'data/tessarchy'
+        (data / '.tessarchy-dev-launchers/start-tessarchy').unlink()
+        self.run_script('uninstall-dev.sh', expected=1)
+        self.assertTrue((self.home / '.local/bin/start-tessarchy').exists())
+        self.assertTrue((data / 'shell/shell.qml').exists())
+
+    def test_uninstall_legacy_v2_install_still_works(self):
+        self.run_script('install-dev.sh')
+        data = self.home / 'data/tessarchy'
+        (data / '.tessarchy-dev-install').write_text('tessarchy-dev-v2\n')
+        self.run_script('uninstall-dev.sh')
+        self.assertFalse(data.exists())
 
     def test_uninstall_requires_marker_and_preserves_extra_files(self):
         self.run_script('uninstall-dev.sh', expected=1)

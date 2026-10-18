@@ -1534,3 +1534,34 @@ its pixels were not reconstructed. Updated the tablet image and application
 script cache versions so returning visitors receive the corrected asset.
 Visually inspected the replacement, built the site, and verified that both the
 published asset and screenshot ZIP contain the replacement bytes.
+
+## Repository audit — 2026-10-18
+
+Reviewed session helpers, development install/uninstall, package and bundle
+scripts, local communications storage and Tessy event formatting in an isolated
+worktree. Confirmed regressions before changing their implementations:
+
+- At 600×1200 with scale `1.5`, the OSK helper emitted `1.26` rather than the
+  `1.80` multiplier used for the same geometry at `1.50`. Decimal fractions are
+  now padded before conversion; coverage includes integer, one- and two-digit
+  monitor scales.
+- An unchanged development installation could not be removed from an updated
+  source checkout because the uninstaller compared installed launchers against
+  the newer source. New v3 installs retain original launcher bytes and derive
+  their owned launcher list from the install manifest. Changed launchers, unsafe
+  manifests and missing originals still stop removal before any files are
+  deleted. v1/v2 uninstall compatibility is retained; those older installations
+  still use source comparisons because they have no recorded originals.
+- Tessy could crash on an empty commit message and exceed Discord's embed
+  limits on long summaries or PR titles. Summaries now have a fallback and are
+  shortened; payload construction enforces per-field and total limits from the
+  [Discord message specification](https://docs.discord.com/developers/resources/message#embed-limits).
+  Formatting tests use synthetic events and make no network requests.
+
+Actual validation: `./scripts/check.sh` passes 97 Python tests and 49 Qt Quick
+results, plus available QML and Hyprland checks. Fish and ShellCheck are absent
+locally and are checked in CI. Coverage includes uninstall from a different
+source tree, rejection of edited/missing launcher originals, legacy uninstall
+and long/empty event messages. No host settings, development
+installation or running VM were modified. Fractional-scale acceptance on a
+physical display remains pending.

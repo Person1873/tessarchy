@@ -11,13 +11,14 @@ for path in "$data" "$bin/start-tessarchy" "$bin/tessera-shell" "$bin/tessarchy-
         echo "Refusing existing path: $path (uninstall this dev copy first)" >&2; exit 1
     fi
 done
-mkdir -p -- "$data/session" "$bin"
+mkdir -p -- "$data/session" "$data/.tessarchy-dev-launchers" "$bin"
 cp -R -- "$root/shell" "$data/"
 find "$data/shell" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
 find "$data/shell" -depth -type d -name __pycache__ -empty -delete
 cp -- "$root/session/hyprland.lua" "$root/session/hypridle.conf" "$data/session/"
-cp -- "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessarchy-session-services" "$root/session/tessera-brightness" "$root/session/tessera-nightlight" "$root/session/tessera-rotate" "$bin/"
-printf '%s\n' 'tessarchy-dev-v2' > "$marker"
+cp -- "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessarchy-session-services" "$root/session/tessera-brightness" "$root/session/tessera-nightlight" "$root/session/tessera-rotate" "$data/.tessarchy-dev-launchers/"
+cp -- "$data/.tessarchy-dev-launchers/"* "$bin/"
+printf '%s\n' 'tessarchy-dev-v3' > "$marker"
 # Record installed data files relative to the private data directory.
 manifest=$data/.tessarchy-dev-files
 {
