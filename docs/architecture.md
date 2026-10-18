@@ -12,8 +12,9 @@ rendered in the same glass: a raised accent Start pill with the project mark,
 quick-launch buttons, wide bevelled task buttons (the focused window reads as
 pressed), and a sunken tray holding the application indicators and the clock. It
 stays full width while a page is open so the page reads as a centered sheet. The
-Start pill toggles a Windows-XP-style Start menu: a blue-tinted glass panel with a
-compact app grid that opens above the button on the primary output. Desktop
+Start pill toggles a Windows-XP-style Start menu: a blue-tinted panel with a
+compact app grid that sits flush on the taskbar's top edge and is frosted by the
+same compositor blur rule as the bar and status strip. Desktop
 ordinary windows open floating at a conventional size and centred ("windowed"), or
 join the dwindle tile layout ("tiled"), per the Desktop setting in Settings; the
 Hyprland config reads the same value. Launcher
