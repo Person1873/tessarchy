@@ -1436,6 +1436,27 @@ desktop mode (Dr...", "arch@archlinux:~"), spacer, then the sunken tray with the
 tray icon and the clock. `./scripts/check.sh` passes 86 Python tests and 49 Qt
 Quick results. Physical touch acceptance remains pending.
 
+## Desktop taskbar tray, 2026-10-18
+
+Owner asked for the top-bar status icons to move to the bottom-right of the
+taskbar in Desktop mode, as Windows does.
+
+The right-hand indicator cluster (bell, cellular, Wi-Fi, battery, volume,
+settings) is now a shared `StatusIndicators.qml` component. The mobile status
+strip keeps it along the top edge (`visible: surface.mode !== "desktop"`); the
+desktop taskbar renders it `compact` inside the sunken tray, before the
+application tray icons and the clock. The bell's unread count is a small badge
+instead of a label so it fits the tray. Layout still follows the old width
+breakpoints (battery text at 380 px, volume at 700 px, settings at 560 px).
+
+Actual VM checks:
+
+- 1200x800 Desktop: the status strip's right side is empty; the taskbar tray
+  reads bell, cellular, Wi-Fi, battery, volume, settings, tray icon, clock.
+- 400x800 Phone: the status strip keeps its icons and the floating dock is
+  unchanged.
+- `./scripts/check.sh` passes 92 Python tests and 49 Qt Quick results.
+
 ## Desktop window resize, 2026-10-18
 
 Owner report: ordinary windows in Desktop mode could not be resized.
