@@ -177,5 +177,27 @@ TestCase {
         compare(Policy.duration(3600), "1h 00m");
         compare(Policy.duration(3660), "1h 01m");
         compare(Policy.duration(7325), "2h 02m");
+}
+
+    function test_notification_placements() {
+        const phone = Policy.notificationPlacement("phone", 400);
+        verify(phone.fullWidth);
+        verify(phone.maxWidth > 0 && phone.maxWidth <= 400);
+        verify(phone.topOffset > 48);
+        const narrowPhone = Policy.notificationPlacement("phone", 280);
+        verify(narrowPhone.maxWidth <= 280);
+        const tablet = Policy.notificationPlacement("tablet", 800);
+        verify(!tablet.fullWidth);
+        verify(tablet.maxWidth > 0 && tablet.maxWidth <= 800);
+        verify(tablet.topOffset > 48);
+        const desktop = Policy.notificationPlacement("desktop", 1280);
+        verify(!desktop.fullWidth);
+        compare(desktop.maxWidth, 420);
+        verify(desktop.topOffset > 48);
+    }
+    function test_notification_timeouts() {
+        compare(Policy.notificationTimeout(0), 4);
+        compare(Policy.notificationTimeout(1), 8);
+        compare(Policy.notificationTimeout(2), 0);
     }
 }

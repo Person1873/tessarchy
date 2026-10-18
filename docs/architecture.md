@@ -67,6 +67,28 @@ exposes an adapter: the pull-down panel toggles the radio, requests discovery on
 expanded and powered on, and connects or disconnects already-paired devices; pairing,
 forgetting and passkey agents are out of scope.
 
+## Notification delivery
+
+Tessera registers Quickshell's `NotificationServer`, which claims
+`org.freedesktop.Notifications` on the session bus, so ordinary D-Bus
+notifications reach the shell without any extra daemon. Every delivered
+notification is marked tracked, which is the history model the alert center
+lists; `dismiss()` removes an item from both pop-ups and history, and an
+application withdrawing a notification does the same. The server advertises
+only what the card renders: a plain-text body. Markup, hyperlinks, inline
+images, actions and persistence are explicitly disabled rather than advertised
+and ignored. Notification text is untrusted input and is only ever displayed
+as plain text; no body content reaches IPC, a command line or a filename.
+
+Pop-ups are views over at most the three newest tracked items and render once,
+on the first screen. Phones show full-width cards below the status bar;
+tablet/desktop right-align a column of at most 360/420 logical pixels. Tapping
+a pop-up hides it but keeps it in the center; the close button dismisses it
+everywhere. Low-urgency pop-ups leave after 4 seconds, normal after 8, and
+critical ones stay until acted on. The "pop-ups muted" preference persists in
+`shell.ini`; muted notifications still collect in the center. Nothing is
+persisted across sessions, and no notification history is written to disk.
+
 ## Verified against installed files, 2026-10-16
 
 - Hyprland 0.56.2: `/usr/share/hypr/hyprland.lua`,
@@ -86,6 +108,11 @@ forgetting and passkey agents are out of scope.
 - [Official archiso profile specification](https://github.com/archlinux/archiso/blob/master/docs/README.profile.rst)
   and [releng profile](https://github.com/archlinux/archiso/blob/master/configs/releng/profiledef.sh)
   inform the overlay; installed archiso supplies the actual bootloader files.
+- Quickshell 0.3.1 notification service source (`NotificationServer`,
+  `Notification`): `tracked` keeps an item in `trackedNotifications`, and
+  `dismiss()`/`expire()` remove it from the model via `deleteNotification`.
+  The capability properties are honored exactly; unsupported features are
+  advertised as false rather than silently dropped.
 
 Session authentication is provided by the separate greetd greeter; a Wayland
 session-lock implementation is tracked independently in the agent backlog.
