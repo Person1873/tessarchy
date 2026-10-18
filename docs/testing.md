@@ -1203,3 +1203,19 @@ nor user manager reported failed units. The VM was left running on the home scre
 This is installed-disk VM evidence. Physical touch hardware, radios, power and
 suspend acceptance remain pending. Stock OSK sizing still needs the separate
 keyboard sizing/accessibility work listed on the task board.
+
+## Mobile status tray fix, 2026-10-18
+
+The installed Alpha 3 VM at 400×800, scale 1, software graphics showed
+NetworkManager’s wired-network tray icon clipped into the phone status bar.
+The development shell now displays application tray indicators only in Desktop
+layout. Phone and Tablet retain their built-in status indicators; Connections
+remains in the app picker and the NetworkManager applet continues running.
+
+The updated development copy was loaded in the existing VM. Actual QMP captures
+confirmed the computer icon was gone and the clock, pull-down handle and status
+indicators remained visible. A touch tap opened the drawer and a second closed
+it. Hyprland reported no config errors. `./scripts/check.sh` passed 73 Python
+tests, 46 Qt Quick results, QML lint and both Hyprland config checks; fish and
+shellcheck were unavailable. Desktop/Tablet runtime checks remain pending;
+the published Alpha 3 ISO has not been rebuilt for this fix.
