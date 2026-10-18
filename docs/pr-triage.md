@@ -1,6 +1,13 @@
 # Pull request review — 2026-10-18
 
-## Update — easiest-PR pass complete
+## Update — window previews and display controls
+
+#16 is closed as superseded by the current card switcher. #19 is reconciled with
+current main: display controls live in the pull-down panel, brightness writes
+read back hardware state, and night light uses a transient user service instead
+of signalling a PID file. See docs/testing.md for validation and hardware gaps.
+
+## Earlier easiest-PR pass
 
 The three smallest genuine integrations are merged: **#21** idle blanking,
 **#22** display rotation and **#13** notification center. #16 window previews is
@@ -34,6 +41,6 @@ is preserved as a merge parent. A staging regression check asserts removal of
 the inherited time-wait link, and Alpha 3 reached Tessera in BIOS and UEFI with
 no network adapter.
 
-Eleven previously reviewed PRs remain open. Their branches and original commits
-are preserved, including the unfinished theme review in `build/integration`.
+Contributor branches and original commits are preserved, including the
+unfinished theme review in `build/integration`. Check GitHub for current status.
 Actual checks and device acceptance remain in [testing.md](testing.md).

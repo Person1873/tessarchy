@@ -1474,3 +1474,37 @@ Actual VM checks at 1200x800 Desktop (QMP captures, guest shell deployed from
   taskbar shows its task button. `./scripts/check.sh` passes 87 Python tests and
   49 Qt Quick results. Physical touch acceptance remains pending.
 
+## Display controls integration — 2026-10-18
+
+PR #16 was closed as superseded: AppSwitcher.qml already implements window
+captures within the current horizontal switcher. PR #19 adds brightness and night
+light to the current pull-down without replacing the shell or installer.
+
+Actual validation:
+
+- `./scripts/check.sh` passes: 91 Python tests and 49 Qt Quick results. QML
+  lint and Hyprland config verification pass; fish and ShellCheck are unavailable
+  locally and remain covered by CI.
+- Helper regression tests exercise brightness reads, writes, stepping, leading
+  zeros, zero brightness, exact backlight selection, failed writes and absent or
+  invalid hardware using a temporary sysfs fixture.
+- Night-light tests cover on/off/status, duplicate starts, missing backend/user
+  manager, start failure and invalid arguments. A stale PID file referencing a
+  live unrelated process is ignored; that process survives both off calls.
+- An offscreen Quickshell harness verifies persisted night-light application,
+  toggle readback, coalesced brightness changes and actual-level restoration
+  after a failed write. Installer round-trip and ISO staging checks include both
+  helpers and the image's backend packages.
+
+Physical backlight permissions, brightness keys on hardware, compositor color
+changes from hyprsunset, and a new ISO boot remain pending. The development guest
+has neither backend installed; no dependencies or host configuration were changed.
+
+## Website tablet screenshot repair — 2026-10-18
+
+Replaced the stretched tablet home screenshot with the intact 800×1280 VM
+capture preserved in commit `aec7ac8`. The replacement is an original screenshot;
+its pixels were not reconstructed. Updated the tablet image and application
+script cache versions so returning visitors receive the corrected asset.
+Visually inspected the replacement, built the site, and verified that both the
+published asset and screenshot ZIP contain the replacement bytes.

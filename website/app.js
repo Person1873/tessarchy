@@ -1,6 +1,6 @@
 const modes = {
   phone: {image: 'phone-home.png?v=20261018-touch', controls: 'phone-controls.png?v=20261018-touch', label: 'PHONE / 400 × 800', width: 400, height: 800},
-  tablet: {image: 'tablet-home.png?v=20261018-touch', controls: 'tablet-controls.png?v=20261018-touch', label: 'TABLET / 800 × 1280', width: 800, height: 1280},
+  tablet: {image: 'tablet-home.png?v=20261018-clean', controls: 'tablet-controls.png?v=20261018-touch', label: 'TABLET / 800 × 1280', width: 800, height: 1280},
   desktop: {image: 'desktop-home.png?v=20261018-touch', controls: 'desktop-controls.png?v=20261018-touch', label: 'DESKTOP / 1280 × 800', width: 1280, height: 800}
 };
 const tabs = [...document.querySelectorAll('[data-mode]')];

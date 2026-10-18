@@ -25,6 +25,7 @@ navigation.
 | Phone and messages | Dock apps, contacts/photos, ModemManager call/SMS backend and SIM/eSIM settings; [guide](docs/communications.md) |
 | Sounds | Five VoidRing tones, ringtone/message/alarm selection, previews and MP3 import |
 | Power | Battery status and supported power modes, with missing-service guards |
+| Display controls | Backlight slider and keys; persisted 4000 K night light when supported |
 | Audio and media | Optional PipeWire controls and MPRIS playback integration |
 | Keyboard and captures | Optional squeekboard; Print and pull-down screenshot actions |
 | Latest checks | 73 Python tests and 46 Qt Quick results; Ubuntu/Arch CI passed |

@@ -189,3 +189,17 @@ Tessarchy's generated display.lua with the currently applied mode, position and
 scale plus the new transform, reloads Hyprland and verifies the result. The
 previous file is restored when verification fails; user preferences.lua is
 never modified. Touch remapping after rotation remains a hardware check.
+
+## Display controls
+
+Quick controls probes the first backlight when opened, then coalesces brightness
+changes through `tessera-brightness`. The helper targets the same backlight for
+reads and writes, uses brightnessctl when available and falls back to writable
+sysfs. Hardware brightness keys use the same helper. Failed writes show an error
+and read back the actual level; devices without a backlight hide the control.
+
+`tessera-nightlight` starts hyprsunset at 4000 K in the transient user service
+`tessera-nightlight.service`. Systemd owns and stops its process; the helper does
+not trust PID files. The toggle persists its preference in shell.ini and reads
+back service state. Missing hyprsunset or an unavailable user manager hides it.
+The ISO includes both backends; the session package lists them as optional.

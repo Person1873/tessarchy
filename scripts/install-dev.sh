@@ -6,7 +6,7 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 data=${XDG_DATA_HOME:-$HOME/.local/share}/tessarchy
 bin=$HOME/.local/bin
 marker=$data/.tessarchy-dev-install
-for path in "$data" "$bin/start-tessarchy" "$bin/tessera-shell" "$bin/tessarchy-osk" "$bin/tessera-screenshot" "$bin/tessarchy-session-services" "$bin/tessera-rotate"; do
+for path in "$data" "$bin/start-tessarchy" "$bin/tessera-shell" "$bin/tessarchy-osk" "$bin/tessera-screenshot" "$bin/tessarchy-session-services" "$bin/tessera-brightness" "$bin/tessera-nightlight" "$bin/tessera-rotate"; do
     if [[ -e "$path" || -L "$path" ]]; then
         echo "Refusing existing path: $path (uninstall this dev copy first)" >&2; exit 1
     fi
@@ -16,7 +16,7 @@ cp -R -- "$root/shell" "$data/"
 find "$data/shell" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
 find "$data/shell" -depth -type d -name __pycache__ -empty -delete
 cp -- "$root/session/hyprland.lua" "$root/session/hypridle.conf" "$data/session/"
-cp -- "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessarchy-session-services" "$root/session/tessera-rotate" "$bin/"
+cp -- "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessarchy-session-services" "$root/session/tessera-brightness" "$root/session/tessera-nightlight" "$root/session/tessera-rotate" "$bin/"
 printf '%s\n' 'tessarchy-dev-v2' > "$marker"
 # Record installed data files relative to the private data directory.
 manifest=$data/.tessarchy-dev-files

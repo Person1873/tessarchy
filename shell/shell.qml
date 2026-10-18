@@ -63,6 +63,7 @@ ShellRoot {
         // "windowed" opens desktop windows floating and sized; "tiled" restores
         // the dwindle layout. Read by the Hyprland config on load.
         property string desktopWindows: "windowed"
+        property bool nightLight: false
     }
     RadioBackend { id: radioBackend }
     CommunicationBackend { id: communications }
