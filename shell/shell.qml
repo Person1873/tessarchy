@@ -13,6 +13,7 @@ import Quickshell.Services.Mpris
 import Quickshell.Services.SystemTray
 import "components"
 import "LayoutPolicy.js" as Policy
+import "AppPolicy.js" as Apps
 
 ShellRoot {
     id: root
@@ -124,9 +125,7 @@ ShellRoot {
             PanelWindow {
                 id: panel
                 screen: surface.modelData
-                readonly property var appEntries: DesktopEntries.applications.values
-                    .filter(entry => !entry.noDisplay && entry.command.length > 0)
-                    .sort((a, b) => a.name.localeCompare(b.name))
+                readonly property var appEntries: Apps.majorApplications(DesktopEntries.applications.values)
                 property string page: ""
                 property var closeTarget: null
                 property bool keyboardSwitch: false

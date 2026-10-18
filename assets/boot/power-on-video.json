@@ -1,0 +1,15 @@
+{
+  "source": "Owner-supplied power-on animation",
+  "source_path": "session/boot/power-on.mp4",
+  "source_sha256": "68764416a0bf0a126e6528f20ed4a86bf742f823f5e03b9b79632b479c8fcb1b",
+  "duration_seconds": 8,
+  "width": 1080,
+  "height": 1080,
+  "audio": false,
+  "plymouth": {
+    "frames": 160,
+    "fps": 20,
+    "size": 480
+  },
+  "validation": "Frames exported and packaged; current development VM was not changed"
+}

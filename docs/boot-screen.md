@@ -1,8 +1,10 @@
 # Quiet Edge power-on screen
 
-Tessarchy's startup sequence uses a navy Plymouth screen, the official mint mark
-turning through 64 frames, and a clean transition to the phone PIN greeter.
-Animation runs at 20 frames per second. The theme adapts to the boot display size.
+Tessarchy's Plymouth theme uses the supplied eight-second power-on video.
+The original 1080×1080 MP4 is retained in `session/boot/power-on.mp4`; packaging
+exports 160 square 480×480 frames at 20 fps. Playback runs once and holds the
+final frame until boot completes. The full composition fits portrait and landscape
+displays. Frames are loaded as needed rather than preloading a scaled image array.
 
 ## Startup path
 
@@ -22,7 +24,7 @@ stays in logs. Console recovery remains available through the other VTs.
 ## Source and packaging
 
 - `session/boot/`: Plymouth script, theme descriptor, daemon config and retained-splash unit override.
-- `scripts/export-boot-assets.py`: renders the canonical SVG using the shared logo turntable implementation.
+- `scripts/export-boot-assets.py`: converts the supplied video with FFmpeg and records its source checksum.
 - `packaging/tessarchy-bootsplash/PKGBUILD`: builds the theme package.
 - `scripts/configure-vm-boot.py`: plans or applies the QEMU/KVM boot configuration.
 - `session/start-tessarchy`: journals compositor/session output.
@@ -36,8 +38,25 @@ python3 scripts/configure-vm-boot.py
 ```
 
 `scripts/package.sh` builds the optional bootsplash package alongside the shell,
-session and greeter. Its build tools are Pillow and librsvg; runtime uses Plymouth
+session, greeter and tablet profile. Its build tools are Python and FFmpeg; runtime uses Plymouth
 and DejaVu fonts. Installation and boot activation are explicit operations.
+
+## Physical tablet activation
+
+Use the [Intel/AMD tablet guide](tablet-install.md). Install the optional splash
+package on the target tablet, select the `tessarchy` theme, preserve KMS and the
+existing root/encryption/resume arguments, and integrate Plymouth using that
+device's bootloader and initramfs configuration. The VM helper below deliberately
+does not support physical hardware. The live-image profile stages the frames and
+adds Plymouth after KMS without applying VM-specific resolution arguments.
+
+## Supplied preview and validation
+
+The site hosts the original silent MP4 and a poster extracted from it. This is an
+animation preview, not a recorded boot. Source checksum and conversion metadata
+are in `assets/boot/power-on-video.json`. Frame export and package builds are
+validated separately from actual boot behavior in [testing.md](testing.md).
+The existing development VM has not been changed for this update.
 
 ## VM activation
 
@@ -76,12 +95,12 @@ screenshots are recorded in [testing.md](testing.md).
 - [Arch silent boot controls](https://wiki.archlinux.org/title/Silent_boot)
 - [greetd terminal configuration](https://man.archlinux.org/man/greetd.5.en)
 
-## Share the startup
+## Earlier VM startup recording
 
 - [Actual VM startup MP4](https://github.com/thediamondsaint/tessarchy/releases/download/brand-kit-20261017/Tessarchy-Boot-Preview.mp4): 400x800, 35 seconds.
 - [Discord-ready startup GIF](https://github.com/thediamondsaint/tessarchy/releases/download/brand-kit-20261017/Tessarchy-Boot-Preview.gif): 320x640, 14.6 seconds.
 
-The MP4 starts when Plymouth appears and continues through the PIN screen. The
+These recordings show the earlier 64-frame turntable theme. The MP4 starts when Plymouth appears and continues through the PIN screen. The
 GIF shortens the idle transition. Both use actual VM frames. Firmware and GRUB
 run before this excerpt; their remaining text is tracked separately from Linux
 service output. Capture provenance is in assets/boot/.

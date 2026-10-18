@@ -25,6 +25,8 @@ jobs:
     timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare video conversion tools
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ffmpeg
       - name: Check source workflows
         run: ./scripts/check.sh
       - name: Build Arch live image in disposable container
@@ -36,7 +38,7 @@ jobs:
             --volume "$PWD:/workspace" --workdir /workspace \
             --env "TESSARCHY_COMMIT=$GITHUB_SHA" \
             archlinux:base bash -euo pipefail -c '
-              pacman -Syu --noconfirm --needed archiso
+              pacman -Syu --noconfirm --needed archiso ffmpeg
               ./scripts/stage-iso.sh
               mkarchiso -v -w build/iso-work -o dist build/iso-profile 2>&1 | tee dist/build.log
               cp build/iso-work/iso/arch/pkglist.x86_64.txt dist/packages.txt
@@ -89,14 +91,16 @@ jobs:
             seconds=90
           fi
           echo "Boot capture: $accel, $seconds seconds per firmware"
-          python3 scripts/boot-test-iso.py "${images[0]}" build/boot-bios --firmware bios --accel "$accel" --seconds "$seconds" &
+          python3 scripts/boot-test-iso.py "${images[0]}" build/boot-bios --firmware bios --accel "$accel" --seconds "$seconds" --sample-interval 2 --capture-launcher &
           bios=$!
-          python3 scripts/boot-test-iso.py "${images[0]}" build/boot-uefi --firmware uefi --accel "$accel" --seconds "$seconds" &
+          python3 scripts/boot-test-iso.py "${images[0]}" build/boot-uefi --firmware uefi --accel "$accel" --seconds "$seconds" --sample-interval 2 --capture-launcher &
           uefi=$!
           wait "$bios"
           wait "$uefi"
           cp build/boot-bios/final.png dist/boot-bios.png
           cp build/boot-uefi/final.png dist/boot-uefi.png
+          cp build/boot-bios/launcher.png dist/launcher-bios.png
+          cp build/boot-uefi/launcher.png dist/launcher-uefi.png
           tar -czf dist/boot-evidence.tar.gz -C build boot-bios boot-uefi
           printf '%s\n' "BIOS and UEFI captures collected in diskless QEMU/$accel with 2 GiB RAM." 'Screenshots require review; capture completion alone is not a boot-success claim.' > dist/BOOT-TESTING.md
       - name: Create a draft tester prerelease
@@ -111,7 +115,7 @@ jobs:
             --title "Tessarchy $RELEASE_TAG — tester ISO" \
             --notes "Tester ISO draft. Review the attached BIOS/UEFI boot captures before publishing. No installer or persistence; physical keyboard required." \
             dist/tessarchy-*.iso dist/SHA256SUMS dist/build-info.txt dist/packages.txt \
-            dist/build.log dist/boot-bios.png dist/boot-uefi.png dist/boot-evidence.tar.gz dist/BOOT-TESTING.md
+            dist/build.log dist/boot-bios.png dist/boot-uefi.png dist/launcher-bios.png dist/launcher-uefi.png dist/boot-evidence.tar.gz dist/BOOT-TESTING.md
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -44,6 +44,8 @@ def main():
     for source in sources:
         shutil.copyfile(source, assets / source.name)
     shutil.copyfile(ROOT / "assets/boot/phone-startup.png", assets / "phone-startup.png")
+    shutil.copyfile(ROOT / "session/boot/power-on.mp4", assets / "power-on.mp4")
+    shutil.copyfile(ROOT / "assets/boot/power-on-poster.png", assets / "power-on-poster.png")
     shutil.copyfile(ROOT / "shell/artwork/tessarchy-mark.svg", assets / "tessarchy-mark.svg")
     shutil.copyfile(ROOT / "assets/roadmap/tessarchy-device-roadmap.png",
                     assets / "tessarchy-device-roadmap.png")

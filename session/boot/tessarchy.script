@@ -1,5 +1,5 @@
-Window.SetBackgroundTopColor(0.035294, 0.074510, 0.145098);
-Window.SetBackgroundBottomColor(0.035294, 0.074510, 0.145098);
+Window.SetBackgroundTopColor(0.031373, 0.070588, 0.141176);
+Window.SetBackgroundBottomColor(0.031373, 0.070588, 0.141176);
 Plymouth.SetRefreshRate(20);
 
 fun minimum(a, b)
@@ -7,17 +7,10 @@ fun minimum(a, b)
     if (a < b) return a;
     return b;
 }
-size = minimum(240, minimum(Window.GetWidth() * 0.48, Window.GetHeight() * 0.3));
-for (index = 0; index < 64; index++)
-    frames[index] = Image("logo-" + index + ".png").Scale(size, size);
-
-logo = Sprite(frames[0]);
+size = minimum(720, minimum(Window.GetWidth() * 0.92, Window.GetHeight() * 0.85));
+logo = Sprite(Image("logo-0.png").Scale(size, size));
 logo.SetPosition(Window.GetX() + (Window.GetWidth() - size) / 2,
-                 Window.GetY() + Window.GetHeight() * 0.43 - size / 2, 1);
-wordmark = Image.Text("T E S S A R C H Y", 0.66, 0.91, 0.84, 1, "DejaVu Sans 15");
-brand = Sprite(wordmark);
-brand.SetPosition(Window.GetX() + (Window.GetWidth() - wordmark.GetWidth()) / 2,
-                  Window.GetY() + Window.GetHeight() * 0.43 + size / 2 + 20, 1);
+                 Window.GetY() + (Window.GetHeight() - size) / 2, 1);
 status = Sprite();
 entry = Sprite();
 frame = 0;
@@ -32,11 +25,10 @@ fun center_text(sprite, text, y)
 
 fun refresh()
 {
-    if (mode == "normal")
+    if (mode == "normal" && frame < 159)
     {
         global.frame++;
-        if (frame >= 64) global.frame = 0;
-        logo.SetImage(frames[frame]);
+        logo.SetImage(Image("logo-" + frame + ".png").Scale(size, size));
     }
 }
 
@@ -52,8 +44,8 @@ fun password(prompt, count)
     global.mode = "password";
     bullets = "";
     for (i = 0; i < minimum(count, 32); i++) bullets += "•";
-    center_text(status, prompt, Window.GetY() + Window.GetHeight() * 0.7);
-    center_text(entry, bullets, Window.GetY() + Window.GetHeight() * 0.7 + 32);
+    center_text(status, prompt, Window.GetY() + Window.GetHeight() * 0.88);
+    center_text(entry, bullets, Window.GetY() + Window.GetHeight() * 0.88 + 32);
     status.SetOpacity(1);
     entry.SetOpacity(1);
 }
@@ -61,14 +53,14 @@ fun password(prompt, count)
 fun question(prompt, text)
 {
     global.mode = "question";
-    center_text(status, prompt, Window.GetY() + Window.GetHeight() * 0.7);
-    center_text(entry, text, Window.GetY() + Window.GetHeight() * 0.7 + 32);
+    center_text(status, prompt, Window.GetY() + Window.GetHeight() * 0.88);
+    center_text(entry, text, Window.GetY() + Window.GetHeight() * 0.88 + 32);
     status.SetOpacity(1);
     entry.SetOpacity(1);
 }
 
 fun message(text) {}
-fun quit() { logo.SetImage(frames[0]); }
+fun quit() {}
 Plymouth.SetRefreshFunction(refresh);
 Plymouth.SetDisplayNormalFunction(normal);
 Plymouth.SetDisplayPasswordFunction(password);

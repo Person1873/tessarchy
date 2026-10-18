@@ -61,6 +61,7 @@ hl.on("window.open", function(window)
 end)
 hl.on("window.active", maximize_if_mobile)
 hl.on("hyprland.start", function ()
+    hl.exec_cmd("tessarchy-session-services")
     hl.exec_cmd("tessera-shell")
     -- Optional; exits quietly when squeekboard is not installed.
     hl.exec_cmd("tessarchy-osk start")

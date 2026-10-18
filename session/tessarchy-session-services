@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Start optional session integration only inside a Tessarchy compositor.
+set -euo pipefail
+[[ -n ${WAYLAND_DISPLAY:-} && -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]] || exit 0
+if command -v dbus-update-activation-environment >/dev/null; then
+    dbus-update-activation-environment --systemd WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP XDG_SESSION_TYPE || true
+fi
+if command -v xdg-user-dirs-update >/dev/null; then xdg-user-dirs-update; fi
+if command -v systemctl >/dev/null && systemctl --user cat hyprpolkitagent.service >/dev/null 2>&1; then
+    systemctl --user start hyprpolkitagent.service || true
+fi
+if command -v nm-applet >/dev/null; then nm-applet --indicator & fi
+wait

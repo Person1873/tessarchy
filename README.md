@@ -133,14 +133,23 @@ touch scrolling were exercised in the guest. Software display rendering is the
 accepted default; KVM CPU acceleration remains enabled. See [VM setup](docs/vm.md)
 and the [validation record](docs/testing.md).
 
+## Intel/AMD tablet pilot
+
+The [tablet install guide](docs/tablet-install.md) covers an installed Arch target,
+the `tessarchy-tablet` package profile, service setup and a read-only device
+preflight. It includes everyday apps, firmware, wireless tools, audio, an OSK,
+authorization and portals. The app picker keeps one installed primary app per role.
+The supplied eight-second video is the new optional Plymouth power-on animation.
+The current Alpha 2 download remains a live demonstration, not a disk installer.
+
 ## Packages and images
 
 ```bash
 ./scripts/package.sh
 ```
 
-This builds four Arch packages into `dist/`: `tessera-shell`,
-`tessarchy-session`, the opt-in `tessarchy-greeter` and `tessarchy-bootsplash`. Package installation and
+This builds five Arch packages into `dist/`: `tessera-shell`,
+`tessarchy-session`, the `tessarchy-tablet` profile, the opt-in `tessarchy-greeter` and `tessarchy-bootsplash`. Package installation and
 service activation are separate operations. The [PIN login guide](docs/phone-login.md)
 covers greetd setup and the tested VM configuration. The [power-on screen guide](docs/boot-screen.md)
 covers the animated Plymouth theme and quiet VM startup.

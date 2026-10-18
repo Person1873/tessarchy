@@ -172,6 +172,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |
 | T09 | Done | Codex | PR #18 | Guarded battery/power-profile integration; unavailable VM state verified |
 | T08 | Done | Codex | VM/touch publication | Seventeen refreshed captures, three retained PIN captures and matching site/ZIP |
+| T58 | Review | Codex | feat/tablet-install-readiness | x86 tablet profile, curated launcher and supplied splash video |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |
 
 ### P0 — Validate and finish the current integrations
@@ -291,3 +292,5 @@ the Pages deployment when website content changed.
 - [Tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2)
 - [Official logo kit and spinning GIF](https://github.com/thediamondsaint/tessarchy/releases/tag/brand-kit-20261017)
 - [Roadmap image](https://thediamondsaint.github.io/tessarchy/assets/tessarchy-device-roadmap.png)
+
+T58: prepare the Intel/AMD tablet package/profile, primary-app picker and supplied video splash. Host and current development VM stay unchanged.

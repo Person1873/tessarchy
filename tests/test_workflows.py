@@ -193,6 +193,17 @@ class Workflows(unittest.TestCase):
         self.assertEqual(result.stderr, '')
         self.assertIn('compositor-output', journal.read_text())
         self.assertIn('compositor-error', journal.read_text())
+        # A real login user bus must be reused instead of starting a private bus.
+        import socket
+        runtime = self.home / 'user-bus'
+        runtime.mkdir()
+        with socket.socket(socket.AF_UNIX) as server:
+            server.bind(str(runtime / 'bus'))
+            (tools / 'dbus-run-session').write_text('#!/bin/bash\nexit 99\n')
+            result = subprocess.run([str(ROOT / 'session/start-tessarchy')],
+                                    env=dict(env, XDG_RUNTIME_DIR=str(runtime)),
+                                    capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_session_start_launches_shell_and_optional_keyboard(self):
         import shutil
@@ -211,7 +222,7 @@ hl = {
 }
 dofile(arg[1])
 callbacks["hyprland.start"]()
-assert(commands[1] == "tessera-shell" and commands[2] == "tessarchy-osk start",
+assert(commands[1] == "tessarchy-session-services" and commands[2] == "tessera-shell" and commands[3] == "tessarchy-osk start",
        table.concat(commands, ","))
 '''
         result = subprocess.run(['lua', '-', str(ROOT / 'session/hyprland.lua')],
@@ -713,6 +724,7 @@ assert(#fire("window.open", dialog) == 0, "desktop dialogs are left alone")
         for directory in ('shell', 'session', 'iso', 'docs'):
             shutil.copytree(ROOT / directory, repo / directory)
         shutil.copy2(ROOT / 'scripts/stage-iso.sh', repo / 'scripts')
+        shutil.copy2(ROOT / 'scripts/export-boot-assets.py', repo / 'scripts')
         base = self.home / 'releng'
         (base / 'airootfs/etc/systemd/system/multi-user.target.wants').mkdir(parents=True)
         (base / 'profiledef.sh').write_text('file_permissions=(["/etc/shadow"]="0:0:400")\n')
@@ -738,8 +750,10 @@ assert(#fire("window.open", dialog) == 0, "desktop dialogs are left alone")
         self.assertTrue(ssh_link.is_symlink())
         self.assertIn('quickshell', (profile / 'packages.x86_64').read_text())
         self.assertNotIn('unused-rescue-tool', (profile / 'packages.x86_64').read_text())
-        self.assertNotIn('linux-firmware', (profile / 'packages.x86_64').read_text())
-        self.assertTrue((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/systemd-networkd.service').is_symlink())
+        self.assertIn('linux-firmware', (profile / 'packages.x86_64').read_text().splitlines())
+        self.assertFalse((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/systemd-networkd.service').is_symlink())
+        self.assertTrue((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/NetworkManager.service').is_symlink())
+        self.assertEqual((profile / 'airootfs/etc/resolv.conf').readlink().as_posix(), '/run/NetworkManager/resolv.conf')
         self.assertTrue((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/systemd-timesyncd.service').is_symlink())
         self.assertEqual((profile / 'airootfs/etc/hostname').read_text().strip(), 'tessarchy')
         self.assertIn('en_US.UTF-8', (profile / 'airootfs/etc/locale.conf').read_text())
@@ -749,6 +763,8 @@ assert(#fire("window.open", dialog) == 0, "desktop dialogs are left alone")
                       (profile / 'airootfs/etc/systemd/journald.conf.d/volatile.conf').read_text())
         self.assertTrue((profile / 'airootfs/usr/share/tessarchy/docs/iso.md').is_file())
         self.assertTrue((profile / 'airootfs/usr/bin/start-tessarchy').stat().st_mode & 0o111)
+        self.assertTrue((profile / 'airootfs/usr/share/plymouth/themes/tessarchy/logo-159.png').is_file())
+        self.assertTrue((profile / 'airootfs/usr/bin/tessarchy-session-services').is_file())
         self.assertTrue((profile / 'airootfs/usr/bin/tessera-screenshot').stat().st_mode & 0o111)
         self.assertIn('grim', (profile / 'packages.x86_64').read_text().splitlines())
         self.assertIn('libnotify', (profile / 'packages.x86_64').read_text().splitlines())

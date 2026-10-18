@@ -2,7 +2,7 @@
 
 `stage-iso.sh` copies `/usr/share/archiso/configs/releng` into
 `build/iso-profile`. It preserves the installed bootloader templates, hooks and
-bootmode syntax rather than hardcoding a stale upstream layout. It uses the VM-focused
+bootmode syntax rather than hardcoding a stale upstream layout. It uses the Intel/AMD tablet-pilot
 package set in `iso/packages.x86_64` and stages the shell/session directly into
 `/usr/share/tessarchy` and `/usr/bin`. These overlay files are not pacman-owned;
 using the local packages in a signed repository is a later milestone.
@@ -28,9 +28,23 @@ public release.
 The staged rootfs pins the hostname to `tessarchy`, generates the en_US.UTF-8
 locale, sets a live-console motd that points at `/usr/share/tessarchy/docs`
 (a snapshot of `docs/` staged into the image), keeps the journal volatile with
-a 64M runtime cap, and enables `systemd-timesyncd` alongside networkd so guests
+a 64M runtime cap, and enables `systemd-timesyncd` alongside NetworkManager so guests
 without a working RTC still get a sane clock. `noto-fonts-emoji` is included so
 browser pages render emoji. None of this changes development installs.
+
+## Tablet-pilot source profile
+
+Current source expands the live image with broad Linux firmware, SOF audio
+firmware, NetworkManager and its connection/secret agent, Bluetooth tools,
+PipeWire audio/ALSA support, an authorization agent, portals and common apps.
+Only NetworkManager manages the live network; inherited networkd/resolved
+activation links are removed and DNS points at NetworkManager's resolver file.
+The supplied power-on video is converted to Plymouth frames during staging.
+The profile keeps early KMS and adds Plymouth after it in the initramfs hooks.
+
+Use [tablet-install.md](tablet-install.md) to install the packages on an existing
+Arch tablet. The live image does not partition or install onto internal storage.
+These source changes do not alter the older Alpha 2 release.
 
 ## Build explicitly on Arch
 
@@ -46,7 +60,7 @@ VM_UEFI=1 ./scripts/vm.sh run dist/<actual-ISO-filename>.iso
 
 Prerequisites: internet, a consistent current Arch installation, administrator
 access for mkarchiso, and roughly 15–25GiB free disk. More than 2GiB memory is
-recommended for building. `archiso` pulls in its own auxiliary tools, and
+recommended for building. Staging also needs Python and FFmpeg for the animation. `archiso` pulls in its own auxiliary tools, and
 `iso/packages.x86_64` includes `memtest86+`, whose EFI payload needs `mtools`
 on the build host. Hyprland's system-wide dependencies are resolved by pacman;
 shell-level guesses (`wlogout`, extras) are intentionally absent. ISO builds are not bit-reproducible yet: repository

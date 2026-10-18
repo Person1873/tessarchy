@@ -1098,3 +1098,33 @@ exceptions. The VM was restored to 400×800 with its normal development shell.
 Remote Ubuntu and Arch checks caught ShellCheck SC2054 on two comma-containing
 QEMU device arguments after all Python and Qt Quick tests passed. Both arguments
 were quoted explicitly; workflow tests were rerun for that command-only fix.
+
+## Intel/AMD tablet pilot and supplied animation — 2026-10-18
+
+Scope: source, package builds and publication. The owner requested no changes to
+the host or existing development VM. Neither was configured, installed into,
+restarted or updated during this work.
+
+The tablet profile supplies firmware, wireless tools, a full PipeWire stack,
+authorization/portal integration, an OSK and general desktop applications.
+Live-image staging switches its own overlay to NetworkManager, adds the supplied
+Plymouth animation and retains the upstream boot machinery. Installed systems
+use the documented manual Arch package path; no disk installer is provided.
+`tessarchy-readiness` reads packages and service state without writing settings.
+
+The app picker uses an explicit primary-application policy: one installed choice
+per role, excluding helpers and hidden entries. Qt Quick tests cover duplicates,
+hidden/missing apps and preferred alternatives. Startup reuses an existing login
+user bus; scratch-HOME tests cover that path and dev install/uninstall.
+
+Actual local checks: 72 Python tests and 46 Qt Quick results passed, both Hyprland
+configs verified and QML lint completed. ShellCheck is absent locally and runs in
+CI. All five packages built without installing host dependencies. Animation export
+produced 160 480×480 PNGs at 20 fps (8 seconds), about 5.3 MiB on disk. The original
+silent 1080×1080 MP4 is preserved with its checksum. The site labels it as a
+supplied animation preview. No current-VM or physical-tablet boot claim is made.
+
+Physical acceptance remains pending the tablet model and tester feedback: firmware
+and mixed-UEFI compatibility, native touch/OSK dialogs, Wi-Fi/Bluetooth, audio,
+charging, suspend/wake and boot/recovery. Automatic rotation, secure session
+locking and native network association remain separate work.
