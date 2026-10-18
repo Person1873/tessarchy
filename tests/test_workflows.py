@@ -693,6 +693,9 @@ assert(#fire("window.open", dialog) == 0, "desktop dialogs are left alone")
         (boot / 'arch.conf').write_text('retained boot asset')
         ssh_link = base / 'airootfs/etc/systemd/system/multi-user.target.wants/sshd.service'
         ssh_link.symlink_to('/usr/lib/systemd/system/sshd.service')
+        (base / 'airootfs/etc/systemd/system/sysinit.target.wants').mkdir(parents=True)
+        wait_sync = base / 'airootfs/etc/systemd/system/sysinit.target.wants/systemd-time-wait-sync.service'
+        wait_sync.symlink_to('/usr/lib/systemd/system/systemd-time-wait-sync.service')
         env = dict(self.env, ARCHISO_RELENG=str(base))
         command = [str(repo / 'scripts/stage-iso.sh')]
         result = subprocess.run(command, env=env, capture_output=True, text=True)
@@ -706,6 +709,8 @@ assert(#fire("window.open", dialog) == 0, "desktop dialogs are left alone")
         self.assertFalse((profile / 'airootfs/etc/group').exists())
         self.assertFalse((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/sshd.service').is_symlink())
         self.assertTrue(ssh_link.is_symlink())
+        self.assertFalse((profile / 'airootfs/etc/systemd/system/sysinit.target.wants/systemd-time-wait-sync.service').is_symlink())
+        self.assertTrue(wait_sync.is_symlink())
         self.assertIn('quickshell', (profile / 'packages.x86_64').read_text())
         self.assertNotIn('unused-rescue-tool', (profile / 'packages.x86_64').read_text())
         self.assertNotIn('linux-firmware', (profile / 'packages.x86_64').read_text())

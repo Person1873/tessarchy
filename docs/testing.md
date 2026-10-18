@@ -966,6 +966,26 @@ Remaining work:
 - Physical display/touch validation, graphical encrypted-disk prompts and recovery
   acceptance remain planned. No new ISO was built or boot-tested in this task.
 
+## Live boot without a network — 2026-10-18 UTC
+
+Actually performed:
+
+- Debug boots of the live line exposed a boot hang: on a QEMU guest with no NIC
+  and no battery-backed clock, the releng-enabled
+  `systemd-time-wait-sync.service` held sysinit open with systemd reporting
+  `(no limit)`, and a `plymouth-quit-wait` companion stuck behind it, so the
+  graphical session never started (two runs, one stuck for 8+ minutes).
+- `scripts/stage-iso.sh` now deletes the `sysinit.target.wants` link for
+  `systemd-time-wait-sync.service` from the staged profile, and the staging
+  test seeds the link in its fake base and asserts the staged profile no
+  longer carries it; the full check suite passes.
+- Debug images used for the same validation mask the unit on the kernel
+  command line (`systemd.mask=systemd-time-wait-sync.service`) and skip
+  plymouth (`plymouth.enable=0`); with both, boots became deterministic.
+
+Not performed: a live-image rebuild from this change and an on-hardware check
+of a Wi-Fi-less boot (the staged-profile test covers the packaging step).
+
 ## Phone, Messages, sounds and SIM controls — 2026-10-18 UTC
 
 Actual validation:

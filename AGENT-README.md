@@ -257,6 +257,7 @@ Read [pr-triage.md](docs/pr-triage.md) and inspect current PR heads first.
 | T54 | Maintain the device roadmap | Gates and artwork updated after accepted product milestones |
 | T55 | Improve issue and contribution templates | Reproduction/source/device details and concise review guidance |
 | T56 | Publish a tester feedback guide | Simple install/test/report path and useful bug-report examples |
+| T57 | Do not gate the live boot on an NTP sync | Releng enables `systemd-time-wait-sync`; with no network and no battery clock it waits forever (`no limit`), so the staged profile removes it and the staging test asserts the removal |
 
 ## Contribution completion record
 

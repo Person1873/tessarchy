@@ -49,6 +49,10 @@ mkdir -p "$airoot/home/tess"
 cp -a "$root/iso/airootfs/etc/skel/." "$airoot/home/tess/"
 # Releng may enable SSH for rescue. Keep network services out of this prototype.
 find "$airoot/etc/systemd/system" -type l -name 'sshd.service' -delete
+# Releng waits for an NTP sync before sysinit completes. On a machine with no
+# network and no battery-backed clock that wait never ends (systemd reports
+# "no limit"), so the live image must not gate its boot on time sync.
+rm -f "$airoot/etc/systemd/system/sysinit.target.wants/systemd-time-wait-sync.service"
 mkdir -p "$airoot/etc/systemd/system/multi-user.target.wants"
 ln -sf /usr/lib/systemd/system/systemd-networkd.service "$airoot/etc/systemd/system/multi-user.target.wants/"
 ln -sf /usr/lib/systemd/system/systemd-resolved.service "$airoot/etc/systemd/system/multi-user.target.wants/"
