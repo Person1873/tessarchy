@@ -1436,6 +1436,23 @@ desktop mode (Dr...", "arch@archlinux:~"), spacer, then the sunken tray with the
 tray icon and the clock. `./scripts/check.sh` passes 86 Python tests and 49 Qt
 Quick results. Physical touch acceptance remains pending.
 
+## Desktop window resize, 2026-10-18
+
+Owner report: ordinary windows in Desktop mode could not be resized.
+
+Cause: `general.resize_on_border` was left at its default `false` and
+`border_size` is `0` in this theme, so there was no grabbable edge at all. The
+`SUPER + right-drag` bind existed but nothing else did.
+
+Fix: set `resize_on_border = true` and raise `extend_border_grab_area` to 24 so
+the grab band is finger-sized even though the border is invisible.
+
+Verified in the VM at 1200x800 with a QMP pointer drag (`usb-tablet`): dragging a
+floating window's right edge outward took `foot` from 960x640 to 1057x640.
+`hyprctl getoption general:resize_on_border` reads `true` and
+`general:extend_border_grab_area` reads `24`. A QMP *touch* drag does not resize
+(border resize is pointer-only), which matters on real touch hardware.
+
 ## Start menu and windowed Desktop, 2026-10-18
 
 Owner asked for a modernised Windows-XP Start menu above the Start button (apps
