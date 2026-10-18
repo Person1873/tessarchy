@@ -163,8 +163,9 @@ class Workflows(unittest.TestCase):
         (tools / 'bash').symlink_to(shutil.which('bash'))
         for name, body in {
                 'qs': 'exit 0',
+                'systemd-cat': 'shift; exec "$@" > "$JOURNAL_TEST_LOG" 2>&1',
                 'dbus-run-session': 'shift; exec "$@"',
-                'start-hyprland': 'printf "%s\\0" "$@" > "$LAUNCH_TEST_LOG"'}.items():
+                'start-hyprland': 'printf "%s\\0" "$@" > "$LAUNCH_TEST_LOG"; echo compositor-output; echo compositor-error >&2'}.items():
             path = tools / name
             path.write_text('#!/bin/bash\n' + body + '\n')
             path.chmod(0o755)
@@ -172,12 +173,18 @@ class Workflows(unittest.TestCase):
         (share / 'session').mkdir(parents=True)
         (share / 'session/hyprland.lua').write_text('-- test config\n')
         log = self.home / 'launcher-args'
-        env = dict(self.env, PATH=str(tools), TESSARCHY_DATA_DIR=str(share), LAUNCH_TEST_LOG=str(log))
+        journal = self.home / 'session-journal'
+        env = dict(self.env, PATH=str(tools), TESSARCHY_DATA_DIR=str(share),
+                   LAUNCH_TEST_LOG=str(log), JOURNAL_TEST_LOG=str(journal))
         result = subprocess.run([str(ROOT / 'session/start-tessarchy')], env=env,
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(log.read_bytes().split(b'\0')[:-1],
                          [b'--', b'--config', str(share / 'session/hyprland.lua').encode()])
+        self.assertEqual(result.stdout, '')
+        self.assertEqual(result.stderr, '')
+        self.assertIn('compositor-output', journal.read_text())
+        self.assertIn('compositor-error', journal.read_text())
 
     def test_session_start_launches_shell_and_optional_keyboard(self):
         import shutil
