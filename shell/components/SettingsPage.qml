@@ -100,14 +100,14 @@ ColumnLayout {
         }
     }
     Text {
-        text: "Automatic follows the usable display size, including rotation. Override it to keep a layout. New apps fill Phone/Tablet layouts; Desktop starts apps tiled. Existing windows stay in place."
+        text: "Automatic follows the usable display size, including rotation. Override it to keep a layout. New apps fill Phone/Tablet layouts; Desktop starts apps tiled. Existing windows stay in place. Desktop and wide tablets show a workspace strip in the status bar."
         color: "#8da7b9"
         font.pixelSize: 13
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
     }
     Text {
-        text: "SCREEN"
+        text: "KEYBOARD"
         color: page.accentColor
         font {
             pixelSize: 11
@@ -115,9 +115,12 @@ ColumnLayout {
             letterSpacing: 2
         }
     }
-    RotationControl {
+    Text {
+        text: "Super + 1…5 · switch workspace\nSuper + Shift + 1…5 · move window to workspace\nSuper + Q · confirm window close\nSuper + Tab · next window\nSuper + F · maximize · Super + Shift + F · fullscreen\nSuper + Return · terminal · Super + Shift + E · confirm session exit"
+        color: "#aabccb"
+        font.pixelSize: 13
         Layout.fillWidth: true
-        accentColor: page.accentColor
+        wrapMode: Text.WordWrap
     }
     Text {
         text: "APPEARANCE"
@@ -250,6 +253,19 @@ ColumnLayout {
                 page.replayRequested();
             }
         }
+    }
+    Text {
+        text: "ROTATION"
+        color: page.accentColor
+        font {
+            pixelSize: 11
+            bold: true
+            letterSpacing: 2
+        }
+    }
+    RotationControl {
+        Layout.fillWidth: true
+        accentColor: page.accentColor
     }
     Text {
         text: "SYSTEM"

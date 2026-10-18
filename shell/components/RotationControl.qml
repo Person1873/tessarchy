@@ -1,16 +1,15 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
-import "../LayoutPolicy.js" as Policy
 
 ColumnLayout {
     id: control
     property color accentColor: "#a9e8d5"
 
     readonly property var monitor: Hyprland.focusedMonitor
-    // Not named `transform`: QtQuick Item.transform is final and a colliding
-    // declaration makes this whole component fail to instantiate.
+    // `Item.transform` is FINAL in Qt Quick; this property must not be named transform.
     readonly property int currentTransform: {
         if (!control.monitor || !control.monitor.lastIpcObject)
             return 0;
@@ -21,20 +20,17 @@ ColumnLayout {
 
     spacing: 6
 
-    function rotate() {
+    function send(action) {
         if (!control.monitor)
             return;
-        const next = Policy.nextTransform(control.currentTransform);
-        // Fixed argv: the monitor name comes from the compositor and the
-        // transform from our own cycle, so nothing user-supplied is parsed.
-        Quickshell.execDetached(["hyprctl", "keyword", "monitor",
-                                 control.monitor.name + ",transform," + next]);
+        // Fixed argv: the monitor name comes from the compositor, the action is a literal.
+        Quickshell.execDetached(["tessera-rotate", action, control.monitor.name]);
         refreshTimer.restart();
     }
 
     Timer {
         id: refreshTimer
-        interval: 300
+        interval: 400
         onTriggered: Hyprland.refreshMonitors()
     }
 
@@ -43,12 +39,24 @@ ColumnLayout {
         color: "#d0dced"
         font.pixelSize: 14
     }
-    TouchButton {
-        text: "Rotate screen"
-        enabled: control.monitor !== null
-        accentColor: control.accentColor
+    RowLayout {
         Layout.fillWidth: true
-        Accessible.name: control.monitor ? "Rotate screen, now " + control.orientation : "Rotate screen unavailable"
-        onClicked: control.rotate()
+        spacing: 8
+        TouchButton {
+            text: "Rotate"
+            enabled: control.monitor !== null
+            accentColor: control.accentColor
+            Layout.fillWidth: true
+            Accessible.name: control.monitor ? "Rotate screen, now " + control.orientation : "Rotate screen unavailable"
+            onClicked: control.send("cycle")
+        }
+        TouchButton {
+            text: "Reset"
+            enabled: control.monitor !== null && control.currentTransform !== 0
+            accentColor: control.accentColor
+            Layout.fillWidth: true
+            Accessible.name: "Reset screen rotation"
+            onClicked: control.send("reset")
+        }
     }
 }
