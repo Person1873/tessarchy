@@ -1,5 +1,12 @@
 -- Tessarchy defaults: Hyprland 0.56.x Lua API.
 -- This is loaded explicitly, never over the user's Hyprland config.
+local session = debug.getinfo(1, "S").source:sub(2):match("^(.*)/[^/]+$")
+local data = os.getenv("TESSARCHY_DATA_DIR") or session:match("^(.*)/session$")
+TessarchyWindows = dofile(session .. "/window-controls.lua")
+local bars = data .. "/plugins/hyprbars.so"
+local barsFile = io.open(bars, "r")
+if barsFile then barsFile:close(); hl.plugin.load(bars) end
+TessarchyWindows.configure_bars()
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
 hl.config({
     general = { gaps_in = 0, gaps_out = 0, border_size = 0, layout = "dwindle",
@@ -86,9 +93,13 @@ hl.on("window.open", function(window)
             hl.dispatch(hl.dsp.window.float({ window = window, action = "set" }))
             local monitor = window.monitor
             local width = math.max(360, math.floor(math.min(960, monitor.width / monitor.scale - 96)))
-            local height = math.max(280, math.floor(math.min(640, monitor.height / monitor.scale - 140)))
+            local titleHeight = hl.plugin and hl.plugin.hyprbars and 48 or 0
+            local height = math.max(280, math.floor(math.min(640, monitor.height / monitor.scale - 140 - titleHeight)))
             hl.dispatch(hl.dsp.window.resize({ window = window, x = width, y = height }))
             hl.dispatch(hl.dsp.window.center({ window = window }))
+            if titleHeight > 0 then
+                hl.dispatch(hl.dsp.window.move({ window = window, x = 0, y = titleHeight / 2, relative = true }))
+            end
         end
         return
     end

@@ -1674,3 +1674,40 @@ continues to use its existing cards. Captures are local ignored artifacts under
 The separate runtime-only Hyprbars title-bar experiment from the preceding
 review remains a prototype, not a packaged part of this change. No new ISO boot
 or physical touchscreen validation was performed for these changes.
+
+
+## Desktop minimize and title-bar controls, 2026-10-18
+
+`./scripts/check.sh` passed: 107 Python tests and 57 Qt Quick results. The new
+Lua lifecycle tests cover independent minimized windows, reload recovery,
+maximized/fullscreen state, named Unicode workspaces, closed targets and
+unrelated special workspaces. Hyprland verification and QML lint passed with
+the existing metadata warnings; local Fish and ShellCheck remain unavailable.
+
+Compiled the official Hyprbars 0.56.2 pin with the touch patch and existing
+toolchain. No dependencies or host session configuration were changed. Deployed
+the library into the guest's Tessarchy plugins directory; the session now loads
+it from there, replacing the earlier temporary runtime experiment. Reload
+produced no configuration errors. A new session boot was not performed.
+
+Actual 1280×800 VM checks with a temporary Foot window:
+
+- Clicking Minimize hid the window while keeping its taskbar entry. Clicking
+  that taskbar entry restored the exact 960×560 size and position.
+- Maximize, minimize while maximized, reload configuration, restore, then
+  unmaximize preserved the maximized state and original floating geometry.
+- Alt+Tab selected and restored a minimized window, confirmed by compositor
+  active-window and workspace state.
+- Genuine virtual multitouch minimized two separate overlapping windows,
+  including Files, and both restored independently. The upstream touch bug
+  required the included contact-position/nonzero-ID patch.
+- Title-bar Close opened confirmation; confirming closed only the temporary
+  target. Fixed the existing IPC action to retain the Wayland handle instead of
+  a compositor record without a close method. Desktop confirmation returns to
+  the app view rather than opening Recents. Existing review windows stayed open.
+- A newly launched temporary window's title bar and content fit between the
+  top reserved area and taskbar. Both new test windows were closed afterwards.
+
+Local ignored evidence: `build/desktop-session/minimized.png`,
+`minimized-alt-tab.png`, `window-close-confirmation.png` and the review scripts.
+Physical touchscreen acceptance and a newly booted ISO were not tested.

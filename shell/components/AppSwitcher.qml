@@ -13,6 +13,7 @@ FocusScope {
     property bool fillApp: false
     property var pendingTarget: null
     property var selection: null
+    property var activateTarget: target => target.activate()
     readonly property int currentIndex: cards.currentIndex
     signal activated
     signal dismissed
@@ -43,7 +44,7 @@ FocusScope {
             const target = control.pendingTarget;
             control.pendingTarget = null;
             if (target) {
-                target.activate();
+                control.activateTarget(target);
                 if (control.fillApp) target.maximized = true;
             }
         }

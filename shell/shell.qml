@@ -32,6 +32,19 @@ ShellRoot {
         function sounds(): void { root.openAppRequested("sounds"); }
     }
     signal replayBrand
+    function activateWindow(window) {
+        if (!window || !window.wayland) return;
+        const workspace = window.workspace || (window.lastIpcObject && window.lastIpcObject.workspace);
+        const address = String(window.address).replace(/^0x/i, "");
+        if (Hyprland.usingLua && workspace && workspace.name.startsWith("special:tessarchy-minimized-")
+                && /^[0-9a-f]+$/i.test(address)) {
+            Quickshell.execDetached(["hyprctl", "eval", "TessarchyWindows.activate(\"address:0x" + address + "\")"]);
+        } else window.wayland.activate();
+    }
+    function activateHandle(target) {
+        const window = Hyprland.toplevels.values.find(window => window.wayland === target);
+        if (window) activateWindow(window);
+    }
     readonly property var activeWindow: Hyprland.activeToplevel || Hyprland.toplevels.values.find(window => window.wayland && window.wayland.activated) || null
     property var windowHistory: []
     readonly property var switcherWindows: windowHistory.filter(window => Hyprland.toplevels.values.indexOf(window) >= 0)
@@ -268,7 +281,7 @@ ShellRoot {
                     target: root
                     function onActionRequested(action) {
                         if (!Hyprland.focusedMonitor || Hyprland.focusedMonitor.name !== surface.modelData.name) return;
-                        panel.closeTarget = action === "close" ? root.activeWindow : null;
+                        panel.closeTarget = action === "close" && root.activeWindow ? root.activeWindow.wayland : null;
                         panel.page = action === "exit" ? "session" : panel.closeTarget ? "close" : "";
                     }
                 }
@@ -291,7 +304,7 @@ ShellRoot {
                     target: panel.closeTarget
                     function onClosed() {
                         panel.closeTarget = null;
-                        panel.page = "windows";
+                        panel.page = surface.mode === "desktop" ? "" : "windows";
                     }
                 }
                 ColumnLayout {
@@ -332,6 +345,7 @@ ShellRoot {
                             fillApp: surface.mode !== "desktop"
                             accentColor: root.accentColor
                             reducedMotion: shellPreferences.reducedMotion
+                            activateTarget: target => root.activateHandle(target)
                             onActivated: panel.page = ""
                             onDismissed: panel.page = ""
                             onCloseRequested: target => {
@@ -473,7 +487,7 @@ ShellRoot {
                                         Layout.fillWidth: true
                                         onClicked: {
                                             panel.closeTarget = null;
-                                            panel.page = "windows";
+                                            panel.page = surface.mode === "desktop" ? "" : "windows";
                                         }
                                     }
                                     TouchButton {
@@ -484,7 +498,7 @@ ShellRoot {
                                         onClicked: {
                                             const target = panel.closeTarget;
                                             panel.closeTarget = null;
-                                            panel.page = "windows";
+                                            panel.page = surface.mode === "desktop" ? "" : "windows";
                                             if (target)
                                                 target.close();
                                         }
@@ -646,7 +660,7 @@ ShellRoot {
                             onWindowRequested: window => {
                                 panel.startMenuOpen = false;
                                 panel.page = "";
-                                Qt.callLater(() => { if (window && window.wayland) window.wayland.activate(); });
+                                Qt.callLater(() => root.activateWindow(window));
                             }
                         }
                         // Sunken tray, as on the XP taskbar: indicators and clock.
@@ -749,7 +763,7 @@ ShellRoot {
                         const target = quickSwitcher.pendingTarget;
                         quickSwitcher.pendingTarget = null;
                         if (target) {
-                            target.activate();
+                            root.activateHandle(target);
                             if (surface.mode !== "desktop") target.maximized = true;
                         }
                     }
