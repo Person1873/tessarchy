@@ -718,6 +718,66 @@ assert(#fire("window.open", dialog) == 0, "desktop dialogs are left alone")
                                 input=script, text=True, capture_output=True, env=self.env)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_windowed_desktop_floats_new_windows_and_honors_settings_toggle(self):
+        import shutil
+        if not shutil.which('lua'):
+            self.skipTest('Lua interpreter unavailable')
+        (self.home / 'config/tessarchy').mkdir(parents=True)
+        script = r'''local callbacks, actions = {}, {}
+local function action(kind) return function(a) a = a or {}; a.kind = kind; return a end end
+hl = {
+    layer_rule = function() end,
+    monitor = function() end, config = function() end, bind = function() end,
+    on = function(name, callback) callbacks[name] = callback end,
+    dispatch = function(a) table.insert(actions, a) end,
+    dsp = { exec_cmd = function() end, exit = function() end, focus = function() end,
+            window = { fullscreen = action("fullscreen"), resize = action("resize"),
+                       center = action("center"), float = action("float"),
+                       move = action("move"), drag = action("drag"),
+                       close = action("close"), cycle_next = action("cycle") } }
+}
+dofile(arg[1])
+local function prefer(mode, windows)
+    local f = assert(io.open(os.getenv("XDG_CONFIG_HOME") .. "/tessarchy/shell.ini", "w"))
+    if windows then f:write("[Shell]\nlayoutMode=" .. mode .. "\ndesktopWindows=" .. windows .. "\n")
+    else f:write("[Shell]\nlayoutMode=" .. mode .. "\n") end
+    f:close()
+end
+local function monitor(w, h)
+    return { width = w, height = h, scale = 1, transform = 0, reserved = {} }
+end
+local function fire(event, window) actions = {}; callbacks[event](window); return actions end
+-- Windowed is the default: an ordinary desktop window floats, shrinks to the
+-- conventional size, and centers. Width/height are capped and floored.
+prefer("desktop")
+local app = { floating = false, fullscreen = 0, monitor = monitor(1920, 1080) }
+local a = fire("window.open", app)
+assert(#a == 3, "expected float, resize and center")
+assert(a[1].kind == "float" and a[1].action == "set" and a[1].window == app)
+assert(a[2].kind == "resize" and a[2].window == app and a[2].x == 960 and a[2].y == 640,
+    a[2].x .. "x" .. a[2].y)
+assert(a[3].kind == "center" and a[3].window == app)
+-- A small output floors the size instead of collapsing it.
+local small = { floating = false, fullscreen = 0, monitor = monitor(640, 400) }
+a = fire("window.open", small)
+assert(a[2].x == 544 and a[2].y == 280, a[2].x .. "x" .. a[2].y)
+-- Tiled restores the old behaviour: nothing is floated, nothing is maximized.
+prefer("desktop", "tiled")
+local tiled = { floating = false, fullscreen = 0, monitor = monitor(1920, 1080) }
+assert(#fire("window.open", tiled) == 0, "tiled desktop must not touch new windows")
+-- Already-floating windows and dialogs are never re-floated.
+prefer("desktop")
+assert(#fire("window.open", { floating = true, fullscreen = 0, monitor = monitor(1920, 1080) }) == 0)
+-- The windowed setting is Desktop-only; phones keep maximizing.
+prefer("phone", "windowed")
+local phone = { floating = false, fullscreen = 0, monitor = monitor(720, 1440) }
+a = fire("window.open", phone)
+assert(#a == 1 and a[1].kind == "fullscreen" and a[1].mode == "maximized")
+'''
+        result = subprocess.run(['lua', '-', str(ROOT / 'session/hyprland.lua')],
+                                input=script, text=True, capture_output=True, env=self.env)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def screenshot_tools(self, grim_body=None):
         import shutil
         tools = self.home / 'capture-tools'

@@ -1416,7 +1416,8 @@ Actual VM checks at 1200x800 Desktop:
 - Taskbar left to right: Apps, Windows, Settings, one button per open window
   ("This is the deskto...", "arch@archlinux:~"), then the tray icon at the right.
 - Tapping a task button focuses that window and dismisses the open page; opening
-  Apps shows the centred "Your space" grid with the taskbar still full width.
+  Apps shows the full-width launcher grid with the taskbar still full width (the
+  launcher page has no heading of its own).
 - `./scripts/check.sh` passes 49 Qt Quick results, QML lint and both Hyprland
   config checks. Physical touch acceptance remains pending.
 
@@ -1434,6 +1435,44 @@ Actual VM check at 1200x800 Desktop, from a QMP capture: left to right - the
 desktop mode (Dr...", "arch@archlinux:~"), spacer, then the sunken tray with the
 tray icon and the clock. `./scripts/check.sh` passes 86 Python tests and 49 Qt
 Quick results. Physical touch acceptance remains pending.
+
+## Start menu and windowed Desktop, 2026-10-18
+
+Owner asked for a modernised Windows-XP Start menu above the Start button (apps
+in a grid, smaller and more professional, blue-tinted like the button), for a
+second press of Start to close it, for the "Your space" label to go, and for
+Desktop windows to open windowed like Windows rather than tiled, with a Settings
+toggle between the two.
+
+- The Start menu is a Desktop-only `PanelWindow` (`namespace tessera-start`)
+  anchored above the Start button on the primary output. It carries a blue header
+  band and a 4-column grid of `StartMenuTile`s (40 px icon over a 12 px label in
+  a blue-tinted glass chip), tinted from the same accent as the Start pill.
+  Choosing a tile closes the menu and launches the app.
+- `StartButton.onClicked` now toggles `panel.startMenuOpen`, so a second press
+  closes the menu; opening any shell page also closes it.
+- The launcher page no longer renders a heading, so "Your space" is gone.
+- Desktop window style is a saved preference (`desktopWindows`, `windowed` by
+  default). `session/hyprland.lua` reads it on `window.open`: in `windowed` mode
+  an ordinary Desktop window is floated, sized to a capped/ floored conventional
+  size (960x640 at 1200x800) and centred; `tiled` leaves the dwindle layout
+  intact. The Settings DESKTOP toggle flips the preference and reloads the
+  compositor so the config re-reads it.
+- Tests: `tests/test_workflows.py` adds
+  `test_windowed_desktop_floats_new_windows_and_honors_settings_toggle` (float +
+  resize + center for windowed, none for tiled, phones still maximize).
+
+Actual VM checks at 1200x800 Desktop (QMP captures, guest shell deployed from
+`shell/`):
+
+- Taskbar left to right: blue `start` pill, quick-launch icons, empty task area,
+  sunken tray with tray icon and clock.
+- Tapping Start opens the blue-header 4-column app grid above the button; tapping
+  Start again closes it.
+- New app window (`foot`) is `floating=True size=[960,640] at=[120,72]`; with
+  `desktopWindows=tiled` a new window is `floating=False size=[1200,688]` and the
+  taskbar shows its task button. `./scripts/check.sh` passes 87 Python tests and
+  49 Qt Quick results. Physical touch acceptance remains pending.
 
 ## Display controls integration — 2026-10-18
 

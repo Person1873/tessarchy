@@ -60,6 +60,9 @@ ShellRoot {
         property real barOpacity: 0.22
         property real wallpaperDim: 0.12
         property bool doNotDisturb: false
+        // "windowed" opens desktop windows floating and sized; "tiled" restores
+        // the dwindle layout. Read by the Hyprland config on load.
+        property string desktopWindows: "windowed"
         property bool nightLight: false
     }
     RadioBackend { id: radioBackend }
@@ -181,6 +184,8 @@ ShellRoot {
                 screen: surface.modelData
                 readonly property var appEntries: Apps.majorApplications(DesktopEntries.applications.values)
                 property string page: ""
+                // Desktop Start menu, opened by the taskbar's Start button.
+                property bool startMenuOpen: false
                 property var closeTarget: null
                 property bool keyboardSwitch: false
                 property string messageRecipient: ""
@@ -221,6 +226,7 @@ ShellRoot {
                     if (name === "windows" && page !== "windows") switcher.selectActive();
                     keyboardSwitch = false;
                     closeTarget = null;
+                    startMenuOpen = false;
                     page = page === name ? "" : name;
                 }
                 function launch(command) {
@@ -299,8 +305,10 @@ ShellRoot {
                         Layout.alignment: Qt.AlignHCenter
                         spacing: 8
                         Text {
-                            visible: panel.page !== "windows"
-                            text: panel.page === "apps" ? "Your space" : panel.page === "close" ? "Close this window?" : panel.page === "settings" ? "Settings" : panel.page === "phone" ? "Phone" : panel.page === "messages" ? "Messages" : panel.page === "cellular" ? "SIM & cellular" : panel.page === "sounds" ? "Sounds & ringtones" : panel.page === "notifications" ? "Alerts" : "End this session?"
+                            // The launcher page carries no heading; Desktop gets
+                            // the Start menu instead.
+                            visible: panel.page !== "windows" && panel.page !== "apps"
+                            text: panel.page === "close" ? "Close this window?" : panel.page === "settings" ? "Settings" : panel.page === "phone" ? "Phone" : panel.page === "messages" ? "Messages" : panel.page === "cellular" ? "SIM & cellular" : panel.page === "sounds" ? "Sounds & ringtones" : panel.page === "notifications" ? "Alerts" : "End this session?"
                             color: root.accentColor
                             font.pixelSize: 22
                             font.bold: true
@@ -577,8 +585,8 @@ ShellRoot {
                         StartButton {
                             text: "start"
                             accentColor: root.accentColor
-                            selected: panel.page === "apps"
-                            onClicked: panel.showPage("apps")
+                            selected: panel.startMenuOpen
+                            onClicked: panel.startMenuOpen = !panel.startMenuOpen
                         }
                         NavButton {
                             Layout.fillWidth: false
@@ -936,6 +944,91 @@ ShellRoot {
                 Connections {
                     target: panel
                     function onPageChanged() { if (panel.page !== "") statusBar.drawerOpen = false; }
+                }
+            }
+            // Windows-XP-style Start menu: a compact blue-tinted glass panel that
+            // opens above the Start button on the primary output. The button
+            // toggles it, choosing an app closes it, and it is Desktop-only.
+            PanelWindow {
+                id: startMenu
+                screen: surface.modelData
+                visible: surface.isPrimaryScreen && surface.mode === "desktop" && panel.startMenuOpen
+                readonly property int gridColumns: 4
+                readonly property int rows: Math.ceil(panel.appEntries.length / gridColumns)
+                readonly property int gridHeight: Math.min(rows * 92, 300)
+                anchors {
+                    bottom: true
+                    left: true
+                }
+                margins.bottom: surface.navHeight + 10
+                margins.left: 12
+                implicitWidth: 452
+                implicitHeight: gridHeight + 78
+                exclusiveZone: 0
+                color: "transparent"
+                WlrLayershell.namespace: "tessera-start"
+                WlrLayershell.layer: WlrLayer.Top
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 18
+                    color: Qt.rgba(0.043, 0.086, 0.176, 0.94)
+                    border.width: 1
+                    border.color: Qt.rgba(0.56, 0.71, 1.0, 0.32)
+                    // Blue header band, the Start menu's signature.
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        height: 40
+                        topLeftRadius: parent.radius
+                        topRightRadius: parent.radius
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: Qt.rgba(0.16, 0.30, 0.62, 0.85) }
+                            GradientStop { position: 1.0; color: Qt.rgba(0.10, 0.18, 0.40, 0.25) }
+                        }
+                    }
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 14
+                        spacing: 10
+                        Text {
+                            text: "ALL APPS"
+                            color: "#dbe8ff"
+                            Layout.leftMargin: 2
+                            font {
+                                pixelSize: 11
+                                bold: true
+                                letterSpacing: 2
+                            }
+                        }
+                        ScrollView {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: startMenu.gridHeight
+                            clip: true
+                            contentWidth: availableWidth
+                            GridLayout {
+                                width: parent.width
+                                columns: startMenu.gridColumns
+                                columnSpacing: 8
+                                rowSpacing: 8
+                                Repeater {
+                                    model: panel.appEntries
+                                    delegate: StartMenuTile {
+                                        required property var modelData
+                                        text: modelData.name
+                                        symbol: "browser"
+                                        iconSource: Quickshell.iconPath(modelData.icon, true)
+                                        accentColor: root.accentColor
+                                        onClicked: {
+                                            panel.startMenuOpen = false;
+                                            modelData.execute();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             // Pop-up host: an overlay window that never reserves space and

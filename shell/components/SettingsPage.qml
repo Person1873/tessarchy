@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 
 ColumnLayout {
     id: page
@@ -281,6 +282,35 @@ ColumnLayout {
     }
     Text {
         text: "Muted notifications still collect in the alert center until dismissed. Nothing persists across sessions."
+        color: "#8da7b9"
+        font.pixelSize: 12
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+    }
+    Text {
+        text: "DESKTOP"
+        color: page.accentColor
+        font {
+            pixelSize: 11
+            bold: true
+            letterSpacing: 2
+        }
+    }
+    TouchButton {
+        text: page.preferences.desktopWindows === "windowed" ? "Windows open floating" : "Windows open tiled"
+        selected: page.preferences.desktopWindows === "windowed"
+        accentColor: page.accentColor
+        Layout.fillWidth: true
+        Accessible.name: text + ", button"
+        onClicked: {
+            page.preferences.desktopWindows = page.preferences.desktopWindows === "windowed" ? "tiled" : "windowed";
+            page.preferences.sync();
+            // The window style lives in the compositor config, so reload it.
+            Quickshell.execDetached(["hyprctl", "reload"]);
+        }
+    }
+    Text {
+        text: "Desktop mode only. Floating windows keep their own size and position; tiled windows share the screen in a row."
         color: "#8da7b9"
         font.pixelSize: 12
         Layout.fillWidth: true

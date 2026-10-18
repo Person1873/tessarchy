@@ -11,7 +11,12 @@ full-width taskbar instead of the floating dock, laid out like Windows XP's but
 rendered in the same glass: a raised accent Start pill with the project mark,
 quick-launch buttons, wide bevelled task buttons (the focused window reads as
 pressed), and a sunken tray holding the application indicators and the clock. It
-stays full width while a page is open so the page reads as a centered sheet. Launcher
+stays full width while a page is open so the page reads as a centered sheet. The
+Start pill toggles a Windows-XP-style Start menu: a blue-tinted glass panel with a
+compact app grid that opens above the button on the primary output. Desktop
+ordinary windows open floating at a conventional size and centred ("windowed"), or
+join the dwindle tile layout ("tiled"), per the Desktop setting in Settings; the
+Hyprland config reads the same value. Launcher
 columns and panel height follow available space, including manual modes on small
 screens. Settings is loaded only when opened. Panels never acquire application
 keyboard focus; buttons and sliders use NoFocus. No keyboard search or outside
