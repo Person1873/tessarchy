@@ -993,5 +993,17 @@ Actually performed:
 - `session/hyprland.lua` with the new wake options and hypridle autostart
   passes `Hyprland --verify-config` (`config ok`) on 0.56.2.
 
-Not performed: a real idle-to-blank-and-wake cycle in the guest and on
-hardware. Hardware idle behavior stays in T37.
+- Full idle-to-blank-and-wake cycle in the guest (build 10 debug image, QEMU
+  x86_64, Hyprland 0.56.2, 20-second debug timeout): hypridle registered the
+  shortened rule, logged `Idled` at 04:22:21, and the monitor read back
+  `dpmsStatus: 0` (blanked output; screendumps of a blanked virtio output are
+  black, so the dpms state is the evidence). Waking input on the session VT
+  produced `Resumed`, then `[LOG] Running hyprctl dispatch 'hl.dsp.dpms({
+  action = "enable" })'` with a plain `ok` and `dpmsStatus: 1` afterwards. A
+  second cycle later in the same run (another `Idled` plus the disable
+  dispatch) also succeeded, showing the Lua dispatch form is accepted in both
+  directions. The idle listener only counts down while the session VT is
+  active; console-side checks read dpms state via `hyprctl monitors` after
+  switching back.
+
+Not performed: hardware idle behavior. It stays in T37.

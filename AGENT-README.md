@@ -188,7 +188,7 @@ Read [pr-triage.md](docs/pr-triage.md) and inspect current PR heads first.
 | ID | Task | Completion result |
 | --- | --- | --- |
 | T09 | Review #18 power controls | Reliable service detection, supported modes and guarded writes |
-| T10 | Review | — | `feat/screen-idle` / #21 | Reworked on current `main`: hypridle autostart through the Lua `hyprland.start` hook, explicit wake-input options, per-capture wake in the boot test; parser and local checks green, guest idle cycle pending |
+| T10 | Review | — | `feat/screen-idle` / #21 | Reworked on current `main`: hypridle autostart through the Lua `hyprland.start` hook, explicit wake-input options, per-capture wake in the boot test; guest idle-to-blank-and-wake cycle verified over the serial console, Lua dispatch accepted both ways |
 | T11 | Review #23 Wi-Fi connection workflow | Scan ownership, NetworkManager lifecycle, credentials agent and cancellation resolved |
 | T12 | Review #22 rotation | Current Lua support, touch mapping, output settings and recovery verified |
 | T13 | Review #13 notifications | Plain-text rendering, popup/history lifecycle, replacement and withdrawal checked |
