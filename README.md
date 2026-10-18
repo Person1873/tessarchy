@@ -32,7 +32,8 @@ live tester ISO.
   labels, and reduced motion.
 - A pull-down glass panel with airplane mode, hardware-aware Wi-Fi/Bluetooth/
   cellular radio switches, layout selection, and optional PipeWire volume controls. Network
-  selection, pairing, and connection-strength backends remain planned; see
+  selection and connection-strength backends remain planned. Bluetooth pairing
+  and device controls are integrated separately; real-adapter acceptance is pending. See
   [radio controls](docs/radio-controls.md).
 - An application drawer populated from installed desktop entries.
 - Swipeable app cards with real window previews, glass icon actions, and keyboard switching.
@@ -46,8 +47,10 @@ live tester ISO.
 
 ## Project status
 
-**Early prototype.** The current source passes 17 Python tests, 19 Qt Quick
-results, and available static checks. The [Alpha 2 tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2)
+**Early prototype.** The current source passes 44 Python tests, 37 Qt Quick
+results, and available static checks. Phone-style greetd/PAM login is verified in
+the development VM; Bluetooth, media, audio and private screenshot controls are
+integrated in source. These additions are not in the published Alpha 2 ISO. The [Alpha 2 tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2)
 has been observed booting into Tessera in BIOS and non-Secure-Boot UEFI QEMU/KVM.
 It includes Quiet Edge, the card switcher, the mobile status clock, and pull-down
 radio and layout controls. Checksums, package versions and boot evidence are
@@ -210,3 +213,10 @@ Phone-style PIN sign-in is available as an opt-in greeter candidate, using the
 four-digit Linux account password through greetd/PAM. See [setup and validation
 status](docs/phone-login.md). The existing tester ISO still uses autologin until
 account provisioning and real greeter boot tests are completed.
+
+## Roadmap and sharing
+
+The [project website](https://thediamondsaint.github.io/tessarchy/) includes real
+development captures, the current hardware roadmap and official branding downloads.
+See the [device roadmap](docs/device-roadmap.md) for milestone gates and the
+difference between the current VM prototype and future physical-device support.

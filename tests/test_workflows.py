@@ -45,11 +45,30 @@ class Workflows(unittest.TestCase):
         with zipfile.ZipFile(destination / 'assets/screenshots.zip') as archive:
             self.assertEqual(archive.read('phone-switcher.png'),
                              (ROOT / 'assets/screenshots/phone-switcher.png').read_bytes())
+            self.assertEqual(archive.read('phone-login.png'),
+                             (ROOT / 'assets/screenshots/phone-login.png').read_bytes())
         sentinel = destination / 'keep.txt'
         sentinel.write_text('unrelated content')
         result = subprocess.run(command, capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(sentinel.read_text(), 'unrelated content')
+
+    def test_site_release_download_ignores_brand_only_releases(self):
+        import json
+        import sys
+        metadata = self.home / 'releases.json'
+        iso_release = {'tag_name': 'tester', 'assets': [{'name': 'tessarchy.iso'}]}
+        metadata.write_text(json.dumps([
+            {'tag_name': 'branding', 'assets': [{'name': 'logo.zip'}]},
+            {'tag_name': 'draft', 'draft': True, 'assets': [{'name': 'draft.iso'}]},
+            iso_release]))
+        destination = self.home / 'release-site'
+        result = subprocess.run([sys.executable, str(ROOT / 'scripts/build-site.py'),
+                                 '--output', str(destination), '--releases', str(metadata)],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads((destination / 'project.json').read_text())['release'],
+                         iso_release)
 
     def setUp(self):
         self.scratch = tempfile.TemporaryDirectory(prefix='tessarchy-test-')

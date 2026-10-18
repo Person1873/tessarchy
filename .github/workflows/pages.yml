@@ -5,6 +5,7 @@ on:
     paths:
       - 'website/**'
       - 'assets/screenshots/**'
+      - 'assets/roadmap/**'
       - 'shell/**'
       - 'docs/**'
       - 'Operation-TESSARCHY.md'

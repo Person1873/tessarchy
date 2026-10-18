@@ -35,6 +35,21 @@ document.querySelectorAll('[data-image]').forEach(button => button.addEventListe
 }));
 document.querySelector('#gallery-close').addEventListener('click', () => gallery.close());
 gallery.addEventListener('click', event => {if (event.target === gallery) gallery.close();});
+document.querySelector('#share-project').addEventListener('click', async () => {
+  const url = 'https://thediamondsaint.github.io/tessarchy/';
+  const status = document.querySelector('#share-status');
+  try {
+    if (navigator.share) {
+      await navigator.share({title: 'Tessarchy · Quiet Edge', text: 'A touch-first Arch Linux prototype: real VM screenshots, a tester ISO, and the roadmap to a handheld device.', url});
+      status.textContent = 'Project shared.';
+    } else {
+      await navigator.clipboard.writeText(url);
+      status.textContent = 'Project link copied. Paste it into your channel.';
+    }
+  } catch (error) {
+    status.textContent = error.name === 'AbortError' ? 'Sharing cancelled.' : 'Copy the project address below to share it.';
+  }
+});
 function showRelease(release) {
   if (!release || !release.html_url || !release.html_url.startsWith('https://github.com/thediamondsaint/tessarchy/releases/')) return;
   const link = document.querySelector('#release-link'); link.href = release.html_url;
@@ -62,6 +77,6 @@ async function readJson(url) {
     readJson('https://api.github.com/repos/thediamondsaint/tessarchy/releases?per_page=5'),
     readJson('https://api.github.com/repos/thediamondsaint/tessarchy/commits?sha=build%2Flive-iso&per_page=1')
   ]);
-  if (results[0].status === 'fulfilled') showRelease(results[0].value.find(release => !release.draft));
+    if (results[0].status === 'fulfilled') showRelease(results[0].value.find(release => !release.draft && release.assets?.some(asset => asset.name.endsWith('.iso'))));
   if (results[1].status === 'fulfilled') showCommit(results[1].value[0]);
 })();
