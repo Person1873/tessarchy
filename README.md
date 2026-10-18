@@ -205,3 +205,8 @@ pull-down. Captures are saved as unique private PNGs in
 `${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots`. This requires grim; desktop
 notifications are optional. These development changes are not part of the
 already-published Alpha 2 image.
+
+Phone-style PIN sign-in is available as an opt-in greeter candidate, using the
+four-digit Linux account password through greetd/PAM. See [setup and validation
+status](docs/phone-login.md). The existing tester ISO still uses autologin until
+account provisioning and real greeter boot tests are completed.

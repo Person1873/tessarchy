@@ -757,3 +757,80 @@ button in the VM, including whether the drawer is absent from captured pixels.
 VM SSH access has expired. These helper tests are not real image captures and
 there is no new ISO boot or release claim. Local fish/ShellCheck are unavailable;
 target CI covers those tools.
+
+## Phone PIN greeter candidate, 2026-10-17
+
+Actual validation:
+- `./scripts/check.sh` passed: 42 Python and 37 Qt Quick results, scratch
+  install/uninstall, Lua syntax, both session and greeter Hyprland config parsers,
+  and QML lint. Local fish/ShellCheck were unavailable; CI covers those tools.
+- Installed Quickshell 0.3.1 Greetd metadata and official API/protocol docs checked.
+- Real Quickshell Greetd module was exercised against an isolated mock UNIX
+  socket: single-secret success/fixed command, rejection, visible prompt, second
+  secret, passwordless success refusal and disconnect/deadline failure. No real
+  account or PAM authentication was used in these tests. The synthetic test PIN
+  did not appear in captured logs; Quickshell censored its secret response.
+- QML component tests cover exact four-digit entry, leading zero, duplicate
+  submission prevention, deletion, busy/unavailable clearing, minimum key size,
+  capability/state guards and refusal to launch before authentication succeeds.
+- Three local packages built without dependency installation: tessera-shell,
+  tessarchy-session, tessarchy-greeter. Final outputs/logs are under ignored
+  build/phone-login-packages-final/. These are candidates, not installed packages.
+- VM SSH access was restored using owner-provided credentials; credentials were
+  not written to repository files. The isolated preview was visually inspected
+  at 400x800 and 320x568. Keypad taps filled masked dots; deletion and synthetic
+  keyboard entry/automatic clear worked. Native 400x800 portrait was restored.
+- Captures: assets/screenshots/login-preview-phone.png and login-preview-small.png.
+  Preview logs show software rendering and a Qt Wayland text-input focus warning,
+  with no QML component-load failure. The preview explicitly cannot authenticate.
+
+Pending/manual acceptance:
+- greetd is missing in the VM. Installing it needs explicit permission under
+  AGENTS.md. No dependency, password, PAM, getty or display-manager setting was
+  changed. The owner selected a four-digit account password but has not chosen
+  the new PIN. Current account credentials remain unchanged.
+- Real PAM success/wrong PIN, greeter compositor exit and user-session handoff,
+  boot/session-exit return, failure recovery, actual account policy/rate limits
+  and touchscreen hardware. Follow docs/phone-login.md after approval.
+- Greeter packaging is opt-in and not enabled in ISO staging. Live-account PIN
+  enrollment is not implemented. Published Alpha 2 and boot evidence are unchanged.
+- This is pre-session authentication, not a Wayland session locker; no secure
+  locking claim. Do not call mock protocol success a real login or boot test.
+
+## Activated phone login, startup warnings and logo kit, 2026-10-17
+
+Actual validation after explicit owner approval:
+- Installed greetd/greetd-agreety and the local Tessarchy packages in the VM.
+  Local package dependencies grim/libnotify were also installed. Host packages
+  and configuration were not changed. Password was set through hidden stdin;
+  no credential is in Git, docs, helper files or command arguments.
+- One VM reboot completed. Because QEMU used -no-reboot it exited; the old process
+  was confirmed gone before relaunching the same disk. The removed temporary
+  read-only share was recreated; no concurrent disk writer or image rebuild.
+- Real PAM rejected an incorrect PIN, with no Tessera process started. The chosen
+  PIN opened the authenticated desktop. The real session-exit confirmation was
+  used and the phone greeter returned. Fixed a follow-up backend error overwriting
+  the rejection message; confirmed the corrected message in the VM.
+- Both greeter and desktop now run through start-hyprland. Before the change logs
+  contained the unsupported direct-launch warning. After it, the greeter log had
+  no such warning and the final desktop reported watchdog=true, warnings=[], and
+  an empty configerrors result. No errors/notifications were suppressed.
+- Separate virtio software-GPU gamma/page-flip/EGL fallback diagnostics remain
+  in logs; they are not claimed eliminated. No persistent config-error overlay
+  was present in the inspected greeter or authenticated desktop captures.
+- Final ./scripts/check.sh passed: 43 Python and 37 Qt Quick checks, both Lua
+  parsers and QML lint. Includes an argument-safe watchdog launch test using a
+  config path with spaces. Log: build/pr-review/phone-login-final-check.log.
+- All three v4 local packages built. VM greeter uses a private writable HOME and
+  VM-only persistent native 400x800 output settings. User clock/motion preferences
+  were preserved. Actual captures are phone-login.png, phone-login-rejected.png
+  and phone-login-home.png under assets/screenshots/.
+- Official logo ZIP exported: 59 files, 5,544,035 bytes; CRC and all manifest hashes
+  passed. Canonical SVG byte identity, all PNG dimensions/alpha, ICO resolutions,
+  GIF/WebP frame counts (72), loop flags, transparency/disposal and 3D contact
+  sheet were inspected. No third-party console artwork or new logo redesign.
+
+Remaining: physical touch/boot hardware, account policy/recovery acceptance on
+other machines, unattended lifecycle soak and live-ISO PIN enrollment. There is
+no new ISO release or secure session-lock claim. Generated branding artifacts
+remain under dist/tessarchy-logo-kit-20261017/.
