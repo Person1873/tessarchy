@@ -15,13 +15,13 @@ target_aspect=320  # 1 / 0.3125, the wide-layout height-to-width ratio
 portrait_scale() {
     local monitors width height scaleh frac short logical hundredths
     monitors=$(hyprctl -j monitors 2>/dev/null || true)
-    [[ $monitors =~ \"width\":[[:space:]]*([0-9]+) ]] && width=${BASH_REMATCH[1]} || return 1
-    [[ $monitors =~ \"height\":[[:space:]]*([0-9]+) ]] && height=${BASH_REMATCH[1]} || return 1
+    if [[ $monitors =~ \"width\":[[:space:]]*([0-9]+) ]]; then width=${BASH_REMATCH[1]}; else return 1; fi
+    if [[ $monitors =~ \"height\":[[:space:]]*([0-9]+) ]]; then height=${BASH_REMATCH[1]}; else return 1; fi
     scaleh=100
     if [[ $monitors =~ \"scale\":[[:space:]]*([0-9]+)(\.([0-9]+))? ]]; then
         frac=${BASH_REMATCH[3]:-0}
         frac=${frac:0:2}
-        scaleh=$(( ${BASH_REMATCH[1]} * 100 + 10#${frac:-0} ))
+        scaleh=$(( BASH_REMATCH[1] * 100 + 10#${frac:-0} ))
     fi
     short=$(( width < height ? width : height ))
     logical=$(( short * 100 / scaleh ))
