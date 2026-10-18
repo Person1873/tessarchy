@@ -42,6 +42,7 @@ def main():
     assets.mkdir()
     for source in sources:
         shutil.copyfile(source, assets / source.name)
+    shutil.copyfile(ROOT / "assets/boot/phone-startup.png", assets / "phone-startup.png")
     shutil.copyfile(ROOT / "shell/artwork/tessarchy-mark.svg", assets / "tessarchy-mark.svg")
     shutil.copyfile(ROOT / "assets/roadmap/tessarchy-device-roadmap.png",
                     assets / "tessarchy-device-roadmap.png")

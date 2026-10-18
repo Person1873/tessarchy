@@ -127,10 +127,11 @@ Automated install tests use scratch HOME directories.
 ./scripts/package.sh
 ```
 
-This builds three Arch packages into `dist/`: `tessera-shell`,
-`tessarchy-session` and the opt-in `tessarchy-greeter`. Package installation and
+This builds four Arch packages into `dist/`: `tessera-shell`,
+`tessarchy-session`, the opt-in `tessarchy-greeter` and `tessarchy-bootsplash`. Package installation and
 service activation are separate operations. The [PIN login guide](docs/phone-login.md)
-covers greetd setup and the tested VM configuration.
+covers greetd setup and the tested VM configuration. The [power-on screen guide](docs/boot-screen.md)
+covers the animated Plymouth theme and quiet VM startup.
 
 The [ISO guide](docs/iso.md) covers staging, an explicitly requested image build,
 boot validation and release publication. Image files are distributed as GitHub

@@ -6,7 +6,8 @@ hl.config({
     decoration = { rounding = 18, blur = { enabled = true, size = 4, passes = 2 }, shadow = { enabled = false } },
     animations = { enabled = false },
     input = { kb_layout = "us", follow_mouse = 0 },
-    misc = { disable_hyprland_logo = true, force_default_wallpaper = 0,
+    misc = { disable_hyprland_logo = true, disable_splash_rendering = true,
+             force_default_wallpaper = 0,
              key_press_enables_dpms = true, mouse_move_enables_dpms = true },
 })
 -- Frost only Tessera glass surfaces; leave applications unchanged.

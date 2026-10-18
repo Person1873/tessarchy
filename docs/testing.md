@@ -922,6 +922,49 @@ The operational handoff is kept in an ignored local file. Public documentation
 uses project-relative paths and generic machine/account descriptions. Published
 validation evidence remains in this file.
 
+## Quiet Edge startup validation — 2026-10-18 UTC
+
+Actual validation:
+
+- `./scripts/check.sh`: 47 Python tests and 37 Qt Quick tests passed, including
+  scratch-HOME install/uninstall, both Hyprland Lua configuration parsers and
+  QML checks. Existing QML metadata warnings remain; local fish/ShellCheck are
+  unavailable and covered by CI.
+- All four Arch packages built with existing host tools and `--nodeps`; no host
+  dependency was installed. The bootsplash package contains the theme, 64 logo
+  frames and retained-splash service override. It leaves Plymouth's own config
+  under the distribution package's ownership.
+- With explicit approval, installed Plymouth and wireless-regdb in the QEMU/KVM
+  development VM. Installed the rebuilt session, greeter and bootsplash packages.
+  Saved boot/config backups before activation and regenerated the initramfs/GRUB
+  configuration inside the VM.
+- Recorded cold boots through QMP. Corrected an initial VT7 handoff stall by
+  retaining VT1 for both Plymouth and greetd. The final cold boot shows the
+  spinning mark, then the PIN keypad. No service-status scrolling appeared in
+  the Linux startup phase.
+- A transient missing-guiutils banner came from the greeter's absent `PATH`.
+  `hyprland-guiutils` was already installed and its package files were intact.
+  Added an explicit system PATH; the final capture has no such banner. Disabled
+  the default Hyprland slogan, with `Hyprland --verify-config` passing.
+- Actual PIN authentication entered the user session; session output appeared
+  under `tessarchy-session` in the journal. Exiting the test session returned to
+  the graphical greeter. `systemctl --failed` reported zero failed units. The
+  missing regulatory.db diagnostic is gone after wireless-regdb installation.
+- Exported an actual 400x800, 35-second MP4 from continuous capture seconds 10–45.
+  Exported a 320x640, 14.6-second GIF from seconds 10–19.6 and 39.5–44.5, shortening
+  only the idle transition. Inspected decoded GIF frames and confirmed dimensions,
+  frame counts and durations with ffprobe. Assets are in the presentation release.
+- Built the website and checked it in installed Chromium at phone/desktop widths:
+  images loaded, no horizontal overflow, keyboard tabs retained focus, gallery
+  open/Escape close worked, and no uncaught JavaScript exceptions occurred.
+
+Remaining work:
+
+- Firmware and GRUB still emit brief text before Plymouth; the published clip
+  begins at the branded OS screen. The tested firmware artwork covers the menu
+  pause, rather than replacing every firmware/bootloader message.
+- Physical display/touch validation, graphical encrypted-disk prompts and recovery
+  acceptance remain planned. No new ISO was built or boot-tested in this task.
 ## Idle blanking through hypridle, 2026-10-18 UTC
 
 Actually performed:
