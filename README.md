@@ -8,7 +8,7 @@ design uses shallow glass, mint accents, a glacier wallpaper and floating icon
 navigation.
 
 [Website](https://thediamondsaint.github.io/tessarchy/) ·
-[Tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2) ·
+[Tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.3) ·
 [Agent workspace](AGENT-README.md) · [Contributing](CONTRIBUTING.md) ·
 [Device roadmap](docs/device-roadmap.md) · [Testing](docs/testing.md)
 
@@ -27,7 +27,7 @@ navigation.
 | Power | Battery status and supported power modes, with missing-service guards |
 | Audio and media | Optional PipeWire controls and MPRIS playback integration |
 | Keyboard and captures | Optional squeekboard; Print and pull-down screenshot actions |
-| Latest checks | 59 Python tests and 41 Qt Quick results; Ubuntu/Arch CI passed |
+| Latest checks | 73 Python tests and 46 Qt Quick results; Ubuntu/Arch CI passed |
 | Next device milestone | Select and bring up one physical reference device |
 
 The [validation record](docs/testing.md) tracks runtime results for each feature.
@@ -36,26 +36,29 @@ board](AGENT-README.md#claiming-and-extending-tasks) lists the next contribution
 
 ## Tester download
 
-[Alpha 2](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2)
-is an x86_64 live VM tester image with Quiet Edge, app cards and pull-down
-radio/layout controls. BIOS and non-Secure-Boot UEFI boots reached Tessera in
-QEMU/KVM. The release includes the ISO, SHA-256 checksum, package list, build log
-and boot evidence.
+[Alpha 3 — Intel/AMD tablet pilot](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.3)
+includes the curated app picker, general desktop applications, firmware, audio,
+wireless tools, on-screen keyboard and the supplied power-on animation.
+BIOS and non-Secure-Boot UEFI QEMU/KVM boots reached Tessera with networking
+absent. The release includes checksums, package lists and inspected boot captures.
 
-| Image behavior | Alpha 2 |
+| Image behavior | Alpha 3 |
 | --- | --- |
 | Login | Live-account autologin |
 | Storage | Disposable live session; no disk installer or persistence |
-| Text input | Physical keyboard |
-| Source | `aa8b59a73a8d5d6b1d3fab6c17272e68e0bfac58` |
-| Later development additions | PIN login, animated startup, Phone/Messages, sounds and expanded connectivity controls |
+| Text input | Included on-screen keyboard; keep a physical keyboard for recovery |
+| ISO source | `566a4385432697ffbb21147355476bed5727d9f5` |
+| Installed Arch tablet | Separate package bundle and [manual install guide](docs/tablet-install.md) |
+
+Physical-tablet acceptance is pending. The release distinguishes the ISO's source
+from the later package bundle's recorded source revision.
 
 ## Alpha login details
 
 | Build | Account | Password / PIN |
 | --- | --- | --- |
 | PIN-login development demo | `arch` | **`1234`** |
-| Downloadable Alpha 2 ISO | `tess` | Automatic login |
+| Downloadable Alpha 3 ISO | `tess` | Automatic login |
 
 `1234` is the owner-designated public PIN for the alpha login demo.
 
@@ -140,7 +143,7 @@ the `tessarchy-tablet` package profile, service setup and a read-only device
 preflight. It includes everyday apps, firmware, wireless tools, audio, an OSK,
 authorization and portals. The app picker keeps one installed primary app per role.
 The supplied eight-second video is the new optional Plymouth power-on animation.
-The current Alpha 2 download remains a live demonstration, not a disk installer.
+The Alpha 3 live ISO remains a live demonstration, not a disk installer.
 
 ## Packages and images
 
@@ -171,7 +174,7 @@ release assets. Generated build output stays in `build/`, `dist/` and `vm/`.
 
 ## Roadmap, branding and sharing
 
-The [project site](https://thediamondsaint.github.io/tessarchy/) contains twenty
+The [project site](https://thediamondsaint.github.io/tessarchy/) contains twenty-one
 real VM captures, the [device roadmap image](assets/roadmap/tessarchy-device-roadmap.png),
 sharing controls and official branding downloads. The
 [logo release](https://github.com/thediamondsaint/tessarchy/releases/tag/brand-kit-20261017)

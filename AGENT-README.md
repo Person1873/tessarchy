@@ -59,15 +59,14 @@ product UI unless they help the user act.
 | Audio/media | Optional PipeWire output/application controls and MPRIS controls integrated | Automated checks pass; real audio signal/output/touch acceptance passed; real player acceptance is next |
 | Screenshots | Print and pull-down camera action; unique private PNGs | Helper tests pass; end-to-end VM action check is next |
 | Keyboard | Optional squeekboard, private settings and focus-preserving toggle | Existing VM evidence; expand the application matrix |
-| Published ISO | Alpha 2, x86_64 live session with autologin | BIOS and non-Secure-Boot UEFI VM boot evidence on its release |
+| Published ISO | Alpha 3 Intel/AMD tablet pilot, x86_64 live session with autologin | BIOS and non-Secure-Boot UEFI VM boot evidence on its release |
 | Physical device | Reference-device selection and bring-up are planned | [Device roadmap](docs/device-roadmap.md) |
-| Website | GitHub Pages, twenty real VM captures, roadmap, branding and sharing | Desktop/phone browser checks and public asset checks passed |
-| Baseline checks | 68 Python tests and 42 Qt Quick results at this checkpoint | Run current checks and record current totals |
+| Website | GitHub Pages, twenty-one real VM captures, roadmap, branding and sharing | Desktop/phone browser checks and public asset checks passed |
+| Baseline checks | 73 Python tests and 46 Qt Quick results at this checkpoint | Run current checks and record current totals |
 
-Alpha 2 predates the PIN login and recent Bluetooth/media/audio/screenshot
-integrations. Keep source features and published-image contents separate in
-release notes. Authentication starts a new session; session locking is a separate
-backlog item.
+Alpha 3 adds the tablet package set, curated launcher and supplied boot video.
+Its live account autologins; installed tablets retain their existing login.
+Authentication starts a new session; session locking is a separate backlog item.
 
 Public tester account details are in [Alpha login details](README.md#alpha-login-details).
 
@@ -172,7 +171,8 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |
 | T09 | Done | Codex | PR #18 | Guarded battery/power-profile integration; unavailable VM state verified |
 | T08 | Done | Codex | VM/touch publication | Seventeen refreshed captures, three retained PIN captures and matching site/ZIP |
-| T58 | Review | Codex | feat/tablet-install-readiness | x86 tablet profile, curated launcher and supplied splash video |
+| T58 | Done | Codex | feat/tablet-install-readiness | x86 tablet profile, curated launcher, supplied splash video and inspected Alpha 3 BIOS/UEFI boots |
+| T59 | Done | Codex / contributor | PR #28 | Offline BIOS/UEFI live boots passed; contributor history preserved |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |
 
 ### P0 — Validate and finish the current integrations
@@ -290,7 +290,7 @@ the Pages deployment when website content changed.
 
 - [Website](https://thediamondsaint.github.io/tessarchy/)
 - [Repository and pull requests](https://github.com/thediamondsaint/tessarchy)
-- [Tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.2)
+- [Tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.3)
 - [Official logo kit and spinning GIF](https://github.com/thediamondsaint/tessarchy/releases/tag/brand-kit-20261017)
 - [Roadmap image](https://thediamondsaint.github.io/tessarchy/assets/tessarchy-device-roadmap.png)
 

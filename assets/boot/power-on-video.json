@@ -11,5 +11,8 @@
     "fps": 20,
     "size": 480
   },
-  "validation": "Frames exported and packaged; current development VM was not changed"
+  "validation": "Supplied video observed in both BIOS and UEFI diskless CI boots; home and curated launcher inspected",
+  "boot_source_commit": "566a4385432697ffbb21147355476bed5727d9f5",
+  "boot_workflow_run": 39127243527,
+  "boot_frame": "assets/boot/tablet-startup.png"
 }

@@ -33,7 +33,7 @@ The website's model tabs support arrow keys, Home/End, visible keyboard focus,
 image enlargement, original downloads, and a screenshot ZIP. Reduced motion is
 respected. There are no accounts, analytics, paid services, or remote fonts.
 
-The current showcase includes twenty real VM screenshots, the device roadmap,
+The current showcase includes twenty-one real VM screenshots, the device roadmap,
 new-session PIN login evidence, and a share panel. Open Graph/Twitter metadata
 uses an actual desktop capture. Sharing uses the system share sheet when
 available, otherwise copies the public URL, with a visible fallback address.

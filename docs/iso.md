@@ -44,7 +44,28 @@ The profile keeps early KMS and adds Plymouth after it in the initramfs hooks.
 
 Use [tablet-install.md](tablet-install.md) to install the packages on an existing
 Arch tablet. The live image does not partition or install onto internal storage.
-These source changes do not alter the older Alpha 2 release.
+Alpha 3 contains this live profile; Alpha 2 remains available as a historical release.
+
+## Alpha 3 Intel/AMD tablet pilot — 2026-10-18
+
+[Download Alpha 3](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.3).
+Actions run [39127243527](https://github.com/thediamondsaint/tessarchy/actions/runs/39127243527)
+built source `566a4385432697ffbb21147355476bed5727d9f5` with archiso 91-1.
+Both diskless BIOS and non-Secure-Boot UEFI boots reached Tessera without a NIC;
+the supplied animation and curated launcher were inspected in the captures.
+A blank interval remains between the animation and desktop during boot.
+Physical tablet and installed-disk acceptance remain pending.
+
+`tessarchy-0.1.0-20261018-x86_64.iso` is 2,111,864,832 bytes. SHA-256:
+
+```text
+7e7f5267e096d7d3f0e1340835fd49ff4a59551e7ecca3a91efb18449f34cf38
+```
+
+The release includes build metadata, package list, checksums and boot evidence.
+Its separate `Tessarchy-Tablet-Pilot-Packages.tar.gz` is for an existing Arch
+x86_64 installation and records its own later source revision in `SOURCE.json`.
+Follow [tablet-install.md](tablet-install.md); the live ISO has no disk installer.
 
 ## Build explicitly on Arch
 

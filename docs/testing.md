@@ -1148,3 +1148,31 @@ Physical acceptance remains pending the tablet model and tester feedback: firmwa
 and mixed-UEFI compatibility, native touch/OSK dialogs, Wi-Fi/Bluetooth, audio,
 charging, suspend/wake and boot/recovery. Automatic rotation, secure session
 locking and native network association remain separate work.
+
+### Alpha 3 live boot inspection
+
+Actions run 39127243527 built source `566a4385432697ffbb21147355476bed5727d9f5`
+using archiso 91-1. The diskless BIOS and non-Secure-Boot UEFI QEMU/KVM captures
+were inspected: both reached Tessera and opened the curated main-app picker.
+The guests had 2 GiB RAM, 2 vCPUs, no NIC and software virtio graphics, at 1280×800.
+The supplied Plymouth video is visible in the early captures; a blank interval
+remains during compositor handoff before the desktop appears. No physical tablet
+or installed-disk boot was tested. `live-launcher.png` and `tablet-startup.png`
+retain actual CI frames; full boot evidence accompanies the release.
+
+ISO: `tessarchy-0.1.0-20261018-x86_64.iso`, 2,111,864,832 bytes.
+SHA-256: `7e7f5267e096d7d3f0e1340835fd49ff4a59551e7ecca3a91efb18449f34cf38`.
+CI checksum verification passed; GitHub's uploaded ISO asset digest independently matches the SHA-256 above.
+Later source-only packaging hygiene and CI-bundle changes do not change this ISO's
+recorded source revision. Installed tablet packages carry their own provenance.
+
+A remote greeter test exposed an incidental collision between the synthetic PIN
+and Quickshell's random shell-identity hash. The log check now ignores only that
+strictly formatted identity line; an added regression check still detects an
+actual plaintext response. This changes tests, not authentication behavior.
+
+The Arch package build initially lacked Git for source provenance; the disposable
+CI toolchain now installs it before checkout so Actions creates a Git repository
+rather than a REST source archive. Local final checks pass 73 Python tests
+and 46 Qt Quick results. Publication checks cover the 21-image manifest/ZIP and
+the supplied MP4 hash, plus desktop/phone browser behavior and video decoding.

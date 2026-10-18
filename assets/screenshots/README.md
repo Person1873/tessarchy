@@ -23,5 +23,9 @@ The three PIN-login captures retain their earlier greetd/PAM validation context:
 entry, rejection and authenticated home. Earlier preview-labelled login PNGs are
 separate assets and are not included in the website's screenshot ZIP.
 
-The website ZIP contains twenty captures. These development captures are separate
+The website ZIP contains twenty-one captures. These development captures are separate
 from the published Alpha 2 ISO and its boot evidence.
+
+`live-launcher.png` is the curated picker from the diskless Alpha 3 UEFI boot
+on CI (1280x800, source566a438). The earlier development-VM captures retain
+their original source checkpoints; that VM was not changed for the tablet pilot.

@@ -19,10 +19,11 @@ The owner authorized skipping disruptive or difficult work.
 | 11 | #12 Tablet split | Defer | Layout, focus and workspace transitions would substantially change current navigation and the card switcher. |
 | 12 | #10 Third-party file dialogs | Defer | A57-file theme/portal stack includes new C and GTK IPC, cancellation and overwrite paths. Tessera's new in-panel browser solves its own photo/tone selection without merging that wider portal stack. |
 
-PR #28 (remove the live-boot NTP gate) arrived after this review and remains
-unreviewed; it is not included in this integration.
+PR #28 (remove the live-boot NTP gate) is integrated. Its contributor commit
+is preserved as a merge parent. A staging regression check asserts removal of
+the inherited time-wait link, and Alpha 3 reached Tessera in BIOS and UEFI with
+no network adapter.
 
-Twelve PRs remain open, including the later-arriving #28 live-boot change. Their branches and the collaborator's original
-commits are preserved. The power-panel merge retains its original contributor
-commit as a merge parent; current documentation and install safeguards are kept.
-Actual checks and device acceptance remain in docs/testing.md.
+Eleven previously reviewed PRs remain open. Their branches and original commits
+are preserved, including the unfinished theme review in `build/integration`.
+Actual checks and device acceptance remain in [testing.md](testing.md).

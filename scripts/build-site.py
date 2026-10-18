@@ -12,7 +12,7 @@ SHOTS = ("phone-home", "phone-launcher", "phone-switcher", "phone-settings",
          "tablet-home", "desktop-home", "phone-controls", "phone-bluetooth",
          "phone-login", "phone-login-rejected", "phone-login-home",
          "tablet-controls", "desktop-controls", "phone-dialer", "phone-contacts",
-         "phone-messages", "phone-sounds", "phone-cellular", "desktop-messages", "desktop-audio")
+         "phone-messages", "phone-sounds", "phone-cellular", "desktop-messages", "desktop-audio", "live-launcher")
 
 
 def main():
@@ -46,6 +46,7 @@ def main():
     shutil.copyfile(ROOT / "assets/boot/phone-startup.png", assets / "phone-startup.png")
     shutil.copyfile(ROOT / "session/boot/power-on.mp4", assets / "power-on.mp4")
     shutil.copyfile(ROOT / "assets/boot/power-on-poster.png", assets / "power-on-poster.png")
+    shutil.copyfile(ROOT / "assets/boot/tablet-startup.png", assets / "tablet-startup.png")
     shutil.copyfile(ROOT / "shell/artwork/tessarchy-mark.svg", assets / "tessarchy-mark.svg")
     shutil.copyfile(ROOT / "assets/roadmap/tessarchy-device-roadmap.png",
                     assets / "tessarchy-device-roadmap.png")
