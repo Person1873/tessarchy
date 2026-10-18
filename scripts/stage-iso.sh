@@ -34,7 +34,7 @@ file_permissions+=(
   ["/usr/bin/tessera-screenshot"]="0:0:755"
   ["/usr/bin/tessarchy-session-services"]="0:0:755"
   ["/usr/bin/tessarchy-readiness"]="0:0:755"
-  ["/usr/bin/tessera-rotate"]="0:0:755
+  ["/usr/bin/tessera-rotate"]="0:0:755"
 )
 PROFILE
 airoot=$profile/airootfs
