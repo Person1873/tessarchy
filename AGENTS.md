@@ -24,4 +24,6 @@ Agent onboarding and the shared planning backlog: [AGENT-README.md](AGENT-README
 Use standard technical English and one-line comments. Keep documentation direct:
 state capabilities, instructions and validation once; omit repetitive caveats,
 generic warnings and speculative disclaimers. Keep current evidence in
-`docs/testing.md` and session progress in `HANDOFF.md`.
+`docs/testing.md` and session progress in the ignored `.HANDOFF.local.md`.
+Keep personal names, local usernames and absolute personal paths out of tracked
+files. Use project-relative paths, `$HOME` or generic placeholders.

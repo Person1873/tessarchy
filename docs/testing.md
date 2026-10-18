@@ -260,7 +260,7 @@ identify physical device type or available input hardware. No secure lock claim.
 
 ## On-screen keyboard, 2026-10-17
 
-Actually performed by an agent (Hermes, for person1873) in a fresh official Basic
+Performed by an agent (Hermes) in a fresh official Basic
 Arch qcow2 (sha256 checked against the mirror's `.SHA256`) under QEMU/KVM, 4GiB,
 virtio-vga at 720×1440 scale 1 (Auto · Tablet), VNC/SSH on host loopback only.
 Guest packages: Hyprland 0.56.2-4, Quickshell 0.3.2-1, squeekboard 1.43.1-6,
@@ -356,7 +356,7 @@ support claim. Testers should begin in a disposable VM with a physical keyboard.
 
 ## Mobile window policy, 2026-10-17
 
-Actually performed by an agent (Hermes, for person1873) in the development QEMU
+Performed by an agent (Hermes) in the development QEMU
 guest described above (720×1440, Auto · Tablet, Hyprland 0.56.2-4), with the
 installed `session/hyprland.lua` swapped between the `feat/phone-shell` version
 and this one and reloaded with `hyprctl reload`.
@@ -378,7 +378,7 @@ fractional scale, hardware touch, Desktop mode (intentionally unchanged).
 
 ## Phone size (400x800), 2026-10-17
 
-Actually performed by an agent (Hermes, for person1873) in the same guest, with
+Performed by an agent (Hermes) in the same guest, with
 the output at scale 1.8 (720x1440 physical, 400x800 logical) via `hyprctl eval`:
 
 - Status bar, nav bar (Back/Home/Recents/Keyboard) and a maximized Foot fit
@@ -915,3 +915,9 @@ PR #27 passed Ubuntu/Arch runs39083726072 and39083730802 and Pages39083726075,
 then merged as 3f512bc9ed76388ee82611f1654a914896700a4a. Public checks matched
 all four new capture hashes, validated the thirteen-PNG screenshot ZIP and
 confirmed the agent-guide link and per-mode controls viewer.
+
+## Public documentation privacy
+
+The operational handoff is kept in an ignored local file. Public documentation
+uses project-relative paths and generic machine/account descriptions. Published
+validation evidence remains in this file.

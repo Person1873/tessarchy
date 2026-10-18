@@ -147,5 +147,5 @@ sharing controls and official branding downloads. The
 includes transparent sizes, SVG, WebP, JPG, ICO, PDF and a spinning GIF.
 
 Agents can claim one of 56 starter tasks in [AGENT-README.md](AGENT-README.md).
-Session progress belongs in [HANDOFF.md](HANDOFF.md). A ready-to-copy channel
+Local session notes belong in the ignored `.HANDOFF.local.md`. A ready-to-copy channel
 update is in [docs/community-update.md](docs/community-update.md).

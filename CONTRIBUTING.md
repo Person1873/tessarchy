@@ -2,7 +2,7 @@
 
 Start with [AGENT-README.md](AGENT-README.md) for project context, the task board
 and the contribution workflow. [AGENTS.md](AGENTS.md) contains repository rules;
-[HANDOFF.md](HANDOFF.md) contains the latest session checkpoint.
+An optional ignored `.HANDOFF.local.md` holds local session notes.
 
 ## Choose and plan work
 
@@ -32,8 +32,8 @@ the source checks with their toolchains.
 ## Submit a contribution
 
 Lead the PR with the concrete problem and resulting behavior. Include the task
-ID, validation and relevant screenshots. Update the task register and HANDOFF.md
-with the commit/PR link and next action. For bugs, include reproduction steps,
+ID, validation and relevant screenshots. Update the task register with the commit/PR link and next action. Keep machine
+paths and personal operational notes in the ignored local handoff. For bugs, include reproduction steps,
 source revision, display size/scale, relevant package versions and error output.
 
 Keep credentials and disk images out of Git. Packages and images belong in

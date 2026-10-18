@@ -26,7 +26,7 @@ PRs #1–#8 and #24 were already merged when this pass started.
 All changes must preserve the existing glass phone interface, application focus,
 48-pixel targets (approved keyboard-width exception only), and close/exit
 confirmations. Keep published Alpha 2 provenance unchanged. Record actual checks
-in docs/testing.md and current merge results in HANDOFF.md.
+in docs/testing.md and public merge results in docs/github-review.md.
 
 Results: #15, #17 and #14 passed Ubuntu, Arch and ISO CI and were merged. That
 integration checkpoint passed 35 Python and 30 Qt Quick checks; the latest source

@@ -5,8 +5,8 @@ off a finished contribution. Add tasks as the project grows. Keep task IDs stabl
 
 ## Start here
 
-1. Read [AGENTS.md](AGENTS.md) for repository rules and
-   [HANDOFF.md](HANDOFF.md) for the latest operational checkpoint.
+1. Read [AGENTS.md](AGENTS.md) for repository rules. If available, read the local
+   `.HANDOFF.local.md` for the current operational checkpoint.
 2. Read [Operation Tessarchy](Operation-TESSARCHY.md) for product direction.
 3. Check the working tree, remote branches and existing pull requests.
 4. Choose one bounded task below. Record its owner, branch and acceptance criteria.
@@ -85,7 +85,7 @@ backlog item.
 | `assets/roadmap/` | Selected publication artwork |
 | `website/` | Static GitHub Pages source |
 | `docs/testing.md` | Actual validation and planned/manual checks |
-| `HANDOFF.md` | Persistent session journal, local state and continuation instructions |
+| `.HANDOFF.local.md` | Ignored local session journal; kept on the developer machine |
 | `build/`, `dist/`, `vm/` | Ignored work products, packages and VM data |
 
 ## Working method
@@ -97,7 +97,8 @@ repeated caveats, generic warnings and speculative disclaimers.
 Follow the concrete rules in AGENTS.md: scratch-HOME install tests, host-session
 isolation, explicit dependency installation, argument-safe scripts, confirmed
 close/exit and protected image-build operations. Keep credentials out of Git,
-documentation, command arguments and captures.
+documentation, command arguments and captures. Use project-relative paths and
+generic account labels in public files; keep personal identifiers in local state.
 
 Touch targets are at least 48 logical pixels in both dimensions. The approved
 exception is on-screen keyboard width: narrower letter keys are allowed, with
@@ -255,7 +256,8 @@ Read [pr-triage.md](docs/pr-triage.md) and inspect current PR heads first.
 
 ## Contribution completion record
 
-Add a short entry to HANDOFF.md and link evidence in docs/testing.md. Include:
+Add public validation evidence to docs/testing.md. Keep local operational notes
+in the ignored `.HANDOFF.local.md`. A contribution record includes:
 
 - Task ID, outcome and affected files.
 - Branch, commit and PR URL.
