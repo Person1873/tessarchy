@@ -874,3 +874,11 @@ steps because tag brand-kit-20261017 is not allowed by the existing Pages
 branch protection policy. Removed that obsolete release-event trigger; source
 pushes/manual dispatch remain enabled, and visitors still read current release
 metadata from the public API. No environment protection rules were weakened.
+
+Live publication validation passed against the public GitHub Pages URL: current
+sections and social preview metadata are present, the roadmap bytes match the
+selected local image hash, the screenshot ZIP passes CRC and contains eleven
+original PNGs, and bundled release metadata selects an ISO release. Updated
+Pages run39082298291 and Ubuntu/Arch runs39082298295 / 39082301438 passed before
+PR #26 merged as e1ff6a5891f04c5751630f7991bf3fb55665197d. No new ISO was built
+or boot-tested as part of the showcase update.

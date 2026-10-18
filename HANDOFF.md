@@ -1,6 +1,6 @@
 # Tessarchy handoff for Hermes or another model
 
-Last checkpoint: 2026-10-17, during pull-request integration. This file is the
+Last checkpoint: 2026-10-17, public roadmap/showcase publication and Git sync. This file is the
 persistent continuation record requested by Charles. Keep it in the Tessarchy
 folder and update it after each meaningful merge, validation, or blocker.
 Never include passwords, tokens, SSH private keys, or other credentials.
@@ -731,3 +731,32 @@ Publication follow-up:
   weakening protections. Runtime public API keeps release information current;
   pushes/manual dispatch rebuild the fallback. Source update CI must finish before
   #26 merge. No tester ISO bytes were changed or newly boot-tested.
+
+## Finished public showcase and Git sync
+
+- PR #26 merged after all checks passed:
+  https://github.com/thediamondsaint/tessarchy/pull/26
+  Merge e1ff6a5891f04c5751630f7991bf3fb55665197d.
+- Source update: 78ea96d23b624895519a11ab5494a023833822c0; deployment follow-up:
+  d925ba44f8bd2f4902c849ec3a0090d51e20b542. Ubuntu/Arch runs39082298295 and
+  39082301438 passed. Pages run39082298291 passed.
+- Public website verified: https://thediamondsaint.github.io/tessarchy/
+  HTTP200 current sections/social metadata; roadmap hash matched; screenshot ZIP
+  CRC passed with eleven original PNGs; project.json selected the ISO release.
+- Shareable roadmap:
+  https://thediamondsaint.github.io/tessarchy/assets/tessarchy-device-roadmap.png
+- Official logo ZIP and animated GIF are on the separate branding release:
+  https://github.com/thediamondsaint/tessarchy/releases/tag/brand-kit-20261017
+- docs/community-update.md contains a ready-to-copy channel post. No messages
+  were sent to anyone. Native share sheet remains untested; public URL is shown
+  directly and the desktop share path offers clipboard/fallback behavior.
+- This documentation-only checkpoint follows the tested merged source. Publish
+  it by fast-forwarding main and build/live-iso to the same commit; do not reset
+  histories or touch collaborator/deferred worktrees. Website and source CI run
+  again automatically. Verify their returned state before final user handoff.
+- Next product work is optional, not an unfinished part of the requested showcase:
+  validate newly merged media/audio/screenshot controls in the VM; then revisit
+  deferred PRs under the owner's easy-first instruction. Physical reference-device
+  selection/bring-up and PIN enrollment in a new ISO remain future work.
+- Alpha 2 stays the same previously boot-tested x86_64 image; login/new integrations
+  are source/development changes. No new ISO boot or physical hardware claim.
