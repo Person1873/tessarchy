@@ -1420,3 +1420,18 @@ Actual VM checks at 1200x800 Desktop:
 - `./scripts/check.sh` passes 49 Qt Quick results, QML lint and both Hyprland
   config checks. Physical touch acceptance remains pending.
 
+## Windows-XP-style glass taskbar, 2026-10-18
+
+Owner asked how hard an XP-style taskbar would be. It is styling only: the
+behaviour from the previous taskbar is unchanged. Added `StartButton.qml` (raised
+accent pill with the project mark and an italic `start` label) and
+`TaskButton.qml` (wide, bevelled, horizontally laid out; the focused window reads
+as pressed), and wrapped the tray indicators plus the clock in a sunken
+translucent segment.
+
+Actual VM check at 1200x800 Desktop, from a QMP capture: left to right - the
+`start` pill, quick-launch icons, a divider, two wide task buttons ("This is the
+desktop mode (Dr...", "arch@archlinux:~"), spacer, then the sunken tray with the
+tray icon and the clock. `./scripts/check.sh` passes 86 Python tests and 49 Qt
+Quick results. Physical touch acceptance remains pending.
+

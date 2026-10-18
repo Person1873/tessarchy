@@ -565,50 +565,48 @@ ShellRoot {
                             onClicked: panel.showPage("windows")
                         }
                     }
-                    // Desktop taskbar: launcher and open windows on the left, the
-                    // application tray on the right. Touch layouts keep the dock.
+                    // Desktop taskbar in the spirit of Windows XP, rendered as
+                    // glass: Start and quick-launch on the left, wide bevelled
+                    // task buttons, and a sunken tray with the clock on the right.
                     RowLayout {
                         visible: surface.mode === "desktop"
                         Layout.fillWidth: true
                         Layout.preferredHeight: 48
-                        spacing: 4
-                        NavButton {
-                            Layout.fillWidth: false
-                            Layout.preferredWidth: 76
-                            text: "Apps"; symbol: "home"
-                            showLabel: shellPreferences.showLabels
+                        spacing: 6
+                        StartButton {
+                            text: "start"
                             accentColor: root.accentColor
                             selected: panel.page === "apps"
                             onClicked: panel.showPage("apps")
                         }
                         NavButton {
                             Layout.fillWidth: false
-                            Layout.preferredWidth: 84
-                            text: "Windows"; symbol: "recents"
-                            showLabel: shellPreferences.showLabels
+                            Layout.preferredWidth: 48
+                            text: "Windows"; symbol: "recents"; showLabel: false
                             accentColor: root.accentColor
                             selected: panel.page === "windows"
                             onClicked: panel.showPage("windows")
                         }
                         NavButton {
                             Layout.fillWidth: false
-                            Layout.preferredWidth: 84
-                            text: "Settings"; symbol: "settings"
-                            showLabel: shellPreferences.showLabels
+                            Layout.preferredWidth: 48
+                            text: "Settings"; symbol: "settings"; showLabel: false
                             accentColor: root.accentColor
                             selected: panel.page === "settings"
                             onClicked: panel.showPage("settings")
                         }
+                        Rectangle {
+                            Layout.preferredWidth: 1
+                            Layout.topMargin: 8
+                            Layout.bottomMargin: 8
+                            color: Qt.alpha(root.accentColor, 0.18)
+                        }
                         // One task button per open window; tapping focuses it.
                         Repeater {
                             model: Hyprland.toplevels
-                            delegate: TouchButton {
+                            delegate: TaskButton {
                                 required property var modelData
                                 readonly property var handle: modelData.wayland
-                                Layout.minimumHeight: 40
-                                implicitHeight: 40
-                                Layout.preferredWidth: 180
-                                Layout.maximumWidth: 220
                                 text: modelData.title || "Untitled window"
                                 selected: modelData.activated
                                 accentColor: root.accentColor
@@ -620,31 +618,55 @@ ShellRoot {
                             }
                         }
                         Item { Layout.fillWidth: true }
-                        // Application indicators belong here, not in the system
-                        // status strip above; their pixmaps are app-supplied.
-                        Repeater {
-                            model: SystemTray.items
-                            delegate: TouchButton {
-                                id: taskTrayButton
-                                required property var modelData
-                                Layout.minimumHeight: 40
-                                Layout.minimumWidth: 40
-                                implicitHeight: 40
-                                implicitWidth: 40
-                                Layout.preferredWidth: 40
-                                text: ""
-                                Accessible.name: modelData.title || "Tray item"
-                                contentItem: Image {
-                                    source: taskTrayButton.modelData.icon
-                                    sourceSize.width: 20
-                                    sourceSize.height: 20
-                                    fillMode: Image.Pad
+                        // Sunken tray, as on the XP taskbar: indicators and clock.
+                        Rectangle {
+                            implicitHeight: 48
+                            implicitWidth: trayRow.implicitWidth + 12
+                            Layout.alignment: Qt.AlignVCenter
+                            radius: 8
+                            color: Qt.alpha("#000000", 0.20)
+                            border.width: 1
+                            border.color: Qt.alpha("#ffffff", 0.12)
+                            RowLayout {
+                                id: trayRow
+                                anchors.centerIn: parent
+                                spacing: 0
+                                Repeater {
+                                    model: SystemTray.items
+                                    delegate: TouchButton {
+                                        id: taskTrayButton
+                                        required property var modelData
+                                        Layout.minimumHeight: 44
+                                        Layout.minimumWidth: 44
+                                        implicitHeight: 44
+                                        implicitWidth: 44
+                                        Layout.preferredWidth: 44
+                                        text: ""
+                                        background: Rectangle { color: "transparent" }
+                                        Accessible.name: modelData.title || "Tray item"
+                                        contentItem: Image {
+                                            source: taskTrayButton.modelData.icon
+                                            sourceSize.width: 20
+                                            sourceSize.height: 20
+                                            fillMode: Image.Pad
+                                        }
+                                        onClicked: {
+                                            if (modelData.hasMenu)
+                                                modelData.display(taskTrayButton.QsWindow.window, 0, 48);
+                                            else
+                                                modelData.activate();
+                                        }
+                                    }
                                 }
-                                onClicked: {
-                                    if (modelData.hasMenu)
-                                        modelData.display(taskTrayButton.QsWindow.window, 0, 48);
-                                    else
-                                        modelData.activate();
+                                Text {
+                                    text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "h:mm" : "h:mm AP")
+                                    color: "#e2edf1"
+                                    font.pixelSize: 12
+                                    leftPadding: 6
+                                    rightPadding: 10
+                                    verticalAlignment: Text.AlignVCenter
+                                    Layout.alignment: Qt.AlignVCenter
+                                    Accessible.name: "Time in the taskbar"
                                 }
                             }
                         }

@@ -7,10 +7,11 @@ No privileged daemon or compositor fork is involved.
 A per-output status bar reserves 48 logical pixels. Navigation reserves 72 in
 Phone mode, 80 in Tablet and 64 in Desktop. Phone navigation spans the output;
 Tablet uses a centered, rounded panel bounded to 720 pixels. Desktop uses a
-full-width taskbar instead of the floating dock: it holds the launcher buttons,
-one task button per open window (tap activates and dismisses the page) and the
-application tray, and it stays full width while a page is open so the page reads
-as a centered sheet. Launcher
+full-width taskbar instead of the floating dock, laid out like Windows XP's but
+rendered in the same glass: a raised accent Start pill with the project mark,
+quick-launch buttons, wide bevelled task buttons (the focused window reads as
+pressed), and a sunken tray holding the application indicators and the clock. It
+stays full width while a page is open so the page reads as a centered sheet. Launcher
 columns and panel height follow available space, including manual modes on small
 screens. Settings is loaded only when opened. Panels never acquire application
 keyboard focus; buttons and sliders use NoFocus. No keyboard search or outside
