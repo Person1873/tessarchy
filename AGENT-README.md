@@ -56,13 +56,13 @@ product UI unless they help the user act.
 | Startup | Greeter and desktop use `start-hyprland -- --config` | Tested user instance: empty config errors and warning list |
 | Radios | rfkill power controls and airplane mode; BlueZ discovery and connection actions for already-paired devices | VM no-adapter state checked; physical radio checks are backlog work |
 | Bluetooth pairing | External Bluetooth manager | Native pairing/passkey workflow is a future task |
-| Audio/media | Optional PipeWire output/application controls and MPRIS controls integrated | Automated checks pass; real service/player acceptance is next |
+| Audio/media | Optional PipeWire output/application controls and MPRIS controls integrated | Automated checks pass; real audio signal/output/touch acceptance passed; real player acceptance is next |
 | Screenshots | Print and pull-down camera action; unique private PNGs | Helper tests pass; end-to-end VM action check is next |
 | Keyboard | Optional squeekboard, private settings and focus-preserving toggle | Existing VM evidence; expand the application matrix |
 | Published ISO | Alpha 2, x86_64 live session with autologin | BIOS and non-Secure-Boot UEFI VM boot evidence on its release |
 | Physical device | Reference-device selection and bring-up are planned | [Device roadmap](docs/device-roadmap.md) |
 | Website | GitHub Pages, nineteen real VM captures, roadmap, branding and sharing | Desktop/phone browser checks and public asset checks passed |
-| Baseline checks | 59 Python tests and 41 Qt Quick results at this checkpoint | Run current checks and record current totals |
+| Baseline checks | 68 Python tests and 42 Qt Quick results at this checkpoint | Run current checks and record current totals |
 
 Alpha 2 predates the PIN login and recent Bluetooth/media/audio/screenshot
 integrations. Keep source features and published-image contents separate in
@@ -168,7 +168,10 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 
 | Task ID | Status | Owner | Branch / PR | Next action or evidence |
 | --- | --- | --- | --- | --- |
-| Example: T01 | Open | — | — | Replace this example when claiming real work |
+| T05 | In progress | Codex | feat/vm-touch-refinement | VM touch drawer, scrolling, output switching and compact/wide layouts tested |
+| T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |
+| T09 | Done | Codex | PR #18 | Guarded battery/power-profile integration; unavailable VM state verified |
+| T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |
 
 ### P0 — Validate and finish the current integrations
 
@@ -216,6 +219,12 @@ Read [pr-triage.md](docs/pr-triage.md) and inspect current PR heads first.
 | T28 | Propose touch-friendly default applications | Narrow-screen evaluation, resource measurements and an approved package list |
 | T29 | Test multi-output behavior | Per-output Auto sizing, global override and window navigation agree |
 | T30 | Improve empty, busy and failure states | Concise actionable messages without simulated hardware state |
+
+### VM test environment
+
+| ID | Task | Completion result |
+| --- | --- | --- |
+| T57 | Add usable VM audio, touch and accelerated graphics | Basic profile, guest audio stack, QMP gestures and actual signal validation |
 
 ### P2 — Move to a physical reference device
 

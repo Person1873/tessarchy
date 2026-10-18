@@ -178,22 +178,10 @@ ColumnLayout {
         accentColor: sheet.accentColor
         Layout.fillWidth: true
     }
+    PowerPanel { Layout.fillWidth: true; accentColor: sheet.accentColor }
     Text {
         text: "Airplane mode switches all detected radios"
         color: "#99afbe"; font.pixelSize: 10
         Layout.alignment: Qt.AlignHCenter
-    }
-    TouchButton {
-        text: "Collapse quick controls"
-        Layout.fillWidth: true
-        implicitHeight: 48; Layout.minimumHeight: 48
-        background: Item {}
-        contentItem: Item { Rectangle { anchors.centerIn: parent; width: 40; height: 4; radius: 2; color: "#8eacb8" } }
-        onClicked: sheet.dismissed()
-        DragHandler {
-            target: null
-            xAxis.enabled: false
-            onActiveTranslationChanged: { if (activeTranslation.y < -28) sheet.dismissed(); }
-        }
     }
 }

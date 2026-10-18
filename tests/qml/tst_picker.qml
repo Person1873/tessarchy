@@ -20,7 +20,9 @@ TestCase {
         mouseClick(header);
         verify(picker.expanded);
         wait(50);
-        const option = picker.children[1].children.find(item => item.text === "Tone B");
+        let option = null;
+        const options = picker.children[1].children;
+        for (let i = 0; i < options.length; i++) if (options[i].text === "Tone B") option = options[i];
         verify(!!option);
         verify(option.height >= 48);
         mouseClick(option);

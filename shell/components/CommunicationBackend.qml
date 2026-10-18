@@ -92,7 +92,7 @@ QtObject {
     }
     onIncomingCallChanged: { if (incomingCall) incoming(); }
     property Timer poller: Timer {
-        interval: backend.incomingCall || (backend.state.cellular.calls || []).some(c => c.state !== 7) ? 1500 : 5000
+        interval: backend.incomingCall || (backend.state.cellular.calls || []).some(c => c.state !== 7) ? 1500 : backend.state.cellular.available ? 5000 : 30000
         running: true
         repeat: true
         triggeredOnStart: true

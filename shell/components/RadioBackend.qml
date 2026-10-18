@@ -21,7 +21,7 @@ QtObject {
         }
     }
     property Timer poller: Timer {
-        interval: 10000
+        interval: backend.state.wifi?.available || backend.state.bluetooth?.available || backend.state.cellular?.available ? 10000 : 30000
         running: true
         repeat: true
         triggeredOnStart: true

@@ -169,7 +169,10 @@ ShellRoot {
                     Quickshell.execDetached(command);
                     page = "";
                 }
-                onPageChanged: { if (page !== "windows") keyboardSwitch = false; }
+                onPageChanged: {
+                    if (page !== "windows") keyboardSwitch = false;
+                    if (["phone", "messages", "cellular", "sounds"].indexOf(page) >= 0) communications.request("status");
+                }
                 Connections {
                     target: root
                     function onSwitcherCommand(action) {
@@ -421,34 +424,6 @@ ShellRoot {
                         columnSpacing: 4
                         rowSpacing: 8
                         NavButton {
-                            text: "Back"
-                            symbol: "back"
-                            showLabel: shellPreferences.showLabels
-                            accentColor: root.accentColor
-                            enabled: panel.expanded || statusBar.drawerOpen
-                            onClicked: {
-                                statusBar.drawerOpen = false;
-                                panel.closeTarget = null;
-                                panel.page = "";
-                            }
-                        }
-                        NavButton {
-                            text: surface.mode === "desktop" ? "Apps" : "Home"
-                            symbol: "home"
-                            showLabel: shellPreferences.showLabels
-                            accentColor: root.accentColor
-                            selected: panel.page === "apps"
-                            onClicked: panel.showPage("apps")
-                        }
-                        NavButton {
-                            text: surface.mode === "desktop" ? "Windows" : "Recents"
-                            symbol: "recents"
-                            showLabel: shellPreferences.showLabels
-                            accentColor: root.accentColor
-                            selected: panel.page === "windows"
-                            onClicked: panel.showPage("windows")
-                        }
-                        NavButton {
                             text: "Phone"; symbol: "call"
                             showLabel: shellPreferences.showLabels
                             accentColor: root.accentColor
@@ -479,6 +454,34 @@ ShellRoot {
                             showLabel: shellPreferences.showLabels
                             accentColor: root.accentColor
                             onClicked: Quickshell.execDetached(["tessarchy-osk", "toggle"])
+                        }
+                        NavButton {
+                            text: "Back"
+                            symbol: "back"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
+                            enabled: panel.expanded || statusBar.drawerOpen
+                            onClicked: {
+                                statusBar.drawerOpen = false;
+                                panel.closeTarget = null;
+                                panel.page = "";
+                            }
+                        }
+                        NavButton {
+                            text: surface.mode === "desktop" ? "Apps" : "Home"
+                            symbol: "home"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
+                            selected: panel.page === "apps"
+                            onClicked: panel.showPage("apps")
+                        }
+                        NavButton {
+                            text: surface.mode === "desktop" ? "Windows" : "Recents"
+                            symbol: "recents"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
+                            selected: panel.page === "windows"
+                            onClicked: panel.showPage("windows")
                         }
                     }
                 }
@@ -593,12 +596,22 @@ ShellRoot {
                             }
                         }
                     }
-                    Item {
+                    TouchButton {
                         Layout.fillWidth: true
-                        Layout.minimumWidth: 48
-                        Layout.fillHeight: true
-                        Rectangle { anchors.centerIn: parent; width: 24; height: 3; radius: 2; color: Qt.alpha(root.accentColor, 0.55) }
-                        TapHandler { onTapped: statusBar.toggleDrawer() }
+                        Layout.minimumWidth: 64
+                        Layout.minimumHeight: 48
+                        implicitHeight: 48
+                        text: "Quick controls"
+                        Accessible.name: statusBar.drawerOpen ? "Collapse quick controls" : "Open quick controls, or swipe down"
+                        padding: 0
+                        background: Item {}
+                        contentItem: Column {
+                            spacing: 4
+                            topPadding: 15
+                            Rectangle { anchors.horizontalCenter: parent.horizontalCenter; width: 28; height: 3; radius: 2; color: root.accentColor }
+                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: statusBar.drawerOpen ? "⌃" : "⌄"; color: root.accentColor; font.pixelSize: 14 }
+                        }
+                        onClicked: statusBar.toggleDrawer()
                     }
                     // Focused window title; only meaningful in the desktop layout.
                     Text {
@@ -659,18 +672,6 @@ ShellRoot {
                         label: "Wi-Fi"
                         strength: root.wifiStrength
                     }
-                    NavButton {
-                        text: "Quick controls"
-                        symbol: "controls"
-                        showLabel: false
-                        implicitWidth: 48
-                        implicitHeight: 48
-                        Layout.minimumHeight: 48
-                        Layout.fillWidth: false
-                        Layout.preferredWidth: 48
-                        selected: statusBar.drawerOpen
-                        onClicked: statusBar.toggleDrawer()
-                    }
                     RowLayout {
                         spacing: 4
                         Image {
@@ -688,7 +689,7 @@ ShellRoot {
                         }
                     }
                     NavButton {
-                        visible: surface.modelData.width >= 400
+                        visible: surface.modelData.width >= 700
                         text: root.audioAvailable && root.audioSink.audio.muted ? "Unmute audio" : "Mute audio"
                         symbol: root.audioAvailable && root.audioSink.audio.muted ? "volume-muted" : "volume"
                         showLabel: false
@@ -714,9 +715,9 @@ ShellRoot {
                 }
                 }
                 ScrollView {
-                    x: 16; y: 60
-                    width: parent.width - 32
-                    height: parent.height - y
+                    x: (parent.width - width) / 2; y: 60
+                    width: Math.min(parent.width - 32, 720)
+                    height: Math.max(0, parent.height - y - 56)
                     visible: statusBar.drawerOpen
                     clip: true
                     contentWidth: availableWidth
@@ -740,6 +741,22 @@ ShellRoot {
                         onCellularRequested: { statusBar.drawerOpen = false; panel.page = "cellular"; }
                         onDismissed: statusBar.drawerOpen = false
                         onSettingsRequested: { statusBar.drawerOpen = false; panel.showPage("settings"); }
+                    }
+                }
+                TouchButton {
+                    visible: statusBar.drawerOpen
+                    anchors.bottom: parent.bottom
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: Math.min(parent.width - 32, 720)
+                    height: 48
+                    text: "Collapse quick controls"
+                    background: Item {}
+                    contentItem: Item { Rectangle { anchors.centerIn: parent; width: 40; height: 4; radius: 2; color: root.accentColor } }
+                    onClicked: statusBar.drawerOpen = false
+                    DragHandler {
+                        target: null
+                        xAxis.enabled: false
+                        onActiveTranslationChanged: { if (activeTranslation.y < -20) statusBar.drawerOpen = false; }
                     }
                 }
                 Connections {

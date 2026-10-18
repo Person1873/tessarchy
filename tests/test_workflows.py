@@ -38,6 +38,10 @@ class Workflows(unittest.TestCase):
         self.env['DBUS_SYSTEM_BUS_ADDRESS'] = 'unix:path=/nonexistent/tessarchy-test-bus'
         self.run_quickshell_harness('communications', 'COMMUNICATIONS')
 
+    def test_power_panel_without_daemon_never_writes(self):
+        self.env['DBUS_SYSTEM_BUS_ADDRESS'] = 'unix:path=/nonexistent/tessarchy-test-bus'
+        self.run_quickshell_harness('power', 'POWER')
+
     def test_site_builder_refuses_existing_output_and_bundles_originals(self):
         import sys
         import zipfile
@@ -329,6 +333,32 @@ assert(commands[1] == "tessera-shell" and commands[2] == "tessarchy-osk start",
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 2)
         self.assertIn('VM_SSH_PORT', result.stderr)
+
+    def test_vm_hardware_profile_and_invalid_options(self):
+        import shlex
+        repo = self.home / 'source'
+        self.copy_repo(repo, ('scripts',))
+        disk = repo / 'vm/tessarchy.qcow2'
+        disk.parent.mkdir(parents=True)
+        disk.touch()
+        env = dict(self.env, VM_AUDIO='pipewire', VM_GL='1', VM_TOUCH='1',
+                   VM_AUDIO_USB='1', VM_QMP='/tmp/test-qmp.sock')
+        command = [str(repo / 'scripts/vm.sh'), 'plan']
+        result = subprocess.run(command, env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        args = shlex.split(result.stdout.removeprefix('VM command:'))
+        for option in ['virtio-vga-gl', 'gtk,gl=on', 'virtio-multitouch-pci',
+                       'pipewire,id=sound', 'hda-output,audiodev=sound',
+                       'usb-audio,id=usb-sound,audiodev=sound', 'virtio-rng-pci',
+                       'unix:/tmp/test-qmp.sock,server=on,wait=off']:
+            self.assertIn(option, args)
+        for name, value in [('VM_GL', 'bad'), ('VM_AUDIO', 'bad'),
+                            ('VM_AUDIO_CODEC', 'hda-output,extra=bad'),
+                            ('VM_QMP', '/tmp/a,server=off')]:
+            result = subprocess.run(command, env=dict(env, **{name: value}),
+                                    capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(name, result.stderr)
 
     FAKE_CURL = ('#!/bin/bash\n'
                  'out=""\n'

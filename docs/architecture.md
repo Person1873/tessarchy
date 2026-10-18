@@ -120,3 +120,12 @@ full Wayland desktop; the pull-down camera action closes controls before a short
 capture delay. Each successful capture has a unique private PNG path under the
 configured pictures directory's Screenshots folder. Capture failure removes the
 partial output, and notification failure does not discard a saved capture.
+
+## Power panel
+
+Quick controls reads the UPower display device for battery charge state, time
+estimates and health. Missing UPower state is shown as unavailable. Power modes
+come from a separate Gio helper using power-profiles-daemon's current or legacy
+D-Bus interface. The helper reads the service's supported profiles before every
+write and rereads the active profile afterward. Unavailable/unsupported controls
+stay disabled. Profile polling runs only while the panel is visible.

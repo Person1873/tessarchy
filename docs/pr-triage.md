@@ -1,35 +1,28 @@
-# Pull request triage — 2026-10-17
+# Pull request review — 2026-10-18
 
-The owner requested an effort-ordered review, taking straightforward changes
-and deferring disruptive or difficult work. This is a source-review assessment,
-the starting point for focused integration work.
-PRs #1–#8 and #24 were already merged when this pass started.
+The existing PRs were rescanned after the Phone/Messages checkpoint.
+Order reflects integration effort and product risk against the current shell.
+The owner authorized skipping disruptive or difficult work.
 
-| Order | PR | Effort | Decision and reason |
+| Order | PR | Decision | Current reason |
 | --- | --- | --- | --- |
-| 1 | #15 Media controls | Low | Merged; glass pull-down icon controls with capability and player-disappearance guards. |
-| 2 | #17 Audio panel | Low–medium | Merged; current pull-down integration, readiness/tracking fixes, playback-only filtering and guarded writes. |
-| 3 | #14 Screenshots | Medium | Merged; unique private files, failure cleanup and manifest safety. VM acceptance pending. |
-| 4 | #18 Power panel | Medium | Defer: installed PowerProfiles API exposes no availability flag; add reliable missing-service detection before enabling mode writes. |
-| 5 | #21 Idle blanking | Medium | Defer: changes session startup and display wake behavior; current Lua dispatch and capture wake input need validation. |
-| 6 | #23 Wi-Fi | Medium | Defer: scan ownership, connection lifecycle and NetworkManager acceptance need more work; no password agent. |
-| 7 | #22 Rotation | Medium | Defer as disruptive: current keyword command is incompatible with Lua; rotation must preserve monitor/touch settings and be recoverable. |
-| 8 | #13 Notifications | Medium–high | Defer: new D-Bus server, popup/history lifecycle, withdrawal handling and safe external text need integration. |
-| 9 | #19 Brightness/night light | Medium–high | Defer: hardware coverage and PID ownership safety; current helper can target a reused, unrelated PID. |
-| 10 | #9 System theme | High | Defer broad theme/app/keyboard changes; substantial local review is preserved uncommitted in build/integration. |
-| 11 | #11 Keyboard sizing | High dependency cost | Small incremental patch, but its branch includes #9/#10; defer until those are reviewed. Width exception is already authorized. |
-| 12 | #20 Keyboard page guard | High dependency cost | Includes #9/#10/#11; current shell already hides the keyboard for pages and pull-down. Review incremental differences later. |
-| 13 | #12 Tablet split | High/disruptive | Defer: compositor layout/focus/workspace changes and an obsolete Recents implementation must be reconciled with the current card switcher. |
-| 14 | #10 Touch file picker | High/disruptive | Defer: new C portal backend and GTK module, IPC/FIFO paths, cancellation and save/overwrite behavior require a dedicated review. |
-| — | #16 Window previews | Superseded | Leave open for now: previews already exist in the current card switcher; merging the old grid would regress the requested interface. |
+| 1 | #18 Power panel | Integrated | Added missing-service and supported-profile guards, authoritative readback, unavailable battery state and tests. Preserved current app UI and manifest-based uninstall. |
+| 2 | #21 Idle blanking | Defer | The branch now uses Lua DPMS correctly. Integration still changes session startup and capture wake input; hypridle is absent in the VM and blank/wake/PIN acceptance needs a dedicated test. |
+| 3 | #23 Wi-Fi | Defer | The updated branch includes PSK entry and scanner handling. It replaces the image's wired network service; device replacement/scanner ownership and NetworkManager/keyboard association still need acceptance without losing connectivity. |
+| 4 | #22 Rotation | Defer | The updated helper now writes Lua and attempts rollback. Monitor parsing, preserved settings and touch-coordinate recovery still affect the display path; avoid changing it during this app checkpoint. |
+| 5 | #13 Notifications | Defer | A new D-Bus notification server, history and popup lifecycle need reconciliation with current layered panels and native phone alerts. Keep this as a focused integration. |
+| 6 | #19 Brightness/night light | Skip for safety | The night-light helper still trusts kill -0 on a PID file, then kills that PID without checking process identity. Brightness also needs real backlight/permission validation. |
+| 7 | #16 Window previews | Skip as superseded | Current card previews already implement the requested switcher. The old shell/grid patch would replace current UI behavior. |
+| 8 | #9 System theme | Defer | Broad shell/application/keyboard changes across49 files. Existing unfinished review in build/integration is preserved. |
+| 9 | #11 Keyboard sizing | Defer dependencies | Its current diff includes the theme/portal stack across58 files. The narrower-width/48px-height exception is already authorized; extract sizing after its dependencies are reviewed. |
+| 10 | #20 Keyboard page guard | Defer dependencies | Current shell already hides the keyboard when opening pages/controls. This59-file stacked branch includes theme/portal/keyboard changes that need separate review. |
+| 11 | #12 Tablet split | Defer | Layout, focus and workspace transitions would substantially change current navigation and the card switcher. |
+| 12 | #10 Third-party file dialogs | Defer | A57-file theme/portal stack includes new C and GTK IPC, cancellation and overwrite paths. Tessera's new in-panel browser solves its own photo/tone selection without merging that wider portal stack. |
 
-All changes must preserve the existing glass phone interface, application focus,
-48-pixel targets (approved keyboard-width exception only), and close/exit
-confirmations. Keep published Alpha 2 provenance unchanged. Record actual checks
-in docs/testing.md and public merge results in docs/github-review.md.
+PR #28 (remove the live-boot NTP gate) arrived after this review and remains
+unreviewed; it is not included in this integration.
 
-Results: #15, #17 and #14 passed Ubuntu, Arch and ISO CI and were merged. That
-integration checkpoint passed 35 Python and 30 Qt Quick checks; the latest source
-baseline is 44 Python and 37 Qt Quick results. Real-player,
-real-audio and screenshot/visual VM acceptance remains pending because the
-previous SSH control session expired. The other 12 PRs remain open and deferred.
+Twelve PRs remain open, including the later-arriving #28 live-boot change. Their branches and the collaborator's original
+commits are preserved. The power-panel merge retains its original contributor
+commit as a merge parent; current documentation and install safeguards are kept.
+Actual checks and device acceptance remain in docs/testing.md.

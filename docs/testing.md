@@ -1014,3 +1014,76 @@ Remaining device checks:
 The updated site passed installed-Chromium phone/desktop checks: all images
 loaded, no horizontal overflow, keyboard mode tabs retained focus, gallery and
 Escape close worked, and no uncaught JavaScript exceptions were observed.
+
+## VM audio, touch and bar refinement — 2026-10-18
+
+Validated the working tree based on `aec7ac8`, including the preserved unfinished
+power integration. The implementation was checked in an isolated worktree before
+copying the affected files back. The original merge/index state was retained.
+Local evidence and source hashes are in `build/vm-touch-review/`.
+
+Actual environment: QEMU 11.1.1, KVM, two vCPUs, 1536 MiB RAM, virtio VGA with
+Virgl. The guest compositor log identifies `virgl (Mesa Intel UHD Graphics 605)`.
+The Basic launcher now enables GL, virtio multitouch, HDA output, a USB audio
+output and virtio RNG. The guest audio packages were installed with owner approval;
+no host packages or desktop configuration were changed.
+
+Actual results:
+
+- 68 Python tests and 42 Qt Quick results passed, both Hyprland configurations
+  verified, and QML lint completed with existing service/type-metadata warnings.
+  Shellcheck was unavailable. Scratch HOME was used by the check script.
+- Guest ALSA and PipeWire detected the HDA and USB outputs. A host PipeWire
+  recording linked directly to QEMU's playback ports captured a real test tone:
+  480,000 stereo frames at 48 kHz, signed-16-bit peak 2563 and RMS 1273.25.
+  Host speakers were muted and their mute preference was retained. This checks
+  the guest-to-host signal path; audible speaker output was not assessed.
+- Genuine QMP multitouch opened the drawer with a downward swipe, closed it with
+  an upward swipe on the fixed bottom handle, scrolled its content, selected the
+  USB output, toggled mute and dragged volume from 40% to 60%. Volume was restored
+  to 40% and unmuted in the guest. No uinput device or guest root input helper was
+  required for these tests.
+- Home and controls were inspected at 320×640, 400×800, 800×1000 and 1280×800.
+  The central controls handle is separate from audio; the phone header omits the
+  speaker shortcut. Wide content is capped at 720 logical pixels. Radio labels
+  wrap, and the collapse handle remains outside the scrolling content.
+- Opening/closing controls and opening Home then Back preserved the active Foot
+  window address and its focus. The disposable test terminal was closed afterward.
+  Final compositor config errors were empty; the development shell was installed
+  back into the guest's normal development path and left at 400×800.
+
+Idle optimization: absent cellular/radio hardware now polls every 30 seconds;
+cellular remains at 5 seconds when available and 1.5 seconds during a call.
+Opening communications pages immediately requests current state; opening controls
+refreshes radios. In one 30-second idle sample per version, Quickshell child CPU
+ticks decreased from 177 to 51 (71%); its own ticks decreased from 67 to 4.
+These short samples measure idle work, not frame rate or touch-to-display latency.
+Virgl was verified, but no before/after graphics benchmark was performed.
+
+Remaining device acceptance: physical multitouch, Wi-Fi, Bluetooth, cellular,
+camera, microphone, battery and real-time audio scheduling. The VM has no radios,
+modem, camera or battery. RTKit is absent; audio services use ordinary scheduling.
+
+### Viewer regression follow-up
+
+The owner still found the accelerated presentation unacceptable after a trial
+800×1600 framebuffer at scale 2. That trial was reverted to the saved 400×800,
+scale-1 preference. The VM was shut down cleanly and relaunched with `virtio-vga`
+and `gtk,gl=off`, retaining KVM CPU acceleration, both audio outputs and multitouch.
+The Basic launcher now defaults to `VM_GL=0`; Virgl remains an explicit opt-in.
+The earlier accelerated screenshots and CPU samples describe that earlier test,
+not the final viewer choice. Shell syntax and both QMP gesture-driver tests pass.
+The software-viewer guest booted and signed in successfully. Both sinks remained
+available, compositor config errors were empty, and QMP swipe-open/close was
+retested. `build/vm-touch-review/viewer-software.png` records the resulting host
+presentation. Owner visual acceptance remains pending.
+
+The owner accepted the software viewer's appearance. It is the final default;
+the earlier Virgl and higher-resolution trials were rejected.
+
+## Publication checks — 2026-10-18
+
+The software display was accepted by the owner. The publication includes the
+preserved PR #18 contributor merge and guarded power-profile backend, the final
+VM audio/touch profile, the bar/drawer changes and reduced absent-device polling.
+Four Arch packages were rebuilt locally without installing host dependencies.

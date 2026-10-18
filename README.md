@@ -24,6 +24,7 @@ navigation.
 | Radios | rfkill power/airplane controls; Bluetooth discovery and connections to already-paired devices |
 | Phone and messages | Dock apps, contacts/photos, ModemManager call/SMS backend and SIM/eSIM settings; [guide](docs/communications.md) |
 | Sounds | Five VoidRing tones, ringtone/message/alarm selection, previews and MP3 import |
+| Power | Battery status and supported power modes, with missing-service guards |
 | Audio and media | Optional PipeWire controls and MPRIS playback integration |
 | Keyboard and captures | Optional squeekboard; Print and pull-down screenshot actions |
 | Latest checks | 59 Python tests and 41 Qt Quick results; Ubuntu/Arch CI passed |
@@ -123,6 +124,15 @@ To remove the development startup hook and installation:
 The installer keeps Tessarchy namespaced; uninstall preserves user preferences.
 Automated install tests use scratch HOME directories.
 
+## VM testing update
+
+The Basic VM launcher provides sound, two audio outputs and virtual multitouch.
+Quick controls have a separate top handle and a fixed collapse handle; the dock
+groups app shortcuts before navigation. Audio output selection, mute, volume and
+touch scrolling were exercised in the guest. Software display rendering is the
+accepted default; KVM CPU acceleration remains enabled. See [VM setup](docs/vm.md)
+and the [validation record](docs/testing.md).
+
 ## Packages and images
 
 ```bash
@@ -152,7 +162,7 @@ release assets. Generated build output stays in `build/`, `dist/` and `vm/`.
 
 ## Roadmap, branding and sharing
 
-The [project site](https://thediamondsaint.github.io/tessarchy/) contains eleven
+The [project site](https://thediamondsaint.github.io/tessarchy/) contains nineteen
 real VM captures, the [device roadmap image](assets/roadmap/tessarchy-device-roadmap.png),
 sharing controls and official branding downloads. The
 [logo release](https://github.com/thediamondsaint/tessarchy/releases/tag/brand-kit-20261017)
