@@ -129,3 +129,13 @@ come from a separate Gio helper using power-profiles-daemon's current or legacy
 D-Bus interface. The helper reads the service's supported profiles before every
 write and rereads the active profile afterward. Unavailable/unsupported controls
 stay disabled. Profile polling runs only while the panel is visible.
+
+## Idle blanking
+
+Idle handling is one hypridle listener: five minutes without input blanks the
+panel with `hyprctl dispatch 'hl.dsp.dpms({ action = "disable" })'`, and resume
+brings it back with the matching enable dispatch. The session starts hypridle
+from the existing `hyprland.start` hook with the same data-directory resolution
+as `tessera-shell`; key presses and mouse movement explicitly wake the panel
+through `misc.key_press_enables_dpms` and `misc.mouse_move_enables_dpms`. No
+lock command is configured: Tessarchy makes no session-locking claim.
