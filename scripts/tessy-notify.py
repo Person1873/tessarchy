@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """Tessy announces repository activity to the project Discord channel.
 
-Posts a Discord webhook message for pushes, pull-request activity and releases.
-Reads a GitHub Actions event from GITHUB_EVENT_PATH and the webhook URL from
-DISCORD_WEBHOOK_URL. Without the webhook the script is a no-op so the workflow
-stays green until the channel is configured.
+Posts a Discord message for pushes, pull-request activity and releases. Two
+transports are supported:
+
+* bot token -- DISCORD_BOT_TOKEN + DISCORD_CHANNEL_ID (preferred when both set)
+* webhook   -- DISCORD_WEBHOOK_URL
+
+Reads a GitHub Actions event from GITHUB_EVENT_PATH. With no transport
+configured the script is a no-op so the workflow stays green until the channel
+is wired up. See docs/tessy.md.
 """
 import json
 import os
@@ -14,6 +19,8 @@ import urllib.error
 import urllib.request
 
 USERNAME = "Tessy"
+DISCORD_API = "https://discord.com/api/v10"
+USER_AGENT = "Tessy/1.0"
 COLORS = {"push": 0x6FD8B8, "merged": 0x57F287, "pr": 0x5865F2,
           "release": 0xFEE75C, "closed": 0xED4245}
 MAX_COMMITS = 5
@@ -97,12 +104,26 @@ def build_message(event_name, event, server, repository):
     return None
 
 
-def post(url, payload, attempts=3):
+def transport(env):
+    """Return (url, headers, transform) for the configured Discord transport."""
+    token = env.get("DISCORD_BOT_TOKEN")
+    channel = env.get("DISCORD_CHANNEL_ID")
+    if token and channel:
+        url = f"{DISCORD_API}/channels/{channel}/messages"
+        headers = {"Authorization": f"Bot {token}", "Content-Type": "application/json",
+                   "User-Agent": USER_AGENT}
+        # Bots cannot choose a message username; the bot account name is used.
+        return url, headers, lambda payload: {k: v for k, v in payload.items() if k != "username"}
+    webhook = env.get("DISCORD_WEBHOOK_URL")
+    if webhook:
+        return webhook, {"Content-Type": "application/json", "User-Agent": USER_AGENT}, lambda payload: payload
+    return None, None, None
+
+
+def deliver(url, headers, payload, attempts=3):
     """POST the payload, retrying transient failures; return True on success."""
     data = json.dumps(payload).encode()
-    request = urllib.request.Request(url, data=data,
-                                     headers={"Content-Type": "application/json",
-                                              "User-Agent": "Tessy/1.0"})
+    request = urllib.request.Request(url, data=data, headers=headers)
     for attempt in range(1, attempts + 1):
         try:
             with urllib.request.urlopen(request, timeout=15) as response:
@@ -115,22 +136,23 @@ def post(url, payload, attempts=3):
     return False
 
 
-def main():
-    path = os.environ.get("GITHUB_EVENT_PATH")
+def main(env=None):
+    env = dict(os.environ) if env is None else env
+    path = env.get("GITHUB_EVENT_PATH")
     with open(path, encoding="utf-8") as handle:
         event = json.load(handle)
-    event_name = os.environ.get("GITHUB_EVENT_NAME", "")
-    server = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
-    repository = os.environ.get("GITHUB_REPOSITORY", "")
-    payload = build_message(event_name, event, server, repository)
+    event_name = env.get("GITHUB_EVENT_NAME", "")
+    payload = build_message(event_name, event,
+                            env.get("GITHUB_SERVER_URL", "https://github.com"),
+                            env.get("GITHUB_REPOSITORY", ""))
     if payload is None:
         print(f"Tessy: nothing to announce for {event_name}")
         return 0
-    webhook = os.environ.get("DISCORD_WEBHOOK_URL")
-    if not webhook:
-        print("Tessy: DISCORD_WEBHOOK_URL is not set; skipping announcement")
+    url, headers, transform = transport(env)
+    if url is None:
+        print("Tessy: no Discord transport configured; skipping announcement")
         return 0
-    if post(webhook, payload):
+    if deliver(url, headers, transform(payload)):
         print("Tessy: announcement posted")
         return 0
     return 1
