@@ -34,6 +34,23 @@ local function shell_mode(monitor)
     if width >= 1100 and height >= 650 then return "desktop" end
     return "tablet"
 end
+-- Desktop window style, chosen in Settings: "windowed" floats ordinary windows
+-- at a conventional size, anything else leaves the dwindle tiling in place.
+local function desktop_windowed()
+    local config = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
+    local file = io.open(config .. "/tessarchy/shell.ini", "r")
+    local value, section = "windowed", ""
+    if file then
+        for line in file:lines() do
+            section = line:match("^%[([^%]]+)%]%s*$") or section
+            if section == "Shell" then
+                value = line:match("^%s*desktopWindows%s*=%s*(%a+)%s*$") or value
+            end
+        end
+        file:close()
+    end
+    return value == "windowed"
+end
 -- Re-maximize ordinary mobile windows when they become active.
 local function maximize_if_mobile(window)
     if not window or window.floating or window.fullscreen ~= 0 or not window.monitor then return end
@@ -58,6 +75,20 @@ local function fit_dialog(window)
     hl.dispatch(hl.dsp.window.center({ window = window }))
 end
 hl.on("window.open", function(window)
+    -- Windowed desktop: ordinary windows open floating at a conventional size
+    -- and are centred, instead of joining the tile layout.
+    if window and not window.floating and window.fullscreen == 0 and window.monitor
+       and shell_mode(window.monitor) == "desktop" and desktop_windowed() then
+        if hl.dsp.window.float then
+            hl.dispatch(hl.dsp.window.float({ window = window, action = "set" }))
+            local monitor = window.monitor
+            local width = math.max(360, math.floor(math.min(960, monitor.width / monitor.scale - 96)))
+            local height = math.max(280, math.floor(math.min(640, monitor.height / monitor.scale - 140)))
+            hl.dispatch(hl.dsp.window.resize({ window = window, x = width, y = height }))
+            hl.dispatch(hl.dsp.window.center({ window = window }))
+        end
+        return
+    end
     maximize_if_mobile(window)
     fit_dialog(window)
 end)
