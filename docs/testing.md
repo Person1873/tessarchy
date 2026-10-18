@@ -1449,6 +1449,12 @@ toggle between the two.
   band and a 4-column grid of `StartMenuTile`s (40 px icon over a 12 px label in
   a blue-tinted glass chip), tinted from the same accent as the Start pill.
   Choosing a tile closes the menu and launches the app.
+- The panel matches the taskbar's glass: the same translucent accent fill, a
+  zero bottom margin so it sits flush on the taskbar's top edge (Hyprland already
+  offsets by the taskbar's exclusive zone), square bottom corners and rounded top
+  corners. `tessera-start` is added to the compositor blur rule
+  (`tessera(-status|-start)?`), so the panel is frosted like the bar and status
+  strip.
 - `StartButton.onClicked` now toggles `panel.startMenuOpen`, so a second press
   closes the menu; opening any shell page also closes it.
 - The launcher page no longer renders a heading, so "Your space" is gone.
@@ -1468,7 +1474,10 @@ Actual VM checks at 1200x800 Desktop (QMP captures, guest shell deployed from
 - Taskbar left to right: blue `start` pill, quick-launch icons, empty task area,
   sunken tray with tray icon and clock.
 - Tapping Start opens the blue-header 4-column app grid above the button; tapping
-  Start again closes it.
+  Start again closes it. `hyprctl -j layers` reports the panel at
+  `x 12 y 382 w 452 h 354`, so its bottom edge (736) meets the taskbar top.
+- Frosting verified by comparison: a strip beside the panel shows crisp Nautilus
+  folder icons and text, while the same content under the panel is a smooth blur.
 - New app window (`foot`) is `floating=True size=[960,640] at=[120,72]`; with
   `desktopWindows=tiled` a new window is `floating=False size=[1200,688]` and the
   taskbar shows its task button. `./scripts/check.sh` passes 87 Python tests and

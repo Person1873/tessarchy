@@ -960,7 +960,9 @@ ShellRoot {
                     bottom: true
                     left: true
                 }
-                margins.bottom: surface.navHeight + 10
+                // Hyprland already offsets by the taskbar's exclusive zone, so a
+                // zero margin lands the panel exactly on the taskbar's top edge.
+                margins.bottom: 0
                 margins.left: 12
                 implicitWidth: 452
                 implicitHeight: gridHeight + 78
@@ -971,21 +973,25 @@ ShellRoot {
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                 Rectangle {
                     anchors.fill: parent
-                    radius: 18
-                    color: Qt.rgba(0.043, 0.086, 0.176, 0.94)
+                    // Flush with the taskbar, so only the top corners round.
+                    topLeftRadius: 16
+                    topRightRadius: 16
+                    // Same frosted glass as the taskbar: a translucent accent
+                    // fill the compositor blurs behind (namespace tessera-start).
+                    color: Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
                     border.width: 1
-                    border.color: Qt.rgba(0.56, 0.71, 1.0, 0.32)
+                    border.color: Qt.alpha(root.accentColor, 0.15)
                     // Blue header band, the Start menu's signature.
                     Rectangle {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
                         height: 40
-                        topLeftRadius: parent.radius
-                        topRightRadius: parent.radius
+                        topLeftRadius: parent.topLeftRadius
+                        topRightRadius: parent.topRightRadius
                         gradient: Gradient {
-                            GradientStop { position: 0.0; color: Qt.rgba(0.16, 0.30, 0.62, 0.85) }
-                            GradientStop { position: 1.0; color: Qt.rgba(0.10, 0.18, 0.40, 0.25) }
+                            GradientStop { position: 0.0; color: Qt.rgba(0.16, 0.30, 0.62, 0.55) }
+                            GradientStop { position: 1.0; color: Qt.rgba(0.10, 0.18, 0.40, 0.12) }
                         }
                     }
                     ColumnLayout {

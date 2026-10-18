@@ -11,7 +11,7 @@ hl.config({
              key_press_enables_dpms = true, mouse_move_enables_dpms = true },
 })
 -- Frost only Tessera glass surfaces; leave applications unchanged.
-hl.layer_rule({ match = { namespace = "tessera(-status)?" }, blur = true, ignore_alpha = 0.01 })
+hl.layer_rule({ match = { namespace = "tessera(-status|-start)?" }, blur = true, ignore_alpha = 0.01 })
 -- Read the same saved mode as Tessera when a new ordinary app opens.
 -- Existing windows and floating dialogs are left alone when modes change.
 local function shell_mode(monitor)
