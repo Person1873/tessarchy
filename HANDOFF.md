@@ -7,18 +7,21 @@ Never include passwords, tokens, SSH private keys, or other credentials.
 
 ## Current user request
 
-1. Build and activate a phone-style login using a four-digit Linux account
-   password through greetd/PAM. Owner explicitly approved greetd installation,
-   activation/testing and one VM restart, and selected a PIN. It was applied
-   through hidden stdin; never repeat or save its value here or in Git.
-2. Produce a ZIP of the existing official logo in multiple sizes/formats,
-   including a spinning GIF. Generated and validated; exact artifact below.
-3. Fix two startup messages seen when Hyprland loads. Confirmed unsupported direct
-   launcher warning; changed both greeter and desktop to start-hyprland. Verify
-   the final user-session transition before claiming those warnings resolved.
+1. Completed: phone-style four-digit account-password login installed and tested
+   through real greetd/PAM in the development VM. No credential is stored here.
+2. Completed: official logo kit, multiple sizes/formats and spinning GIF.
+3. Completed: supported Hyprland launch path; actual desktop warnings=[] and
+   config_errors="". Separate virtual-GPU diagnostics remain documented.
+4. Latest: professional roadmap image from the VM prototype to a physical phone/
+   tablet. Generated, corrected and selected; publication details below.
+5. Latest: update Git and the GitHub Pages site with current verified information,
+   lots of images and materials ready to share to a channel. Preserve collaborator
+   contributions, published ISO provenance and the deferred integration worktree.
 
-The easy-PR pass is complete (#15/#17/#14 merged). Other 12 PRs remain deferred;
-preserve #9's unfinished worktree. Maintain this handoff and one-line comments.
+The easy-PR pass is complete (#15/#17/#14 merged); login PR #25 is now merged.
+Other 12 PRs remain deferred; preserve #9's unfinished worktree. Maintain this
+handoff and one-line comments. Historical sections below retain prior checkpoints;
+the final dated checkpoint takes precedence over stale next-action statements.
 
 ## Communication and working rules
 
@@ -681,3 +684,50 @@ Logo kit:
 - Finish commit/push and CI for final fixes and scripts/export-brand-assets.py;
   update PR #25 around actual finished scope, merge after checks pass, then sync
   build/live-iso without discarding handoff history. Logo ZIP is ready to deliver.
+
+## Roadmap and public showcase checkpoint — 2026-10-17
+
+- Login PR #25 merged after Ubuntu/Arch/ISO CI passed. Merge commit:
+  ff53bd674b3aeb96a87105e98e2a585a86bd3df3. Local build/live-iso fast-forwarded
+  to origin/main before the website update; no contributor history was discarded.
+- Latest owner request: professional roadmap image and update Git/site with
+  current information and many images, ready to share to a channel. No message
+  has been sent to any channel; docs/community-update.md is prepared for copying.
+- Roadmap: assets/roadmap/tessarchy-device-roadmap.png, 1024x1536, curated final
+  publication artwork. Built-in image generation with official logo reference;
+  correction pass fixed 00–06 sequence and concept device captions. Full prompt:
+  docs/device-roadmap-image-prompt.txt. Milestone source: docs/device-roadmap.md.
+- Final PNG SHA256: 5e2263de2c447b1cca7f5ce7b4a558d3cdbd15f17a20816f82869a30da92a720.
+- Separate public asset release created, leaving Alpha 2 ISO unchanged:
+  https://github.com/thediamondsaint/tessarchy/releases/tag/brand-kit-20261017
+  Contains official logo ZIP, 512px spinning GIF and roadmap. GitHub digests
+  verified against local files. It is explicitly not marked latest.
+- Site retains the existing Quiet Edge presentation and collaborator history;
+  adds real login/Bluetooth/post-login captures, current contributor integration
+  status, planned hardware gates, full roadmap, branding downloads, sharing and
+  Open Graph/Twitter metadata. Screenshot ZIP now includes eleven real captures.
+- Both bundled and live release selection require an ISO asset, so a brand-only
+  release cannot replace the tester download. Added meaningful regression test.
+- Actual checks: 44 Python / 37 Qt Quick pass, git diff --check clean. Local fish
+  and ShellCheck unavailable. New site build succeeds, browser checks pass using
+  installed Chromium: desktop1440/mobile390 no overflow, static image decoding,
+  keyboard tabs/focus, gallery/Escape and no uncaught script exceptions. Inspected
+  desktop/mobile screenshots under build/site-refresh. No dependencies installed.
+- Native mobile share sheet not tested. Hardware/real radio, media/audio and
+  screenshot acceptance remain as recorded in docs/testing.md. No new ISO boot
+  is claimed. Current user session uses its preserved private development copy.
+- Immediate next step at this checkpoint: commit/push the showcase update, merge
+  to main after CI, sync build/live-iso, confirm Pages deployment and live assets.
+  Keep build/integration's deferred #9 merge untouched. Final checkpoint below
+  will supersede these publication next actions when they are complete.
+
+Publication follow-up:
+- Showcase commit 78ea96d23b624895519a11ab5494a023833822c0 pushed to
+  build/live-iso; PR #26 opened. Ubuntu/Arch checks and Pages run39082172625 passed.
+- Brand release is marked prerelease and not latest so it does not become the
+  project's stable software release; website also requires an ISO asset.
+- Release-event run39081997323 failed before steps: existing environment rejects
+  tag deployments. Removed obsolete release-event Pages trigger instead of
+  weakening protections. Runtime public API keeps release information current;
+  pushes/manual dispatch rebuild the fallback. Source update CI must finish before
+  #26 merge. No tester ISO bytes were changed or newly boot-tested.

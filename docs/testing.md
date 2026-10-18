@@ -834,3 +834,43 @@ Remaining: physical touch/boot hardware, account policy/recovery acceptance on
 other machines, unattended lifecycle soak and live-ISO PIN enrollment. There is
 no new ISO release or secure session-lock claim. Generated branding artifacts
 remain under dist/tessarchy-logo-kit-20261017/.
+
+## Roadmap and website refresh — 2026-10-17
+
+Actual validation:
+
+- `./scripts/check.sh`: 44 Python tests and 37 Qt Quick results passed. Local
+  fish and ShellCheck remain unavailable; no host dependencies were installed.
+- Website build passed into a fresh `dist/website-refresh-20261017` directory.
+  Screenshot ZIP now includes eleven actual VM captures, including real login,
+  rejected-PIN and post-login home evidence. Earlier preview captures are excluded.
+- Added regression coverage for skipping branding-only and draft releases when
+  selecting the tester ISO. Existing-output refusal and original-byte screenshot
+  packaging remain covered.
+- The built-in image generation tool produced the roadmap; the final selected
+  poster was visually inspected, including its 00–06 sequence, six milestone gates
+  and explicit concept-phone/tablet labels. It is presentation artwork, not a new
+  hardware test. The original official logo was the visual reference.
+
+Publication and browser results are recorded in the final checkpoint below once
+completed. Physical-device validation and a fresh ISO boot remain pending; this
+website change does not rebuild or replace the Alpha 2 download.
+
+Browser validation completed using the installed Chromium headless browser
+(the computer-use browser surface was unavailable): all static images loaded;
+1440px desktop and 390px phone layouts had no horizontal overflow; keyboard
+layout tabs retained focus and selection; screenshot enlargement and Escape
+close worked; no uncaught JavaScript exceptions were observed. Desktop evidence,
+phone sharing and phone roadmap screenshots were visually inspected under
+`build/site-refresh/`. Native mobile share sheets were not exercised.
+
+The branding release assets were uploaded and GitHub-reported digests match the
+local ZIP, GIF and roadmap hashes. ISO asset bytes and Alpha 2 release provenance
+were not changed. Deployment/public URL checks are a separate publication step.
+
+The initial showcase commit 78ea96d deployed successfully in Pages run
+39082172625. A separate release-event run 39081997323 was rejected before any
+steps because tag brand-kit-20261017 is not allowed by the existing Pages
+branch protection policy. Removed that obsolete release-event trigger; source
+pushes/manual dispatch remain enabled, and visitors still read current release
+metadata from the public API. No environment protection rules were weakened.

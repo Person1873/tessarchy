@@ -9,7 +9,8 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SHOTS = ("phone-home", "phone-launcher", "phone-switcher", "phone-settings",
-         "tablet-home", "desktop-home", "phone-controls")
+         "tablet-home", "desktop-home", "phone-controls", "phone-bluetooth",
+         "phone-login", "phone-login-rejected", "phone-login-home")
 
 
 def main():
@@ -25,7 +26,8 @@ def main():
         if not path.is_file():
             parser.error(f"Missing screenshot: {path}")
     releases = json.loads(args.releases.read_text()) if args.releases else []
-    release = next((item for item in releases if not item.get("draft")), None)
+    release = next((item for item in releases if not item.get("draft") and any(
+        asset.get("name", "").endswith(".iso") for asset in item.get("assets", []))), None)
     commit = "source-snapshot"
     if shutil.which("git"):
         result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
@@ -40,6 +42,8 @@ def main():
     for source in sources:
         shutil.copyfile(source, assets / source.name)
     shutil.copyfile(ROOT / "shell/artwork/tessarchy-mark.svg", assets / "tessarchy-mark.svg")
+    shutil.copyfile(ROOT / "assets/roadmap/tessarchy-device-roadmap.png",
+                    assets / "tessarchy-device-roadmap.png")
     with zipfile.ZipFile(assets / "screenshots.zip", "w", zipfile.ZIP_DEFLATED) as archive:
         for source in sources:
             archive.write(source, source.name)
