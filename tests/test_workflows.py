@@ -402,6 +402,79 @@ assert(#commands == 4, "unexpected extra autostart commands")
         self.assertEqual(result.returncode, 2)
         self.assertIn('VM_SSH_PORT', result.stderr)
 
+    def test_aarch64_vm_plan_profile_and_refusals(self):
+        import shlex
+        repo = self.home / 'source'
+        self.copy_repo(repo, ('scripts',))
+        command = [str(repo / 'scripts/vm-aarch64.sh'), 'plan']
+        result = subprocess.run(command, env=self.env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('build-aarch64-disk.sh', result.stderr)
+        vm = repo / 'vm/aarch64'
+        vm.mkdir(parents=True)
+        for name in ('rootfs.img', 'Image', 'initramfs-linux.img'):
+            (vm / name).write_text(name)
+        env = dict(self.env, VM_ACCEL='tcg', VM_QMP='/tmp/test-qmp.sock', VM_DISPLAY='vnc=127.0.0.1:0')
+        result = subprocess.run(command, env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        args = shlex.split(result.stdout.removeprefix('VM command:'))
+        self.assertEqual(args[0], 'qemu-system-aarch64')
+        for option in ['virt', 'max', str(vm / 'Image'), 'virtio-gpu-pci', 'vnc=127.0.0.1:0',
+                       f'file={vm / "rootfs.img"},format=raw,if=virtio',
+                       'virtio-multitouch-pci', 'unix:/tmp/test-qmp.sock,server=on,wait=off']:
+            self.assertIn(option, args)
+        self.assertEqual((vm / 'Image').read_text(), 'Image')
+        for name, value in [('VM_ACCEL', 'bad'), ('VM_RAM', '4G'), ('VM_CPUS', '0'),
+                            ('VM_DISPLAY', 'gtk,gl=on'), ('VM_SSH_PORT', '80'),
+                            ('VM_QMP', '/tmp/a,server=off')]:
+            result = subprocess.run(command, env=dict(env, **{name: value}),
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn(name, result.stderr)
+        result = subprocess.run([str(repo / 'scripts/vm-aarch64.sh'), 'wat'], env=self.env,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2)
+
+    def test_aarch64_disk_build_refuses_missing_input_and_existing_output(self):
+        repo = self.home / 'source'
+        self.copy_repo(repo, ('scripts',))
+        command = [str(repo / 'scripts/build-aarch64-disk.sh')]
+        result = subprocess.run(command, env=self.env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        if 'fetch-alarm' not in result.stderr:
+            self.skipTest('fakeroot, bsdtar or mke2fs unavailable')
+        vm = repo / 'vm/aarch64'
+        vm.mkdir(parents=True)
+        (vm / 'ArchLinuxARM-aarch64-latest.tar.gz').write_text('archive')
+        result = subprocess.run(command, env=dict(self.env, VM_DISK_SIZE='16'),
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('VM_DISK_SIZE', result.stderr)
+        (vm / 'rootfs.img').write_text('mine')
+        result = subprocess.run(command, env=self.env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('Keeping existing', result.stderr)
+        self.assertEqual((vm / 'rootfs.img').read_text(), 'mine')
+        self.assertFalse(list(vm.glob('.build.*')))
+
+    def test_alarm_fetch_refuses_existing_archive_and_plain_keyserver(self):
+        repo = self.home / 'source'
+        self.copy_repo(repo, ('scripts',))
+        command = [str(repo / 'scripts/fetch-alarm.sh')]
+        vm = repo / 'vm/aarch64'
+        vm.mkdir(parents=True)
+        result = subprocess.run(command, env=dict(self.env, ALARM_KEYSERVER='http://keys.example'),
+                                capture_output=True, text=True)
+        if 'Missing' in result.stderr:
+            self.skipTest('curl, gpg, gpgv or md5sum unavailable')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('ALARM_KEYSERVER', result.stderr)
+        (vm / 'ArchLinuxARM-aarch64-latest.tar.gz').write_text('existing')
+        result = subprocess.run(command, env=self.env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('already exists', result.stderr)
+        self.assertEqual((vm / 'ArchLinuxARM-aarch64-latest.tar.gz').read_text(), 'existing')
+
     def test_vm_hardware_profile_and_invalid_options(self):
         import shlex
         repo = self.home / 'source'
@@ -493,7 +566,7 @@ assert(#commands == 4, "unexpected extra autostart commands")
     def test_export_vm_source_keeps_existing_snapshot_idempotent(self):
         repo = self.home / 'source'
         self.copy_repo(repo, ('shell', 'session', 'scripts', 'packaging', 'iso',
-                              'docs', 'tests', 'assets'))
+                              'docs', 'tests', 'assets', 'website'))
         share = repo / 'build/vm-share/tessarchy'
         def run():
             return subprocess.run([str(repo / 'scripts/export-vm-source.sh')], env=self.env,
@@ -501,6 +574,7 @@ assert(#commands == 4, "unexpected extra autostart commands")
         self.assertEqual(run().returncode, 0)
         self.assertEqual((share / 'scripts/install-dev.sh').read_bytes(),
                          (ROOT / 'scripts/install-dev.sh').read_bytes())
+        self.assertTrue((share / 'website/index.html').is_file())
         marker = share / 'README.md'
         first = marker.read_bytes()
         self.assertEqual(run().returncode, 0)
@@ -565,11 +639,12 @@ assert(#commands == 4, "unexpected extra autostart commands")
         fakebin.mkdir()
         fakeqemu = fakebin / 'qemu-system-x86_64'
         fakeqemu.write_text('#!/bin/bash\nprintf "%s\\n" "$@"\n'
-                            'test -f "$VM_SOURCE_SHARE/tessarchy/scripts/setup-guest.sh"\n')
+                            'test -f "$VM_SOURCE_SHARE/tessarchy/scripts/setup-guest.sh"\n'
+                            'test -f "$VM_SOURCE_SHARE/tessarchy/website/index.html"\n')
         fakeqemu.chmod(0o755)
         import shutil
         source = self.home / 'source'
-        for directory in ('scripts', 'shell', 'session', 'packaging', 'iso', 'docs', 'tests', 'assets'):
+        for directory in ('scripts', 'shell', 'session', 'packaging', 'iso', 'docs', 'tests', 'assets', 'website'):
             shutil.copytree(ROOT / directory, source / directory)
         for name in ('README.md', 'AGENTS.md', 'LICENSE'):
             shutil.copy2(ROOT / name, source / name)
