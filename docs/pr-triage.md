@@ -2,7 +2,7 @@
 
 The owner requested an effort-ordered review, taking straightforward changes
 and deferring disruptive or difficult work. This is a source-review assessment,
-not a claim that any unmerged feature passed runtime or hardware acceptance.
+the starting point for focused integration work.
 PRs #1–#8 and #24 were already merged when this pass started.
 
 | Order | PR | Effort | Decision and reason |
@@ -28,7 +28,8 @@ All changes must preserve the existing glass phone interface, application focus,
 confirmations. Keep published Alpha 2 provenance unchanged. Record actual checks
 in docs/testing.md and current merge results in HANDOFF.md.
 
-Results: #15, #17 and #14 passed Ubuntu, Arch and ISO CI and were merged. The
-combined development tree passed 35 Python and 30 Qt Quick checks. Real-player,
+Results: #15, #17 and #14 passed Ubuntu, Arch and ISO CI and were merged. That
+integration checkpoint passed 35 Python and 30 Qt Quick checks; the latest source
+baseline is 44 Python and 37 Qt Quick results. Real-player,
 real-audio and screenshot/visual VM acceptance remains pending because the
 previous SSH control session expired. The other 12 PRs remain open and deferred.

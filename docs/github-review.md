@@ -1,49 +1,45 @@
-# GitHub review — 2026-10-17
+# GitHub integration status
 
-Release scope: the tested `build/live-iso` branch at
-`aa8b59a73a8d5d6b1d3fab6c17272e68e0bfac58`. The owner explicitly chose
-to leave collaborators’ open pull requests unchanged.
+Snapshot: 2026-10-17. Query GitHub for current heads before beginning a review.
 
-## Observed repository state
+## Merged
 
-- 24 open pull requests, including 8 drafts; no open issues at review time.
-- Current source checks pass locally: 17 Python tests and 19 Qt Quick results,
-  Lua syntax, Hyprland configuration verification and QML lint.
-- Existing ISO and Pages workflows succeeded on the preceding development source.
-- Some fork workflows require maintainer approval; missing checks are not passes.
-- No contributor pull request was merged, rewritten, approved or closed.
+| PRs | Result |
+| --- | --- |
+| #1–#8 | Shell, tooling, desktop controls, live defaults, checks, keyboard and mobile window policy |
+| #24 | Bluetooth adapter discovery and already-paired device connections |
+| #15 | Guarded MPRIS media controls |
+| #17 | Optional PipeWire output and application controls |
+| #14 | Private collision-safe screenshots and camera action |
+| #25 | Phone PIN login, supported Hyprland launch path and official logo exports |
+| #26 | Current showcase, device roadmap and sharing assets |
 
-This is a status inventory, not a code-quality approval of pending contributions.
+## Open review queue
 
-## Pending work
+Twelve contributor PRs remain open: #9, #10, #11, #12, #13, #16, #18, #19, #20,
+#21, #22 and #23. Their scope, dependencies and review order are in
+[pr-triage.md](pr-triage.md). Agent tasks T09–T20 cover this queue.
 
-| PR | Change | Base branch | State |
-| --- | --- | --- | --- |
-| [#1](https://github.com/thediamondsaint/tessarchy/pull/1) | Add Quiet Edge mobile shell, card switching and pull-down controls | `main` | Draft |
-| [#2](https://github.com/thediamondsaint/tessarchy/pull/2) | Harden install tooling and fill the app drawer from desktop entries | `main` | Open |
-| [#3](https://github.com/thediamondsaint/tessarchy/pull/3) | Add a desktop workspace strip, focused-window title and desktop keybindings | `feat/phone-shell` | Open |
-| [#4](https://github.com/thediamondsaint/tessarchy/pull/4) | Bundle fish as the live user's login shell | `feat/phone-shell` | Open |
-| [#5](https://github.com/thediamondsaint/tessarchy/pull/5) | Harden the live rootfs identity and runtime defaults | `feat/phone-shell` | Open |
-| [#6](https://github.com/thediamondsaint/tessarchy/pull/6) | Make the source checks portable and add a checks workflow | `feat/phone-shell` | Open |
-| [#7](https://github.com/thediamondsaint/tessarchy/pull/7) | Integrate squeekboard as an optional on-screen keyboard | `feat/phone-shell` | Draft |
-| [#8](https://github.com/thediamondsaint/tessarchy/pull/8) | Keep Phone/Tablet apps maximized and fit oversized dialogs | `feat/phone-shell` | Draft |
-| [#9](https://github.com/thediamondsaint/tessarchy/pull/9) | Carry the system theme through shell, keyboard and apps (Omarchy themes) | `feat/phone-shell` | Draft |
-| [#10](https://github.com/thediamondsaint/tessarchy/pull/10) | Touch file dialogs on Phone/Tablet (portal backend + GTK3 module) | `feat/phone-shell` | Draft |
-| [#11](https://github.com/thediamondsaint/tessarchy/pull/11) | On-screen keyboard rows fit 48 logical px | `feat/phone-shell` | Draft |
-| [#12](https://github.com/thediamondsaint/tessarchy/pull/12) | Tablet split: two apps side by side with touch controls | `feat/phone-shell` | Draft |
-| [#13](https://github.com/thediamondsaint/tessarchy/pull/13) | Add notification pop-ups and an alert center | `feat/phone-shell` | Open |
-| [#14](https://github.com/thediamondsaint/tessarchy/pull/14) | Add full-screen screenshots from Quick controls and the Print key | `feat/phone-shell` | Open |
-| [#15](https://github.com/thediamondsaint/tessarchy/pull/15) | Add MPRIS media controls to the status bar and Quick controls | `feat/phone-shell` | Open |
-| [#16](https://github.com/thediamondsaint/tessarchy/pull/16) | Show live window previews in the app switcher | `feat/phone-shell` | Open |
-| [#17](https://github.com/thediamondsaint/tessarchy/pull/17) | Add a PipeWire audio panel to quick controls | `feat/phone-shell` | Open |
-| [#18](https://github.com/thediamondsaint/tessarchy/pull/18) | Add a battery and power-mode panel to quick controls | `feat/phone-shell` | Open |
-| [#19](https://github.com/thediamondsaint/tessarchy/pull/19) | Add display controls: brightness helper, keys and a night-light toggle | `feat/phone-shell` | Open |
-| [#20](https://github.com/thediamondsaint/tessarchy/pull/20) | Keep the keyboard hidden while a shell page is open | `feat/phone-shell` | Draft |
-| [#21](https://github.com/thediamondsaint/tessarchy/pull/21) | Blank the idle panel after five minutes with hypridle | `feat/phone-shell` | Open |
-| [#22](https://github.com/thediamondsaint/tessarchy/pull/22) | Rotate the focused display from Settings in 90° steps | `feat/phone-shell` | Open |
-| [#23](https://github.com/thediamondsaint/tessarchy/pull/23) | Connect Wi-Fi from Quick controls through NetworkManager | `feat/phone-shell` | Open |
-| [#24](https://github.com/thediamondsaint/tessarchy/pull/24) | Add Bluetooth quick controls to the shell | `feat/phone-shell` | Open |
+The working tree at `build/integration` preserves an unfinished #9 integration.
+Continue it in place only when assigned that work; keep its contributor changes.
 
-Contributors’ draft features and unmerged proposals are not included in Alpha 2.
-They require individual source review, relevant checks and runtime validation
-before integration; the release does not claim those features.
+## Integration workflow
+
+1. Fetch the exact contributor head and compare it with current main.
+2. Identify dependencies and overlapping implementations.
+3. Preserve author history and make focused integration fixes.
+4. Run source checks and the affected runtime workflow.
+5. Record evidence, merge after checks pass and synchronize public branches.
+
+Latest source baseline: 44 Python tests and 37 Qt Quick results. Actual feature
+acceptance is recorded in [testing.md](testing.md).
+
+## Release and site
+
+Alpha 2 remains the tester ISO from source
+`aa8b59a73a8d5d6b1d3fab6c17272e68e0bfac58`. Later merged contributions are in
+development source. Its release assets contain the exact image provenance.
+
+The website deploys from approved `main`/`build/live-iso` pushes and manual
+workflow dispatch. It reads current public release/commit metadata. Branding
+assets use their own release; tester download selection requires an ISO asset.

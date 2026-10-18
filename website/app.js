@@ -1,7 +1,7 @@
 const modes = {
-  phone: {image: 'phone-launcher.png', label: 'PHONE / 400 × 800', width: 400, height: 800},
-  tablet: {image: 'tablet-home.png', label: 'TABLET / 800 × 1280', width: 800, height: 1280},
-  desktop: {image: 'desktop-home.png', label: 'DESKTOP / 1280 × 800', width: 1280, height: 800}
+  phone: {image: 'phone-launcher.png', controls: 'phone-controls.png', label: 'PHONE / 400 × 800', width: 400, height: 800},
+  tablet: {image: 'tablet-home.png?v=20261018', controls: 'tablet-controls.png', label: 'TABLET / 800 × 1280', width: 800, height: 1280},
+  desktop: {image: 'desktop-home.png?v=20261018', controls: 'desktop-controls.png', label: 'DESKTOP / 1280 × 800', width: 1280, height: 800}
 };
 const tabs = [...document.querySelectorAll('[data-mode]')];
 function selectMode(tab) {
@@ -14,6 +14,9 @@ function selectMode(tab) {
   image.width = mode.width; image.height = mode.height;
   image.parentElement.dataset.image = image.src;
   document.querySelector('#layout-label').textContent = mode.label;
+  const controls = document.querySelector('#layout-controls-shot');
+  controls.dataset.image = 'assets/' + mode.controls;
+  controls.dataset.alt = tab.textContent + ' layout showing the current pull-down controls in the development VM';
 }
 tabs.forEach((tab, index) => {
   tab.addEventListener('click', () => selectMode(tab));
@@ -29,7 +32,7 @@ tabs.forEach((tab, index) => {
 const gallery = document.querySelector('#gallery');
 document.querySelectorAll('[data-image]').forEach(button => button.addEventListener('click', () => {
   document.querySelector('#gallery-image').src = button.dataset.image;
-  document.querySelector('#gallery-image').alt = button.querySelector('img').alt;
+  document.querySelector('#gallery-image').alt = button.querySelector('img')?.alt || button.dataset.alt;
   document.querySelector('#gallery-download').href = button.dataset.image;
   gallery.showModal();
 }));

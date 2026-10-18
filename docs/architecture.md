@@ -62,8 +62,7 @@ The original T logo is built from six SVG faces. BrandMark animates assembly and
 rotation once, settles after 1.6 seconds, and supports tap/replay and reduced
 motion. It has no idle animation loop. The clock updates once per minute; mode
 selection is reactive, with no polling. Optional PipeWire integration is loaded
-only when the service socket exists at launch. No hardware Wi-Fi/modem control
-or secure locking is claimed. Bluetooth quick controls bind only when BlueZ
+only when the service socket exists at launch. Radio power controls use the rfkill helper. Bluetooth quick controls bind only when BlueZ
 exposes an adapter: the pull-down panel toggles the radio, requests discovery only while
 expanded and powered on, and connects or disconnects already-paired devices; pairing,
 forgetting and passkey agents are out of scope.
@@ -88,7 +87,8 @@ forgetting and passkey agents are out of scope.
   and [releng profile](https://github.com/archlinux/archiso/blob/master/configs/releng/profiledef.sh)
   inform the overlay; installed archiso supplies the actual bootloader files.
 
-No overlays claim secure locking. No lock button is included.
+Session authentication is provided by the separate greetd greeter; a Wayland
+session-lock implementation is tracked independently in the agent backlog.
 
 ## On-screen keyboard
 

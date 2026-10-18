@@ -1,7 +1,6 @@
 # Phone PIN sign-in
 
-The owner selected a four-digit PIN as the Linux account password. This is a
-pre-session greetd/PAM login, not a lock overlay inside Tessera. The login page
+The owner selected a four-digit PIN as the Linux account password. greetd/PAM authenticates a new session. The login page
 has the Quiet Edge wallpaper, Tessarchy mark, mobile clock, four masked dots,
 glass numeric keys and an icon for deletion. The fourth digit submits once;
 keyboard digits, Backspace, Escape and Enter are supported. Keys remain at least
@@ -16,9 +15,8 @@ time out after 30 seconds. Failure clears pending input and delays retry for
 three seconds; PAM remains responsible for system account policies and rate
 limits. If cancellation cannot return the backend to idle, the greeter exits
 and greetd can restart it. No PIN is put in command arguments, environment,
-settings, logs or this repository. QML string copies are not claimed securely
-zeroed in memory. Four digits have low entropy and do not replace system account
-protection, encrypted storage, or device security review.
+settings, logs or this repository. Session locking, storage protection and first-boot enrollment have separate
+implementation tasks in AGENT-README.md.
 
 Both login paths use the installed start-hyprland watchdog with explicit config
 arguments. The separate greeter Hyprland configuration loads no user preferences or
@@ -30,8 +28,8 @@ side effects before the explicit session command.
 
 ## Review and package layout
 
-Preview only: `qs --path shell/login-preview.qml`. It explicitly says sign-in is
-disabled and cannot launch a session. Do not describe a preview as authentication.
+UI preview: `qs --path shell/login-preview.qml`. The preview is labelled and
+sign-in is disabled.
 The actual entry point is `shell/greeter.qml`, launched through greetd.
 
 `scripts/package.sh` now also builds the opt-in `tessarchy-greeter` package.

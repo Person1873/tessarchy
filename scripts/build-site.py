@@ -10,7 +10,8 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 SHOTS = ("phone-home", "phone-launcher", "phone-switcher", "phone-settings",
          "tablet-home", "desktop-home", "phone-controls", "phone-bluetooth",
-         "phone-login", "phone-login-rejected", "phone-login-home")
+         "phone-login", "phone-login-rejected", "phone-login-home",
+         "tablet-controls", "desktop-controls")
 
 
 def main():
@@ -48,6 +49,7 @@ def main():
         for source in sources:
             archive.write(source, source.name)
         archive.write(ROOT / "assets/screenshots/README.md", "README.md")
+        archive.write(ROOT / "assets/screenshots/capture-manifest.json", "capture-manifest.json")
     (output / "project.json").write_text(json.dumps({"commit": commit, "release": release}) + "\n")
     (output / ".nojekyll").touch()
     print(f"Built {output} from {commit[:7]}")

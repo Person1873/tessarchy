@@ -1,7 +1,7 @@
 # Quiet Edge development captures
 
 Captured directly from the installed Tessarchy QEMU/KVM development guest on
-2026-10-17. These are actual session screenshots, not mockups or captures of the
+2026-10-17 and 2026-10-18 UTC. These are actual session screenshots, not mockups or captures of the
 published Alpha 1 ISO. The ISO predates Quiet Edge and the card switcher.
 
 - `phone-home.png`: automatic Phone mode, 400 × 800 logical pixels.
@@ -37,3 +37,17 @@ small-screen capture contains only synthetic partial entry, not a real PIN.
 greetd/PAM login evidence from the configured 400x800 development VM: entry page,
 rejected PIN and authenticated Tessera home. No PIN is visible. These are distinct
 from the earlier preview-labelled images and are not captures of Alpha 2.
+
+## Updated tablet and desktop captures
+
+`tablet-home.png`, `desktop-home.png`, `tablet-controls.png` and
+`desktop-controls.png` were recaptured from source
+`9c1f4a3f400a6358066b41ab9fb6720e4af33fb0` in the existing VM on 2026-10-18
+UTC. The source was staged in an isolated directory and used a private copy of
+the existing shell preferences. Auto selected Tablet at 800x1280 and Desktop at
+1280x800. Home views show the current clock and floating navigation; controls
+views include Bluetooth devices, audio controls, the camera action and media state.
+
+The original private development source and preferences were preserved. The VM
+returned to its original shell at 400x800 after capture. Capture details and
+hashes are recorded in capture-manifest.json.
