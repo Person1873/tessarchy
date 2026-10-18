@@ -1094,3 +1094,7 @@ ZIP passed CRC and per-image SHA-256 checks; the manifest covers every image.
 Chromium desktop and phone checks passed for image loading, horizontal fit,
 keyboard layout tabs, gallery selection and Escape dismissal, with no JavaScript
 exceptions. The VM was restored to 400×800 with its normal development shell.
+
+Remote Ubuntu and Arch checks caught ShellCheck SC2054 on two comma-containing
+QEMU device arguments after all Python and Qt Quick tests passed. Both arguments
+were quoted explicitly; workflow tests were rerun for that command-only fix.

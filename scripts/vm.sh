@@ -53,12 +53,12 @@ cmd=(qemu-system-x86_64 -name Tessarchy -machine "q35" -accel "$accel" -cpu "$cp
     -device "$gpu" -display "${VM_DISPLAY:-gtk},gl=$gl"
     -device qemu-xhci -device usb-tablet
     -device virtio-rng-pci
-    -audiodev "$audio,id=sound" -device intel-hda,id=hda
+    -audiodev "$audio,id=sound" -device "intel-hda,id=hda"
     -device "${VM_AUDIO_CODEC:-hda-output},audiodev=sound"
     -netdev "$network" -device "virtio-net-pci,netdev=net0"
     -nic none -boot "menu=on" -no-reboot)
 if [[ ${VM_TOUCH:-0} == 1 ]]; then cmd+=(-device virtio-multitouch-pci); fi
-if [[ ${VM_AUDIO_USB:-0} == 1 ]]; then cmd+=(-device usb-audio,id=usb-sound,audiodev=sound); fi
+if [[ ${VM_AUDIO_USB:-0} == 1 ]]; then cmd+=(-device "usb-audio,id=usb-sound,audiodev=sound"); fi
 if [[ -n ${VM_QMP:-} ]]; then
     [[ $VM_QMP != *,* ]] || { echo "VM_QMP must not contain commas" >&2; exit 2; }
     cmd+=(-qmp "unix:$VM_QMP,server=on,wait=off")
