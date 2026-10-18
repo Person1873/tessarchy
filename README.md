@@ -8,7 +8,7 @@ design uses shallow glass, mint accents, a glacier wallpaper and floating icon
 navigation.
 
 [Website](https://thediamondsaint.github.io/tessarchy/) ·
-[Tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.3) ·
+[Tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.4) ·
 [Agent workspace](AGENT-README.md) · [Contributing](CONTRIBUTING.md) ·
 [Device roadmap](docs/device-roadmap.md) · [Testing](docs/testing.md)
 
@@ -36,13 +36,16 @@ board](AGENT-README.md#claiming-and-extending-tasks) lists the next contribution
 
 ## Tester download
 
-[Alpha 3 — Intel/AMD tablet pilot](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.3)
-includes the curated app picker, general desktop applications, firmware, audio,
-wireless tools, on-screen keyboard and the supplied power-on animation.
-BIOS and non-Secure-Boot UEFI QEMU/KVM boots reached Tessera with networking
-absent. The release includes checksums, package lists and inspected boot captures.
+[Alpha 4 — tablet pilot with today's fixes](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.4)
+carries everything from Alpha 3 (curated app picker, general desktop
+applications, firmware, audio, wireless tools, on-screen keyboard and the
+supplied power-on animation) plus the desktop tray-icon fix, on-screen keys at
+the 48px height floor, five-minute idle blanking, the notification center and
+display rotation. BIOS and non-Secure-Boot UEFI QEMU/KVM boots reached Tessera
+with networking absent. The release includes checksums, package lists and
+inspected boot captures.
 
-| Image behavior | Alpha 3 |
+| Image behavior | Alpha 4 |
 | --- | --- |
 | Login | Live-account autologin |
 | Storage | Disposable live session; no disk installer or persistence |
@@ -58,7 +61,7 @@ from the later package bundle's recorded source revision.
 | Build | Account | Password / PIN |
 | --- | --- | --- |
 | PIN-login development demo | `arch` | **`1234`** |
-| Downloadable Alpha 3 ISO | `tess` | Automatic login |
+| Downloadable Alpha 4 ISO | `tess` | Automatic login |
 
 `1234` is the owner-designated public PIN for the alpha login demo.
 
@@ -143,7 +146,7 @@ the `tessarchy-tablet` package profile, service setup and a read-only device
 preflight. It includes everyday apps, firmware, wireless tools, audio, an OSK,
 authorization and portals. The app picker keeps one installed primary app per role.
 The supplied eight-second video is the new optional Plymouth power-on animation.
-The Alpha 3 live ISO remains a live demonstration, not a disk installer.
+The Alpha 4 live ISO remains a live demonstration, not a disk installer.
 
 ## Packages and images
 

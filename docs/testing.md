@@ -1371,3 +1371,26 @@ Actually performed:
   switching back.
 
 Not performed: hardware idle behavior. It stays in T37.
+
+## Tester ISO Alpha 4, 2026-10-18
+
+Built by Actions run 39144935780 from `main` = `0f71636a0aecb20cd76359a71d2e911eb082cb57`
+(`build-info.txt` records that commit and archiso 91-1). The draft prerelease
+`v0.1.0-alpha.4` was reviewed and published as a prerelease, not marked latest.
+
+- Asset: `tessarchy-0.1.0-20261018-x86_64.iso`, 2,111,864,832 bytes.
+  SHA-256 `8cae59e93b1043699fc5d568b5fb7bccb1ae71288703a358c874ded4ec636b03`,
+  identical to the digest GitHub reports for the uploaded asset and to the
+  checksum the workflow verified before upload. The download URL returns HTTP 200.
+- Boot captures were inspected, not just collected: both `boot-bios.png` and
+  `boot-uefi.png` show the live image reaching the graphical Tessera desktop
+  (workspace strip, notification bell, tray indicator, dock, wallpaper and the
+  Tessarchy mark), and both `launcher-bios.png` and `launcher-uefi.png` show the
+  curated "Your space" picker with Firefox, Files, Text Editor, Document Viewer,
+  Image Viewer, mpv, Calculator, network and Bluetooth managers, Foot, Phone,
+  Messages, Settings, Controls and Alerts.
+- Contents: Alpha 3 plus the desktop tray-icon fix, on-screen keys at the 48px
+  height floor, five-minute idle blanking, the notification center, display
+  rotation and the Tessy workflow. Live, nonpersistent, no disk installer.
+- Physical hardware, touch, radios, rotation and Secure Boot remain untested;
+  the boot checks are diskless QEMU/KVM smoke tests.
