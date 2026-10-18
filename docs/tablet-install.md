@@ -27,12 +27,13 @@ Build on an Arch development checkout as a normal user:
 ```
 
 Copy the resulting packages to the tablet. On the **tablet**, update Arch and
-install the three session/profile packages together (select exact build filenames):
+install the four session/profile packages together (select exact build filenames):
 
 ```bash
 sudo pacman -Syu
 sudo pacman -U dist/tessera-shell-0.1.0-2-any.pkg.tar.zst \
   dist/tessarchy-session-0.1.0-2-any.pkg.tar.zst \
+  dist/tessarchy-bootsplash-0.1.0-2-any.pkg.tar.zst \
   dist/tessarchy-tablet-0.1.0-1-x86_64.pkg.tar.zst
 ```
 
@@ -69,7 +70,7 @@ are omitted. The supported alternatives are listed in `shell/AppPolicy.js`.
 
 ## Power-on video
 
-The optional `tessarchy-bootsplash` package converts the supplied eight-second
+The profile includes the `tessarchy-bootsplash` package, which converts the supplied eight-second
 animation into Plymouth frames at build time. It plays once and holds the final
 frame until boot completes. It preserves the full square composition and supports
 password/question prompts. See [boot-screen.md](boot-screen.md) for activation.

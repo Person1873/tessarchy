@@ -39,6 +39,8 @@ PROFILE
 airoot=$profile/airootfs
 mkdir -p "$airoot/usr/share/tessarchy/session" "$airoot/usr/bin" "$airoot/usr/share/wayland-sessions"
 cp -R -- "$root/shell" "$airoot/usr/share/tessarchy/"
+find "$airoot/usr/share/tessarchy/shell" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
+find "$airoot/usr/share/tessarchy/shell" -depth -type d -name __pycache__ -empty -delete
 cp -R -- "$root/docs" "$airoot/usr/share/tessarchy/"
 cp -- "$root/session/hyprland.lua" "$airoot/usr/share/tessarchy/session/"
 install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"

@@ -4,7 +4,7 @@ pkgrel=1
 pkgdesc='Tessarchy Intel/AMD tablet desktop and hardware support profile'
 arch=('x86_64')
 license=('MIT')
-depends=('tessarchy-session=0.1.0' 'linux-firmware' 'sof-firmware' 'alsa-ucm-conf'
+depends=('tessarchy-session=0.1.0' 'tessarchy-bootsplash=0.1.0' 'linux-firmware' 'sof-firmware' 'alsa-ucm-conf'
          'mesa' 'vulkan-intel' 'vulkan-radeon' 'libinput' 'xorg-xwayland'
          'squeekboard' 'networkmanager' 'network-manager-applet' 'bluez' 'bluez-utils' 'blueman'
          'polkit' 'hyprpolkitagent' 'pipewire' 'pipewire-audio' 'pipewire-alsa' 'pipewire-pulse'
@@ -12,8 +12,7 @@ depends=('tessarchy-session=0.1.0' 'linux-firmware' 'sof-firmware' 'alsa-ucm-con
          'xdg-desktop-portal-hyprland' 'xdg-desktop-portal-gtk' 'xdg-user-dirs'
          'nautilus' 'gvfs' 'gvfs-mtp' 'udisks2' 'gnome-text-editor' 'papers' 'loupe' 'mpv'
          'gnome-calculator' 'noto-fonts' 'noto-fonts-emoji' 'wireless-regdb')
-optdepends=('libreoffice-fresh: office documents' 'fwupd: supported device firmware updates'
-            'tessarchy-bootsplash: supplied video power-on animation')
+optdepends=('libreoffice-fresh: office documents' 'fwupd: supported device firmware updates')
 source=("tessarchy-$pkgver.tar.gz")
 sha256sums=('SKIP')
 package() {
