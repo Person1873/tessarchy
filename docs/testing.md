@@ -938,9 +938,12 @@ Actually performed:
   staging test checks the config lands in the image session directory and the
   packaging installs it; the boot-test script wakes the panel before each
   capture so idle blanking cannot look like a failed boot.
-- The `dpms` dispatcher used by the listener exists in the 0.56 Lua API
-  (`hl.dsp.dpms` in the shipped stubs), so the runtime commands stay valid
-  for the Lua session.
+- The guest run of the first integration image caught the legacy listener
+  commands failing: under the Lua config, `hyprctl dispatch dpms off` is
+  rewritten to `hl.dispatch(dpms off)` and rejected. The listener now uses the
+  documented Lua dispatch form, `hyprctl dispatch 'hl.dsp.dpms({ action =
+  "disable" })'`, with the matching enable command on resume (see the Hyprland
+  0.56 dispatcher and hypridle documentation).
 - `session/hypridle.conf` parses under hypridle 0.1.8: `Registered timeout
   rule for 300s` with both dpms commands; a deliberately broken config is
   rejected by the same parser.

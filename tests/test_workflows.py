@@ -211,8 +211,8 @@ assert(#commands == 3, "unexpected extra autostart commands")
     def test_idle_config_blanks_without_locking(self):
         config = (ROOT / 'session/hypridle.conf').read_text()
         self.assertIn('timeout = 300', config)
-        self.assertIn('on-timeout = hyprctl dispatch dpms off', config)
-        self.assertIn('on-resume = hyprctl dispatch dpms on', config)
+        self.assertIn("on-timeout = hyprctl dispatch 'hl.dsp.dpms({ action = \"disable\" })'", config)
+        self.assertIn("on-resume = hyprctl dispatch 'hl.dsp.dpms({ action = \"enable\" })'", config)
         for absent in ('lock_cmd', 'swaylock', 'hyprlock'):
             self.assertNotIn(absent, config)
 
