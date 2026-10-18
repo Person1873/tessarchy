@@ -845,7 +845,7 @@ ShellRoot {
             PanelWindow {
                 id: popupHost
                 screen: surface.modelData
-                visible: surface.isPrimaryScreen && root.popupNotifications.length > 0
+                visible: surface.isPrimaryScreen && root.popupNotifications.length > 0 && panel.page === ""
                 readonly property var placement: Policy.notificationPlacement(surface.mode, surface.modelData.width)
                 anchors {
                     top: true
