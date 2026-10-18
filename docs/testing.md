@@ -1460,3 +1460,12 @@ Actual validation:
 Physical backlight permissions, brightness keys on hardware, compositor color
 changes from hyprsunset, and a new ISO boot remain pending. The development guest
 has neither backend installed; no dependencies or host configuration were changed.
+
+## Website tablet screenshot repair — 2026-10-18
+
+Replaced the stretched tablet home screenshot with the intact 800×1280 VM
+capture preserved in commit `aec7ac8`. The replacement is an original screenshot;
+its pixels were not reconstructed. Updated the tablet image and application
+script cache versions so returning visitors receive the corrected asset.
+Visually inspected the replacement, built the site, and verified that both the
+published asset and screenshot ZIP contain the replacement bytes.
