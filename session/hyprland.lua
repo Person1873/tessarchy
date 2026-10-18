@@ -114,3 +114,7 @@ local home = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
 local preferences = home .. "/tessarchy/preferences.lua"
 local f = io.open(preferences, "r")
 if f then f:close(); dofile(preferences) end
+-- Generated display rotation; written only by tessera-rotate, loaded last.
+local display = home .. "/tessarchy/display.lua"
+local displayFile = io.open(display, "r")
+if displayFile then displayFile:close(); dofile(display) end

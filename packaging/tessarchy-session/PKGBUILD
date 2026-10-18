@@ -15,6 +15,7 @@ package() {
     install -Dm755 "$srcdir/session/start-tessarchy" "$pkgdir/usr/bin/start-tessarchy"
     install -Dm755 "$srcdir/session/tessera-screenshot" "$pkgdir/usr/bin/tessera-screenshot"
     install -Dm755 "$srcdir/session/tessarchy-session-services" "$pkgdir/usr/bin/tessarchy-session-services"
+    install -Dm755 "$srcdir/session/tessera-rotate" "$pkgdir/usr/bin/tessera-rotate"
     install -Dm755 "$srcdir/session/tessarchy-osk" "$pkgdir/usr/bin/tessarchy-osk"
     install -Dm644 "$srcdir/session/tessarchy.desktop" "$pkgdir/usr/share/wayland-sessions/tessarchy.desktop"
 }

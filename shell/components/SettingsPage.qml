@@ -287,6 +287,19 @@ ColumnLayout {
         wrapMode: Text.WordWrap
     }
     Text {
+        text: "ROTATION"
+        color: page.accentColor
+        font {
+            pixelSize: 11
+            bold: true
+            letterSpacing: 2
+        }
+    }
+    RotationControl {
+        Layout.fillWidth: true
+        accentColor: page.accentColor
+    }
+    Text {
         text: "SYSTEM"
         color: page.accentColor
         font {

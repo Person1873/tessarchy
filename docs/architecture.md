@@ -166,3 +166,11 @@ from the existing `hyprland.start` hook with the same data-directory resolution
 as `tessera-shell`; key presses and mouse movement explicitly wake the panel
 through `misc.key_press_enables_dpms` and `misc.mouse_move_enables_dpms`. No
 lock command is configured: Tessarchy makes no session-locking claim.
+## Display rotation
+
+Screen rotation in Settings cycles the focused output through 90-degree steps.
+The panel calls the fixed-argument tessera-rotate helper, which rewrites only
+Tessarchy's generated display.lua with the currently applied mode, position and
+scale plus the new transform, reloads Hyprland and verifies the result. The
+previous file is restored when verification fails; user preferences.lua is
+never modified. Touch remapping after rotation remains a hardware check.
