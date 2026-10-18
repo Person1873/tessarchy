@@ -128,7 +128,9 @@ To remove the development startup hook and installation:
 ./scripts/uninstall-dev.sh
 ```
 
-The installer keeps Tessarchy namespaced; uninstall preserves user preferences.
+The installer keeps Tessarchy namespaced and records installed launcher originals.
+Uninstall preserves user preferences and edited launchers, and can remove an
+unchanged development copy after the source checkout is updated.
 Automated install tests use scratch HOME directories.
 
 ## VM testing update

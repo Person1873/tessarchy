@@ -20,6 +20,7 @@ portrait_scale() {
     scaleh=100
     if [[ $monitors =~ \"scale\":[[:space:]]*([0-9]+)(\.([0-9]+))? ]]; then
         frac=${BASH_REMATCH[3]:-0}
+        frac=${frac}00
         frac=${frac:0:2}
         scaleh=$(( BASH_REMATCH[1] * 100 + 10#${frac:-0} ))
     fi

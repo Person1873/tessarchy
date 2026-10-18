@@ -36,6 +36,19 @@ def repo_url(server, repository):
     return f"{server}/{repository}"
 
 
+def clip(value, limit):
+    """Truncate display text with room for an ellipsis."""
+    return value if len(value) <= limit else value[:limit - 1] + "…"
+
+
+def announcement(title, url, description, color, footer):
+    """Apply Discord's per-field and combined embed limits."""
+    title, footer = clip(title, 256), clip(footer, 2048)
+    description = clip(description, min(4096, 6000 - len(title) - len(footer)))
+    return {"username": USERNAME, "embeds": [{"title": title, "url": url,
+            "description": description, "color": color, "footer": {"text": footer}}]}
+
+
 def build_message(event_name, event, server, repository):
     """Return a webhook payload dict, or None when the event is not announced."""
     url = repo_url(server, repository)
@@ -45,21 +58,17 @@ def build_message(event_name, event, server, repository):
         head = event.get("head_commit") or {}
         lines = []
         for commit in commits[:MAX_COMMITS]:
-            message = (commit.get("message") or "").splitlines()[0]
+            message = ((commit.get("message") or "").splitlines() or ["No commit message"])[0] or "No commit message"
+            message = clip(message, 500)
             lines.append(f"[`{short(commit.get('id'))}`]({commit.get('url')}) {message}")
         if len(commits) > MAX_COMMITS:
             lines.append(f"and {len(commits) - MAX_COMMITS} more commit(s)")
         description = "\n".join(lines) or "No commit details in this event."
-        return {
-            "username": USERNAME,
-            "embeds": [{
-                "title": f"Pushed {len(commits)} commit(s) to {branch}",
-                "url": f"{url}/commit/{head.get('id', '')}" if head.get("id") else url,
-                "description": description,
-                "color": COLORS["push"],
-                "footer": {"text": f"{event.get('pusher', {}).get('name', 'someone')} · {repository}"},
-            }],
-        }
+        return announcement(
+            f"Pushed {len(commits)} commit(s) to {branch}",
+            f"{url}/commit/{head.get('id', '')}" if head.get("id") else url,
+            description, COLORS["push"],
+            f"{event.get('pusher', {}).get('name', 'someone')} · {repository}")
     if event_name == "pull_request":
         action = event.get("action")
         pr = event.get("pull_request") or {}
@@ -75,32 +84,20 @@ def build_message(event_name, event, server, repository):
         else:
             title = f"{action.capitalize()} PR #{pr.get('number')}: {pr.get('title', '')}"
             color = COLORS["pr"]
-        return {
-            "username": USERNAME,
-            "embeds": [{
-                "title": title,
-                "url": pr.get("html_url") or url,
-                "description": (pr.get("body") or "").splitlines()[0][:280] if pr.get("body") else "",
-                "color": color,
-                "footer": {"text": f"by {pr.get('user', {}).get('login', 'someone')} · {repository}"},
-            }],
-        }
+        return announcement(
+            title, pr.get("html_url") or url,
+            (pr.get("body") or "").splitlines()[0][:280] if pr.get("body") else "",
+            color, f"by {pr.get('user', {}).get('login', 'someone')} · {repository}")
     if event_name == "release":
         action = event.get("action")
         release = event.get("release") or {}
         if action != "published":
             return None
         kind = "prerelease" if release.get("prerelease") else "release"
-        return {
-            "username": USERNAME,
-            "embeds": [{
-                "title": f"Published {kind} {release.get('tag_name', '')}",
-                "url": release.get("html_url") or url,
-                "description": (release.get("body") or "")[:280],
-                "color": COLORS["release"],
-                "footer": {"text": repository},
-            }],
-        }
+        return announcement(
+            f"Published {kind} {release.get('tag_name', '')}",
+            release.get("html_url") or url, (release.get("body") or "")[:280],
+            COLORS["release"], repository)
     return None
 
 

@@ -1,8 +1,8 @@
 # Tessy — Discord announcements
 
 Tessy announces repository activity to the project Discord channel. It is a
-GitHub Actions job (`.github/workflows/tessy.yml`) that posts a Discord webhook
-message; there is no server to host and no bot token to store.
+GitHub Actions job (`.github/workflows/tessy.yml`) that posts through a configured
+bot account or webhook; there is no server to host.
 
 ## What it announces
 
@@ -25,8 +25,8 @@ Tessy uses the first transport that is configured:
 ## Option A — bot account
 
 Use this when you cannot create a channel webhook. Inviting a bot needs the
-**Manage Server** permission on the server; after that the token is yours and no
-per-channel permission is required.
+**Manage Server** permission on the server. The bot needs permission to view the
+target channel, send messages and embed links.
 
 1. Open <https://discord.com/developers/applications> → **New Application**, name
    it `Tessy`.
@@ -81,5 +81,5 @@ covers the payload builder for pushes, pull requests and releases.
 
 ## Disabling
 
-Remove the repository secret to stop announcements; the job then skips. Delete
-`.github/workflows/tessy.yml` to remove the workflow entirely.
+Remove both the bot token and webhook URL secrets to stop announcements; the job
+then skips. Delete `.github/workflows/tessy.yml` to remove the workflow entirely.
