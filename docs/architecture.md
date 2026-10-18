@@ -33,6 +33,13 @@ appearance preferences persist through QtCore Settings in
 `$XDG_CONFIG_HOME/tessarchy/shell.ini` (default `~/.config/tessarchy/shell.ini`).
 Dev uninstall preserves this user-owned file.
 
+The status strip also carries current conditions. `shell/helpers/weather.py`
+resolves the location from `[Shell] weatherPlace` — a city name, or `auto` (the
+default) to place the machine by IP — and reads Open-Meteo's keyless current
+weather. `weatherUnits` selects metric or imperial. The last observation is
+cached under `$XDG_STATE_HOME/tessarchy/weather.json` so the chip can show a
+stale reading, marked as such, across an offline spell rather than disappearing.
+
 Hyprland.toplevels supplies window identity/title/state; each `.wayland` handle
 provides activate(), close() and writable maximized. Close confirmation retains
 the selected object rather than whichever window later becomes active. Closed

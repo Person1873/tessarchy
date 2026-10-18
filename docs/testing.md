@@ -1436,6 +1436,35 @@ desktop mode (Dr...", "arch@archlinux:~"), spacer, then the sunken tray with the
 tray icon and the clock. `./scripts/check.sh` passes 86 Python tests and 49 Qt
 Quick results. Physical touch acceptance remains pending.
 
+## Weather indicator, 2026-10-18
+
+Owner asked for a weather integration in the top bar.
+
+- `shell/helpers/weather.py` (no API key): location from `[Shell] weatherPlace`
+  (a city name, or `auto` to place the machine by IP), current conditions from
+  Open-Meteo, WMO code mapped to a description and one of eight new line icons.
+  `[Shell] weatherUnits` picks metric or imperial. The last observation is cached
+  in `$XDG_STATE_HOME/tessarchy/weather.json`, so a failed fetch shows a stale
+  reading rather than nothing. The helper never exits non-zero in a way that
+  blanks the shell.
+- `WeatherBackend.qml` polls it every 15 minutes; the status strip shows a small
+  icon + temperature chip next to the focused-window title (right-aligned in
+  Desktop, where the indicator cluster moved to the tray).
+- Tests: `tests/test_weather.py` covers the code/icon mapping, ini parsing,
+  named-place geocoding, IP auto-location with cache reuse, the offline fallback
+  and a corrupt cache.
+
+Measured on this machine: `weather.py` returned
+`{"ok": true, "place": "Miami, Florida", "temperature": 26.5, "unit": "°C",
+"description": "Overcast", "icon": "weather-cloud", ...}`, and with the fetcher
+forced to fail it returned the same observation with `"stale": true`.
+
+In the VM the deployed helper returned the same live reading and the chip
+rendered as a cloud glyph plus `26°C`: in Phone mode (400x800) it sits in the
+status strip, and in Desktop mode (1200x800) it is right-aligned in the strip
+because the indicator cluster has moved to the taskbar tray. `./scripts/check.sh`
+passes 99 Python tests (7 new) and 49 Qt Quick results.
+
 ## Desktop taskbar tray, 2026-10-18
 
 Owner asked for the top-bar status icons to move to the bottom-right of the
