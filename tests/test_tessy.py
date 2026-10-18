@@ -59,6 +59,23 @@ class Tessy(unittest.TestCase):
         self.assertIsNone(tessy.build_message("watch", {}, SERVER, REPO))
         self.assertEqual(tessy.short("abcdef1234"), "abcdef1")
 
+    def test_bot_transport_is_preferred_and_drops_the_username(self):
+        url, headers, transform = tessy.transport({"DISCORD_BOT_TOKEN": "t0ken",
+                                                   "DISCORD_CHANNEL_ID": "123",
+                                                   "DISCORD_WEBHOOK_URL": "https://example/hook"})
+        self.assertEqual(url, "https://discord.com/api/v10/channels/123/messages")
+        self.assertEqual(headers["Authorization"], "Bot t0ken")
+        self.assertNotIn("username", transform({"username": "Tessy", "embeds": []}))
+
+    def test_webhook_transport_and_missing_transport(self):
+        url, headers, transform = tessy.transport({"DISCORD_WEBHOOK_URL": "https://example/hook"})
+        self.assertEqual(url, "https://example/hook")
+        self.assertNotIn("Authorization", headers)
+        self.assertIn("username", transform({"username": "Tessy"}))
+        self.assertEqual(tessy.transport({}), (None, None, None))
+        # A token without a channel falls back rather than posting nowhere.
+        self.assertEqual(tessy.transport({"DISCORD_BOT_TOKEN": "t"}), (None, None, None))
+
 
 if __name__ == "__main__":
     unittest.main()
