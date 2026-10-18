@@ -11,7 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SHOTS = ("phone-home", "phone-launcher", "phone-switcher", "phone-settings",
          "tablet-home", "desktop-home", "phone-controls", "phone-bluetooth",
          "phone-login", "phone-login-rejected", "phone-login-home",
-         "tablet-controls", "desktop-controls")
+         "tablet-controls", "desktop-controls", "phone-dialer", "phone-contacts",
+         "phone-messages", "phone-sounds", "phone-cellular", "desktop-messages")
 
 
 def main():

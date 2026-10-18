@@ -5,6 +5,19 @@ import "../../shell/LayoutPolicy.js" as Policy
 
 TestCase {
     name: "AdaptiveLayout"
+    function test_dock_targets_fit_narrow_and_desktop_layouts() {
+        for (const mode of ["phone", "tablet", "desktop"]) {
+            for (const width of [320, 360, 400, 800, 1280]) {
+                for (const keyboard of [true, false]) {
+                    const dock = Policy.dockLayout(mode, width, keyboard);
+                    const available = dock.width - (mode === "phone" ? 24 : 32);
+                    verify((available - (dock.columns - 1) * 4) / dock.columns >= 48);
+                    verify(dock.width <= width);
+                    verify(dock.rows >= 1);
+                }
+            }
+        }
+    }
     Component {
         id: markFactory
         BrandMark {

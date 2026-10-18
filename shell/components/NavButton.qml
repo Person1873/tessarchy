@@ -3,6 +3,7 @@ import QtQuick.Layouts
 
 TouchButton {
     id: control
+    focusPolicy: Qt.StrongFocus
     required property string symbol
     property bool showLabel: true
     Layout.fillWidth: true

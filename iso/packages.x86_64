@@ -27,3 +27,6 @@ python
 util-linux
 grim
 libnotify
+python-gobject
+ffmpeg
+modemmanager

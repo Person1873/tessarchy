@@ -22,9 +22,11 @@ navigation.
 | Navigation | Touch-sized icon controls, Alt+Tab, workspace controls and confirmed close/exit |
 | Login | Four-digit account-password entry through greetd/PAM; real VM login cycle tested |
 | Radios | rfkill power/airplane controls; Bluetooth discovery and connections to already-paired devices |
+| Phone and messages | Dock apps, contacts/photos, ModemManager call/SMS backend and SIM/eSIM settings; [guide](docs/communications.md) |
+| Sounds | Five VoidRing tones, ringtone/message/alarm selection, previews and MP3 import |
 | Audio and media | Optional PipeWire controls and MPRIS playback integration |
 | Keyboard and captures | Optional squeekboard; Print and pull-down screenshot actions |
-| Latest checks | 44 Python tests and 37 Qt Quick results; Ubuntu/Arch CI passed |
+| Latest checks | 59 Python tests and 41 Qt Quick results; Ubuntu/Arch CI passed |
 | Next device milestone | Select and bring up one physical reference device |
 
 The [validation record](docs/testing.md) tracks runtime results for each feature.
@@ -45,7 +47,7 @@ and boot evidence.
 | Storage | Disposable live session; no disk installer or persistence |
 | Text input | Physical keyboard |
 | Source | `aa8b59a73a8d5d6b1d3fab6c17272e68e0bfac58` |
-| Later development additions | PIN login, expanded Bluetooth, media/audio panels and screenshot actions |
+| Later development additions | PIN login, animated startup, Phone/Messages, sounds and expanded connectivity controls |
 
 ## Alpha login details
 

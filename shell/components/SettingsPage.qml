@@ -4,6 +4,9 @@ import QtQuick.Layouts
 
 ColumnLayout {
     id: page
+    required property var backend
+    signal soundsRequested
+    signal cellularRequested
     required property var preferences
     required property string activeMode
     required property int displayWidth
@@ -254,6 +257,8 @@ ColumnLayout {
             }
         }
     }
+    TouchButton { text: "Sounds & ringtones"; Layout.fillWidth: true; focusPolicy: Qt.StrongFocus; onClicked: page.soundsRequested() }
+    TouchButton { text: "SIM & cellular"; Layout.fillWidth: true; focusPolicy: Qt.StrongFocus; onClicked: page.cellularRequested() }
     Text {
         text: "SYSTEM"
         color: page.accentColor

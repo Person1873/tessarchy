@@ -17,6 +17,7 @@ ColumnLayout {
     property bool audioExpanded: false
     property var audioSink: null
     readonly property bool audioAvailable: !!(audioSink && audioSink.ready && audioSink.audio)
+    signal cellularRequested
     signal screenshotRequested
     signal settingsRequested
     signal dismissed
@@ -66,6 +67,12 @@ ColumnLayout {
                 onClicked: sheet.radios.toggle(modelData.name)
             }
         }
+    }
+    TouchButton {
+        text: "SIM & cellular"
+        Layout.fillWidth: true
+        focusPolicy: Qt.StrongFocus
+        onClicked: sheet.cellularRequested()
     }
     TouchButton {
         text: sheet.bluetoothExpanded ? "Hide Bluetooth devices" : "Bluetooth devices"

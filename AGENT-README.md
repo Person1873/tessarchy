@@ -50,6 +50,8 @@ product UI unless they help the user act.
 | Area | Current state | Evidence or next check |
 | --- | --- | --- |
 | Shell | Quiet Edge bars, launcher, settings, adaptive layouts, workspace controls and card switcher | Actual VM captures and [testing record](docs/testing.md) |
+| Communications | Phone/Messages dock apps, local contacts/photos, ModemManager and SIM/eSIM controls | [Implementation and device acceptance](docs/communications.md) |
+| Sounds | Five supplied VoidRing tracks, selection, previews and MP3 import | Real VM selection/photo/input tests; device alert acceptance next |
 | PIN login | Four-digit Linux account-password entry through greetd/PAM | Real VM rejection, login and return-to-greeter checks passed |
 | Startup | Greeter and desktop use `start-hyprland -- --config` | Tested user instance: empty config errors and warning list |
 | Radios | rfkill power controls and airplane mode; BlueZ discovery and connection actions for already-paired devices | VM no-adapter state checked; physical radio checks are backlog work |
@@ -59,8 +61,8 @@ product UI unless they help the user act.
 | Keyboard | Optional squeekboard, private settings and focus-preserving toggle | Existing VM evidence; expand the application matrix |
 | Published ISO | Alpha 2, x86_64 live session with autologin | BIOS and non-Secure-Boot UEFI VM boot evidence on its release |
 | Physical device | Reference-device selection and bring-up are planned | [Device roadmap](docs/device-roadmap.md) |
-| Website | GitHub Pages, thirteen real VM captures, roadmap, branding and sharing | Desktop/phone browser checks and public asset checks passed |
-| Baseline checks | 44 Python tests and 37 Qt Quick results at this checkpoint | Run current checks and record current totals |
+| Website | GitHub Pages, nineteen real VM captures, roadmap, branding and sharing | Desktop/phone browser checks and public asset checks passed |
+| Baseline checks | 59 Python tests and 41 Qt Quick results at this checkpoint | Run current checks and record current totals |
 
 Alpha 2 predates the PIN login and recent Bluetooth/media/audio/screenshot
 integrations. Keep source features and published-image contents separate in
@@ -226,7 +228,7 @@ Read [pr-triage.md](docs/pr-triage.md) and inspect current PR heads first.
 | T35 | Validate connectivity and audio | Real Wi-Fi/Bluetooth, speaker/microphone and headset results |
 | T36 | Validate power, charging and thermals | Recorded battery reporting, charge behavior, temperature and runtime measurements |
 | T37 | Validate suspend, wake and rotation | Repeatable cycles, recovery and touch remapping results |
-| T38 | Evaluate modem/data/call/SMS integration | Chosen stack, permissions, audio routing and device test matrix |
+| T38 | Validate the ModemManager stack on hardware | Chosen stack, permissions, audio routing and device test matrix |
 | T39 | Define phone acceptance requirements | Network/operator, emergency-use and recovery requirements assigned to explicit validation |
 | T40 | Run the first daily-use pilot | Repeatable image, install guide, field log and prioritized defects |
 

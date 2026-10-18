@@ -965,3 +965,52 @@ Remaining work:
   pause, rather than replacing every firmware/bootloader message.
 - Physical display/touch validation, graphical encrypted-disk prompts and recovery
   acceptance remain planned. No new ISO was built or boot-tested in this task.
+
+## Phone, Messages, sounds and SIM controls — 2026-10-18 UTC
+
+Actual validation:
+
+- Source checks passed 59 Python tests and 41 Qt Quick results. Tests cover private
+  contact storage, malformed/remote inputs, photo decoding, sound persistence,
+  invalid and unconfirmed actions, failed SMS, duplicate received SMS, modem/SIM
+  inventory, eSIM identification and typed D-Bus arguments. The Quickshell harness
+  exercises stdin request/response and a user action queued behind status polling.
+- Qt pointer tests select an inline glass option and check its touch targets.
+  Dock policy tests cover 320/360/400/800/1280 widths, all three manual modes and
+  keyboard presence while keeping controls at least 48 pixels wide.
+- Built all four Arch packages with existing host tools. No host package or
+  desktop configuration changed. The source ISO package list includes the new
+  runtime tools; no image build or ISO boot was performed.
+- Installed the development source in the existing VM, preserving a rollback
+  copy. Python GObject and FFmpeg were already present; no dependencies were
+  installed during this task. ModemManager service installation remains pending
+  the requested approval.
+- In the VM, entered a synthetic contact using QEMU keyboard events, navigated
+  the glass photo browser, selected a project-logo PNG and saved the contact.
+  The copied avatar and local data persisted with mode 0600. Contact shortcuts
+  opened the keypad and SMS composer. No real calls or messages were sent.
+- Changed the ringtone through the on-screen selector and verified the saved
+  preference. Preview launched ffplay; Stop preview terminated it. This verifies
+  process control, rather than audible output on this VM's absent audio backend.
+- Inspected Phone/contacts, Messages, sound settings and SIM settings at 400x800.
+  At 1280x800, automatic Desktop mode showed the wider panel and two-column
+  Messages. Refreshed Tablet home/controls at 800x1280.
+- A dedicated 48-pixel status-handle area opens the pull-down by click. Guest
+  uinput downward swipe also opens it. The volume button is separate; opening
+  the drawer does not change volume. The unavailable VM sink stays disabled.
+- Captured twelve current QMP frames, added six app screenshots and refreshed
+  home/controls in all modes. The screenshot ZIP now contains nineteen images.
+  Capture hashes and example-data descriptions are under assets/screenshots/.
+
+Remaining device checks:
+
+- Actual ModemManager service and authorization on a modem-equipped target;
+  incoming/outgoing calls, voice audio routing and in-call keypad behavior.
+- Real SMS receive/send/delivery and unplug/reconnect behavior.
+- Physical SIM/PIN/slot switching and eUICC profile changes/enrollment through
+  the selected reader. The VM's unavailable state is not cellular hardware proof.
+- Audible alerts through real speakers/headsets and alarms app scheduling.
+
+The updated site passed installed-Chromium phone/desktop checks: all images
+loaded, no horizontal overflow, keyboard mode tabs retained focus, gallery and
+Escape close worked, and no uncaught JavaScript exceptions were observed.

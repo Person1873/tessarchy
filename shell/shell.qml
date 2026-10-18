@@ -21,6 +21,14 @@ ShellRoot {
         target: "controls"
         function toggle(): void { root.controlsRequested(); }
     }
+    signal openAppRequested(string page)
+    IpcHandler {
+        target: "apps"
+        function phone(): void { root.openAppRequested("phone"); }
+        function messages(): void { root.openAppRequested("messages"); }
+        function cellular(): void { root.openAppRequested("cellular"); }
+        function sounds(): void { root.openAppRequested("sounds"); }
+    }
     signal replayBrand
     readonly property var activeWindow: Hyprland.activeToplevel || Hyprland.toplevels.values.find(window => window.wayland && window.wayland.activated) || null
     signal actionRequested(string action)
@@ -51,10 +59,11 @@ ShellRoot {
         property real wallpaperDim: 0.12
     }
     RadioBackend { id: radioBackend }
+    CommunicationBackend { id: communications }
     readonly property var bluetoothAdapter: Bluetooth.defaultAdapter
     // Signal strength remains unavailable until a real connection backend is added.
     property real wifiStrength: -1
-    property real cellularStrength: -1
+    readonly property real cellularStrength: communications.state.cellular.signal === undefined ? -1 : communications.state.cellular.signal / 100
     // squeekboard via tessarchy-osk; it also appears by itself for text fields.
     readonly property bool oskAvailable: Quickshell.env("TESSARCHY_OSK") === "1"
     readonly property var audioSink: audioLoader.item ? (audioLoader.item as AudioStatus).sink : null
@@ -77,8 +86,9 @@ ShellRoot {
             required property var modelData
             readonly property string mode: Policy.effectiveMode(shellPreferences.layoutMode, modelData.width, modelData.height)
             readonly property bool isPhone: mode === "phone"
-            readonly property int navHeight: isPhone ? 76 : 84
-            readonly property int launcherRows: Math.ceil((panel.appEntries.length + 2) / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
+            readonly property var dock: Policy.dockLayout(mode, modelData.width, root.oskAvailable)
+            readonly property int navHeight: dock.rows > 1 ? dock.rows * 56 + 20 : isPhone ? 76 : 84
+            readonly property int launcherRows: Math.ceil((panel.appEntries.length + 4) / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
             readonly property bool showWorkspaces: Policy.showWorkspaces(mode, modelData.width)
             readonly property var workspaceIds: {
                 const ids = [];
@@ -120,6 +130,7 @@ ShellRoot {
                 property string page: ""
                 property var closeTarget: null
                 property bool keyboardSwitch: false
+                property string messageRecipient: ""
                 readonly property bool expanded: page !== ""
                 // The keyboard is a separate top-layer surface that would cover
                 // the drawer, so shell pages dismiss it like an IME on Recents.
@@ -132,7 +143,7 @@ ShellRoot {
                     left: false
                     right: false
                 }
-                implicitWidth: expanded ? Policy.panelWidth(surface.mode, surface.modelData.width) : Math.min(surface.modelData.width - 32, surface.isPhone ? 272 : 360)
+                implicitWidth: expanded ? Policy.panelWidth(surface.mode, surface.modelData.width) : surface.dock.width
                 implicitHeight: expanded ? Math.min(page === "windows" ? surface.modelData.height - 60 : page === "apps" ? surface.launcherRows * 124 + 156 : surface.mode === "tablet" ? 740 : 640, surface.modelData.height - 64) : surface.navHeight
                 exclusiveZone: surface.navHeight
                 color: "transparent"
@@ -146,7 +157,7 @@ ShellRoot {
                 }
                 WlrLayershell.namespace: "tessera"
                 WlrLayershell.layer: WlrLayer.Top
-                WlrLayershell.keyboardFocus: panel.keyboardSwitch && panel.page === "windows" ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+                WlrLayershell.keyboardFocus: panel.keyboardSwitch && panel.page === "windows" ? WlrKeyboardFocus.Exclusive : ["phone", "messages", "cellular", "settings", "sounds"].indexOf(panel.page) >= 0 ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
                 function showPage(name) {
                     if (name === "windows" && page !== "windows") switcher.selectActive();
@@ -187,6 +198,21 @@ ShellRoot {
                     }
                 }
                 Connections {
+                    target: root
+                    function onOpenAppRequested(name) {
+                        if (Hyprland.focusedMonitor && Hyprland.focusedMonitor.name === surface.modelData.name) panel.page = name;
+                    }
+                }
+                Connections {
+                    target: communications
+                    function onIncoming() {
+                        if (Hyprland.focusedMonitor && Hyprland.focusedMonitor.name === surface.modelData.name) {
+                            panel.page = "phone";
+                            statusBar.drawerOpen = false;
+                        }
+                    }
+                }
+                Connections {
                     target: panel.closeTarget
                     function onClosed() {
                         panel.closeTarget = null;
@@ -196,7 +222,7 @@ ShellRoot {
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 12
-                    anchors.bottomMargin: panel.expanded ? 12 : 18
+                    anchors.bottomMargin: panel.expanded ? 12 : 16
                     anchors.leftMargin: surface.isPhone ? 12 : 16
                     anchors.rightMargin: surface.isPhone ? 12 : 16
                     spacing: 8
@@ -207,7 +233,7 @@ ShellRoot {
                         spacing: 8
                         Text {
                             visible: panel.page !== "windows"
-                            text: panel.page === "apps" ? "Your space" : panel.page === "close" ? "Close this window?" : panel.page === "settings" ? "Settings" : "End this session?"
+                            text: panel.page === "apps" ? "Your space" : panel.page === "close" ? "Close this window?" : panel.page === "settings" ? "Settings" : panel.page === "phone" ? "Phone" : panel.page === "messages" ? "Messages" : panel.page === "cellular" ? "SIM & cellular" : panel.page === "sounds" ? "Sounds & ringtones" : "End this session?"
                             color: root.accentColor
                             font.pixelSize: 22
                             font.bold: true
@@ -260,6 +286,8 @@ ShellRoot {
                                                 }
                                             }
                                         }
+                                        AppTile { text: "Phone"; symbol: "call"; accentColor: root.accentColor; onClicked: panel.showPage("phone") }
+                                        AppTile { text: "Messages"; symbol: "messages"; accentColor: root.accentColor; onClicked: panel.showPage("messages") }
                                         AppTile {
                                             text: "Settings"
                                             symbol: "settings"
@@ -282,9 +310,45 @@ ShellRoot {
                                 }
                                 Loader {
                                     visible: active
+                                    active: panel.page === "phone"
+                                    Layout.fillWidth: true
+                                    sourceComponent: PhoneApp {
+                                        backend: communications
+                                        accentColor: root.accentColor
+                                        onSimRequested: panel.page = "cellular"
+                                        onMessageRequested: number => { panel.messageRecipient = number; panel.page = "messages"; }
+                                    }
+                                }
+                                Loader {
+                                    visible: active
+                                    active: panel.page === "messages"
+                                    Layout.fillWidth: true
+                                    sourceComponent: MessagesApp {
+                                        backend: communications
+                                        accentColor: root.accentColor
+                                        recipient: panel.messageRecipient
+                                    }
+                                }
+                                Loader {
+                                    visible: active
+                                    active: panel.page === "sounds"
+                                    Layout.fillWidth: true
+                                    sourceComponent: SoundSettings { backend: communications; accentColor: root.accentColor }
+                                }
+                                Loader {
+                                    visible: active
+                                    active: panel.page === "cellular"
+                                    Layout.fillWidth: true
+                                    sourceComponent: CellularSettings { backend: communications; accentColor: root.accentColor }
+                                }
+                                Loader {
+                                    visible: active
                                     active: panel.page === "settings"
                                     Layout.fillWidth: true
                                     sourceComponent: SettingsPage {
+                                        backend: communications
+                                        onCellularRequested: panel.page = "cellular"
+                                        onSoundsRequested: panel.page = "sounds"
                                         preferences: shellPreferences
                                         activeMode: Policy.title(surface.mode)
                                         displayWidth: surface.modelData.width
@@ -350,10 +414,12 @@ ShellRoot {
                             }
                         }
                     }
-                    RowLayout {
+                    GridLayout {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 48
-                        spacing: 8
+                        Layout.preferredHeight: 48 + (surface.dock.rows - 1) * 56
+                        columns: surface.dock.columns
+                        columnSpacing: 4
+                        rowSpacing: 8
                         NavButton {
                             text: "Back"
                             symbol: "back"
@@ -381,6 +447,20 @@ ShellRoot {
                             accentColor: root.accentColor
                             selected: panel.page === "windows"
                             onClicked: panel.showPage("windows")
+                        }
+                        NavButton {
+                            text: "Phone"; symbol: "call"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
+                            selected: panel.page === "phone"
+                            onClicked: panel.showPage("phone")
+                        }
+                        NavButton {
+                            text: "Messages"; symbol: "messages"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
+                            selected: panel.page === "messages"
+                            onClicked: panel.showPage("messages")
                         }
                         NavButton {
                             visible: !surface.isPhone
@@ -515,6 +595,10 @@ ShellRoot {
                     }
                     Item {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 48
+                        Layout.fillHeight: true
+                        Rectangle { anchors.centerIn: parent; width: 24; height: 3; radius: 2; color: Qt.alpha(root.accentColor, 0.55) }
+                        TapHandler { onTapped: statusBar.toggleDrawer() }
                     }
                     // Focused window title; only meaningful in the desktop layout.
                     Text {
@@ -576,8 +660,8 @@ ShellRoot {
                         strength: root.wifiStrength
                     }
                     NavButton {
-                        text: root.audioAvailable ? "Volume " + root.volumePercent + "%" : "Quick controls · audio unavailable"
-                        symbol: root.audioAvailable && root.audioSink.audio.muted ? "volume-muted" : "volume"
+                        text: "Quick controls"
+                        symbol: "controls"
                         showLabel: false
                         implicitWidth: 48
                         implicitHeight: 48
@@ -604,6 +688,17 @@ ShellRoot {
                         }
                     }
                     NavButton {
+                        visible: surface.modelData.width >= 400
+                        text: root.audioAvailable && root.audioSink.audio.muted ? "Unmute audio" : "Mute audio"
+                        symbol: root.audioAvailable && root.audioSink.audio.muted ? "volume-muted" : "volume"
+                        showLabel: false
+                        implicitWidth: 48; implicitHeight: 48
+                        Layout.minimumHeight: 48; Layout.fillWidth: false; Layout.preferredWidth: 48
+                        enabled: root.audioAvailable
+                        onClicked: root.audioSink.audio.muted = !root.audioSink.audio.muted
+                    }
+                    NavButton {
+                        visible: surface.modelData.width >= 560
                         text: "Settings"
                         symbol: "settings"
                         showLabel: false
@@ -642,6 +737,7 @@ ShellRoot {
                             screenshotTimer.restart();
                         }
                         mediaPlayer: root.activePlayer
+                        onCellularRequested: { statusBar.drawerOpen = false; panel.page = "cellular"; }
                         onDismissed: statusBar.drawerOpen = false
                         onSettingsRequested: { statusBar.drawerOpen = false; panel.showPage("settings"); }
                     }

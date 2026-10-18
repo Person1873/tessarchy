@@ -1,50 +1,150 @@
 {
   "environment": "Existing QEMU/KVM development guest",
-  "capture_tool": "grim",
+  "capture_tool": "QMP screendump for the listed current captures",
   "captures": [
     {
-      "file": "tablet-home.png",
-      "source_commit": "9c1f4a3f400a6358066b41ab9fb6720e4af33fb0",
+      "file": "desktop-messages.png",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
       "captured_utc_date": "2026-10-18",
-      "mode": "tablet",
+      "mode": "desktop",
       "selection": "auto",
-      "width": 800,
-      "height": 1280,
+      "width": 1280,
+      "height": 800,
       "scale": 1,
-      "sha256": "248bf469ea519c7c0f350f0ccce91d147f35c07a3894d7221c831b06133ed03f"
-    },
-    {
-      "file": "tablet-controls.png",
-      "source_commit": "9c1f4a3f400a6358066b41ab9fb6720e4af33fb0",
-      "captured_utc_date": "2026-10-18",
-      "mode": "tablet",
-      "selection": "auto",
-      "width": 800,
-      "height": 1280,
-      "scale": 1,
-      "sha256": "b272a025da235bfc819bd639c29235891ec531cb82e212c9772dff7588d103f0"
+      "sha256": "2f969f6d099ec2f5f8a4fa344b48501b311638d8d705701abea827d20de86089"
     },
     {
       "file": "desktop-home.png",
-      "source_commit": "9c1f4a3f400a6358066b41ab9fb6720e4af33fb0",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
       "captured_utc_date": "2026-10-18",
       "mode": "desktop",
       "selection": "auto",
       "width": 1280,
       "height": 800,
       "scale": 1,
-      "sha256": "2a3f9cc68a1a84f63eaecccc3c5cd549d75f5005441d1ae374660bbc9030b474"
+      "sha256": "e30862d03034cf03679484fccd8d42239c8d13e1e4479a8203ea2f25aeb73164"
     },
     {
       "file": "desktop-controls.png",
-      "source_commit": "9c1f4a3f400a6358066b41ab9fb6720e4af33fb0",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
       "captured_utc_date": "2026-10-18",
       "mode": "desktop",
       "selection": "auto",
       "width": 1280,
       "height": 800,
       "scale": 1,
-      "sha256": "3bea526ae5100ef7202fdb5d107e8dfdc53a632ac5907cca14b6c28123f0c2ee"
+      "sha256": "b0ac8107f133385b57ac05dc38aff0cb46c59a5ae622908b8660fa0715da48b2"
+    },
+    {
+      "file": "tablet-home.png",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
+      "captured_utc_date": "2026-10-18",
+      "mode": "tablet",
+      "selection": "auto",
+      "width": 800,
+      "height": 1280,
+      "scale": 1,
+      "sha256": "41006ff125b77e6ad77483980b760a62c2a8f4b217f35463f9ebd17af790d25b"
+    },
+    {
+      "file": "tablet-controls.png",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
+      "captured_utc_date": "2026-10-18",
+      "mode": "tablet",
+      "selection": "auto",
+      "width": 800,
+      "height": 1280,
+      "scale": 1,
+      "sha256": "4ab96cd136b5ea410ee538ab9515d6c6e0fbe39a3efa4aaa870695fc7e3db914"
+    },
+    {
+      "file": "phone-home.png",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
+      "captured_utc_date": "2026-10-18",
+      "mode": "phone",
+      "selection": "auto",
+      "width": 400,
+      "height": 800,
+      "scale": 1,
+      "sha256": "4fc4e2948298413b4b31480b9d839f64b651393781a5d43da3176d4ee3bdb2c4"
+    },
+    {
+      "file": "phone-dialer.png",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
+      "captured_utc_date": "2026-10-18",
+      "mode": "phone",
+      "selection": "auto",
+      "width": 400,
+      "height": 800,
+      "scale": 1,
+      "sha256": "80d4759ba2e75714f4b4f0a3a7e38d3423c1d926b57c64dba2b4befa852518ab"
+    },
+    {
+      "file": "phone-contacts.png",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
+      "captured_utc_date": "2026-10-18",
+      "mode": "phone",
+      "selection": "auto",
+      "width": 400,
+      "height": 800,
+      "scale": 1,
+      "sha256": "ca880847a5e004da46d4ae3febfb725a7fe5fb5b18d936193d3a68cff8db7de5"
+    },
+    {
+      "file": "phone-messages.png",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
+      "captured_utc_date": "2026-10-18",
+      "mode": "phone",
+      "selection": "auto",
+      "width": 400,
+      "height": 800,
+      "scale": 1,
+      "sha256": "8b580f46f8a60934d190166927f88ab07c26022a247d2b4d3ba28eb5e08fc23d"
+    },
+    {
+      "file": "phone-sounds.png",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
+      "captured_utc_date": "2026-10-18",
+      "mode": "phone",
+      "selection": "auto",
+      "width": 400,
+      "height": 800,
+      "scale": 1,
+      "sha256": "946e639f48e3a8310c7ef9f9fececf0dbdecc457cd4e0c9ded414e6742613e8e"
+    },
+    {
+      "file": "phone-cellular.png",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
+      "captured_utc_date": "2026-10-18",
+      "mode": "phone",
+      "selection": "auto",
+      "width": 400,
+      "height": 800,
+      "scale": 1,
+      "sha256": "73dba9738a64e726b284471d08892df25041b9c76e3c62c4bdc8be495ee8b231"
+    },
+    {
+      "file": "phone-controls.png",
+      "source_base_commit": "6f4f6fa024bc423157974fef0bc22201aa556c9f",
+      "source_state": "Phone, Messages, sounds and SIM integration working tree",
+      "captured_utc_date": "2026-10-18",
+      "mode": "phone",
+      "selection": "auto",
+      "width": 400,
+      "height": 800,
+      "scale": 1,
+      "sha256": "e3b18daddd906f43376d591b30781ac566ab81d9425a0b0d99e0ea469c2dad70"
     }
   ]
 }

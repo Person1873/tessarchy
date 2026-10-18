@@ -24,6 +24,15 @@ function panelWidth(mode, width) {
     return mode === "phone" ? width : Math.min(Math.max(0, width - 24), mode === "desktop" ? 760 : 720);
 }
 
+function dockLayout(mode, width, keyboard) {
+    const count = (mode === "phone" ? 5 : 6) + (keyboard && mode !== "desktop" ? 1 : 0);
+    const dockWidth = Math.min(Math.max(0, width - 32), mode === "phone" ? 376 : 448);
+    const padding = mode === "phone" ? 24 : 32;
+    const capacity = Math.max(1, Math.floor((dockWidth - padding + 4) / 52));
+    const columns = capacity >= count ? count : Math.min(3, capacity);
+    return {width: dockWidth, columns: columns, rows: Math.ceil(count / columns)};
+}
+
 // Desktop keeps numbered workspaces one tap away; landscape tablets only once
 // the status bar has room beside the clock, tray and battery indicators.
 function showWorkspaces(mode, width) {

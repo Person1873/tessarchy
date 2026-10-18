@@ -1,0 +1,27 @@
+[
+  {
+    "file": "Ascenid.mp3",
+    "original_sha256": "87b7a0e6ada4d4fee64a4a86aea50fd9bf48f51a1b3109a01f849d7f2fe6bcdd",
+    "bundled_sha256": "4e137dc270a9954e49a1ad95e2b20af5041be52d8d4e3aaed5384c0d9a92bc11"
+  },
+  {
+    "file": "MoonLight.mp3",
+    "original_sha256": "5d0ff1c2adb742906e3cf236812c6c8c03a4ffd040a6952608d7da099093955b",
+    "bundled_sha256": "964e8457ddbff917c43f9b6a751111982cf709b6e3b0948866e02a450aac09ad"
+  },
+  {
+    "file": "Revenity.mp3",
+    "original_sha256": "755b5dcd8274a0d1fac53c57c843f8dcd9e53505fe5ad0ea329606b4b1023df8",
+    "bundled_sha256": "d3d9f995957c1f0bc3985b44fe998d0674208a7ea2d3f5a40e61b8cc3fc48f6f"
+  },
+  {
+    "file": "Stage.mp3",
+    "original_sha256": "d981bf370ca7429d75c699dcc759dfa53a9d471c6a64f290e84dbb6454bd0627",
+    "bundled_sha256": "293588dd338899bb85fe641cdad3702c4f0e2f69b7d8a763bf9375f868c325e6"
+  },
+  {
+    "file": "Starcast.mp3",
+    "original_sha256": "bc47b5d75c29d29dccaf44f0cbbbaab5c65eff1f6a7e15ed14b4ef55e6496a3e",
+    "bundled_sha256": "417e2c998e098c2c5fd6812de4caba772a3f2d0a4ab8e19c29a8d12b3e30c422"
+  }
+]
