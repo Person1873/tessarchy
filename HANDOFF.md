@@ -7,15 +7,18 @@ Never include passwords, tokens, SSH private keys, or other credentials.
 
 ## Current user request
 
-Build a phone-style login screen using a four-digit PIN, replacing terminal
-username/password entry. The owner explicitly chose “Use the PIN as the account
-password,” so use standard greetd/PAM rather than a separate PIN credential.
-The owner also restored VM access by supplying the existing credentials; do not
-repeat or save those values here. No new four-digit PIN has been chosen yet.
+1. Build and activate a phone-style login using a four-digit Linux account
+   password through greetd/PAM. Owner explicitly approved greetd installation,
+   activation/testing and one VM restart, and selected a PIN. It was applied
+   through hidden stdin; never repeat or save its value here or in Git.
+2. Produce a ZIP of the existing official logo in multiple sizes/formats,
+   including a spinning GIF. Generated and validated; exact artifact below.
+3. Fix two startup messages seen when Hyprland loads. Confirmed unsupported direct
+   launcher warning; changed both greeter and desktop to start-hyprland. Verify
+   the final user-session transition before claiming those warnings resolved.
 
-The earlier effort-ordered PR pass is complete (#15/#17/#14 merged). The other
-12 PRs remain deferred; preserve #9's unfinished worktree. Keep this handoff
-updated and keep comments to one line, in standard technical English.
+The easy-PR pass is complete (#15/#17/#14 merged). Other 12 PRs remain deferred;
+preserve #9's unfinished worktree. Maintain this handoff and one-line comments.
 
 ## Communication and working rules
 
@@ -152,20 +155,18 @@ was visually inspected and canceled, and native 400x800 portrait was restored.
 
 ## Current immediate next actions
 
-1. Finish/push the phone-login candidate and its draft PR, run/inspect CI and
-   get explicit owner approval before installing greetd in the VM. AGENTS.md
-   says not to install dependencies automatically. Code, packages, protocol tests,
-   VM preview screenshots and activation/rollback plan are prepared for review.
-2. Ask for the chosen four-digit PIN or have the owner set it directly in the VM.
-   Never put it in Git, handoff, command arguments or logs. Activation requires
-   changing the account password; do not invent or publish a default PIN.
-3. Only after approval: install the missing greetd dependency and local packages,
-   configure arch as the account, back up tty1 autologin and switch to greetd.
-   Confirm session exit/restart before boot testing; preserve recovery SSH/TTY.
-4. Test real PAM failure/success and session return. Current screenshots/protocol
-   tests are previews/mocks, not proof of boot-time authentication.
-5. Other 12 PRs remain deferred. Preserve the unfinished #9 merge. Alpha 2 ISO
-   and published release evidence remain unchanged; no new ISO has been built.
+1. Login, real PAM tests, session-return and startup-watchdog validation are
+   complete. Final checks: 43 Python / 37 Qt Quick; three v4 packages built.
+2. Commit/push the final source/docs/exporter, inspect new CI and finish PR #25.
+   It can be marked ready after updating its description to actual validated
+   scope. Merge only after checks pass, then sync build/live-iso with both histories.
+3. Deliver the validated logo ZIP/GIF and commit link. Artifact details below.
+4. Current VM is logged in to Tessera at native 400x800, with no app windows from
+   the final test. PIN is set, greetd enabled and user private launcher updated.
+   Do not repeat credentials. No further install/reboot permission is needed for
+   the already-approved work; do not perform extra restarts without a new reason.
+5. Preserve the 12 deferred PRs and #9 worktree. No new ISO was released or
+   claimed boot-tested. Published Alpha 2 and website collaborator source intact.
 
 ## Pending PR inventory and dependency cautions
 
@@ -593,3 +594,90 @@ build/pr-review/pr15-check.log, pr17-check.log and pr14-check.log.
 - Activation and rollback plan: docs/phone-login.md. Real PAM/boot/session handoff
   checks remain pending, as do credential selection and dependency permission.
 - No secure locking claim; this is a pre-session greeter, not an overlay lock.
+
+## Activated login and logo pack checkpoint — latest
+
+Owner approved installation/testing/restart and chose the account PIN. Do not
+ask again or record the credential. Dependencies and local source packages are
+installed only in the VM; no host configuration/package change occurred.
+
+- greetd 0.10.3-2 and greetd-agreety installed; local session dependencies also
+  installed grim/libnotify. Three source packages installed under /usr/bin and
+  /usr/share/tessarchy. Greeter account is UID/GID 967, home /var/lib/tessarchy-greeter.
+- Source package now provides a private tmpfiles directory and explicit HOME for
+  greeter portability; Arch's package originally gives greeter the unwritable /.
+- greetd.service enabled, getty@tty1 disabled, graphical.target was already set.
+  No tty1 autologin override existed. Backup: /root/tessarchy-login-before/systemd.
+  The stock PAM stack is unchanged. /etc/tessarchy/login-user is arch.
+- The selected account password was changed via hidden stdin to chpasswd, not
+  command arguments/files. SSH reconnected successfully after reboot. Never store
+  or echo the PIN or old credentials. Root backup contains no copied shadow file.
+- VM was rebooted once. QEMU uses -no-reboot and exited; relaunched after confirming
+  the old process was gone. New QEMU PID 234086 (verify). Saved argv (no credentials):
+  vm/phone-login-qemu-command.json. The old temporary source share had been cleaned
+  up, so build/source-share.hOIYSt was recreated before relaunch; no disk race.
+- SSH control socket vm/ssh-control restored, four-hour lifetime. The account's
+  new credential is active; do not try the previous password or save credentials.
+- Real PAM wrong-PIN rejection captured; no Tessera session started on failure.
+  Real chosen-PIN success then started user Hyprland/Tessera. Session exit via the
+  actual confirmation screen returned to greetd's phone screen. There were no
+  user applications in the new test desktop when it was ended for these checks.
+- VM testing found a follow-up backend error overwrote the rejected-PIN text.
+  Controller now does not cancel an already-ended auth failure and preserves the
+  rejection message against the follow-up error. Fixed state was exercised in VM.
+- Actual captures in build/pr-review: phone-login-real-ready.png,
+  phone-login-rejected-v2.png, phone-login-success.png. They are genuine greeter/
+  PAM results, distinct from the earlier preview images. No PIN visible.
+- User reported two messages at Hyprland load. Logs confirm direct Hyprland launch
+  warning. Both source launch paths now use start-hyprland -- --config. Installed
+  current greeter uses watchdog and its logs have no WARN/start-hyprland warning.
+  Still verify user session through the updated launcher. Both configerrors were
+  empty. Separate virtual-GPU diagnostics (gamma/page-flip/EGL fallback) exist in
+  logs and are not falsely claimed eliminated or hidden.
+- The private ~/.local/bin/start-tessarchy exactly matched the prior source SHA
+  b9b038012f6cca431bc237a70a5e7228251c5b45c83f3b2cb24ca33abe58e52d before updating.
+  Backed up at ~/tessarchy-backups/login-launcher/start-tessarchy, then updated.
+- Latest checks: 43 Python and 37 Qt Quick passed, both Hyprland parsers/lint.
+  Log build/pr-review/phone-login-v3-check.log. Current v4 only adds optional greeter
+  output/mode environment knobs; run checks again if other code changes occur.
+- Package builds v1/final/v2/v3 all passed; v4 final source build is running or
+  finished under build/phone-login-packages-v4/. Use newest, not earlier archives.
+- Current draft PR: https://github.com/thediamondsaint/tessarchy/pull/25.
+  Initial commit b9803624d66794dd4cbd5c3fb2b0e2eb3feaf2c8 passed Ubuntu/Arch/ISO CI
+  (39079577447 / 39079577407); final uncommitted fixes/exporter still need pushing.
+
+Logo kit:
+- ZIP: dist/tessarchy-logo-kit-20261017/Tessarchy-Official-Logo-Kit.zip
+- SHA256: c768b5126c13b3ea58bf21615d713fa171194a336e424cc6f4baff07a45fb39e
+- 59 entries, 5,544,035 bytes; ZIP CRC and every manifest digest validated.
+- Original mint SVG is byte-identical to shell/artwork/tessarchy-mark.svg.
+- Transparent mint/white/black PNG at 16–2048px (12 sizes), SVG variants, lossless
+  WebP, navy JPG, multi-size ICO, vector PDF, MIT license, README and manifest.
+- Animated/ contains 256/512 navy-matte 3D-style GIF spin, animated WebP, transparent
+  flat-spin GIF and animated SVG. GIF/WebP have 72 frames, 50ms/frame, loop=0.
+- Main GIF: dist/tessarchy-logo-kit-20261017/Tessarchy-Official-Logo-Kit/Animated/tessarchy-logo-3d-spin-512.gif
+- Contact sheet build/pr-review/logo-spin-contact.png visually inspected. This
+  extends the existing vector asset using code; no new AI logo or redesign.
+- Exporter refuses existing output and uses installed Pillow/rsvg-convert. No
+  dependencies were installed on host. Generated ZIP stays under ignored dist/.
+
+## Final login/branding validation checkpoint
+
+- Real PAM wrong-PIN rejection and chosen-PIN success verified; session exit via
+  confirmation returns to the greeter. Final watchdog login transition also passed.
+- Greeter starts via start-hyprland; user desktop evidence reports watchdog=true,
+  config_errors="", warnings=[]. Virtual-GPU diagnostic messages are separate and
+  remain documented; nothing was hidden with a suppress-errors setting.
+- Final source checks passed 43 Python / 37 Qt Quick. All three v4 packages built;
+  v4 greeter installed. Global and known-owned private launchers use watchdog.
+- Greeter root config persists Virtual-1 400x800@60 via environment knobs. The
+  actual screenshot is assets/screenshots/phone-login.png; rejection and success
+  captures are phone-login-rejected.png / phone-login-home.png. These are real
+  authentication evidence, not preview or ISO boot evidence.
+- User session deliberately still selects its private development Tessera source;
+  existing preferences preserved. Root-managed greeter runs installed package.
+- VM currently logged in to Tessera, native 400x800, no app windows created by the
+  final test. QEMU PID 234086 and SSH control socket remain active (verify).
+- Finish commit/push and CI for final fixes and scripts/export-brand-assets.py;
+  update PR #25 around actual finished scope, merge after checks pass, then sync
+  build/live-iso without discarding handoff history. Logo ZIP is ready to deliver.

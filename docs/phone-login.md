@@ -20,7 +20,8 @@ settings, logs or this repository. QML string copies are not claimed securely
 zeroed in memory. Four digits have low entropy and do not replace system account
 protection, encrypted storage, or device security review.
 
-The separate greeter Hyprland configuration loads no user preferences or
+Both login paths use the installed start-hyprland watchdog with explicit config
+arguments. The separate greeter Hyprland configuration loads no user preferences or
 application-launch bindings. It starts only the greeter. The launcher exits
 that compositor when Quickshell exits, allowing greetd to start the authenticated
 session. greetd uses its packaged PAM configuration; no custom PAM module or
@@ -39,18 +40,23 @@ namespaced `/etc/greetd/tessarchy.toml`, `/etc/tessarchy/login-user`, the greete
 launcher/config, and a greetd systemd drop-in selecting that config. It does not
 enable or start the service. It does not overwrite `/etc/greetd/config.toml`.
 The public account-name file defaults to `tess` and contains no credential.
+The package creates /var/lib/tessarchy-greeter with private greeter ownership
+and uses it as HOME, including on systems where greetd's account home is /.
+For a fixed kiosk display, set TESSARCHY_GREETER_OUTPUT and TESSARCHY_GREETER_MODE
+in the greetd command environment. Their default is the preferred native mode;
+only the development VM explicitly selects Virtual-1 at 400x800@60.
 
 The existing ISO continues to use its locked live account and autologin. This
 experimental greeter is not enabled in ISO staging: enabling it without a
 provisioned account password would strand testers. Published Alpha 2 is unchanged.
 First-boot PIN enrollment for disposable/live media remains future work.
 
-## VM activation plan — not yet performed
+## VM activation procedure
 
 1. Keep a VM snapshot and the current SSH connection/recovery TTY available.
 2. After explicit owner permission, install greetd in the VM and the three local
    Tessarchy packages. No host package/configuration change is needed. Built
-   candidate packages are under ignored `build/phone-login-packages-final/`.
+   candidate packages are under ignored `build/phone-login-packages-v4/`.
 3. Set `/etc/tessarchy/login-user` to `arch` for the current development VM.
 4. Have the owner choose a four-digit account password. Set it directly in the
    VM through standard password tooling; do not save it in source, shell command
@@ -77,3 +83,20 @@ not protect an already-running session with a Wayland session lock.
 - [Quickshell 0.3.1 Greetd API](https://quickshell.org/docs/v0.3.1/types/Quickshell.Services.Greetd/Greetd/)
 - [greetd configuration](https://man.archlinux.org/man/greetd.5.en)
 - [greetd IPC protocol](https://man.archlinux.org/man/greetd-ipc.7.en)
+
+## Actual development VM result
+
+The owner approved dependency installation and one VM restart. greetd and the
+local packages were installed, the selected four-digit account password applied
+through hidden stdin, and greetd enabled in place of tty1 getty. The original
+systemd configuration is backed up under /root/tessarchy-login-before/systemd.
+No host configuration or package was changed and the stock PAM stack is intact.
+
+A wrong PIN was rejected by real PAM and did not start Tessera. The chosen PIN
+started the user session. Confirmed session exit returned to the phone greeter.
+After both launch paths switched to start-hyprland, the greeter and authenticated
+desktop had no launcher warnings; the desktop's configerrors result was empty.
+The final native 400x800 display and real greeter/rejection/home captures were
+inspected. These are development-VM checks, not a new ISO boot test or locking
+claim. The private development Tessera copy remains the user session's selected
+source; the greeter itself runs the installed system package.

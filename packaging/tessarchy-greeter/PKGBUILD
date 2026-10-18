@@ -14,5 +14,6 @@ package() {
     install -Dm755 "$srcdir/session/tessarchy-greeter" "$pkgdir/usr/bin/tessarchy-greeter"
     install -Dm644 "$srcdir/session/greetd/tessarchy.toml" "$pkgdir/etc/greetd/tessarchy.toml"
     install -Dm644 "$srcdir/session/greetd/greetd.service.d/tessarchy.conf" "$pkgdir/usr/lib/systemd/system/greetd.service.d/tessarchy.conf"
+    install -Dm644 "$srcdir/session/greetd/tessarchy-greeter.tmpfiles" "$pkgdir/usr/lib/tmpfiles.d/tessarchy-greeter.conf"
     install -Dm644 "$srcdir/session/greetd/login-user" "$pkgdir/etc/tessarchy/login-user"
 }

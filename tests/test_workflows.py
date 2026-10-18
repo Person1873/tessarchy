@@ -137,6 +137,29 @@ class Workflows(unittest.TestCase):
         self.osk('show', path_tools=[busctl])
         self.assertTrue(log.read_text().splitlines()[-1].endswith('SetVisible b true'))
 
+    def test_session_uses_watchdog_and_preserves_config_path_arguments(self):
+        import shutil
+        tools = self.home / 'launcher-tools'
+        tools.mkdir()
+        (tools / 'bash').symlink_to(shutil.which('bash'))
+        for name, body in {
+                'qs': 'exit 0',
+                'dbus-run-session': 'shift; exec "$@"',
+                'start-hyprland': 'printf "%s\\0" "$@" > "$LAUNCH_TEST_LOG"'}.items():
+            path = tools / name
+            path.write_text('#!/bin/bash\n' + body + '\n')
+            path.chmod(0o755)
+        share = self.home / 'source with spaces'
+        (share / 'session').mkdir(parents=True)
+        (share / 'session/hyprland.lua').write_text('-- test config\n')
+        log = self.home / 'launcher-args'
+        env = dict(self.env, PATH=str(tools), TESSARCHY_DATA_DIR=str(share), LAUNCH_TEST_LOG=str(log))
+        result = subprocess.run([str(ROOT / 'session/start-tessarchy')], env=env,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(log.read_bytes().split(b'\0')[:-1],
+                         [b'--', b'--config', str(share / 'session/hyprland.lua').encode()])
+
     def test_session_start_launches_shell_and_optional_keyboard(self):
         import shutil
         if not shutil.which('lua'):

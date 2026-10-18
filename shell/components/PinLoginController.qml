@@ -24,14 +24,14 @@ QtObject {
         deadline.restart();
         backend.createSession(user);
     }
-    function fail(text) {
+    function fail(text, cancel = true) {
         pendingPin = "";
         attemptActive = false;
         answeredSecret = false;
         deadline.stop();
         message = text;
         busy = true;
-        if (available && backend.state !== inactiveState) backend.cancelSession();
+        if (cancel && available && backend.state !== inactiveState) backend.cancelSession();
         retryDelay.restart();
     }
     property Timer deadline: Timer {
@@ -58,8 +58,10 @@ QtObject {
             controller.answeredSecret = true;
             controller.backend.respond(pin);
         }
-        function onAuthFailure(message) { controller.fail("Passcode not recognized. Try again."); }
-        function onError(error) { controller.fail("Sign-in unavailable. Try again."); }
+        function onAuthFailure(message) { controller.fail("Passcode not recognized. Try again.", false); }
+        function onError(error) {
+            if (controller.attemptActive || controller.message.length === 0) controller.fail("Sign-in unavailable. Try again.", false);
+        }
         function onReadyToLaunch() {
             if (!controller.attemptActive || !controller.answeredSecret || controller.pendingPin.length !== 0) {
                 controller.fail("This account needs passcode authentication configured.");

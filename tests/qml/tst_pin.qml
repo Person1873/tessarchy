@@ -78,7 +78,10 @@ TestCase {
         const backend = createTemporaryObject(backendFactory, this);
         const login = createTemporaryObject(controllerFactory, this, {backend: backend});
         login.begin("0123");
+        backend.state = 0;
         backend.authFailure("test failure");
+        backend.error("follow-up backend error");
+        verify(login.message.startsWith("Passcode not recognized"));
         compare(login.pendingPin, "");
         compare(backend.launches, 0);
         verify(login.busy);

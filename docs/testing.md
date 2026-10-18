@@ -796,3 +796,41 @@ Pending/manual acceptance:
   enrollment is not implemented. Published Alpha 2 and boot evidence are unchanged.
 - This is pre-session authentication, not a Wayland session locker; no secure
   locking claim. Do not call mock protocol success a real login or boot test.
+
+## Activated phone login, startup warnings and logo kit, 2026-10-17
+
+Actual validation after explicit owner approval:
+- Installed greetd/greetd-agreety and the local Tessarchy packages in the VM.
+  Local package dependencies grim/libnotify were also installed. Host packages
+  and configuration were not changed. Password was set through hidden stdin;
+  no credential is in Git, docs, helper files or command arguments.
+- One VM reboot completed. Because QEMU used -no-reboot it exited; the old process
+  was confirmed gone before relaunching the same disk. The removed temporary
+  read-only share was recreated; no concurrent disk writer or image rebuild.
+- Real PAM rejected an incorrect PIN, with no Tessera process started. The chosen
+  PIN opened the authenticated desktop. The real session-exit confirmation was
+  used and the phone greeter returned. Fixed a follow-up backend error overwriting
+  the rejection message; confirmed the corrected message in the VM.
+- Both greeter and desktop now run through start-hyprland. Before the change logs
+  contained the unsupported direct-launch warning. After it, the greeter log had
+  no such warning and the final desktop reported watchdog=true, warnings=[], and
+  an empty configerrors result. No errors/notifications were suppressed.
+- Separate virtio software-GPU gamma/page-flip/EGL fallback diagnostics remain
+  in logs; they are not claimed eliminated. No persistent config-error overlay
+  was present in the inspected greeter or authenticated desktop captures.
+- Final ./scripts/check.sh passed: 43 Python and 37 Qt Quick checks, both Lua
+  parsers and QML lint. Includes an argument-safe watchdog launch test using a
+  config path with spaces. Log: build/pr-review/phone-login-final-check.log.
+- All three v4 local packages built. VM greeter uses a private writable HOME and
+  VM-only persistent native 400x800 output settings. User clock/motion preferences
+  were preserved. Actual captures are phone-login.png, phone-login-rejected.png
+  and phone-login-home.png under assets/screenshots/.
+- Official logo ZIP exported: 59 files, 5,544,035 bytes; CRC and all manifest hashes
+  passed. Canonical SVG byte identity, all PNG dimensions/alpha, ICO resolutions,
+  GIF/WebP frame counts (72), loop flags, transparency/disposal and 3D contact
+  sheet were inspected. No third-party console artwork or new logo redesign.
+
+Remaining: physical touch/boot hardware, account policy/recovery acceptance on
+other machines, unattended lifecycle soak and live-ISO PIN enrollment. There is
+no new ISO release or secure session-lock claim. Generated branding artifacts
+remain under dist/tessarchy-logo-kit-20261017/.

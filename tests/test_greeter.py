@@ -33,9 +33,10 @@ ShellRoot {
     Timer {
         interval: 1300; running: true
         onTriggered: {
-            if (login.pendingPin.length === 0 && !login.attemptActive && login.message.length > 0)
+            if (login.pendingPin.length === 0 && !login.attemptActive && login.message.length > 0) {
                 console.log("LOGIN_FAIL_CLOSED");
-            else console.error("LOGIN_TEST_FAILED");
+                if (login.message.startsWith("Passcode not recognized")) console.log("LOGIN_REJECTION_MESSAGE_OK");
+            } else console.error("LOGIN_TEST_FAILED");
             Qt.quit();
         }
     }
@@ -112,6 +113,8 @@ ShellRoot {
                         self.assertEqual(process.returncode, 0, output + errors)
                         self.assertNotIn('0123', output + errors)
                         self.assertNotIn('LOGIN_TEST_FAILED', output + errors)
+                        if scenario == 'failure':
+                            self.assertIn('LOGIN_REJECTION_MESSAGE_OK', output + errors)
                         if scenario != 'success':
                             self.assertIn('LOGIN_FAIL_CLOSED', output + errors)
                 finally:
