@@ -6,7 +6,7 @@ hl.config({
     decoration = { rounding = 0, shadow = { enabled = false } },
     animations = { enabled = false },
     input = { kb_layout = "us", follow_mouse = 0 },
-    misc = { disable_hyprland_logo = true, force_default_wallpaper = 0 },
+    misc = { disable_hyprland_logo = true, disable_splash_rendering = true, force_default_wallpaper = 0 },
 })
 hl.on("hyprland.start", function()
     hl.exec_cmd("/usr/bin/tessarchy-greeter")
