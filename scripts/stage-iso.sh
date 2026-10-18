@@ -34,6 +34,7 @@ file_permissions+=(
   ["/usr/bin/tessera-screenshot"]="0:0:755"
   ["/usr/bin/tessarchy-session-services"]="0:0:755"
   ["/usr/bin/tessarchy-readiness"]="0:0:755"
+  ["/usr/bin/tessera-rotate"]="0:0:755
 )
 PROFILE
 airoot=$profile/airootfs
@@ -43,7 +44,7 @@ find "$airoot/usr/share/tessarchy/shell" -type f \( -name '*.pyc' -o -name '*.py
 find "$airoot/usr/share/tessarchy/shell" -depth -type d -name __pycache__ -empty -delete
 cp -R -- "$root/docs" "$airoot/usr/share/tessarchy/"
 cp -- "$root/session/hyprland.lua" "$airoot/usr/share/tessarchy/session/"
-install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"
+install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessera-rotate" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"
 install -m644 "$root/session/tessarchy.desktop" "$airoot/usr/share/wayland-sessions/"
 cp -a "$root/iso/airootfs/." "$airoot/"
 # Convert the supplied clip for initramfs playback; no video decoder runs at boot.

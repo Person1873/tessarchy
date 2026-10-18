@@ -731,6 +731,112 @@ assert(#fire("window.open", dialog) == 0, "desktop dialogs are left alone")
         self.assertEqual(launcher.read_text(), 'unrelated helper')
         self.assertFalse((self.home / 'data/tessarchy').exists())
 
+    def rotation_tools(self, keep_reload=False):
+        tools = self.home / 'bin'
+        tools.mkdir(exist_ok=True)
+        state = self.home / 'transform-state'
+        state.write_text('0')
+        stub = tools / 'hyprctl'
+        stub.write_text('''#!/bin/bash
+state=$STUB_STATE
+case "$1" in
+monitors)
+    printf 'Monitor eDP-1 (ID 0):\\n\\t1920x1080@60.000 at 0x0\\n\\tscale: 1.00\\n\\ttransform: %s\\n' "$(cat "$state")"
+    ;;
+reload)
+    [ -n "${STUB_KEEP_RELOAD:-}" ] && exit 0
+    config=${XDG_CONFIG_HOME:-$HOME/.config}/tessarchy/display.lua
+    if [ -f "$config" ]; then
+        sed -n 's/.*transform = \\([0-9]*\\).*/\\1/p' "$config" > "$state"
+    else
+        echo 0 > "$state"
+    fi
+    ;;
+*)
+    exit 1
+    ;;
+esac
+''')
+        stub.chmod(0o755)
+        env = dict(self.env, PATH=str(tools) + ':' + os.environ['PATH'], STUB_STATE=str(state))
+        if keep_reload:
+            env['STUB_KEEP_RELOAD'] = '1'
+        return env, state
+
+    def test_rotation_helper_cycles_and_preserves_display_settings(self):
+        env, state = self.rotation_tools()
+        preferences = self.home / 'config/tessarchy/preferences.lua'
+        preferences.parent.mkdir(parents=True)
+        preferences.write_text('-- mine\n')
+        command = [str(ROOT / 'session/tessera-rotate')]
+        result = subprocess.run(command + ['cycle', 'eDP-1'], env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('90 degrees', result.stdout)
+        display = self.home / 'config/tessarchy/display.lua'
+        first = display.read_text()
+        self.assertIn('output = "eDP-1"', first)
+        self.assertIn('mode = "1920x1080@60.000"', first)
+        self.assertIn('position = "0x0"', first)
+        self.assertIn('scale = 1.00', first)
+        self.assertIn('transform = 1', first)
+        self.assertEqual(state.read_text(), '1\n')
+        result = subprocess.run(command + ['cycle', 'eDP-1'], env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        second = display.read_text()
+        self.assertIn('transform = 2', second)
+        self.assertNotIn('transform = 1', second)
+        self.assertEqual(second.count('hl.monitor('), 1)
+        self.assertEqual(preferences.read_text(), '-- mine\n')
+
+    def test_rotation_helper_restores_state_when_reload_does_not_apply(self):
+        env, _ = self.rotation_tools(keep_reload=True)
+        display = self.home / 'config/tessarchy/display.lua'
+        display.parent.mkdir(parents=True)
+        previous = '-- previous\nhl.monitor({ output = "eDP-1", transform = 3 })\n'
+        display.write_text(previous)
+        result = subprocess.run([str(ROOT / 'session/tessera-rotate'), 'cycle', 'eDP-1'],
+                                env=env, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('restoring', result.stderr)
+        self.assertEqual(display.read_text(), previous)
+
+    def test_rotation_helper_reset_removes_generated_rule(self):
+        env, state = self.rotation_tools()
+        display = self.home / 'config/tessarchy/display.lua'
+        display.parent.mkdir(parents=True)
+        display.write_text('hl.monitor({ output = "eDP-1", transform = 2 })\n')
+        state.write_text('2')
+        command = [str(ROOT / 'session/tessera-rotate')]
+        result = subprocess.run(command + ['reset', 'eDP-1'], env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(display.exists())
+        self.assertEqual(state.read_text(), '0\n')
+        again = subprocess.run(command + ['reset', 'eDP-1'], env=env, capture_output=True, text=True)
+        self.assertEqual(again.returncode, 0)
+
+    def test_rotation_helper_rejects_arguments_and_unknown_output(self):
+        env, _ = self.rotation_tools()
+        command = [str(ROOT / 'session/tessera-rotate')]
+        for arguments in ([], ['cycle'], ['wobble', 'eDP-1'], ['cycle', 'eDP-1;true'],
+                          ['cycle', 'eDP-1/../x'], ['cycle', ''], ['cycle', 'HDMI-A-1']):
+            result = subprocess.run(command + arguments, env=env, capture_output=True, text=True)
+            self.assertIn(result.returncode, (1, 64), arguments)
+        self.assertFalse((self.home / 'config/tessarchy/display.lua').exists())
+
+    def test_rotation_wiring_uses_generated_lua_not_keywords(self):
+        settings = (ROOT / 'shell/components/SettingsPage.qml').read_text()
+        self.assertIn('RotationControl {', settings)
+        control = (ROOT / 'shell/components/RotationControl.qml').read_text()
+        self.assertIn('Quickshell.execDetached(["tessera-rotate", action, control.monitor.name])', control)
+        self.assertIn('control.send("cycle")', control)
+        self.assertIn('control.send("reset")', control)
+        self.assertNotIn('keyword', control)
+        lua = (ROOT / 'session/hyprland.lua').read_text()
+        self.assertIn('tessarchy/display.lua', lua)
+        for name in ('scripts/install-dev.sh', 'scripts/uninstall-dev.sh', 'scripts/stage-iso.sh',
+                     'scripts/check.sh', 'packaging/tessarchy-session/PKGBUILD'):
+            self.assertIn('tessera-rotate', (ROOT / name).read_text(), name)
+
     def test_iso_staging_preserves_boot_assets_and_account_databases(self):
         # Minimal fixture exercises our assembly, not upstream archiso validity.
         repo = self.home / 'source'

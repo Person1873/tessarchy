@@ -260,6 +260,19 @@ ColumnLayout {
     TouchButton { text: "Sounds & ringtones"; Layout.fillWidth: true; focusPolicy: Qt.StrongFocus; onClicked: page.soundsRequested() }
     TouchButton { text: "SIM & cellular"; Layout.fillWidth: true; focusPolicy: Qt.StrongFocus; onClicked: page.cellularRequested() }
     Text {
+        text: "ROTATION"
+        color: page.accentColor
+        font {
+            pixelSize: 11
+            bold: true
+            letterSpacing: 2
+        }
+    }
+    RotationControl {
+        Layout.fillWidth: true
+        accentColor: page.accentColor
+    }
+    Text {
         text: "SYSTEM"
         color: page.accentColor
         font {

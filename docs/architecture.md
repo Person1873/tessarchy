@@ -129,3 +129,12 @@ come from a separate Gio helper using power-profiles-daemon's current or legacy
 D-Bus interface. The helper reads the service's supported profiles before every
 write and rereads the active profile afterward. Unavailable/unsupported controls
 stay disabled. Profile polling runs only while the panel is visible.
+
+## Display rotation
+
+Screen rotation in Settings cycles the focused output through 90-degree steps.
+The panel calls the fixed-argument tessera-rotate helper, which rewrites only
+Tessarchy's generated display.lua with the currently applied mode, position and
+scale plus the new transform, reloads Hyprland and verifies the result. The
+previous file is restored when verification fails; user preferences.lua is
+never modified. Touch remapping after rotation remains a hardware check.
