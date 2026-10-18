@@ -197,7 +197,7 @@ Read [pr-triage.md](docs/pr-triage.md) and inspect current PR heads first.
 | ID | Task | Completion result |
 | --- | --- | --- |
 | T09 | Review #18 power controls | Reliable service detection, supported modes and guarded writes |
-| T10 | Review #21 idle blanking | Current Lua-compatible display control, wake input and session lifecycle tested |
+| T10 | Review | — | `feat/screen-idle` / #21 | Reworked on current `main`: hypridle autostart through the Lua `hyprland.start` hook, explicit wake-input options, per-capture wake in the boot test; guest idle-to-blank-and-wake cycle verified over the serial console, Lua dispatch accepted both ways |
 | T11 | Review #23 Wi-Fi connection workflow | Scan ownership, NetworkManager lifecycle, credentials agent and cancellation resolved |
 | T12 | Review | — | `feat/rotation` / #22 | Reworked for Lua: generated `display.lua` plus recoverable `tessera-rotate` helper; guest rotation applied (transform 1, portrait shell capture) and reload-race retry added; hardware rotation pending |
 | T13 | Review #13 notifications | Plain-text rendering, popup/history lifecycle, replacement and withdrawal checked |

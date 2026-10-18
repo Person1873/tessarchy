@@ -43,7 +43,7 @@ cp -R -- "$root/shell" "$airoot/usr/share/tessarchy/"
 find "$airoot/usr/share/tessarchy/shell" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
 find "$airoot/usr/share/tessarchy/shell" -depth -type d -name __pycache__ -empty -delete
 cp -R -- "$root/docs" "$airoot/usr/share/tessarchy/"
-cp -- "$root/session/hyprland.lua" "$airoot/usr/share/tessarchy/session/"
+cp -- "$root/session/hyprland.lua" "$root/session/hypridle.conf" "$airoot/usr/share/tessarchy/session/"
 install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessera-rotate" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"
 install -m644 "$root/session/tessarchy.desktop" "$airoot/usr/share/wayland-sessions/"
 cp -a "$root/iso/airootfs/." "$airoot/"

@@ -237,12 +237,25 @@ hl = {
 }
 dofile(arg[1])
 callbacks["hyprland.start"]()
+local share = os.getenv("TESSARCHY_DATA_DIR")
 assert(commands[1] == "tessarchy-session-services" and commands[2] == "tessera-shell" and commands[3] == "tessarchy-osk start",
        table.concat(commands, ","))
+assert(commands[4] == "hypridle -c '" .. share .. "/session/hypridle.conf'",
+       tostring(commands[4]))
+assert(#commands == 4, "unexpected extra autostart commands")
 '''
+        env = dict(self.env, TESSARCHY_DATA_DIR=str(self.home / 'data'))
         result = subprocess.run(['lua', '-', str(ROOT / 'session/hyprland.lua')],
-                                input=script, text=True, capture_output=True, env=self.env)
+                                input=script, text=True, capture_output=True, env=env)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_idle_config_blanks_without_locking(self):
+        config = (ROOT / 'session/hypridle.conf').read_text()
+        self.assertIn('timeout = 300', config)
+        self.assertIn("on-timeout = hyprctl dispatch 'hl.dsp.dpms({ action = \"disable\" })'", config)
+        self.assertIn("on-resume = hyprctl dispatch 'hl.dsp.dpms({ action = \"enable\" })'", config)
+        for absent in ('lock_cmd', 'swaylock', 'hyprlock'):
+            self.assertNotIn(absent, config)
 
     def test_existing_launcher_refused_before_installing_data(self):
         launcher = self.home / '.local/bin/start-tessarchy'
@@ -275,6 +288,7 @@ assert(commands[1] == "tessarchy-session-services" and commands[2] == "tessera-s
         listed = manifest.read_text().splitlines()
         self.assertIn('shell/shell.qml', listed)
         self.assertIn('session/hyprland.lua', listed)
+        self.assertIn('session/hypridle.conf', listed)
         self.assertIn('.tessarchy-dev-install', listed)
         for entry in (data / 'shell').rglob('*'):
             if entry.is_file():
@@ -892,6 +906,8 @@ esac
         self.assertTrue((profile / 'airootfs/usr/share/plymouth/themes/tessarchy/logo-159.png').is_file())
         self.assertTrue((profile / 'airootfs/usr/bin/tessarchy-session-services').is_file())
         self.assertTrue((profile / 'airootfs/usr/bin/tessera-screenshot').stat().st_mode & 0o111)
+        self.assertTrue((profile / 'airootfs/usr/share/tessarchy/session/hypridle.conf').is_file())
+        self.assertIn('hypridle', (profile / 'packages.x86_64').read_text().splitlines())
         self.assertIn('grim', (profile / 'packages.x86_64').read_text().splitlines())
         self.assertIn('libnotify', (profile / 'packages.x86_64').read_text().splitlines())
         self.assertIn('u tess 1000 "Tessarchy live user" /home/tess /usr/bin/fish',
