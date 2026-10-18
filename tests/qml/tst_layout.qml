@@ -200,4 +200,9 @@ TestCase {
         compare(Policy.notificationTimeout(1), 8);
         compare(Policy.notificationTimeout(2), 0);
     }
+    function test_osk_armed_only_for_touch_layouts() {
+        verify(Policy.oskArmed("phone"));
+        verify(Policy.oskArmed("tablet"));
+        verify(!Policy.oskArmed("desktop"));
+    }
 }

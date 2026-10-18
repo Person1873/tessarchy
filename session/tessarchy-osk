@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Use a private settings backend for the optional on-screen keyboard.
 set -euo pipefail
-usage() { echo "Usage: $0 start | show | hide | toggle" >&2; exit 2; }
+usage() { echo "Usage: $0 start | show | hide | toggle | enable | disable" >&2; exit 2; }
 [[ $# == 1 ]] || usage
 bus=sm.puri.OSK0
 object=/sm/puri/OSK0
@@ -56,6 +56,24 @@ start)
     ;;
 show) set_visible true ;;
 hide) set_visible false ;;
+# Arm or disarm the a11y screen keyboard that makes squeekboard appear for text
+# fields. Desktop mode disarms it so a focused field never raises a keyboard.
+enable|disable)
+    state=${XDG_STATE_HOME:-$HOME/.local/state}/tessarchy/osk
+    keyfile=$state/glib-2.0/settings/keyfile
+    if [[ ! -e $keyfile && ! -L $keyfile ]]; then
+        mkdir -p -- "${keyfile%/*}"
+        printf '%s\n' '[org/gnome/desktop/a11y/applications]' \
+            'screen-keyboard-enabled=true' > "$keyfile"
+    fi
+    value=true; [[ $1 == disable ]] && value=false
+    export GSETTINGS_BACKEND=keyfile XDG_CONFIG_HOME=$state
+    if command -v gsettings >/dev/null; then
+        # Disarming also hides a keyboard already on screen, and re-arming
+        # restores auto-show for text fields without a sticky forced state.
+        gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled "$value"
+    fi
+    ;;
 toggle)
     visible=$(busctl --user get-property "$bus" "$object" "$bus" Visible)
     if [[ $visible == "b true" ]]; then set_visible false; else set_visible true; fi

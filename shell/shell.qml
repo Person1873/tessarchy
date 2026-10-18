@@ -69,6 +69,11 @@ ShellRoot {
     readonly property real cellularStrength: communications.state.cellular.signal === undefined ? -1 : communications.state.cellular.signal / 100
     // squeekboard via tessarchy-osk; it also appears by itself for text fields.
     readonly property bool oskAvailable: Quickshell.env("TESSARCHY_OSK") === "1"
+    // Desktop mode must never raise the on-screen keyboard; touch modes may.
+    function applyOskMode(mode) {
+        if (!oskAvailable) return;
+        Quickshell.execDetached(["tessarchy-osk", Policy.oskArmed(mode) ? "enable" : "disable"]);
+    }
     readonly property var audioSink: audioLoader.item ? (audioLoader.item as AudioStatus).sink : null
     readonly property bool audioAvailable: !!(audioSink && audioSink.ready && audioSink.audio)
     readonly property int volumePercent: audioAvailable ? Math.round(audioSink.audio.volume * 100) : 0
@@ -163,6 +168,9 @@ ShellRoot {
             readonly property string modeLabel: (shellPreferences.layoutMode === "auto" ? "Auto · " : "") + Policy.title(mode)
             // Pop-ups render once, on the first screen, not on every output.
             readonly property bool isPrimaryScreen: Quickshell.screens.length > 0 && Quickshell.screens[0] === modelData
+            // Arm or disarm the keyboard whenever the layout for this output changes.
+            onModeChanged: if (isPrimaryScreen) root.applyOskMode(mode)
+            Component.onCompleted: if (isPrimaryScreen) root.applyOskMode(mode)
             SystemClock {
                 id: clock
                 precision: SystemClock.Minutes

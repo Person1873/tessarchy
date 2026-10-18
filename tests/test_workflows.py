@@ -181,6 +181,16 @@ class Workflows(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn(f'scale-in-vertical-screen-orientation {expected}', log.read_text())
 
+    def test_osk_arms_and_disarms_the_a11y_keyboard(self):
+        log = self.home / 'a11y.log'
+        gsettings = ('gsettings', f'echo "$*" >> {log}\n')
+        for action, expected in (('disable', 'false'), ('enable', 'true')):
+            log.unlink(missing_ok=True)
+            result = self.osk(action, path_tools=[gsettings])
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(f'screen-keyboard-enabled {expected}', log.read_text())
+        self.assertEqual(self.osk('whatever').returncode, 2)
+
     def test_session_uses_watchdog_and_preserves_config_path_arguments(self):
         import shutil
         tools = self.home / 'launcher-tools'
