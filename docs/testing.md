@@ -995,7 +995,7 @@ Actually performed:
   explicit `hyprctl reload` issued moments later can lose the IPC handshake
   (`Hyprland IPC didn't respond in time`), so the helper reported a rejected
   reload and restored the previous state. Fixed by retrying the explicit reload
-  in `reload_hyprland()` (10 x 0.3 s, used by apply, reset and restore) and by
+  in `reload_hyprland()` (20 x 0.5 s, used by apply, reset and restore) and by
   forcing mode 0644 on the generated file so a helper started from a rescue
   console still writes a file the session user can read. Debug-image runs as
   root had also been writing the file outside the live user's config

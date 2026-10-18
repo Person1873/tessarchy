@@ -40,11 +40,11 @@ if [[ -f $display_file ]]; then
     cp -- "$display_file" "$backup"
 fi
 reload_hyprland() {
-    # The generated file also triggers Hyprland's own config watcher; retry so
-    # the explicit reload is not lost to the in-flight automatic one.
-    for _ in 1 2 3 4 5 6 7 8 9 10; do
+    # The generated file also triggers Hyprland's own config watcher, and a
+    # busy compositor can stall IPC for seconds; retry until it answers.
+    for _ in $(seq 1 20); do
         hyprctl reload >/dev/null 2>&1 && return 0
-        sleep 0.3
+        sleep 0.5
     done
     return 1
 }
