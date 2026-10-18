@@ -19,6 +19,12 @@ ARM and Secure Boot enrollment are outside this profile.
 
 ## Build and install the session packages
 
+A published tablet pilot includes `Tessarchy-Tablet-Pilot-Packages.tar.gz`, built
+on the disposable Arch CI runner. Extract it into a new directory, verify its
+`SHA256SUMS`, then follow the target-tablet install commands below. It contains
+the four packages, this guide and exact source provenance; it runs no installer.
+
+
 Build on an Arch development checkout as a normal user:
 
 ```bash

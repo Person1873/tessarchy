@@ -42,3 +42,13 @@ jobs:
           chown -R checker:checker "$GITHUB_WORKSPACE"
       - name: Check as a non-root development user
         run: runuser -u checker -- ./scripts/check.sh
+      - name: Build tablet install packages without installing them
+        run: |
+          runuser -u checker -- ./scripts/package.sh
+          runuser -u checker -- python scripts/bundle-tablet.py --output dist/Tessarchy-Tablet-Pilot-Packages.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tablet-install-packages-${{ github.sha }}
+          path: dist/Tessarchy-Tablet-Pilot-Packages.tar.gz
+          if-no-files-found: error
+          retention-days: 7
