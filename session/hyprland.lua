@@ -108,7 +108,7 @@ hl.on("hyprland.start", function ()
 end)
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("tessera-brightness up"))
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("tessera-brightness down"))
--- Same card switcher for touch and keyboard. Alt release commits selection.
+-- Keyboard icon switcher. Alt release commits selection.
 -- Keycodes 64/108 are left/right Alt in the configured evdev/US keymap.
 -- These bindings remain available while the switcher has an exclusive layer grab.
 hl.bind("ALT + Tab", hl.dsp.exec_cmd("tessera-shell ipc call switcher next"), { locked = true })

@@ -6,10 +6,11 @@ Button {
     id: control
     property color accentColor: "#a9e8d5"
     property bool selected: false
-    Layout.minimumWidth: 48
+    property int slotWidth: 48
+    Layout.minimumWidth: slotWidth
     Layout.minimumHeight: 48
-    Layout.preferredWidth: 48
-    implicitWidth: 48
+    Layout.preferredWidth: slotWidth
+    implicitWidth: slotWidth
     implicitHeight: 48
     padding: 0
     focusPolicy: Qt.NoFocus

@@ -37,7 +37,7 @@ The selected design is **Quiet Edge**:
 - Midnight navy, mint accents and the original glacier wallpaper.
 - Shallow glass top bar, mobile clock and pull-down component controls.
 - Floating translucent bottom navigation with icon actions.
-- Horizontal app cards with window previews and the same switcher for Alt+Tab.
+- Touch Recents cards with previews; Alt+Tab uses centered app icons without a background.
 - Automatic Phone/Tablet/Desktop layouts and a saved manual mode in the pull-down.
 - Original geometric Tessarchy mark, finite assembly/rotation and reduced motion.
 
@@ -103,7 +103,8 @@ close/exit and protected image-build operations. Keep private credentials out of
 documentation, command arguments and captures. Use project-relative paths and
 generic account labels in public files; keep personal identifiers in local state.
 
-Touch targets are at least 48 logical pixels in both dimensions. The approved
+Touch targets are at least 48 logical pixels in both dimensions, except the
+owner-requested 32px-wide desktop quick-launch and tray controls (48px tall). The other approved
 exception is on-screen keyboard width: narrower letter keys are allowed, with
 height still at least 48 pixels. Navigation preserves application keyboard focus.
 
@@ -182,6 +183,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T67 | Done | Codex | fix/desktop-window-resize | Desktop windows can be resized by dragging an edge (resize_on_border, wider grab area) |
 | T68 | Done | Codex | feat/desktop-tray-indicators | The status strip's indicator cluster moves into the Desktop taskbar tray, beside the clock |
 | T70 | Done | Codex | feat/desktop-taskbar-polish | Centered Start, floating menu icons, consistent tray glyphs, task overflow and dismissal; 1280×800 VM / 104 Python / 53 Qt checks |
+| T71 | Done | Codex | feat/desktop-quick-switcher | Logo Start, weather by Start, pulldown-only top, uniform compact tray, icon-only Alt+Tab; VM keyboard and visual checks |
 | T69 | Done | Codex | feat/weather-status | Keyless current-conditions chip in the status strip, with an offline cache |
 | T59 | Done | Codex / contributor | PR #28 | Offline BIOS/UEFI live boots passed; contributor history preserved |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |

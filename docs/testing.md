@@ -1648,3 +1648,29 @@ Only the temporary test windows were closed. The original guest shell is backed
 up in its tessarchy-backups directory. Captures are in the ignored
 `build/desktop-session/` directory. Physical input and multi-monitor acceptance
 remain pending; no ISO build or boot was performed locally.
+
+
+## Desktop status strip and quick switcher, 2026-10-18
+
+`./scripts/check.sh` passed: 104 Python tests and 57 Qt Quick results, including
+quick-switcher cycling, Alt release, Escape, and selected-window removal.
+Hyprland configuration verification and QML lint passed with the existing type
+metadata warnings. Fish and ShellCheck remain unavailable locally.
+
+Deployed the source to the running 1280×800 Basic guest, Quickshell 0.3.2 /
+Hyprland 0.56.2. Observed the desktop top edge showing only the pulldown control, with
+weather beside the narrow logo-only Start button and time in the taskbar. Tray
+icons use uniform 32px spacing and 48px height, per the owner’s compact-spacing
+request. Battery text is hidden in this tray to keep its glyph centered. The transparent switcher mapped at 160×96 for two
+windows, centered in the usable output area, showing only the Terminal and Files
+icons with the selected icon larger and brighter. QMP keyboard Alt+Tab and Alt
+release selected Files, confirmed through the active-window IPC state. Escape
+cancelled and preserved the previously active Terminal. Reverse cycling was
+exercised in the guest; the automated three-window case verifies wraparound.
+No preview captures or card backgrounds are used by Alt+Tab. Touch Recents
+continues to use its existing cards. Captures are local ignored artifacts under
+`build/desktop-session/quick-switcher.png`.
+
+The separate runtime-only Hyprbars title-bar experiment from the preceding
+review remains a prototype, not a packaged part of this change. No new ISO boot
+or physical touchscreen validation was performed for these changes.

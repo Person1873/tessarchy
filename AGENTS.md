@@ -11,7 +11,9 @@ Hyprland/Omarchy configuration or install dependencies automatically. Session
 configuration targets Hyprland 0.56 Lua and Quickshell 0.3.1. Check installed
 QML type metadata and `Hyprland --verify-config` when changing those APIs.
 
-Keep touch targets >=48 logical pixels; on-screen keyboard keys may be narrower
+Keep touch targets >=48 logical pixels; desktop quick-launch and tray controls use 32px width
+and 48px height for the owner-requested compact spacing (2026-10-18).
+On-screen keyboard keys may be narrower
 but must remain >=48 logical pixels tall (owner decision 2026-10-17). Preserve
 keyboard focus in navigation,
 and confirm close and exit. No secure locking claims. Record actual validation
