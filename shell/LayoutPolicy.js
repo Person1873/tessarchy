@@ -117,3 +117,9 @@ function notificationTimeout(urgency) {
     if (urgency === 0) return 4;
     return 8;
 }
+
+// The on-screen keyboard is armed for the touch layouts only. Desktop is driven
+// by a physical keyboard, and a panel there would cover the window it serves.
+function oskArmed(mode) {
+    return mode !== "desktop";
+}

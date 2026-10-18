@@ -131,7 +131,10 @@ The Keyboard navigation button calls `tessarchy-osk toggle`, which uses
 squeekboard's `sm.puri.OSK0` D-Bus `Visible`/`SetVisible` on the session bus. Tessera
 panels never take keyboard focus, so the app keeps its text field. The button
 appears only when `tessera-shell` finds squeekboard and the wrapper, and is not
-added to Desktop mode. Without squeekboard nothing starts and no button appears.
+added to Desktop mode. Desktop mode also disarms the key through
+`tessarchy-osk disable` (and re-arms it with `enable`), so a focused text field
+never raises a keyboard panel over a desktop window; the shell applies this on
+every layout change. Without squeekboard nothing starts and no button appears.
 The guest test observed squeekboard load its terminal layout for Foot and its
 text layout for Firefox's address bar, so text-input content purpose reached it;
 the exact protocol traffic was not traced.

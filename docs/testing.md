@@ -1242,6 +1242,30 @@ clamped 2.00). squeekboard caps the multiplier at 2.00, so outputs below about
 346 logical px wide cannot reach 48 px keys through this setting and need a
 custom layout; that limit is a documented remaining gap. Hardware touch
 acceptance remains pending.
+
+## On-screen keyboard suppression in Desktop mode, 2026-10-18
+
+Owner report: in Desktop mode a focused text field raised a keyboard panel that
+covered the window. squeekboard shows itself whenever the GNOME a11y key
+`screen-keyboard-enabled` is true, which the wrapper seeds, so the panel appeared
+regardless of layout.
+
+`session/tessarchy-osk` gained `enable` and `disable`, which flip only that key
+through the private keyfile backend, and `tessera-shell` now calls them whenever
+the layout for the primary output changes (`Policy.oskArmed`): Desktop disarms,
+Phone and Tablet arm. Setting the key alone hides a keyboard already on screen
+and re-arms auto-show later; calling `SetVisible false` as well was tested and
+discarded because squeekboard then stays forced-hidden across a re-arm.
+
+Actual VM checks at the accepted 400x800 and at 1200x800 Desktop:
+
+- Desktop 1200x800: key false; a touch tap into a focused Foot terminal left the
+  `osk` layer absent, before and after switching layouts.
+- Phone 400x800: key true; the same tap raised the keyboard, so the touch layouts
+  are unchanged.
+- `./scripts/check.sh` covers the wrapper's `enable`/`disable` (stubbed
+  `gsettings`) and `Policy.oskArmed` in the Qt Quick suite.
+
 ## Display rotation through generated Lua, 2026-10-18 UTC
 
 Actually performed:
