@@ -67,6 +67,7 @@ ShellRoot {
     }
     RadioBackend { id: radioBackend }
     CommunicationBackend { id: communications }
+    WeatherBackend { id: weatherBackend }
     readonly property var bluetoothAdapter: Bluetooth.defaultAdapter
     // Signal strength remains unavailable until a real connection backend is added.
     property real wifiStrength: -1
@@ -838,6 +839,26 @@ ShellRoot {
                         Layout.maximumWidth: 360
                         Layout.leftMargin: 8
                         Accessible.name: text.length > 0 ? "Focused window " + text : ""
+                    }
+                    // Current conditions, from the weather helper.
+                    RowLayout {
+                        visible: weatherBackend.available
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.leftMargin: 4
+                        spacing: 6
+                        Image {
+                            Layout.alignment: Qt.AlignVCenter
+                            source: "icons/" + (weatherBackend.state.icon || "weather-cloud") + ".svg"
+                            sourceSize.width: 20
+                            sourceSize.height: 20
+                        }
+                        Text {
+                            Layout.alignment: Qt.AlignVCenter
+                            text: Math.round(weatherBackend.state.temperature) + (weatherBackend.state.unit || "")
+                            color: "#e2edf1"
+                            font.pixelSize: 12
+                            Accessible.name: (weatherBackend.state.description || "Weather") + ", " + text + (weatherBackend.state.stale ? ", last observation" : "")
+                        }
                     }
                     // Built-in indicators move to the taskbar tray in Desktop
                     // mode; the mobile strip keeps them along the top edge.

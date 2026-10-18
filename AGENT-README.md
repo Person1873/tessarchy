@@ -179,6 +179,9 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T64 | Done | Codex | feat/xp-glass-taskbar | Windows-XP-style glass taskbar: Start pill, bevelled task buttons and a sunken tray |
 | T65 | Done | Codex | feat/start-menu-windowed-desktop | XP-style Start menu opens above the Start button and toggles shut; Desktop windows open windowed by default with a Settings toggle for tiling |
 | T66 | Done | Codex | fix/repository-audit | Fractional OSK scales, source-independent dev uninstall and bounded Tessy payloads; 97 Python / 49 Qt checks |
+| T67 | Done | Codex | fix/desktop-window-resize | Desktop windows can be resized by dragging an edge (resize_on_border, wider grab area) |
+| T68 | Done | Codex | feat/desktop-tray-indicators | The status strip's indicator cluster moves into the Desktop taskbar tray, beside the clock |
+| T69 | Done | Codex | feat/weather-status | Keyless current-conditions chip in the status strip, with an offline cache |
 | T59 | Done | Codex / contributor | PR #28 | Offline BIOS/UEFI live boots passed; contributor history preserved |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |
 
