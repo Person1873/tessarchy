@@ -175,6 +175,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T60 | Done | Codex | fix/mobile-status-tray | Mobile bar excludes desktop tray icons; actual VM home and drawer checked |
 | T61 | Done | Codex | fix/osk-key-height | Portrait on-screen keys meet the 48px height floor at 400px and 360px widths |
 | T62 | Done | Codex | feat/tessy-discord | Tessy posts commits, pull requests and releases to the project Discord channel |
+| T63 | Done | Codex | feat/desktop-taskbar | Desktop mode uses a full-width taskbar with window tasks; the app tray left the status strip |
 | T59 | Done | Codex / contributor | PR #28 | Offline BIOS/UEFI live boots passed; contributor history preserved |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |
 

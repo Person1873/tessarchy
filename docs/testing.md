@@ -1394,3 +1394,29 @@ Built by Actions run 39144935780 from `main` = `0f71636a0aecb20cd76359a71d2e911e
   rotation and the Tessy workflow. Live, nonpersistent, no disk installer.
 - Physical hardware, touch, radios, rotation and Secure Boot remain untested;
   the boot checks are diskless QEMU/KVM smoke tests.
+
+## Desktop taskbar and status-strip cleanup, 2026-10-18
+
+Owner report: an out-of-place icon sat in the Desktop status bar, and the bottom
+bar still looked like the mobile dock.
+
+The icon was the application tray item (nm-applet's wired-network pixmap). An
+app-supplied pixmap cannot be restyled to the shell's mint line icons, so the
+tray moved out of the status strip and into the bottom bar. Desktop navigation is
+now a full-width taskbar (64 px) with the launcher buttons, one task button per
+open window and the tray on the right; Phone and Tablet keep the floating dock
+unchanged. The taskbar stays full width while a page is open, and the page reads
+as a centred sheet.
+
+Actual VM checks at 1200x800 Desktop:
+
+- Status bar left to right: clock, workspaces 1-5, pull-down handle, focused
+  window title, notification bell, cellular, Wi-Fi, battery, volume, settings -
+  no application tray tile.
+- Taskbar left to right: Apps, Windows, Settings, one button per open window
+  ("This is the deskto...", "arch@archlinux:~"), then the tray icon at the right.
+- Tapping a task button focuses that window and dismisses the open page; opening
+  Apps shows the centred "Your space" grid with the taskbar still full width.
+- `./scripts/check.sh` passes 49 Qt Quick results, QML lint and both Hyprland
+  config checks. Physical touch acceptance remains pending.
+

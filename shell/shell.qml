@@ -135,7 +135,7 @@ ShellRoot {
             readonly property string mode: Policy.effectiveMode(shellPreferences.layoutMode, modelData.width, modelData.height)
             readonly property bool isPhone: mode === "phone"
             readonly property var dock: Policy.dockLayout(mode, modelData.width, root.oskAvailable)
-            readonly property int navHeight: dock.rows > 1 ? dock.rows * 56 + 20 : isPhone ? 76 : 84
+            readonly property int navHeight: mode === "desktop" ? 64 : dock.rows > 1 ? dock.rows * 56 + 20 : isPhone ? 76 : 84
             readonly property int launcherRows: Math.ceil((panel.appEntries.length + 4) / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
             readonly property bool showWorkspaces: Policy.showWorkspaces(mode, modelData.width)
             readonly property var workspaceIds: {
@@ -192,17 +192,22 @@ ShellRoot {
                 }
                 anchors {
                     bottom: true
-                    left: false
-                    right: false
+                    // Desktop uses a full-width taskbar, open page or not; touch
+                    // layouts keep the floating centred dock sized to its content.
+                    left: surface.mode === "desktop"
+                    right: surface.mode === "desktop"
                 }
                 implicitWidth: expanded ? Policy.panelWidth(surface.mode, surface.modelData.width) : surface.dock.width
                 implicitHeight: expanded ? Math.min(page === "windows" ? surface.modelData.height - 60 : page === "apps" ? surface.launcherRows * 124 + 156 : surface.mode === "tablet" ? 740 : 640, surface.modelData.height - 64) : surface.navHeight
                 exclusiveZone: surface.navHeight
                 color: "transparent"
                 Rectangle {
-                    anchors.fill: parent
-                    anchors.bottomMargin: panel.expanded ? 0 : 12
-                    radius: 26
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottomMargin: panel.expanded ? 0 : (surface.mode === "desktop" ? 8 : 12)
+                    width: panel.expanded ? expandedContent.width : parent.width
+                    radius: panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
                     color: panel.expanded ? (panel.page === "windows" ? "#b3101b30" : "#c2101b30") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
                     border.width: 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
@@ -277,14 +282,20 @@ ShellRoot {
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 12
-                    anchors.bottomMargin: panel.expanded ? 12 : 16
-                    anchors.leftMargin: surface.isPhone ? 12 : 16
-                    anchors.rightMargin: surface.isPhone ? 12 : 16
+                    anchors.topMargin: surface.mode === "desktop" ? 8 : 12
+                    anchors.bottomMargin: panel.expanded ? 12 : surface.mode === "desktop" ? 8 : 16
+                    anchors.leftMargin: surface.isPhone ? 12 : surface.mode === "desktop" ? 10 : 16
+                    anchors.rightMargin: surface.isPhone ? 12 : surface.mode === "desktop" ? 10 : 16
                     spacing: 8
                     ColumnLayout {
+                        id: expandedContent
                         visible: panel.expanded
                         Layout.fillWidth: true
                         Layout.fillHeight: true
+                        // Desktop keeps the taskbar full width, so the page is a
+                        // centred column rather than the whole bar.
+                        Layout.maximumWidth: surface.mode === "desktop" ? Policy.panelWidth(surface.mode, surface.modelData.width) : surface.modelData.width
+                        Layout.alignment: Qt.AlignHCenter
                         spacing: 8
                         Text {
                             visible: panel.page !== "windows"
@@ -487,6 +498,7 @@ ShellRoot {
                         }
                     }
                     GridLayout {
+                        visible: surface.mode !== "desktop"
                         Layout.fillWidth: true
                         Layout.preferredHeight: 48 + (surface.dock.rows - 1) * 56
                         columns: surface.dock.columns
@@ -551,6 +563,90 @@ ShellRoot {
                             accentColor: root.accentColor
                             selected: panel.page === "windows"
                             onClicked: panel.showPage("windows")
+                        }
+                    }
+                    // Desktop taskbar: launcher and open windows on the left, the
+                    // application tray on the right. Touch layouts keep the dock.
+                    RowLayout {
+                        visible: surface.mode === "desktop"
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 48
+                        spacing: 4
+                        NavButton {
+                            Layout.fillWidth: false
+                            Layout.preferredWidth: 76
+                            text: "Apps"; symbol: "home"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
+                            selected: panel.page === "apps"
+                            onClicked: panel.showPage("apps")
+                        }
+                        NavButton {
+                            Layout.fillWidth: false
+                            Layout.preferredWidth: 84
+                            text: "Windows"; symbol: "recents"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
+                            selected: panel.page === "windows"
+                            onClicked: panel.showPage("windows")
+                        }
+                        NavButton {
+                            Layout.fillWidth: false
+                            Layout.preferredWidth: 84
+                            text: "Settings"; symbol: "settings"
+                            showLabel: shellPreferences.showLabels
+                            accentColor: root.accentColor
+                            selected: panel.page === "settings"
+                            onClicked: panel.showPage("settings")
+                        }
+                        // One task button per open window; tapping focuses it.
+                        Repeater {
+                            model: Hyprland.toplevels
+                            delegate: TouchButton {
+                                required property var modelData
+                                readonly property var handle: modelData.wayland
+                                Layout.minimumHeight: 40
+                                implicitHeight: 40
+                                Layout.preferredWidth: 180
+                                Layout.maximumWidth: 220
+                                text: modelData.title || "Untitled window"
+                                selected: modelData.activated
+                                accentColor: root.accentColor
+                                enabled: handle !== null
+                                onClicked: {
+                                    if (handle) handle.activate();
+                                    panel.page = "";
+                                }
+                            }
+                        }
+                        Item { Layout.fillWidth: true }
+                        // Application indicators belong here, not in the system
+                        // status strip above; their pixmaps are app-supplied.
+                        Repeater {
+                            model: SystemTray.items
+                            delegate: TouchButton {
+                                id: taskTrayButton
+                                required property var modelData
+                                Layout.minimumHeight: 40
+                                Layout.minimumWidth: 40
+                                implicitHeight: 40
+                                implicitWidth: 40
+                                Layout.preferredWidth: 40
+                                text: ""
+                                Accessible.name: modelData.title || "Tray item"
+                                contentItem: Image {
+                                    source: taskTrayButton.modelData.icon
+                                    sourceSize.width: 20
+                                    sourceSize.height: 20
+                                    fillMode: Image.Pad
+                                }
+                                onClicked: {
+                                    if (modelData.hasMenu)
+                                        modelData.display(taskTrayButton.QsWindow.window, 0, 48);
+                                    else
+                                        modelData.activate();
+                                }
+                            }
                         }
                     }
                 }
@@ -708,37 +804,8 @@ ShellRoot {
                         Accessible.name: root.notificationCount > 0 ? "Notifications, " + root.notificationCount + " unread" : "Notifications"
                         onClicked: panel.showPage("notifications")
                     }
-                    // Desktop app indicators do not belong in the compact mobile status strip.
-                    RowLayout {
-                        visible: surface.mode === "desktop"
-                        Layout.maximumWidth: Math.max(0, surface.modelData.width - 370)
-                        clip: true
-                        spacing: 0
-                        Repeater {
-                            model: SystemTray.items
-                            delegate: TouchButton {
-                                id: trayButton
-                                required property var modelData
-                                text: modelData.title
-                                implicitWidth: 48
-                                implicitHeight: 48
-                                Layout.minimumHeight: 48
-                                Layout.preferredWidth: 48
-                                contentItem: Image {
-                                    source: trayButton.modelData.icon
-                                    sourceSize.width: 20
-                                    sourceSize.height: 20
-                                    fillMode: Image.Pad
-                                }
-                                onClicked: {
-                                    if (modelData.hasMenu)
-                                        modelData.display(trayButton.QsWindow.window, 0, 48);
-                                    else
-                                        modelData.activate();
-                                }
-                            }
-                        }
-                    }
+                    // Desktop application indicators moved to the taskbar; the
+                    // compact mobile strip keeps only built-in status glyphs.
                     Image {
                         visible: !!(radioBackend.state.airplane && radioBackend.state.airplane.enabled)
                         Layout.preferredWidth: 18; Layout.preferredHeight: 18

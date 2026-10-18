@@ -5,8 +5,12 @@ under Hyprland, using Quickshell's layer-shell panels and window integration.
 No privileged daemon or compositor fork is involved.
 
 A per-output status bar reserves 48 logical pixels. Navigation reserves 72 in
-Phone mode and 80 in Tablet/Desktop. Phone navigation spans the output;
-Tablet/Desktop use centered, rounded panels bounded to 720/760 pixels. Launcher
+Phone mode, 80 in Tablet and 64 in Desktop. Phone navigation spans the output;
+Tablet uses a centered, rounded panel bounded to 720 pixels. Desktop uses a
+full-width taskbar instead of the floating dock: it holds the launcher buttons,
+one task button per open window (tap activates and dismisses the page) and the
+application tray, and it stays full width while a page is open so the page reads
+as a centered sheet. Launcher
 columns and panel height follow available space, including manual modes on small
 screens. Settings is loaded only when opened. Panels never acquire application
 keyboard focus; buttons and sliders use NoFocus. No keyboard search or outside
@@ -51,8 +55,10 @@ When a workspace exists, `HyprlandWorkspace.activate()` is used because it
 correctly emits Lua or classic dispatchers depending on `Hyprland.usingLua`;
 for a not-yet-created workspace the shell dispatches a fixed
 `hl.dsp.focus({ workspace = <n> })` expression containing only a number. The
-focused window title sits next to the tray and is display-only; no title text
-reaches IPC or shells. The Lua config adds fixed keybindings
+focused window title sits next to the notification bell and is display-only; no title text
+reaches IPC or shells. Application tray indicators live in the taskbar, not the
+status strip, because their pixmaps are supplied by the applications and cannot
+match the shell's own icons. The Lua config adds fixed keybindings
 (Super+1-5, Super+Shift+1-5, Super+Q, Super+Tab, directional focus/move,
 Super+left-drag/resize, and XF86Audio* volume keys). All are fixed strings and
 safe in every layout mode; close/exit shortcuts open the shell confirmation
