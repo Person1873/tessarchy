@@ -7,25 +7,27 @@ Never include passwords, tokens, SSH private keys, or other credentials.
 
 ## Current user request
 
-1. Completed: phone-style four-digit account-password login installed and tested
-   through real greetd/PAM in the development VM. No credential is stored here.
-2. Completed: official logo kit, multiple sizes/formats and spinning GIF.
-3. Completed: supported Hyprland launch path; actual desktop warnings=[] and
-   config_errors="". Separate virtual-GPU diagnostics remain documented.
-4. Latest: professional roadmap image from the VM prototype to a physical phone/
-   tablet. Generated, corrected and selected; publication details below.
-5. Latest: update Git and the GitHub Pages site with current verified information,
-   lots of images and materials ready to share to a channel. Preserve collaborator
-   contributions, published ISO provenance and the deferred integration worktree.
+Create a root-level agent README with project context, contribution instructions,
+a shared planning register and a long actionable backlog; publish it to Git and
+return its URL. The owner also requested direct documentation without repeated
+caveats. This writing preference is persisted in AGENTS.md and AGENT-README.md.
 
-The easy-PR pass is complete (#15/#17/#14 merged); login PR #25 is now merged.
-Other 12 PRs remain deferred; preserve #9's unfinished worktree. Maintain this
-handoff and one-line comments. Historical sections below retain prior checkpoints;
-the final dated checkpoint takes precedence over stale next-action statements.
+Completed product/publication work: real phone PIN login in the VM; supported
+Hyprland startup; official logo ZIP/spinning GIF; professional device roadmap;
+updated public showcase with eleven real captures. PRs #25/#26 are merged.
+main/build/live-iso were synchronized at 9c1f4a3f400a6358066b41ab9fb6720e4af33fb0.
+Ubuntu/Arch checks and Pages run39082410721 passed; the public page passed the
+same desktop/phone browser checks as the local build.
+
+The remaining 12 contributor PRs retain their deferred review state. Preserve
+#9's unfinished worktree. Historical sections below retain prior checkpoints;
+the final dated checkpoint supersedes stale next-action statements.
 
 ## Communication and working rules
 
 - Use standard technical English in code and responses. Keep comments to one line.
+- Owner preference: direct documentation; state capabilities, instructions and
+  validation once, without repetitive caveats or speculative disclaimers.
 - Be concise and direct. Continue authorized work without routine confirmation.
 - Give meaningful progress updates at least once per minute during active work.
 - Follow the root AGENTS.md. Do not modify the host’s Hyprland/Omarchy settings.
@@ -158,18 +160,11 @@ was visually inspected and canceled, and native 400x800 portrait was restored.
 
 ## Current immediate next actions
 
-1. Login, real PAM tests, session-return and startup-watchdog validation are
-   complete. Final checks: 43 Python / 37 Qt Quick; three v4 packages built.
-2. Commit/push the final source/docs/exporter, inspect new CI and finish PR #25.
-   It can be marked ready after updating its description to actual validated
-   scope. Merge only after checks pass, then sync build/live-iso with both histories.
-3. Deliver the validated logo ZIP/GIF and commit link. Artifact details below.
-4. Current VM is logged in to Tessera at native 400x800, with no app windows from
-   the final test. PIN is set, greetd enabled and user private launcher updated.
-   Do not repeat credentials. No further install/reboot permission is needed for
-   the already-approved work; do not perform extra restarts without a new reason.
-5. Preserve the 12 deferred PRs and #9 worktree. No new ISO was released or
-   claimed boot-tested. Published Alpha 2 and website collaborator source intact.
+1. Finish the agent guide/documentation refresh and publish it; return the
+   GitHub main-branch URL for AGENT-README.md.
+2. Keep main/build/live-iso synchronized and confirm Pages/source CI results.
+3. Retain the existing VM state and deferred PR work. Product follow-ups are in
+   the new task board; no extra installation or restart is part of this doc task.
 
 ## Pending PR inventory and dependency cautions
 
@@ -760,3 +755,42 @@ Publication follow-up:
   selection/bring-up and PIN enrollment in a new ISO remain future work.
 - Alpha 2 stays the same previously boot-tested x86_64 image; login/new integrations
   are source/development changes. No new ISO boot or physical hardware claim.
+
+## Agent onboarding, direct documentation and image refresh
+
+Owner requests:
+- Root agent README with context, a shared plan/register and a long task list;
+  publish to Git and return its URL.
+- Direct technical documentation without repeated caveats; remember this style.
+- Replace outdated tablet/desktop website images with current-feature captures.
+
+Completed content:
+- AGENT-README.md: onboarding, design, current implementation/evidence, repository
+  map, runtime source precedence, commands, task claiming, contribution checklist
+  and 56 task IDs T01–T56 across validation, 12 open PRs, UX, hardware and releases.
+- Writing preference saved in AGENTS.md, AGENT-README.md and this file.
+- README/CONTRIBUTING and active roadmap/GitHub-review docs rewritten directly;
+  architecture/login/VM facts refreshed. Historical testing evidence preserved.
+- Corrected a website/README overstatement from the prior showcase: Bluetooth
+  pairing is external; native controls discover and connect already-paired devices.
+- Agent guide linked from README, CONTRIBUTING, AGENTS and the website.
+
+Current image provenance and VM state:
+- Exact source9c1f4a3 archived into ~/tessarchy-capture-9c1f4a3 in the VM. Latest
+  shell ran temporarily with isolated config and PATH. Existing source preserved.
+- New tablet-home/tablet-controls captures: Auto Tablet, 800x1280 scale1.
+- New desktop-home/desktop-controls captures: Auto Desktop, 1280x800 scale1.
+- Source SHA, dimensions and hashes: assets/screenshots/capture-manifest.json.
+- Four captures visually inspected; current quick controls show Bluetooth, audio,
+  camera and media sections. No simulated radio/device/player states.
+- Restored original private shell at400x800 and cursor visibility. Original shell
+  preferences match the initial copied bytes. Current qs PID2318, config path
+  /home/arch/.local/share/tessarchy/shell/shell.qml; verify runtime before use.
+- Site ZIP now thirteen originals; mode preview can open matching controls views;
+  image/script version query refreshes cached tablet/desktop and social images.
+
+Actual checks so far: 44 Python /37 Qt Quick pass; fresh site build; all Markdown
+file links resolve; 56 task IDs validated. Browser review uses installed Chromium
+and screenshots under build/site-refresh. Finish current Git publication, source
+CI and Pages verification; return the main-branch agent-guide URL. Keep the
+integration worktree for #9 intact. No dependency install or VM reboot was used.

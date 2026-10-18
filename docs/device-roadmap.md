@@ -1,9 +1,8 @@
 # From prototype to a device in hand
 
-The current product is an Arch Linux session with a Quickshell interface, tested
-in an x86_64 VM. It is not yet a validated physical phone or tablet. This roadmap
-uses acceptance gates rather than delivery dates. Select one reference device
-before promising broader hardware compatibility or buying production hardware.
+Tessarchy currently runs as an Arch Linux session with a Quickshell interface
+in an x86_64 VM. The next milestone is one physical reference device. This roadmap
+defines the work and acceptance gates from that prototype to a daily-use pilot.
 
 ## Current verified foundation
 
@@ -24,9 +23,9 @@ integrations. See [testing.md](testing.md) for exact evidence and remaining chec
 | 05 — Harden and recover | First-boot account/PIN enrollment, credential change/recovery, data protection, signed updates, rollback and supported-device recovery documentation. Session locking requires its own implementation and validation. | Update and recovery drills pass; authentication, storage and locking claims match actual evidence. |
 | 06 — Pilot in hand | Daily-use testing, power/thermal measurements, crash collection, accessibility checks and a small tester cohort. Publish a reproducible device image, install guide, support matrix and known issues. | Reliable use on the reference device, repeatable installation and a proven recovery path. |
 
-A tablet pilot does not establish phone readiness. A phone pilot does not establish
-support for other devices. Manufacturing, commercial distribution, certification
-and long-term support are separate scope decisions after the reference-device pilot.
+The tablet and phone tracks have separate acceptance results. Broader device
+support, manufacturing, commercial distribution and long-term support follow
+the reference-device pilot as separate project decisions.
 
 ## Presentation asset
 
@@ -34,7 +33,8 @@ The professional roadmap poster is
 [tessarchy-device-roadmap.png](../assets/roadmap/tessarchy-device-roadmap.png).
 The selected final image is a curated project artwork asset, copied into the
 repository for publication. Intermediate generations remain outside source.
-The phone/tablet renders are labelled concepts; they are not hardware evidence.
+The phone/tablet renders are labelled concepts. Actual VM captures live in
+`assets/screenshots/`.
 
 Generated with the built-in image generation tool using the existing official
 logo as reference. The [prompt and correction pass](device-roadmap-image-prompt.txt)

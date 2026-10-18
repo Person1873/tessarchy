@@ -1,44 +1,33 @@
-# Roadmap
+# Development roadmap
 
-See [Operation Tessarchy](../Operation-TESSARCHY.md) for the design brief.
+The product direction is defined in [Operation Tessarchy](../Operation-TESSARCHY.md).
+The [device roadmap](device-roadmap.md) tracks the path to a physical handheld.
+Agents plan and claim implementation work in [AGENT-README.md](../AGENT-README.md).
 
-## Implemented in the development branch
+## Current foundation
 
-- Quiet Edge: shallow frosted status bar, floating glass navigation, minimal icons.
-- Pull-down radio switches and airplane mode, with hardware/permission state checks.
-- Swipeable app cards, live previews when available, icon actions, confirmed close.
-- Automatic Phone/Tablet/Desktop layouts with saved overrides and appearance settings.
-- Optional on-screen keyboard with a private settings backend and focus-preserving toggle.
-- Mobile apps re-maximize on activation; oversized dialogs request the usable area.
-- Original wallpaper, finite cube logo animation, reduced motion.
-- Experimental x86_64 Alpha 2 live ISO, observed BIOS/UEFI QEMU/KVM GUI boots.
-- GitHub Pages project site, real screenshot pack, automatic repository deployments.
+- Quiet Edge glass status bar, floating navigation, launcher and settings.
+- Card switcher with live previews, icon actions and Alt+Tab.
+- Automatic Phone/Tablet/Desktop layouts with saved overrides.
+- Pull-down radio/layout controls and Bluetooth discovery/paired-device connections.
+- Optional squeekboard, MPRIS and PipeWire integrations.
+- Private screenshot helper and camera action.
+- Phone PIN login through greetd/PAM, tested in the development VM.
+- Alpha 2 live tester ISO with BIOS/UEFI VM boot evidence.
+- GitHub Pages showcase, real captures, official branding and roadmap artwork.
 
-Alpha 2 includes Quiet Edge, the card switcher, and pull-down radio and layout
-controls. BIOS and non-Secure-Boot UEFI graphical boots were observed in
-diskless QEMU/KVM. Pending contributor pull requests remain outside this
-release; see the [GitHub review](github-review.md).
+The feature-by-feature validation record is in [testing.md](testing.md). Alpha 2
+contains the earlier Quiet Edge build; release contents are listed on its page.
 
-Desktop workspace navigation and keyboard management are implemented; broader
-tablet split layouts remain pending.
+## Work order
 
-## Next implementation steps
+1. Validate real media/audio services and screenshot actions in the VM.
+2. Expand mobile input, switcher, settings and accessibility regression coverage.
+3. Integrate the manageable portions of existing PRs using the
+   [review order](pr-triage.md).
+4. Select one reference device and document its component support.
+5. Bring up the native session and measure connectivity, power and usability.
+6. Complete enrollment, recovery and updates, then run a daily-use pilot.
 
-1. Refine card transitions and physical touchscreen interactions; add configurable
-   gestures while retaining visible navigation and >=48px touch targets.
-2. Validate on-screen keyboard protocols, focus and resize with Foot and Firefox.
-3. Propose a narrow-screen default app set for approval before integration.
-4. Extend tablet split layouts, continuous mobile window policy and rotation.
-
-## Investigation, not device support
-
-- Verify exact OnePlus 7/8 models; consider 6/6T if compatibility is better.
-- Document boot, display, touch, graphics, Wi-Fi, charging, suspend, audio and
-  cellular status before recommending hardware or flashing anything.
-- Research existing dialers/messaging and modem integration separately.
-- Scope a WebUSB installer to one verified device with recovery instructions and
-  explicit confirmation before destructive operations.
-- Verify OpenRouter integration, pricing, privacy and budget limits before paid use.
-
-No universal ARM image, cellular/SMS support, secure lock, production update
-system, or phone flasher is currently claimed.
+The agent task board has stable IDs, ownership fields, dependencies and completion
+results. Add new work there and update this overview when product priorities change.

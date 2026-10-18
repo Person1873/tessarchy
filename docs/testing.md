@@ -882,3 +882,31 @@ original PNGs, and bundled release metadata selects an ISO release. Updated
 Pages run39082298291 and Ubuntu/Arch runs39082298295 / 39082301438 passed before
 PR #26 merged as e1ff6a5891f04c5751630f7991bf3fb55665197d. No new ISO was built
 or boot-tested as part of the showcase update.
+
+## Agent guide and current tablet/desktop captures — 2026-10-18 UTC
+
+Actual validation:
+
+- Source checks passed: 44 Python tests and 37 Qt Quick results. Local fish and
+  ShellCheck were skipped; Ubuntu/Arch CI supply those tools.
+- Markdown file links resolve and the agent task board contains 56 unique IDs.
+- Fresh site build includes thirteen original screenshots and capture metadata.
+- Current shell/session source from commit
+  9c1f4a3f400a6358066b41ab9fb6720e4af33fb0 was archived and staged in the VM at
+  ~/tessarchy-capture-9c1f4a3. It ran with a private copy of shell preferences.
+- Auto selected Tablet at 800x1280 and Desktop at 1280x800. Home and expanded
+  quick-controls views were captured with grim and visually inspected. The new
+  views include current Bluetooth, audio, camera and media controls. File hashes
+  and dimensions are in assets/screenshots/capture-manifest.json.
+- Hyprland configerrors remained empty. The original private shell was restored
+  at 400x800; its preferences compare byte-for-byte with the pre-capture copy.
+- The site mode preview now offers a matching quick-controls capture. Versioned
+  tablet/desktop image URLs and social preview URLs refresh cached assets.
+
+These checks cover rendering, sizing, capture provenance and the website. Real
+service/player acceptance remains assigned in the agent task board.
+
+The updated site passed installed-Chromium checks at desktop and phone widths:
+all static images loaded, no horizontal overflow, keyboard mode navigation kept
+focus, the Desktop quick-controls button opened the matching new capture, and
+gallery/Escape close worked. No uncaught JavaScript exceptions were observed.
