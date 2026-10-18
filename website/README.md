@@ -22,6 +22,9 @@ allows these two branches. No source is merged automatically.
 
 A build bundles current public release metadata; the browser additionally reads
 public GitHub release and commit metadata, with usable fallback links on failure.
+Release tags do not deploy to the branch-protected Pages environment. Visitors
+receive fresh release metadata from the public API; source pushes and manual
+dispatch rebuild the bundled fallback without changing deployment protections.
 No token is sent to visitors. Screenshots and feature descriptions are reviewed
 content: refresh them when behavior changes. Keep development features separate
 from features in published ISO releases. UI changes do not rebuild an ISO.

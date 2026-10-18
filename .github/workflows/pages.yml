@@ -13,8 +13,6 @@ on:
       - 'scripts/build-site.py'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
-  release:
-    types: [published, edited]
 
 permissions:
   contents: read

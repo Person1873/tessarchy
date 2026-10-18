@@ -720,3 +720,14 @@ Logo kit:
   to main after CI, sync build/live-iso, confirm Pages deployment and live assets.
   Keep build/integration's deferred #9 merge untouched. Final checkpoint below
   will supersede these publication next actions when they are complete.
+
+Publication follow-up:
+- Showcase commit 78ea96d23b624895519a11ab5494a023833822c0 pushed to
+  build/live-iso; PR #26 opened. Ubuntu/Arch checks and Pages run39082172625 passed.
+- Brand release is marked prerelease and not latest so it does not become the
+  project's stable software release; website also requires an ISO asset.
+- Release-event run39081997323 failed before steps: existing environment rejects
+  tag deployments. Removed obsolete release-event Pages trigger instead of
+  weakening protections. Runtime public API keeps release information current;
+  pushes/manual dispatch rebuild the fallback. Source update CI must finish before
+  #26 merge. No tester ISO bytes were changed or newly boot-tested.

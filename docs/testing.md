@@ -867,3 +867,10 @@ phone sharing and phone roadmap screenshots were visually inspected under
 The branding release assets were uploaded and GitHub-reported digests match the
 local ZIP, GIF and roadmap hashes. ISO asset bytes and Alpha 2 release provenance
 were not changed. Deployment/public URL checks are a separate publication step.
+
+The initial showcase commit 78ea96d deployed successfully in Pages run
+39082172625. A separate release-event run 39081997323 was rejected before any
+steps because tag brand-kit-20261017 is not allowed by the existing Pages
+branch protection policy. Removed that obsolete release-event trigger; source
+pushes/manual dispatch remain enabled, and visitors still read current release
+metadata from the public API. No environment protection rules were weakened.
