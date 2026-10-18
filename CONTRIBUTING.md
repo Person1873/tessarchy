@@ -36,6 +36,6 @@ ID, validation and relevant screenshots. Update the task register with the commi
 paths and personal operational notes in the ignored local handoff. For bugs, include reproduction steps,
 source revision, display size/scale, relevant package versions and error output.
 
-Keep credentials and disk images out of Git. Packages and images belong in
+Keep private credentials and disk images out of Git. Packages and images belong in
 ignored output directories or GitHub release assets. The project uses the
 [MIT License](LICENSE).

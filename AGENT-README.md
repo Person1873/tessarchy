@@ -67,6 +67,8 @@ integrations. Keep source features and published-image contents separate in
 release notes. Authentication starts a new session; session locking is a separate
 backlog item.
 
+Public tester account details are in [Alpha login details](README.md#alpha-login-details).
+
 ## Repository map
 
 | Path | Responsibility |
@@ -96,7 +98,7 @@ repeated caveats, generic warnings and speculative disclaimers.
 
 Follow the concrete rules in AGENTS.md: scratch-HOME install tests, host-session
 isolation, explicit dependency installation, argument-safe scripts, confirmed
-close/exit and protected image-build operations. Keep credentials out of Git,
+close/exit and protected image-build operations. Keep private credentials out of Git,
 documentation, command arguments and captures. Use project-relative paths and
 generic account labels in public files; keep personal identifiers in local state.
 

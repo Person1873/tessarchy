@@ -14,8 +14,8 @@ or additional secret challenges and passwordless success are rejected. Attempts
 time out after 30 seconds. Failure clears pending input and delays retry for
 three seconds; PAM remains responsible for system account policies and rate
 limits. If cancellation cannot return the backend to idle, the greeter exits
-and greetd can restart it. No PIN is put in command arguments, environment,
-settings, logs or this repository. Session locking, storage protection and first-boot enrollment have separate
+and greetd can restart it. The controller keeps submitted PINs out of command arguments, environment,
+settings and logs. Private credentials stay outside the repository. Session locking, storage protection and first-boot enrollment have separate
 implementation tasks in AGENT-README.md.
 
 Both login paths use the installed start-hyprland watchdog with explicit config
@@ -98,3 +98,9 @@ The final native 400x800 display and real greeter/rejection/home captures were
 inspected. These are development-VM checks, not a new ISO boot test or locking
 claim. The private development Tessera copy remains the user session's selected
 source; the greeter itself runs the installed system package.
+
+## Public alpha demo
+
+The owner-designated public demo account is documented in
+[Alpha login details](../README.md#alpha-login-details). Private user-selected
+credentials continue to stay outside source and logs.

@@ -18,7 +18,8 @@ and confirm close and exit. No secure locking claims. Record actual validation
 separately from planned/manual checks in docs/testing.md. Do not claim an ISO
 boots until it has booted in a VM. Never run image builds with host privileges
 without the user's explicit build command. Keep scripts argument-safe and fail
-before overwriting unrelated files. Never commit disk images or credentials.
+before overwriting unrelated files. Never commit disk images or private credentials.
+Owner-designated public demo credentials may be documented when explicitly requested.
 
 Agent onboarding and the shared planning backlog: [AGENT-README.md](AGENT-README.md).
 Use standard technical English and one-line comments. Keep documentation direct:

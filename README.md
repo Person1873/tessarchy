@@ -47,6 +47,15 @@ and boot evidence.
 | Source | `aa8b59a73a8d5d6b1d3fab6c17272e68e0bfac58` |
 | Later development additions | PIN login, expanded Bluetooth, media/audio panels and screenshot actions |
 
+## Alpha login details
+
+| Build | Account | Password / PIN |
+| --- | --- | --- |
+| PIN-login development demo | `arch` | **`1234`** |
+| Downloadable Alpha 2 ISO | `tess` | Automatic login |
+
+`1234` is the owner-designated public PIN for the alpha login demo.
+
 ## Quick start: use the basic Arch VM
 
 Use the existing Basic Arch guest described in [docs/vm.md](docs/vm.md). Launch
