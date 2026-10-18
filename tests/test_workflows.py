@@ -28,6 +28,18 @@ class Workflows(unittest.TestCase):
         self.assertIn(marker + '_TEST_PASS', result.stdout + result.stderr)
         self.assertNotIn(marker + '_TEST_FAIL', result.stdout + result.stderr)
 
+    def test_display_controls_restore_failed_brightness_and_apply_night_preference(self):
+        stubs = self.home / 'display-bin'
+        stubs.mkdir()
+        brightness = stubs / 'tessera-brightness'
+        brightness.write_text('#!/bin/sh\nif [ "$1" = get ]; then echo 42; else exit 1; fi\n')
+        night = stubs / 'tessera-nightlight'
+        night.write_text('#!/bin/sh\ncase "$1" in\nstatus) if [ -f "$HOME/night-active" ]; then echo on; else echo off; exit 1; fi ;;\non) touch "$HOME/night-active" ;;\noff) rm -f "$HOME/night-active" ;;\nesac\n')
+        brightness.chmod(0o755)
+        night.chmod(0o755)
+        self.env['PATH'] = str(stubs) + ':' + os.environ['PATH']
+        self.run_quickshell_harness('display', 'DISPLAY')
+
     def test_bluetooth_component_lifecycle_and_action_guards(self):
         self.run_quickshell_harness('bluetooth', 'BLUETOOTH')
 
@@ -107,6 +119,8 @@ class Workflows(unittest.TestCase):
         data = self.home / 'data/tessarchy'
         self.assertEqual((data / 'shell/shell.qml').read_bytes(),
                          (ROOT / 'shell/shell.qml').read_bytes())
+        for helper in ('tessera-brightness', 'tessera-nightlight'):
+            self.assertTrue((self.home / '.local/bin' / helper).stat().st_mode & 0o111)
         self.assertTrue((data / 'shell/components/NotificationCard.qml').is_file())
         self.assertTrue((data / 'shell/icons/bell.svg').is_file())
         self.run_script('install-dev.sh', expected=1)
@@ -117,6 +131,8 @@ class Workflows(unittest.TestCase):
         self.assertEqual(shell_settings.read_text(), '[Shell]\nlayoutMode=tablet\n')
         self.assertFalse((self.home / '.local/bin/tessarchy-osk').exists())
         self.assertFalse((self.home / '.local/bin/tessera-screenshot').exists())
+        self.assertFalse((self.home / '.local/bin/tessera-brightness').exists())
+        self.assertFalse((self.home / '.local/bin/tessera-nightlight').exists())
 
     def osk(self, *args, path_tools=(), env=None):
         """Run tessarchy-osk with PATH limited to bash, mkdir and the given stubs."""
@@ -918,6 +934,10 @@ esac
         self.assertTrue((profile / 'airootfs/usr/share/plymouth/themes/tessarchy/logo-159.png').is_file())
         self.assertTrue((profile / 'airootfs/usr/bin/tessarchy-session-services').is_file())
         self.assertTrue((profile / 'airootfs/usr/bin/tessera-screenshot').stat().st_mode & 0o111)
+        for helper in ('tessera-brightness', 'tessera-nightlight'):
+            self.assertTrue((profile / 'airootfs/usr/bin' / helper).stat().st_mode & 0o111)
+        for package in ('brightnessctl', 'hyprsunset'):
+            self.assertIn(package, (profile / 'packages.x86_64').read_text().splitlines())
         self.assertTrue((profile / 'airootfs/usr/share/tessarchy/session/hypridle.conf').is_file())
         self.assertIn('hypridle', (profile / 'packages.x86_64').read_text().splitlines())
         self.assertIn('grim', (profile / 'packages.x86_64').read_text().splitlines())

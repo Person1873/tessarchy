@@ -178,6 +178,21 @@ ColumnLayout {
         accentColor: sheet.accentColor
         Layout.fillWidth: true
     }
+    Text {
+        visible: brightness.available || nightLight.available
+        text: "Display"; color: "#a7bdc6"; font.pixelSize: 12
+    }
+    BrightnessControl { id: brightness; Layout.fillWidth: true; accentColor: sheet.accentColor }
+    NightLightToggle {
+        id: nightLight
+        Layout.fillWidth: true
+        accentColor: sheet.accentColor
+        nightLight: sheet.preferences.nightLight
+        onToggleRequested: {
+            sheet.preferences.nightLight = !sheet.preferences.nightLight;
+            sheet.preferences.sync();
+        }
+    }
     PowerPanel { Layout.fillWidth: true; accentColor: sheet.accentColor }
     Text {
         text: "Airplane mode switches all detected radios"

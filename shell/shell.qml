@@ -60,6 +60,7 @@ ShellRoot {
         property real barOpacity: 0.22
         property real wallpaperDim: 0.12
         property bool doNotDisturb: false
+        property bool nightLight: false
     }
     RadioBackend { id: radioBackend }
     CommunicationBackend { id: communications }

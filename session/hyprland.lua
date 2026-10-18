@@ -72,6 +72,8 @@ hl.on("hyprland.start", function ()
     local share = os.getenv("TESSARCHY_DATA_DIR") or "/usr/share/tessarchy"
     hl.exec_cmd("hypridle -c '" .. share .. "/session/hypridle.conf'")
 end)
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("tessera-brightness up"))
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("tessera-brightness down"))
 -- Same card switcher for touch and keyboard. Alt release commits selection.
 -- Keycodes 64/108 are left/right Alt in the configured evdev/US keymap.
 -- These bindings remain available while the switcher has an exclusive layer grab.

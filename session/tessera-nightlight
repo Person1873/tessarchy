@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Own hyprsunset through a transient user service; never signal a saved PID.
+set -euo pipefail
+[[ $# -eq 1 && $1 =~ ^(on|off|status)$ ]] || {
+    echo 'usage: tessera-nightlight on | off | status' >&2; exit 64;
+}
+unit=tessera-nightlight.service
+command -v systemctl >/dev/null && command -v systemd-run >/dev/null || exit 3
+systemctl --user show-environment >/dev/null 2>&1 || exit 3
+running() { systemctl --user is-active --quiet "$unit"; }
+case "$1" in
+    on)
+        backend=$(command -v hyprsunset) || exit 3
+        if ! running; then
+            systemd-run --user --quiet --collect --unit="$unit" --service-type=exec \
+                --setenv="WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-}" \
+                --setenv="HYPRLAND_INSTANCE_SIGNATURE=${HYPRLAND_INSTANCE_SIGNATURE:-}" \
+                -- "$backend" -t 4000 || running
+        fi
+        ;;
+    off)
+        if [[ $(systemctl --user show "$unit" --property=LoadState --value) != not-found ]]; then
+            systemctl --user stop "$unit"
+        fi
+        ;;
+    status)
+        command -v hyprsunset >/dev/null || exit 3
+        if running; then echo on; else echo off; exit 1; fi
+        ;;
+esac
