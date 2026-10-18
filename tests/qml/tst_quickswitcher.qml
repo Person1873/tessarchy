@@ -64,4 +64,22 @@ TestCase {
         verify(dismissals.count >= 2);
         dismissals.target = null;
     }
+    // The compositor key binding and the QML key release both raise accept, so
+    // a single Alt+Tab must switch once, and cycling must re-arm it.
+    function test_duplicate_accept_commits_once_and_step_rearms() {
+        const windows = model();
+        const switcher = createTemporaryObject(factory, this, {windows: windows});
+        requests.target = switcher;
+        requests.clear();
+        switcher.selectActive();
+        switcher.step(1);
+        switcher.activateCurrent();
+        switcher.activateCurrent();
+        compare(requests.count, 1);
+        switcher.reset();
+        switcher.step(1);
+        switcher.activateCurrent();
+        compare(requests.count, 2);
+        requests.target = null;
+    }
 }

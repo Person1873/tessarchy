@@ -2,27 +2,48 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../SwitcherPolicy.js" as SwitcherPolicy
 
+// Window switcher, driven by Alt+Tab and by the desktop taskbar's Windows
+// button. Bare application icons in a single centred row with no panel or
+// card chrome behind them: the selected icon grows and brightens. Alt release
+// or a click commits, Escape or a click outside cancels.
 FocusScope {
     id: control
     property var windows: []
     property var selection: null
     property var iconForWindow: window => ""
+    property var titleForWindow: window => (window && window.title) || "Untitled window"
+    property color accentColor: "#a9e8d5"
+    property bool reducedMotion: false
+    // A commit only happens once per open session, so a duplicate accept from
+    // the compositor key binding and the QML key release cannot switch twice.
+    property bool committed: false
     readonly property int currentIndex: windows.indexOf(selection)
-    implicitWidth: windows.length * 80
+    readonly property int iconWidth: 80
+    implicitWidth: Math.max(1, icons.count) * iconWidth
     implicitHeight: 96
     signal windowRequested(var window)
     signal dismissed
 
+    // Any selection change means the user is still choosing, so the commit
+    // latch clears here; it exists only to swallow the second accept that the
+    // compositor key binding and the QML key release both raise.
+    function reset() {
+        committed = false;
+    }
     function selectActive() {
+        committed = false;
         selection = windows[SwitcherPolicy.activeIndex(windows)] || null;
     }
     function step(direction) {
+        committed = false;
         selection = windows[SwitcherPolicy.advance(currentIndex, direction, windows.length)] || null;
     }
     function activateCurrent() {
-        if (selection && windows.indexOf(selection) >= 0 && selection.wayland)
+        if (committed) return;
+        if (selection && windows.indexOf(selection) >= 0 && selection.wayland) {
+            committed = true;
             windowRequested(selection);
-        else dismissed();
+        } else dismissed();
     }
     onWindowsChanged: {
         if (windows.indexOf(selection) < 0) selectActive();
@@ -64,22 +85,27 @@ FocusScope {
             required property var modelData
             required property int index
             readonly property bool selected: index === control.currentIndex
-            width: 80
+            width: control.iconWidth
             height: icons.height
             Image {
                 anchors.centerIn: parent
                 width: app.selected ? 64 : 48
                 height: width
-                source: control.iconForWindow(app.modelData) || "../artwork/tessarchy-mark.svg"
+                readonly property string fallbackSource: "../artwork/tessarchy-mark.svg"
+                source: control.iconForWindow(app.modelData) || fallbackSource
                 sourceSize.width: 64
                 sourceSize.height: 64
                 fillMode: Image.PreserveAspectFit
                 opacity: app.selected ? 1 : 0.65
+                Behavior on width {
+                    enabled: !control.reducedMotion
+                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                }
             }
             MouseArea {
                 anchors.fill: parent
                 Accessible.role: Accessible.Button
-                Accessible.name: "Switch to " + (app.modelData.title || "Application")
+                Accessible.name: "Switch to " + control.titleForWindow(app.modelData)
                 onClicked: {
                     control.selection = app.modelData;
                     control.activateCurrent();

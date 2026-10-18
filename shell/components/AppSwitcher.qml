@@ -11,6 +11,9 @@ FocusScope {
     property color accentColor: "#a9e8d5"
     property bool reducedMotion: false
     property bool fillApp: false
+    // Launcher label differs by layout: touch has a Home button, desktop has a
+    // Start menu.
+    property string emptyHint: "Your open apps will appear here.\nTap Home to launch your first."
     property var pendingTarget: null
     property var selection: null
     property var activateTarget: target => target.activate()
@@ -165,7 +168,7 @@ FocusScope {
                 visible: cards.count === 0
                 anchors.centerIn: parent
                 width: parent.width - 32
-                text: "Your open apps will appear here.\nTap Home to launch your first."
+                text: control.emptyHint
                 color: "#b7c7cc"
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap

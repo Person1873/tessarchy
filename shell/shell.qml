@@ -262,19 +262,9 @@ ShellRoot {
                     target: root
                     function onSwitcherCommand(action) {
                         if (!Hyprland.focusedMonitor || Hyprland.focusedMonitor.name !== surface.modelData.name) return;
-                        if (action === "accept") {
-                            if (quickSwitcher.visible) quickIcons.activateCurrent();
-                        } else if (action === "cancel") {
-                            quickSwitcher.open = false;
-                        } else if (Hyprland.toplevels.values.length) {
-                            if (!quickSwitcher.open) quickIcons.selectActive();
-                            panel.page = "";
-                            panel.startMenuOpen = false;
-                            statusBar.drawerOpen = false;
-                            quickSwitcher.open = true;
-                            quickIcons.step(action === "previous" ? -1 : 1);
-                            Qt.callLater(() => quickIcons.forceActiveFocus());
-                        }
+                        if (action === "cancel") quickSwitcher.cancel();
+                        else if (action === "accept") quickSwitcher.commit();
+                        else if (Hyprland.toplevels.values.length) quickSwitcher.show(action === "previous" ? -1 : 1);
                     }
                 }
                 Connections {
@@ -343,6 +333,9 @@ ShellRoot {
                             Layout.fillHeight: true
                             windows: Hyprland.toplevels.values
                             fillApp: surface.mode !== "desktop"
+                            emptyHint: surface.mode === "desktop"
+                                ? "Your open apps will appear here.\nOpen one from the Start menu."
+                                : "Your open apps will appear here.\nTap Home to launch your first."
                             accentColor: root.accentColor
                             reducedMotion: shellPreferences.reducedMotion
                             activateTarget: target => root.activateHandle(target)
@@ -531,6 +524,7 @@ ShellRoot {
                     GridLayout {
                         visible: surface.mode !== "desktop"
                         Layout.fillWidth: true
+                        Layout.fillHeight: false
                         Layout.preferredHeight: 48 + (surface.dock.rows - 1) * 56
                         columns: surface.dock.columns
                         columnSpacing: 4
@@ -602,6 +596,9 @@ ShellRoot {
                     RowLayout {
                         visible: surface.mode === "desktop"
                         Layout.fillWidth: true
+                        // A nested layout fills by default; without this the bar
+                        // swallows the expanded page and leaves it a sliver.
+                        Layout.fillHeight: false
                         Layout.preferredHeight: 48
                         spacing: 0
                         StartButton {
@@ -628,8 +625,8 @@ ShellRoot {
                             text: "Windows"; symbol: "recents"; showLabel: false
                             iconSize: 18
                             accentColor: root.accentColor
-                            selected: panel.page === "windows"
-                            onClicked: panel.showPage("windows")
+                            selected: quickSwitcher.open
+                            onClicked: quickSwitcher.toggle()
                         }
                         NavButton {
                             Layout.fillWidth: false
@@ -732,19 +729,89 @@ ShellRoot {
                 id: quickSwitcher
                 property bool open: false
                 property var pendingTarget: null
+                // Timestamp of an Alt release that arrived before the switcher
+                // opened. A fast Alt+Tab spawns two shell commands whose order
+                // is not guaranteed, so the release can land first; remembering
+                // it makes the tap switch immediately instead of leaving the
+                // overlay stuck open with the keyboard grabbed. An early cancel
+                // (Escape) is remembered the same way and skips the open.
+                property double releasedAt: 0
+                property double cancelledAt: 0
+                readonly property int tapWindow: 300
                 screen: surface.modelData
                 visible: open && Hyprland.toplevels.values.length > 0
-                implicitWidth: Math.max(80, Math.min(surface.modelData.width - 32, quickIcons.implicitWidth))
-                implicitHeight: 96
+                anchors.top: true
+                anchors.bottom: true
+                anchors.left: true
+                anchors.right: true
                 exclusiveZone: 0
                 color: "transparent"
                 WlrLayershell.namespace: "tessera-quick-switcher"
                 WlrLayershell.layer: WlrLayer.Overlay
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
+                // Alt release: commit when the switcher is up, otherwise note
+                // that the tap is already over.
+                function commit() {
+                    if (open) quickIcons.activateCurrent();
+                    else releasedAt = Date.now();
+                }
+                // Escape: close when up, otherwise note the cancel.
+                function cancel() {
+                    if (open) open = false;
+                    else cancelledAt = Date.now();
+                }
+                function show(direction) {
+                    const tapped = !open && releasedAt > 0 && Date.now() - releasedAt < tapWindow;
+                    const cancelled = !open && cancelledAt > 0 && Date.now() - cancelledAt < tapWindow;
+                    releasedAt = 0;
+                    cancelledAt = 0;
+                    if (cancelled) return;
+                    if (!open) {
+                        quickIcons.reset();
+                        quickIcons.selectActive();
+                    }
+                    panel.page = "";
+                    panel.startMenuOpen = false;
+                    statusBar.drawerOpen = false;
+                    open = true;
+                    quickIcons.step(direction);
+                    Qt.callLater(() => quickIcons.forceActiveFocus());
+                    if (tapped) quickIcons.activateCurrent();
+                }
+                // The desktop taskbar's Windows button. Opens the bare icon
+                // row over the desktop with the current window already
+                // selected; pressing it again walks forward through the open
+                // windows, so it cycles without a keyboard.
+                function toggle() {
+                    panel.page = "";
+                    panel.startMenuOpen = false;
+                    statusBar.drawerOpen = false;
+                    if (!open) {
+                        quickIcons.reset();
+                        quickIcons.selectActive();
+                        open = true;
+                        Qt.callLater(() => quickIcons.forceActiveFocus());
+                    } else {
+                        quickIcons.step(1);
+                    }
+                }
+
+                // Clicking anywhere but an icon dismisses. Deliberately
+                // invisible: no backdrop and no panel, so the icons read as
+                // floating in the middle of the screen.
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: quickSwitcher.open = false
+                }
                 QuickSwitcher {
                     id: quickIcons
-                    anchors.fill: parent
+                    anchors.centerIn: parent
+                    width: Math.min(quickSwitcher.width - 64, implicitWidth)
+                    height: implicitHeight
                     windows: root.switcherWindows
+                    accentColor: root.accentColor
+                    reducedMotion: shellPreferences.reducedMotion
                     iconForWindow: window => {
                         const entry = window.wayland ? DesktopEntries.heuristicLookup(window.wayland.appId) : null;
                         return entry && entry.icon ? Quickshell.iconPath(entry.icon, true) : "";
