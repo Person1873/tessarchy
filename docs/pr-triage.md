@@ -1,5 +1,15 @@
 # Pull request review — 2026-10-18
 
+## Update — easiest-PR pass complete
+
+The three smallest genuine integrations are merged: **#21** idle blanking,
+**#22** display rotation and **#13** notification center. #16 window previews is
+confirmed **superseded** by the current AppSwitcher (its grid would replace the
+card switcher); closing it is the resolution, not a merge. Still open: **#23**
+Wi-Fi, **#19** brightness/night light (fix the unguarded PID kill first), **#12**
+tablet split, and the **#9 → #10 → #11 → #20** theme/portal/keyboard stack. The
+original ranking below is retained for reference.
+
 The existing PRs were rescanned after the Phone/Messages checkpoint.
 Order reflects integration effort and product risk against the current shell.
 The owner authorized skipping disruptive or difficult work.
