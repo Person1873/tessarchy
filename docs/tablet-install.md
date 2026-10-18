@@ -4,7 +4,7 @@ The tablet profile targets x86_64 Intel/AMD hardware running current Arch Linux.
 It provides the Tessarchy session, firmware, desktop apps, networking, audio,
 on-screen keyboard, authorization agent, portals and removable-device support.
 It does not partition disks or replace an existing operating system. The published
-Alpha 3 ISO is a live, nonpersistent demonstration; it is not an installer.
+Alpha 4 ISO is a live, nonpersistent demonstration; it is not an installer.
 
 ## Before installation
 

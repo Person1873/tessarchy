@@ -15,6 +15,5 @@ Explore: https://thediamondsaint.github.io/tessarchy/
 Source: https://github.com/thediamondsaint/tessarchy
 Roadmap: https://thediamondsaint.github.io/tessarchy/assets/tessarchy-device-roadmap.png
 
-The downloadable Alpha 2 ISO remains an experimental x86_64 VM tester image and
-predates the latest development additions. Physical phone/tablet support is a
+The downloadable Alpha 4 ISO is an experimental x86_64 VM tester image. Physical phone/tablet support is a
 planned milestone, not a supported product claim yet.

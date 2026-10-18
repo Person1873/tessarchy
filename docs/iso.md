@@ -44,7 +44,23 @@ The profile keeps early KMS and adds Plymouth after it in the initramfs hooks.
 
 Use [tablet-install.md](tablet-install.md) to install the packages on an existing
 Arch tablet. The live image does not partition or install onto internal storage.
-Alpha 3 contains this live profile; Alpha 2 remains available as a historical release.
+Alpha 4 contains this live profile; earlier alphas remain available as historical
+releases.
+
+## Alpha 4 tester ISO — 2026-10-18
+
+[Download Alpha 4](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.4).
+Actions run [39144935780](https://github.com/thediamondsaint/tessarchy/actions/runs/39144935780)
+built source `0f71636a0aecb20cd76359a71d2e911eb082cb57` with archiso 91-1.
+Both diskless BIOS and non-Secure-Boot UEFI boots reached Tessera and the curated
+launcher; no NIC was present. It carries Alpha 3 plus the desktop tray-icon fix,
+on-screen keys at the 48 px height floor, five-minute idle blanking, the
+notification center, display rotation, the Desktop-mode keyboard suppression and
+the Tessy workflow. The desktop taskbar postdates this image.
+Physical tablet and installed-disk acceptance remain pending.
+
+`tessarchy-0.1.0-20261018-x86_64.iso` is 2,111,864,832 bytes. SHA-256:
+`8cae59e93b1043699fc5d568b5fb7bccb1ae71288703a358c874ded4ec636b03`.
 
 ## Alpha 3 Intel/AMD tablet pilot — 2026-10-18
 

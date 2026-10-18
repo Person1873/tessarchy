@@ -31,14 +31,16 @@ Continue it in place only when assigned that work; keep its contributor changes.
 4. Run source checks and the affected runtime workflow.
 5. Record evidence, merge after checks pass and synchronize public branches.
 
-Latest source baseline: 44 Python tests and 37 Qt Quick results. Actual feature
+Latest source baseline: 86 Python tests and 49 Qt Quick results (2026-10-18).
+Actual feature
 acceptance is recorded in [testing.md](testing.md).
 
 ## Release and site
 
-Alpha 2 remains the tester ISO from source
-`aa8b59a73a8d5d6b1d3fab6c17272e68e0bfac58`. Later merged contributions are in
-development source. Its release assets contain the exact image provenance.
+Alpha 4 is the tester ISO from source
+`0f71636a0aecb20cd76359a71d2e911eb082cb57`, published with inspected BIOS and
+UEFI boot captures. Earlier alphas remain available as historical releases, and
+later merged contributions are in development source.
 
 The website deploys from approved `main`/`build/live-iso` pushes and manual
 workflow dispatch. It reads current public release/commit metadata. Branding
