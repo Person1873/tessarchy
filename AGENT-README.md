@@ -190,7 +190,7 @@ Read [pr-triage.md](docs/pr-triage.md) and inspect current PR heads first.
 | T09 | Review #18 power controls | Reliable service detection, supported modes and guarded writes |
 | T10 | Review #21 idle blanking | Current Lua-compatible display control, wake input and session lifecycle tested |
 | T11 | Review #23 Wi-Fi connection workflow | Scan ownership, NetworkManager lifecycle, credentials agent and cancellation resolved |
-| T12 | In progress | — | `feat/rotation` / #22 | Reworked for Lua: generated `display.lua` plus recoverable `tessera-rotate` helper; helper tests and parser validation done, hardware rotation pending |
+| T12 | Review | — | `feat/rotation` / #22 | Reworked for Lua: generated `display.lua` plus recoverable `tessera-rotate` helper; helper tests, parser validation and wiring checks green, hardware rotation pending |
 | T13 | Review #13 notifications | Plain-text rendering, popup/history lifecycle, replacement and withdrawal checked |
 | T14 | Review #19 brightness/night light | Hardware availability and owned-process lifetime handled correctly |
 | T15 | Resume #9 theme integration in its preserved worktree | Reconcile current glass UI, app themes and keyboard without losing contributor work |
