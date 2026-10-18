@@ -624,8 +624,9 @@ ShellRoot {
                         Layout.leftMargin: 8
                         Accessible.name: text.length > 0 ? "Focused window " + text : ""
                     }
-                    // Only registered application icons appear; no simulated signals.
+                    // Desktop app indicators do not belong in the compact mobile status strip.
                     RowLayout {
+                        visible: surface.mode === "desktop"
                         Layout.maximumWidth: Math.max(0, surface.modelData.width - 370)
                         clip: true
                         spacing: 0

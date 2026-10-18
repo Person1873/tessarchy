@@ -172,6 +172,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T09 | Done | Codex | PR #18 | Guarded battery/power-profile integration; unavailable VM state verified |
 | T08 | Done | Codex | VM/touch publication | Seventeen refreshed captures, three retained PIN captures and matching site/ZIP |
 | T58 | Done | Codex | feat/tablet-install-readiness | x86 tablet profile, curated launcher, supplied splash video and inspected Alpha 3 BIOS/UEFI boots |
+| T60 | Done | Codex | fix/mobile-status-tray | Mobile bar excludes desktop tray icons; actual VM home and drawer checked |
 | T59 | Done | Codex / contributor | PR #28 | Offline BIOS/UEFI live boots passed; contributor history preserved |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |
 
