@@ -910,3 +910,8 @@ The updated site passed installed-Chromium checks at desktop and phone widths:
 all static images loaded, no horizontal overflow, keyboard mode navigation kept
 focus, the Desktop quick-controls button opened the matching new capture, and
 gallery/Escape close worked. No uncaught JavaScript exceptions were observed.
+
+PR #27 passed Ubuntu/Arch runs39083726072 and39083730802 and Pages39083726075,
+then merged as 3f512bc9ed76388ee82611f1654a914896700a4a. Public checks matched
+all four new capture hashes, validated the thirteen-PNG screenshot ZIP and
+confirmed the agent-guide link and per-mode controls viewer.

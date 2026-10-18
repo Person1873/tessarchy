@@ -1,27 +1,26 @@
 # Tessarchy handoff for Hermes or another model
 
-Last checkpoint: 2026-10-17, public roadmap/showcase publication and Git sync. This file is the
+Last checkpoint: 2026-10-17 local / 2026-10-18 UTC, agent guide and fresh layout captures. This file is the
 persistent continuation record requested by Charles. Keep it in the Tessarchy
 folder and update it after each meaningful merge, validation, or blocker.
 Never include passwords, tokens, SSH private keys, or other credentials.
 
-## Current user request
+## Current user request — completed
 
-Create a root-level agent README with project context, contribution instructions,
-a shared planning register and a long actionable backlog; publish it to Git and
-return its URL. The owner also requested direct documentation without repeated
-caveats. This writing preference is persisted in AGENTS.md and AGENT-README.md.
+- Root agent README with shared planning register and 56 actionable tasks:
+  https://github.com/thediamondsaint/tessarchy/blob/main/AGENT-README.md
+- Direct documentation and the owner's writing preference saved in AGENTS.md,
+  AGENT-README.md and this handoff.
+- Fresh current-source tablet/desktop home and quick-controls captures published
+  on the website; the screenshot ZIP contains thirteen original images.
 
-Completed product/publication work: real phone PIN login in the VM; supported
-Hyprland startup; official logo ZIP/spinning GIF; professional device roadmap;
-updated public showcase with eleven real captures. PRs #25/#26 are merged.
-main/build/live-iso were synchronized at 9c1f4a3f400a6358066b41ab9fb6720e4af33fb0.
-Ubuntu/Arch checks and Pages run39082410721 passed; the public page passed the
-same desktop/phone browser checks as the local build.
+PR #27 merged as 3f512bc9ed76388ee82611f1654a914896700a4a after Ubuntu/Arch and
+Pages checks passed. The public assets were checked against their local hashes.
+Prior login, branding, roadmap and showcase work (#25/#26) is also complete.
+The 12 deferred contributor PRs and #9's unfinished worktree are preserved.
 
-The remaining 12 contributor PRs retain their deferred review state. Preserve
-#9's unfinished worktree. Historical sections below retain prior checkpoints;
-the final dated checkpoint supersedes stale next-action statements.
+Historical sections retain earlier checkpoints. The final dated checkpoint
+supersedes old next-action statements.
 
 ## Communication and working rules
 
@@ -160,11 +159,10 @@ was visually inspected and canceled, and native 400x800 portrait was restored.
 
 ## Current immediate next actions
 
-1. Finish the agent guide/documentation refresh and publish it; return the
-   GitHub main-branch URL for AGENT-README.md.
-2. Keep main/build/live-iso synchronized and confirm Pages/source CI results.
-3. Retain the existing VM state and deferred PR work. Product follow-ups are in
-   the new task board; no extra installation or restart is part of this doc task.
+The requested documentation and image work is complete. For the next product
+assignment, claim a task in AGENT-README.md and inspect current Git/VM state.
+The recommended starting work is T01–T03: real media/audio and screenshot action
+acceptance. Keep #9's preserved worktree intact.
 
 ## Pending PR inventory and dependency cautions
 
@@ -794,3 +792,19 @@ file links resolve; 56 task IDs validated. Browser review uses installed Chromiu
 and screenshots under build/site-refresh. Finish current Git publication, source
 CI and Pages verification; return the main-branch agent-guide URL. Keep the
 integration worktree for #9 intact. No dependency install or VM reboot was used.
+
+## Completed agent-guide publication
+
+- Content commit: a251708fe68e718be2a9b57361e68b69839be777.
+- PR: https://github.com/thediamondsaint/tessarchy/pull/27
+- Merge: 3f512bc9ed76388ee82611f1654a914896700a4a.
+- Ubuntu/Arch runs39083726072 and39083730802 passed; Pages39083726075 passed.
+- Public four-image hash comparison and thirteen-PNG screenshot ZIP CRC/hash
+  checks passed. Website has the agent link and per-mode quick-controls viewer.
+- Agent guide: https://github.com/thediamondsaint/tessarchy/blob/main/AGENT-README.md
+- Website: https://thediamondsaint.github.io/tessarchy/
+- This completion record follows the tested merge. main and build/live-iso are
+  synchronized when publishing it; automatic source/Pages jobs cover the final
+  snapshot. Next agents should use fetched refs rather than historical SHAs.
+- Original VM shell/preferences restored at400x800. Current capture source and
+  evidence are retained for future screenshot refreshes. No host config changed.
