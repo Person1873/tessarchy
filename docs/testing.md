@@ -1615,3 +1615,34 @@ source tree, rejection of edited/missing launcher originals, legacy uninstall
 and long/empty event messages. No host settings, development
 installation or running VM were modified. Fractional-scale acceptance on a
 physical display remains pending.
+
+## Desktop taskbar and Start menu polish — 2026-10-18
+
+- The taskbar background now fills its 64px reserved area, centering the 48px
+  Start button vertically. Tray controls use consistent 18px glyphs inside 48px
+  targets; volume/settings images keep their intrinsic size instead of stretching
+  to fill a button. The settings stroke matches the other system glyphs.
+- Start apps render as an icon and plain-text label over the menu's glass, with
+  no blue tile or icon backing. Tab focus has an outline; pointer opening leaves
+  the app grid unboxed. Escape and outside input dismiss Start, and changing
+  layouts closes it. Opening Start also closes other shell pages.
+- Task buttons occupy a clipped horizontal strip with overflow arrows and wheel
+  scrolling. Active windows are revealed, titles stay plain text, and application
+  icons are shown when available. The tray keeps its position with many windows.
+
+Actual validation: `./scripts/check.sh` passes 104 Python tests and 53 Qt Quick
+results, including task overflow, active-window visibility, activation requests
+and window removal. Available QML/Hyprland checks pass; fish and ShellCheck are
+absent locally and remain CI checks. Installed Quickshell 0.3.1 metadata and the
+[focus-grab API](https://quickshell.org/docs/v0.3.0/types/Quickshell.Hyprland/HyprlandFocusGrab/)
+were checked before using it.
+
+The existing development VM was booted, logged in and switched to 1280×800
+Desktop at scale 1. The deployed source was inspected in the VM: floating Start
+icons, centered Start button, consistent tray glyphs, Escape and outside-touch
+menu dismissal all worked. Six temporary Foot windows exercised overflow; tapping
+a visible task focused the matching window and the tray remained accessible.
+Only the temporary test windows were closed. The original guest shell is backed
+up in its tessarchy-backups directory. Captures are in the ignored
+`build/desktop-session/` directory. Physical input and multi-monitor acceptance
+remain pending; no ISO build or boot was performed locally.

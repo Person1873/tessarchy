@@ -3,8 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 // Built-in system indicators, shared by the mobile status strip and the desktop
-// taskbar tray. `compact` shrinks the touch targets for the tray, where they sit
-// beside the clock like a Windows notification area.
+// taskbar tray. Compact mode reduces glyphs and spacing while keeping 48px targets.
 RowLayout {
     id: control
     property color accentColor: "#a9e8d5"
@@ -26,8 +25,8 @@ RowLayout {
     signal settingsRequested
     signal muteToggled
 
-    readonly property int itemSize: compact ? 32 : 48
-    readonly property int glyphSize: compact ? 17 : 21
+    readonly property int itemSize: 48
+    readonly property int glyphSize: compact ? 18 : 21
     spacing: compact ? 2 : 8
 
     Button {
@@ -123,12 +122,14 @@ RowLayout {
             radius: 12
             color: volumeButton.down ? Qt.alpha(control.accentColor, 0.3) : "transparent"
         }
-        contentItem: Image {
-            anchors.centerIn: parent
-            opacity: control.audioAvailable ? 1 : 0.35
-            source: "../icons/" + (control.audioMuted ? "volume-muted" : "volume") + ".svg"
-            sourceSize.width: control.glyphSize
-            sourceSize.height: control.glyphSize
+        contentItem: Item {
+            Image {
+                anchors.centerIn: parent
+                opacity: control.audioAvailable ? 1 : 0.35
+                source: "../icons/" + (control.audioMuted ? "volume-muted" : "volume") + ".svg"
+                sourceSize.width: control.glyphSize
+                sourceSize.height: control.glyphSize
+            }
         }
         Accessible.name: control.audioMuted ? "Unmute audio" : "Mute audio"
         onClicked: control.muteToggled()
@@ -148,11 +149,13 @@ RowLayout {
             color: settingsButton.down ? Qt.alpha(control.accentColor, 0.3)
                                        : control.settingsSelected ? Qt.alpha(control.accentColor, 0.15) : "transparent"
         }
-        contentItem: Image {
-            anchors.centerIn: parent
-            source: "../icons/settings.svg"
-            sourceSize.width: control.glyphSize
-            sourceSize.height: control.glyphSize
+        contentItem: Item {
+            Image {
+                anchors.centerIn: parent
+                source: "../icons/settings.svg"
+                sourceSize.width: control.glyphSize
+                sourceSize.height: control.glyphSize
+            }
         }
         Accessible.name: "Settings"
         onClicked: control.settingsRequested()

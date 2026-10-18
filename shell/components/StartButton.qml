@@ -8,7 +8,7 @@ import QtQuick.Layouts
 Button {
     id: control
     property color accentColor: "#a9e8d5"
-    // True while the launcher page this button opens is on screen.
+    // True while the Start menu is open.
     property bool selected: false
     Layout.minimumHeight: 48
     Layout.minimumWidth: 132
@@ -25,6 +25,7 @@ Button {
             Layout.alignment: Qt.AlignVCenter
         }
         Text {
+            textFormat: Text.PlainText
             text: control.text
             color: "#0b1a24"
             font.pixelSize: 17
