@@ -6,7 +6,9 @@ hl.config({
     decoration = { rounding = 18, blur = { enabled = true, size = 4, passes = 2 }, shadow = { enabled = false } },
     animations = { enabled = false },
     input = { kb_layout = "us", follow_mouse = 0 },
-    misc = { disable_hyprland_logo = true, disable_splash_rendering = true, force_default_wallpaper = 0 },
+    misc = { disable_hyprland_logo = true, disable_splash_rendering = true,
+             force_default_wallpaper = 0,
+             key_press_enables_dpms = true, mouse_move_enables_dpms = true },
 })
 -- Frost only Tessera glass surfaces; leave applications unchanged.
 hl.layer_rule({ match = { namespace = "tessera(-status)?" }, blur = true, ignore_alpha = 0.01 })
@@ -65,6 +67,10 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("tessera-shell")
     -- Optional; exits quietly when squeekboard is not installed.
     hl.exec_cmd("tessarchy-osk start")
+    -- Blank the panel after five minutes without input; input wakes it back.
+    -- hypridle honors idle inhibitors and no lock command is configured.
+    local share = os.getenv("TESSARCHY_DATA_DIR") or "/usr/share/tessarchy"
+    hl.exec_cmd("hypridle -c '" .. share .. "/session/hypridle.conf'")
 end)
 -- Same card switcher for touch and keyboard. Alt release commits selection.
 -- Keycodes 64/108 are left/right Alt in the configured evdev/US keymap.
