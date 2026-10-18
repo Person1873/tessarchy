@@ -985,5 +985,23 @@ Actually performed:
 - `session/hyprland.lua` and a generated `display.lua` example pass
   `Hyprland --verify-config` on Hyprland 0.56 with a private runtime directory.
 
+- Guest cycle on the build 10 debug line (QEMU x86_64, Hyprland 0.56.2, 1280x800):
+  with the session live, the generated `display.lua` carrying `transform = 1`
+  reloaded through Hyprland and `hyprctl monitors` reported `transform: 1`; the
+  Tessera shell re-laid out to the portrait canvas (capture
+  `rotate-applied-90deg.png`). Running `tessera-rotate` itself as the live user
+  then uncovered a real reload race: the helper writes `display.lua` inside the
+  watched config directory, Hyprland's own watcher starts a reload, and the
+  explicit `hyprctl reload` issued moments later can lose the IPC handshake
+  (`Hyprland IPC didn't respond in time`), so the helper reported a rejected
+  reload and restored the previous state. Fixed by retrying the explicit reload
+  in `reload_hyprland()` (10 x 0.3 s, used by apply, reset and restore) and by
+  forcing mode 0644 on the generated file so a helper started from a rescue
+  console still writes a file the session user can read. Debug-image runs as
+  root had also been writing the file outside the live user's config
+  (`/root/.config`); the guest harness now exports `HOME`, `XDG_CONFIG_HOME`
+  and `HYPRLAND_INSTANCE_SIGNATURE` for the helper, which is a harness fix, not
+  a product change.
+
 Not performed: rotating a physical display, wake/rotation cycles and touch
 remapping. These stay in T37 hardware validation.
