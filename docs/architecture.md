@@ -10,7 +10,8 @@ Tablet uses a centered, rounded panel bounded to 720 pixels. Desktop uses a
 full-width taskbar instead of the floating dock, laid out like Windows XP's but
 rendered in the same glass: a raised accent Start pill with the project mark,
 quick-launch buttons, wide bevelled task buttons (the focused window reads as
-pressed), and a sunken tray holding the application indicators and the clock. It
+pressed), and a sunken tray holding the built-in status indicators (moved off the
+status strip in this mode), the application tray icons and the clock. It
 stays full width while a page is open so the page reads as a centered sheet. The
 Start pill toggles a Windows-XP-style Start menu: a blue-tinted panel with a
 compact app grid that sits flush on the taskbar's top edge and is frosted by the

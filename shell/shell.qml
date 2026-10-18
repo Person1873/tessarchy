@@ -640,6 +640,24 @@ ShellRoot {
                                 id: trayRow
                                 anchors.centerIn: parent
                                 spacing: 0
+                                // Built-in indicators, as in a Windows tray.
+                                StatusIndicators {
+                                    compact: true
+                                    accentColor: root.accentColor
+                                    notificationCount: root.notificationCount
+                                    cellularStrength: root.cellularStrength
+                                    wifiStrength: root.wifiStrength
+                                    airplaneOn: !!(radioBackend.state.airplane && radioBackend.state.airplane.enabled)
+                                    batteryPresent: UPower.displayDevice.isPresent
+                                    batteryPercent: UPower.displayDevice.percentage
+                                    audioAvailable: root.audioAvailable
+                                    audioMuted: root.audioAvailable && root.audioSink.audio.muted
+                                    notificationsSelected: panel.page === "notifications"
+                                    settingsSelected: panel.page === "settings"
+                                    onNotificationsRequested: panel.showPage("notifications")
+                                    onMuteToggled: root.audioSink.audio.muted = !root.audioSink.audio.muted
+                                    onSettingsRequested: panel.showPage("settings")
+                                }
                                 Repeater {
                                     model: SystemTray.items
                                     delegate: TouchButton {
@@ -821,78 +839,27 @@ ShellRoot {
                         Layout.leftMargin: 8
                         Accessible.name: text.length > 0 ? "Focused window " + text : ""
                     }
-                    NavButton {
-                        text: root.notificationCount > 0 ? String(root.notificationCount) : ""
-                        symbol: "bell"
-                        showLabel: root.notificationCount > 0
-                        implicitWidth: 48
-                        implicitHeight: 48
-                        Layout.minimumHeight: 48
-                        Layout.fillWidth: false
-                        Layout.preferredWidth: 48
+                    // Built-in indicators move to the taskbar tray in Desktop
+                    // mode; the mobile strip keeps them along the top edge.
+                    StatusIndicators {
+                        visible: surface.mode !== "desktop"
                         accentColor: root.accentColor
-                        selected: panel.page === "notifications"
-                        Accessible.name: root.notificationCount > 0 ? "Notifications, " + root.notificationCount + " unread" : "Notifications"
-                        onClicked: panel.showPage("notifications")
-                    }
-                    // Desktop application indicators moved to the taskbar; the
-                    // compact mobile strip keeps only built-in status glyphs.
-                    Image {
-                        visible: !!(radioBackend.state.airplane && radioBackend.state.airplane.enabled)
-                        Layout.preferredWidth: 18; Layout.preferredHeight: 18
-                        source: "icons/airplane.svg"
-                        sourceSize.width: 18; sourceSize.height: 18
-                        Accessible.name: "Airplane mode on"
-                    }
-                    StatusIcon {
-                        symbol: "cellular"
-                        label: "Cellular"
-                        strength: root.cellularStrength
-                    }
-                    StatusIcon {
-                        symbol: "wifi"
-                        label: "Wi-Fi"
-                        strength: root.wifiStrength
-                    }
-                    RowLayout {
-                        spacing: 4
-                        Image {
-                            source: "icons/battery.svg"
-                            sourceSize.width: 22
-                            sourceSize.height: 22
-                            opacity: UPower.displayDevice.isPresent ? 1 : 0.35
-                        }
-                        Text {
-                            visible: surface.modelData.width >= 380
-                            text: UPower.displayDevice.isPresent ? Math.round(UPower.displayDevice.percentage * 100) + "%" : "—"
-                            color: "#a9e8d5"
-                            font.pixelSize: 11
-                            Accessible.name: UPower.displayDevice.isPresent ? "Battery " + text : "Battery status unavailable"
-                        }
-                    }
-                    NavButton {
-                        visible: surface.modelData.width >= 700
-                        text: root.audioAvailable && root.audioSink.audio.muted ? "Unmute audio" : "Mute audio"
-                        symbol: root.audioAvailable && root.audioSink.audio.muted ? "volume-muted" : "volume"
-                        showLabel: false
-                        implicitWidth: 48; implicitHeight: 48
-                        Layout.minimumHeight: 48; Layout.fillWidth: false; Layout.preferredWidth: 48
-                        enabled: root.audioAvailable
-                        onClicked: root.audioSink.audio.muted = !root.audioSink.audio.muted
-                    }
-                    NavButton {
-                        visible: surface.modelData.width >= 560
-                        text: "Settings"
-                        symbol: "settings"
-                        showLabel: false
-                        implicitWidth: 48
-                        implicitHeight: 48
-                        Layout.minimumHeight: 48
-                        Layout.fillWidth: false
-                        Layout.preferredWidth: 48
-                        accentColor: root.accentColor
-                        selected: panel.page === "settings"
-                        onClicked: { statusBar.drawerOpen = false; panel.showPage("settings"); }
+                        notificationCount: root.notificationCount
+                        cellularStrength: root.cellularStrength
+                        wifiStrength: root.wifiStrength
+                        airplaneOn: !!(radioBackend.state.airplane && radioBackend.state.airplane.enabled)
+                        batteryPresent: UPower.displayDevice.isPresent
+                        batteryPercent: UPower.displayDevice.percentage
+                        audioAvailable: root.audioAvailable
+                        audioMuted: root.audioAvailable && root.audioSink.audio.muted
+                        notificationsSelected: panel.page === "notifications"
+                        settingsSelected: panel.page === "settings"
+                        showBatteryText: surface.modelData.width >= 380
+                        showVolume: surface.modelData.width >= 700
+                        showSettings: surface.modelData.width >= 560
+                        onNotificationsRequested: panel.showPage("notifications")
+                        onMuteToggled: root.audioSink.audio.muted = !root.audioSink.audio.muted
+                        onSettingsRequested: { statusBar.drawerOpen = false; panel.showPage("settings"); }
                     }
                 }
                 }
