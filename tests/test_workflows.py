@@ -164,6 +164,21 @@ class Workflows(unittest.TestCase):
         self.osk('show', path_tools=[busctl])
         self.assertTrue(log.read_text().splitlines()[-1].endswith('SetVisible b true'))
 
+    def test_osk_enforces_minimum_portrait_key_height(self):
+        log = self.home / 'gsettings.log'
+        fake_osk = ('squeekboard', 'exit 0\n')
+        # width, height, monitor scale, expected portrait panel multiplier.
+        cases = (('400', '800', '1', '1.80'), ('800', '1600', '2', '1.80'),
+                 ('300', '600', '1', '2.00'))
+        for width, height, scale, expected in cases:
+            hypr = ('hyprctl', f'echo \'[{{"width":{width},"height":{height},"scale":{scale}}}]\'\n')
+            gsettings = ('gsettings', f'echo "$*" >> {log}\n')
+            env = dict(self.env, WAYLAND_DISPLAY='wayland-test')
+            log.unlink(missing_ok=True)
+            result = self.osk('start', path_tools=[fake_osk, hypr, gsettings], env=env)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(f'scale-in-vertical-screen-orientation {expected}', log.read_text())
+
     def test_session_uses_watchdog_and_preserves_config_path_arguments(self):
         import shutil
         tools = self.home / 'launcher-tools'

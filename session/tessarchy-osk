@@ -6,6 +6,31 @@ usage() { echo "Usage: $0 start | show | hide | toggle" >&2; exit 2; }
 bus=sm.puri.OSK0
 object=/sm/puri/OSK0
 set_visible() { busctl --user call "$bus" "$object" "$bus" SetVisible b "$1" >/dev/null; }
+# Minimum portrait panel height that yields keys at or above the 48
+# logical-pixel touch target. Stock squeekboard layouts size their panel from
+# the output width (roughly 0.3125x for the wide four-row tablet layout), so
+# narrow outputs render short keys; scale the panel to compensate.
+min_panel=225
+target_aspect=320  # 1 / 0.3125, the wide-layout height-to-width ratio
+portrait_scale() {
+    local monitors width height scaleh frac short logical hundredths
+    monitors=$(hyprctl -j monitors 2>/dev/null || true)
+    [[ $monitors =~ \"width\":[[:space:]]*([0-9]+) ]] && width=${BASH_REMATCH[1]} || return 1
+    [[ $monitors =~ \"height\":[[:space:]]*([0-9]+) ]] && height=${BASH_REMATCH[1]} || return 1
+    scaleh=100
+    if [[ $monitors =~ \"scale\":[[:space:]]*([0-9]+)(\.([0-9]+))? ]]; then
+        frac=${BASH_REMATCH[3]:-0}
+        frac=${frac:0:2}
+        scaleh=$(( ${BASH_REMATCH[1]} * 100 + 10#${frac:-0} ))
+    fi
+    short=$(( width < height ? width : height ))
+    logical=$(( short * 100 / scaleh ))
+    (( logical > 0 )) || return 1
+    hundredths=$(( min_panel * target_aspect / logical ))
+    (( hundredths < 50 )) && hundredths=50
+    (( hundredths > 200 )) && hundredths=200
+    printf '%d.%02d' $(( hundredths / 100 )) $(( hundredths % 100 ))
+}
 case "$1" in
 start)
     if ! command -v squeekboard >/dev/null; then
@@ -21,6 +46,12 @@ start)
             'screen-keyboard-enabled=true' > "$keyfile"
     fi
     export GSETTINGS_BACKEND=keyfile XDG_CONFIG_HOME=$state
+    # Keep keys tall enough on portrait outputs; skip when tools are absent.
+    if command -v gsettings >/dev/null && command -v hyprctl >/dev/null; then
+        if value=$(portrait_scale); then
+            gsettings set sm.puri.Squeekboard scale-in-vertical-screen-orientation "$value" || true
+        fi
+    fi
     exec squeekboard
     ;;
 show) set_visible true ;;

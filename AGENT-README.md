@@ -173,6 +173,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T08 | Done | Codex | VM/touch publication | Seventeen refreshed captures, three retained PIN captures and matching site/ZIP |
 | T58 | Done | Codex | feat/tablet-install-readiness | x86 tablet profile, curated launcher, supplied splash video and inspected Alpha 3 BIOS/UEFI boots |
 | T60 | Done | Codex | fix/mobile-status-tray | Mobile bar excludes desktop tray icons; actual VM home and drawer checked |
+| T61 | Done | Codex | fix/osk-key-height | Portrait on-screen keys meet the 48px height floor at 400px and 360px widths |
 | T59 | Done | Codex / contributor | PR #28 | Offline BIOS/UEFI live boots passed; contributor history preserved |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |
 
