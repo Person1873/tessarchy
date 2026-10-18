@@ -5,6 +5,19 @@ import "../../shell/LayoutPolicy.js" as Policy
 
 TestCase {
     name: "AdaptiveLayout"
+    function test_dock_targets_fit_narrow_and_desktop_layouts() {
+        for (const mode of ["phone", "tablet", "desktop"]) {
+            for (const width of [320, 360, 400, 800, 1280]) {
+                for (const keyboard of [true, false]) {
+                    const dock = Policy.dockLayout(mode, width, keyboard);
+                    const available = dock.width - (mode === "phone" ? 24 : 32);
+                    verify((available - (dock.columns - 1) * 4) / dock.columns >= 48);
+                    verify(dock.width <= width);
+                    verify(dock.rows >= 1);
+                }
+            }
+        }
+    }
     Component {
         id: markFactory
         BrandMark {
@@ -106,5 +119,90 @@ TestCase {
         verify(Policy.panelWidth("desktop", 320) <= 320);
         compare(Policy.panelWidth("phone", 320), 320);
         compare(Policy.columns("desktop", 760), 4);
+    }
+    function test_workspace_strip_placements() {
+        verify(Policy.showWorkspaces("desktop", 1100));
+        verify(!Policy.showWorkspaces("desktop", 400));
+        verify(Policy.showWorkspaces("desktop", 1920));
+        verify(Policy.showWorkspaces("tablet", 1024));
+        verify(!Policy.showWorkspaces("tablet", 800));
+        verify(!Policy.showWorkspaces("phone", 1080));
+    }
+    function test_workspace_slots() {
+        compare(Policy.workspaceSlots([]), 5);
+        compare(Policy.workspaceSlots([9999999]), 8);
+        compare(Policy.workspaceSlots([7.5]), 5);
+        compare(Policy.workspaceSlots([1, 2]), 5);
+        compare(Policy.workspaceSlots([1, 7, 3]), 7);
+        compare(Policy.workspaceSlots([-1, 2]), 5);
+    }
+    function test_bluetooth_action_and_battery() {
+        compare(Policy.btAction(true, true), "disconnect");
+        compare(Policy.btAction(true, false), "disconnect");
+        compare(Policy.btAction(false, true), "connect");
+        compare(Policy.btAction(false, false), "none");
+        compare(Policy.btBatteryLabel(false, 0.5), "");
+        compare(Policy.btBatteryLabel(true, NaN), "");
+        compare(Policy.btBatteryLabel(true, undefined), "");
+        compare(Policy.btBatteryLabel(true, 0.42), " · 42%");
+        compare(Policy.btBatteryLabel(true, 2), " · 100%");
+        compare(Policy.btBatteryLabel(true, -1), " · 0%");
+    }
+    function test_media_player_selection() {
+        compare(Policy.preferredPlayerIndex([]), -1);
+        compare(Policy.preferredPlayerIndex([false, true]), 1);
+        compare(Policy.preferredPlayerIndex([false, false]), 0);
+        compare(Policy.mediaSummary("", ""), "Unknown track — Unknown artist");
+    }
+    function test_audio_labels_and_stream_filter() {
+        compare(Policy.nodeLabel("", " Speakers ", "node"), "Speakers");
+        compare(Policy.nodeLabel(undefined, null, ""), "Unknown device");
+        compare(Policy.streamLabel("Browser", "Media", "node"), "Browser");
+        compare(Policy.streamLabel("", "", ""), "Unknown app");
+        verify(Policy.playbackStream("Stream/Output/Audio"));
+        for (const value of [undefined, "", "Stream/Input/Audio", "Stream/Output/Video"]) verify(!Policy.playbackStream(value));
+        compare(Policy.volumePercent(0.456), 46);
+        compare(Policy.volumePercent(2), 100);
+        compare(Policy.volumePercent(-1), 0);
+    }
+    function test_duration_formatting() {
+        compare(Policy.duration(0), "");
+        compare(Policy.duration(-5), "");
+        compare(Policy.duration(undefined), "");
+        compare(Policy.duration(NaN), "");
+        compare(Policy.duration(30), "less than a minute");
+        compare(Policy.duration(90), "2m");
+        compare(Policy.duration(3540), "59m");
+        compare(Policy.duration(3599), "1h 00m");
+        compare(Policy.duration(3600), "1h 00m");
+        compare(Policy.duration(3660), "1h 01m");
+        compare(Policy.duration(7325), "2h 02m");
+}
+
+    function test_notification_placements() {
+        const phone = Policy.notificationPlacement("phone", 400);
+        verify(phone.fullWidth);
+        verify(phone.maxWidth > 0 && phone.maxWidth <= 400);
+        verify(phone.topOffset > 48);
+        const narrowPhone = Policy.notificationPlacement("phone", 280);
+        verify(narrowPhone.maxWidth <= 280);
+        const tablet = Policy.notificationPlacement("tablet", 800);
+        verify(!tablet.fullWidth);
+        verify(tablet.maxWidth > 0 && tablet.maxWidth <= 800);
+        verify(tablet.topOffset > 48);
+        const desktop = Policy.notificationPlacement("desktop", 1280);
+        verify(!desktop.fullWidth);
+        compare(desktop.maxWidth, 420);
+        verify(desktop.topOffset > 48);
+    }
+    function test_notification_timeouts() {
+        compare(Policy.notificationTimeout(0), 4);
+        compare(Policy.notificationTimeout(1), 8);
+        compare(Policy.notificationTimeout(2), 0);
+    }
+    function test_osk_armed_only_for_touch_layouts() {
+        verify(Policy.oskArmed("phone"));
+        verify(Policy.oskArmed("tablet"));
+        verify(!Policy.oskArmed("desktop"));
     }
 }

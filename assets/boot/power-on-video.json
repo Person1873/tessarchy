@@ -1,0 +1,18 @@
+{
+  "source": "Owner-supplied power-on animation",
+  "source_path": "session/boot/power-on.mp4",
+  "source_sha256": "68764416a0bf0a126e6528f20ed4a86bf742f823f5e03b9b79632b479c8fcb1b",
+  "duration_seconds": 8,
+  "width": 1080,
+  "height": 1080,
+  "audio": false,
+  "plymouth": {
+    "frames": 160,
+    "fps": 20,
+    "size": 480
+  },
+  "validation": "Supplied video observed in both BIOS and UEFI diskless CI boots; home and curated launcher inspected",
+  "boot_source_commit": "566a4385432697ffbb21147355476bed5727d9f5",
+  "boot_workflow_run": 39127243527,
+  "boot_frame": "assets/boot/tablet-startup.png"
+}

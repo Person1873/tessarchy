@@ -9,6 +9,59 @@ same disk, not the earlier empty `tessarchy.qcow2`, and creates a fresh read-onl
 offline tools. QEMU's normal disk locking prevents concurrent writers; close the
 previous instance first. No SSH forwarding or host service is needed.
 
+The Basic launcher enables KVM when available, software display rendering, an HDA output,
+a USB audio output for switching tests, a virtio random-number device and a
+virtio multitouch touchscreen. Audio selects the host PipeWire or PulseAudio
+socket automatically. The USB tablet remains available for mouse input.
+
+```bash
+VM_SSH_PORT=2222 VM_QMP="$PWD/vm/touch-qmp.sock" ./scripts/run-basic-vm.sh
+```
+
+Install the guest audio stack explicitly when it is absent:
+
+```bash
+sudo pacman -S --needed pipewire pipewire-audio pipewire-pulse wireplumber
+systemctl --user start pipewire pipewire-pulse wireplumber
+```
+
+Restart Tessera after starting PipeWire so its optional audio integration loads.
+Open quick controls using the central top handle or a downward swipe. Volume,
+mute and output selection are in the drawer; the speaker shortcut on wider
+screens only toggles mute. App shortcuts precede Back, Home and Recents in the
+dock. The drawer's bottom handle stays visible while its contents scroll.
+
+| Option | Purpose |
+| --- | --- |
+| `VM_GL=1` | Opt into Virgl; software display rendering is the default |
+| `VM_TOUCH=0` | Omit multitouch on older QEMU builds |
+| `VM_AUDIO=pipewire`, `pa`, `sdl`, `none` | Select the host audio backend; default is `auto` |
+| `VM_AUDIO_USB=0` | Omit the second output |
+| `VM_AUDIO_CODEC=hda-duplex` | Opt into a guest microphone input; default is output only |
+| `VM_QMP=<socket>` | Enable a local QMP socket for automated touch tests |
+| `VM_RAM=1536` | Use 1.5 GiB on a memory-constrained host; default is 2 GiB |
+
+The generic `vm.sh` retains graphics/touch/second-output opt-ins through
+`VM_GL=1 VM_TOUCH=1 VM_AUDIO_USB=1`; the Basic launcher enables touch/second-output by default and leaves GL opt-in.
+The current profile was validated with QEMU 11.1.1. It provides Ethernet rather
+than Wi-Fi and has no Bluetooth adapter, cellular modem, camera or battery.
+Those workflows still require appropriate hardware or a separate test fixture.
+
+To send real single-contact touch events from the host, use framebuffer pixel
+coordinates and the actual guest resolution:
+
+```bash
+./scripts/vm-touch.py vm/touch-qmp.sock 400 800 tap 185 24
+./scripts/vm-touch.py vm/touch-qmp.sock 400 800 swipe 185 18 185 220 450
+./scripts/vm-touch.py vm/touch-qmp.sock 400 800 swipe 200 688 200 615 300
+```
+
+The last gesture closes the drawer using its fixed bottom handle at the tested
+400×800 layout. For other sizes inspect the handle's current position. QMP
+multitouch events are documented in the [QEMU reference](https://www.qemu.org/docs/master/interop/qemu-qmp-ref.html#command-input-send-event).
+`guest-touch.py` remains an alternative guest-uinput driver. Neither virtual
+device establishes physical touchscreen coverage.
+
 Follow the guest commands in [README](../README.md#quick-start-use-the-basic-arch-vm).
 `setup-guest.sh` runs only as a non-root user in an Arch QEMU/KVM VM. It checks
 that required executables exist, runs available validation, and installs the
@@ -37,7 +90,8 @@ For a larger machine use `VM_RAM=4096 VM_CPUS=4 ./scripts/vm.sh run <ISO>`.
 a persistent guest variables file. `vm.sh plan <ISO>` prints the command without
 starting QEMU. `VM_DISPLAY=sdl` selects another graphical backend.
 
-No `/dev/kvm` was exposed to the coding session. Check on your actual host:
+The current development guest has been tested with KVM. Check acceleration
+availability on a new host:
 
 ```bash
 ls -l /dev/kvm
@@ -90,9 +144,8 @@ Ctrl+Alt+F2 switches to another guest TTY when delivered by the host/QEMU.
 Use QEMU's Send Key menu if the host captures a chord. Closing the QEMU window
 is equivalent to abrupt power loss; shut the guest down normally when possible.
 
-The emulated USB tablet supplies an absolute mouse pointer, not touchscreen
-multitouch. Use mouse clicks for the first UI pass; actual touch needs a device
-or deliberate input passthrough later. Portrait/scaled layouts can be requested
+The emulated USB tablet supplies an absolute mouse pointer. The Basic profile
+also supplies a separate virtio multitouch device for deliberate touch tests. Portrait/scaled layouts can be requested
 with a guest `~/.config/tessarchy/preferences.lua`, for example:
 
 ```lua

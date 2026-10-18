@@ -1,19 +1,21 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import Quickshell.Io
 
 ColumnLayout {
     id: control
     property color accentColor: "#a9e8d5"
-    // The backlight probe runs once when the shell starts; there is no
-    // polling. Machines without a backlight keep the section hidden instead
-    // of showing a dead slider; hardware keys use the same helper.
+    // Probe on startup and when quick controls open; no background polling.
     property bool probed: false
-    property int probePercent: 0
+    property int probePercent: -1
     property real level: 0.5
 
-    readonly property bool available: probed && probePercent >= 1
+    readonly property bool available: probed && probePercent >= 0
+
+    property string error: ""
+    property int pendingPercent: -1
+    onVisibleChanged: { if (visible && !write.running) probe.running = true; }
 
     function setLevel(next) {
         level = Math.max(0.01, Math.min(1, next));
@@ -27,17 +29,23 @@ ColumnLayout {
         id: probe
         command: ["tessera-brightness", "get"]
         running: true
-        stdout: StdioCollector {
-            id: probeOutput
-            onDataChanged: {
-                const value = parseInt(probeOutput.text.trim(), 10);
-                control.probed = true;
-                if (!isNaN(value) && value >= 1 && value <= 100) {
-                    control.probePercent = value;
-                    control.level = value / 100;
-                    slider.value = control.level;
-                }
+        stdout: StdioCollector { id: probeOutput }
+        onExited: (code, status) => {
+            control.probed = true;
+            const value = Number(probeOutput.text.trim());
+            if (code === 0 && status === 0 && probeOutput.text.trim() !== "" && Number.isInteger(value) && value >= 0 && value <= 100) {
+                control.probePercent = value;
+                control.level = value / 100;
+                slider.value = control.level;
             }
+        }
+    }
+    Process {
+        id: write
+        onExited: (code, status) => {
+            control.error = code === 0 && status === 0 ? "" : "Could not change brightness";
+            if (control.pendingPercent >= 0) settle.restart();
+            else probe.running = true;
         }
     }
     // Rapid changes coalesce into one helper call per quiet period.
@@ -46,10 +54,20 @@ ColumnLayout {
         interval: 150
         onTriggered: {
             const percent = Math.max(1, Math.min(100, Math.round(control.level * 100)));
-            Quickshell.execDetached(["tessera-brightness", "set", String(percent)]);
+            control.pendingPercent = percent;
+            if (!write.running) {
+                control.pendingPercent = -1;
+                write.command = ["tessera-brightness", "set", String(percent)];
+                write.running = true;
+            }
         }
     }
 
+    Text {
+        visible: control.available && !!control.error
+        Layout.fillWidth: true
+        text: control.error; color: "#ebbbbd"; wrapMode: Text.WordWrap
+    }
     Text {
         visible: control.available
         text: "Brightness · " + Math.round(control.level * 100) + "%"

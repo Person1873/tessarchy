@@ -33,13 +33,36 @@ if [[ -n ${VM_SSH_PORT:-} ]]; then
     fi
     network+=",hostfwd=tcp:127.0.0.1:$VM_SSH_PORT-:22"
 fi
+graphics=${VM_GL:-0}
+case "$graphics" in
+    0) gpu=virtio-vga; gl=off;;
+    1) gpu=virtio-vga-gl; gl=on;;
+    *) echo "VM_GL must be 0 or 1" >&2; exit 2;;
+esac
+audio=${VM_AUDIO:-auto}
+if [[ $audio == auto ]]; then
+    if [[ -S ${XDG_RUNTIME_DIR:-/run/user/$UID}/pipewire-0 ]]; then audio=pipewire
+    elif [[ -S ${XDG_RUNTIME_DIR:-/run/user/$UID}/pulse/native ]]; then audio=pa
+    else audio=none; fi
+fi
+case "$audio" in pipewire|pa|sdl|none) ;; *) echo "VM_AUDIO must be auto, pipewire, pa, sdl or none" >&2; exit 2;; esac
+case "${VM_AUDIO_CODEC:-hda-output}" in hda-output|hda-duplex) ;; *) echo "VM_AUDIO_CODEC must be hda-output or hda-duplex" >&2; exit 2;; esac
 cmd=(qemu-system-x86_64 -name Tessarchy -machine "q35" -accel "$accel" -cpu "$cpu"
     -m "${VM_RAM:-2048}" -smp "${VM_CPUS:-2}"
     -drive "file=$disk,format=qcow2,if=virtio"
-    -device virtio-vga -display "${VM_DISPLAY:-gtk},gl=off"
+    -device "$gpu" -display "${VM_DISPLAY:-gtk},gl=$gl"
     -device qemu-xhci -device usb-tablet
+    -device virtio-rng-pci
+    -audiodev "$audio,id=sound" -device "intel-hda,id=hda"
+    -device "${VM_AUDIO_CODEC:-hda-output},audiodev=sound"
     -netdev "$network" -device "virtio-net-pci,netdev=net0"
     -nic none -boot "menu=on" -no-reboot)
+if [[ ${VM_TOUCH:-0} == 1 ]]; then cmd+=(-device virtio-multitouch-pci); fi
+if [[ ${VM_AUDIO_USB:-0} == 1 ]]; then cmd+=(-device "usb-audio,id=usb-sound,audiodev=sound"); fi
+if [[ -n ${VM_QMP:-} ]]; then
+    [[ $VM_QMP != *,* ]] || { echo "VM_QMP must not contain commas" >&2; exit 2; }
+    cmd+=(-qmp "unix:$VM_QMP,server=on,wait=off")
+fi
 if [[ ${VM_SHARE:-0} == 1 ]]; then
     share=${VM_SOURCE_SHARE:-$root/build/vm-share}
     [[ -d "$share" && "$share" != *,* ]] || { echo "Run ./scripts/export-vm-source.sh first" >&2; exit 1; }

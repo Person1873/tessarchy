@@ -4,7 +4,7 @@ if [[ -n ${WAYLAND_DISPLAY:-} || -n ${DISPLAY:-} ]]; then
     echo "Start Tessarchy from a local TTY, outside an existing graphical session." >&2
     exit 1
 fi
-for tool in Hyprland qs dbus-run-session; do
+for tool in start-hyprland qs dbus-run-session systemd-cat; do
     command -v "$tool" >/dev/null || { echo "Missing dependency: $tool" >&2; exit 1; }
 done
 share=${TESSARCHY_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/tessarchy}
@@ -15,4 +15,9 @@ export PATH="$HOME/.local/bin:$PATH"
 export XDG_CURRENT_DESKTOP=Hyprland
 export XDG_SESSION_DESKTOP=tessarchy
 export XDG_SESSION_TYPE=wayland
-exec dbus-run-session -- Hyprland --config "$share/session/hyprland.lua"
+# Prefer the login user bus so portals, audio and authorization share the session.
+if [[ -S ${XDG_RUNTIME_DIR:-/run/user/$UID}/bus ]]; then
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR:-/run/user/$UID}/bus"
+    exec systemd-cat --identifier=tessarchy-session start-hyprland -- --config "$share/session/hyprland.lua"
+fi
+exec systemd-cat --identifier=tessarchy-session dbus-run-session -- start-hyprland -- --config "$share/session/hyprland.lua"

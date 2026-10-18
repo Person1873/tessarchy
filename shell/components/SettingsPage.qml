@@ -4,6 +4,9 @@ import QtQuick.Layouts
 
 ColumnLayout {
     id: page
+    required property var backend
+    signal soundsRequested
+    signal cellularRequested
     required property var preferences
     required property string activeMode
     required property int displayWidth
@@ -100,8 +103,24 @@ ColumnLayout {
         }
     }
     Text {
-        text: "Automatic follows the usable display size, including rotation. Override it to keep a layout. New apps fill Phone/Tablet layouts; Desktop starts apps tiled. Existing windows stay in place."
+        text: "Automatic follows the usable display size, including rotation. Override it to keep a layout. New apps fill Phone/Tablet layouts; Desktop starts apps tiled. Existing windows stay in place. Desktop and wide tablets show a workspace strip in the status bar."
         color: "#8da7b9"
+        font.pixelSize: 13
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+    }
+    Text {
+        text: "KEYBOARD"
+        color: page.accentColor
+        font {
+            pixelSize: 11
+            bold: true
+            letterSpacing: 2
+        }
+    }
+    Text {
+        text: "Super + 1…5 · switch workspace\nSuper + Shift + 1…5 · move window to workspace\nSuper + Q · confirm window close\nSuper + Tab · next window\nSuper + F · maximize · Super + Shift + F · fullscreen\nSuper + Return · terminal · Super + Shift + E · confirm session exit"
+        color: "#aabccb"
         font.pixelSize: 13
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
@@ -237,6 +256,48 @@ ColumnLayout {
                 page.replayRequested();
             }
         }
+    }
+    TouchButton { text: "Sounds & ringtones"; Layout.fillWidth: true; focusPolicy: Qt.StrongFocus; onClicked: page.soundsRequested() }
+    TouchButton { text: "SIM & cellular"; Layout.fillWidth: true; focusPolicy: Qt.StrongFocus; onClicked: page.cellularRequested() }
+    Text {
+        text: "ALERTS"
+        color: page.accentColor
+        font {
+            pixelSize: 11
+            bold: true
+            letterSpacing: 2
+        }
+    }
+    TouchButton {
+        text: page.preferences.doNotDisturb ? "Notification pop-ups muted" : "Notification pop-ups shown"
+        selected: page.preferences.doNotDisturb
+        accentColor: page.accentColor
+        Layout.fillWidth: true
+        Accessible.name: page.preferences.doNotDisturb ? "Notification pop-ups muted, button" : "Notification pop-ups shown, button"
+        onClicked: {
+            page.preferences.doNotDisturb = !page.preferences.doNotDisturb;
+            page.preferences.sync();
+        }
+    }
+    Text {
+        text: "Muted notifications still collect in the alert center until dismissed. Nothing persists across sessions."
+        color: "#8da7b9"
+        font.pixelSize: 12
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+    }
+    Text {
+        text: "ROTATION"
+        color: page.accentColor
+        font {
+            pixelSize: 11
+            bold: true
+            letterSpacing: 2
+        }
+    }
+    RotationControl {
+        Layout.fillWidth: true
+        accentColor: page.accentColor
     }
     Text {
         text: "SYSTEM"

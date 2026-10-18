@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""Read-only tablet preflight; run on the target tablet after installing its profile."""
+import argparse
+import json
+import platform
+import subprocess
+
+PACKAGES = ('tessarchy-session', 'linux-firmware', 'sof-firmware', 'squeekboard',
+            'networkmanager', 'network-manager-applet', 'bluez', 'blueman', 'hyprpolkitagent',
+            'pipewire', 'pipewire-audio', 'pipewire-alsa', 'pipewire-pulse', 'wireplumber',
+            'upower', 'power-profiles-daemon', 'iio-sensor-proxy', 'nautilus', 'gvfs',
+            'gnome-text-editor', 'papers', 'loupe', 'mpv', 'gnome-calculator',
+            'xdg-desktop-portal-hyprland', 'xdg-desktop-portal-gtk')
+
+
+def command(args):
+    try:
+        return subprocess.run(args, capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+
+
+def inspect(run=command, machine=None):
+    installed = run(['pacman', '-Qq'])
+    packages = set(installed.stdout.splitlines()) if installed and installed.returncode == 0 else set()
+    missing = [name for name in PACKAGES if name not in packages]
+    services = {}
+    for name in ('NetworkManager', 'bluetooth', 'systemd-networkd'):
+        result = run(['systemctl', 'is-active', name + '.service'])
+        services[name] = bool(result and result.returncode == 0)
+    architecture = machine or platform.machine()
+    return {'architecture': architecture, 'supportedArchitecture': architecture == 'x86_64',
+            'missingPackages': missing, 'services': services,
+            'networkManagerConflict': services['NetworkManager'] and services['systemd-networkd'],
+            'deviceChecks': ['touch edges and multi-finger input', 'keyboard in browser and password fields',
+                'Wi-Fi reconnect', 'Bluetooth pairing', 'speaker and microphone', 'suspend/wake and charging',
+                'display scaling and manual orientation', 'cold boot and recovery']}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--json', action='store_true')
+    args = parser.parse_args()
+    result = inspect()
+    if args.json:
+        print(json.dumps(result))
+    else:
+        print('Tablet preflight (' + result['architecture'] + ')')
+        print('Missing packages: ' + (', '.join(result['missingPackages']) or 'none'))
+        for name, active in result['services'].items():
+            print(name + ': ' + ('active' if active else 'inactive'))
+        print('Physical acceptance: ' + '; '.join(result['deviceChecks']))
+    return int(not result['supportedArchitecture'] or bool(result['missingPackages'])
+               or not result['services']['NetworkManager'] or result['networkManagerConflict'])
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

@@ -16,7 +16,11 @@ def main():
     parser.add_argument('--firmware', choices=('bios', 'uefi'), default='bios')
     parser.add_argument('--accel', choices=('tcg', 'kvm'), default='tcg')
     parser.add_argument('--seconds', type=int, default=120)
+    parser.add_argument('--sample-interval', type=int, default=0, help='capture early startup every N seconds (2–30)')
+    parser.add_argument('--capture-launcher', action='store_true', help='click Home after the final capture for manual launcher review')
     args = parser.parse_args()
+    if args.sample_interval and not 2 <= args.sample_interval <= 30:
+        parser.error('Sample interval must be 2–30 seconds')
     iso = args.iso.resolve(strict=True)
     if not iso.is_file() or not 30 <= args.seconds <= 600:
         parser.error('ISO must be a file and capture duration must be 30–600 seconds')
@@ -89,10 +93,16 @@ def main():
                 start = time.monotonic()
                 time.sleep(3)
                 execute('human-monitor-command', {'command-line': 'sendkey ret'})
-                for second in sorted(set([10, 30, 60, args.seconds])):
+                samples = [10, 30, 60, args.seconds]
+                if args.sample_interval:
+                    samples += list(range(args.sample_interval, min(90, args.seconds) + 1, args.sample_interval))
+                for second in sorted(set(samples)):
                     if second > args.seconds:
                         continue
                     time.sleep(max(0, second - (time.monotonic() - start)))
+                    # Wake a blanked panel so idle timeouts cannot hide the shell.
+                    execute('human-monitor-command', {'command-line': 'sendkey ret'})
+                    time.sleep(1)
                     name = 'final' if second == args.seconds else str(second)
                     ppm = output / (name + '.ppm')
                     execute('screendump', {'filename': str(ppm)})
@@ -100,6 +110,31 @@ def main():
                         capture.save(output / (name + '.png'))
                     ppm.unlink()
                     print(f'{args.firmware}: captured {second}s', flush=True)
+                if args.capture_launcher:
+                    with Image.open(output / 'final.png') as capture:
+                        width, height = capture.size
+                    phone = min(width, height) < 600
+                    desktop = not phone and width >= 1100 and height >= 650
+                    count = 6 if phone or desktop else 7
+                    dock = min(width - 32, 376 if phone else 448)
+                    padding = 12 if phone else 16
+                    capacity = max(1, (dock - padding * 2 + 4) // 52)
+                    columns = count if capacity >= count else min(3, capacity)
+                    button = (dock - padding * 2 - (columns - 1) * 4) / columns
+                    column = (count - 2) % columns
+                    x = width / 2 - dock / 2 + padding + column * (button + 4) + button / 2
+                    events = [{'type': 'abs', 'data': {'axis': 'x', 'value': round(x * 32767 / width)}},
+                              {'type': 'abs', 'data': {'axis': 'y', 'value': round((height - 42) * 32767 / height)}},
+                              {'type': 'btn', 'data': {'button': 'left', 'down': True}}]
+                    execute('input-send-event', {'events': events})
+                    time.sleep(.1)
+                    execute('input-send-event', {'events': [{'type': 'btn', 'data': {'button': 'left', 'down': False}}]})
+                    time.sleep(2)
+                    ppm = output / 'launcher.ppm'
+                    execute('screendump', {'filename': str(ppm)})
+                    with Image.open(ppm) as capture:
+                        capture.save(output / 'launcher.png')
+                    ppm.unlink()
                 (output / 'status.json').write_text(json.dumps(execute('query-status'), indent=2) + '\n')
                 execute('quit')
         finally:

@@ -2,190 +2,188 @@
 
 **Touch-first Arch Linux, built around the Tessera shell.**
 
-Tessarchy is an experimental Linux environment for tablets and phone-sized
-screens. It brings together Arch Linux, Hyprland, and a Quickshell/QML shell
-with visible navigation and large touch targets. Inspired by Omarchy's cohesive,
-opinionated experience, Tessarchy is developing its own mobile-focused session.
+Tessarchy combines Arch Linux, Hyprland and Quickshell into a mobile interface
+that adapts from phone-sized screens to tablets and desktops. Its Quiet Edge
+design uses shallow glass, mint accents, a glacier wallpaper and floating icon
+navigation.
 
-The first target is an x86_64 QEMU/KVM guest, followed by touchscreen tablets.
-Selected ARM devices are a later goal with explicit hardware support. The
-project currently ships session source and development tooling; a standalone
-live image is in development.
+[Website](https://thediamondsaint.github.io/tessarchy/) ·
+[Tester ISO](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.4) ·
+[Agent workspace](AGENT-README.md) · [Contributing](CONTRIBUTING.md) ·
+[Device roadmap](docs/device-roadmap.md) · [Testing](docs/testing.md)
 
-[Getting started](#quick-start-use-the-basic-arch-vm) ·
-[Architecture](docs/architecture.md) ·
-[Roadmap](docs/roadmap.md) ·
-[Testing](docs/testing.md) ·
-[Contributing](CONTRIBUTING.md)
+## Current project
 
-## What works today
+| Area | Status |
+| --- | --- |
+| Development target | x86_64 Arch in QEMU/KVM |
+| Interface | Quiet Edge status bar, pull-down controls, launcher, settings and glass card switcher |
+| Layouts | Automatic Phone/Tablet/Desktop selection with a saved manual override |
+| Navigation | Touch-sized icon controls, Alt+Tab, workspace controls and confirmed close/exit |
+| Login | Four-digit account-password entry through greetd/PAM; real VM login cycle tested |
+| Radios | rfkill power/airplane controls; Bluetooth discovery and connections to already-paired devices |
+| Phone and messages | Dock apps, contacts/photos, ModemManager call/SMS backend and SIM/eSIM settings; [guide](docs/communications.md) |
+| Sounds | Five VoidRing tones, ringtone/message/alarm selection, previews and MP3 import |
+| Power | Battery status and supported power modes, with missing-service guards |
+| Display controls | Backlight slider and keys; persisted 4000 K night light when supported |
+| Audio and media | Optional PipeWire controls and MPRIS playback integration |
+| Keyboard and captures | Optional squeekboard; Print and pull-down screenshot actions |
+| Latest checks | 73 Python tests and 46 Qt Quick results; Ubuntu/Arch CI passed |
+| Next device milestone | Select and bring up one physical reference device |
 
-- A top status bar with clock, registered tray icons, battery status when available,
-  and session controls.
-- Automatic Phone/Tablet/Desktop shell layouts with a saved manual override.
-- A persistent navigation bar with 56px touch targets and a compact desktop dock.
-- An original mint-and-navy wallpaper, animated tessellated logo, and responsive
-  tile launcher.
-- Settings for layout mode, accent, opacity, wallpaper shade, clock, navigation
-  labels, and reduced motion.
-- Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
-  controls. Wireless and modem backends remain to be connected.
-- Screen brightness in quick controls wherever a backlight exists, with
-  XF86MonBrightness keys wired to the same shipped helper, plus a persisted
-  hyprsunset night-light toggle (both shipped in the live image).
-- An expandable launcher for Firefox and Foot.
-- A scrollable window overview with application switching and maximize/restore.
-- Confirmation before closing a window or ending the session.
-- A dedicated Hyprland session, user installation, and reversible tty1 startup.
-- A QEMU development workflow, local Arch package recipes, and an initial
-  archiso staging/build pipeline.
+The [validation record](docs/testing.md) tracks runtime results for each feature.
+Bluetooth pairing currently uses an external manager. The [agent task
+board](AGENT-README.md#claiming-and-extending-tasks) lists the next contributions.
 
-## Project status
+## Tester download
 
-**Early prototype.** A user has confirmed that Tessera runs in the basic Arch
-QEMU guest. Ten workflow tests, Qt Quick layout/motion checks, and available
-static checks pass.
-Detailed touchscreen, scaling, focus, and window-action acceptance tests remain
-pending. Two development packages have been built locally; they are not yet
-published releases. **No Tessarchy ISO has been boot-tested or released.**
+[Alpha 4 — tablet pilot with today's fixes](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.4)
+carries everything from Alpha 3 (curated app picker, general desktop
+applications, firmware, audio, wireless tools, on-screen keyboard and the
+supplied power-on animation) plus the desktop tray-icon fix, on-screen keys at
+the 48px height floor, five-minute idle blanking, the notification center and
+display rotation. BIOS and non-Secure-Boot UEFI QEMU/KVM boots reached Tessera
+with networking absent. The release includes checksums, package lists and
+inspected boot captures.
 
-Text input currently requires a physical keyboard. New ordinary windows maximize
-in Phone/Tablet modes and start tiled in Desktop mode. Existing windows stay in
-place when switching modes; restoring a maximized app returns to ordinary tiling.
-Continuous mobile window policy and tablet split layouts are planned. Exclusive
-fullscreen can hide the dock. There is no secure lock screen or on-screen
-keyboard integration yet. See the [validation record](docs/testing.md) for the
-difference between implemented, user-tested, and planned behavior.
+| Image behavior | Alpha 4 |
+| --- | --- |
+| Login | Live-account autologin |
+| Storage | Disposable live session; no disk installer or persistence |
+| Text input | Included on-screen keyboard; keep a physical keyboard for recovery |
+| ISO source | `0f71636a0aecb20cd76359a71d2e911eb082cb57` |
+| Installed Arch tablet | Separate package bundle and [manual install guide](docs/tablet-install.md) |
+
+Physical-tablet acceptance is pending. The release distinguishes the ISO's source
+from the later package bundle's recorded source revision.
+
+## Alpha login details
+
+| Build | Account | Password / PIN |
+| --- | --- | --- |
+| PIN-login development demo | `arch` | **`1234`** |
+| Downloadable Alpha 4 ISO | `tess` | Automatic login |
+
+`1234` is the owner-designated public PIN for the alpha login demo.
 
 ## Quick start: use the basic Arch VM
 
-The basic Arch qcow2 is now the preferred development route. The user has
-confirmed that the basic Arch image boots and Tessera runs in that guest.
-Detailed touch/device acceptance testing and ISO boot testing remain pending.
-
-Shut down the current guest with `sudo poweroff`. From the host repository:
+Use the existing Basic Arch guest described in [docs/vm.md](docs/vm.md). Launch
+its disk once, with the previous instance shut down:
 
 ```bash
 ./scripts/run-basic-vm.sh
 ```
 
-This uses `vm/Arch-Linux-x86_64-basic.qcow2`, preserves the separate blank disk,
-and exports a fresh read-only snapshot of the project on each launch. Stop the
-previous VM before launching the same disk again. KVM is used when accessible;
-TCG is the slow fallback. Defaults are 2GiB RAM and 2 vCPUs.
+The launcher uses `vm/Arch-Linux-x86_64-basic.qcow2`, a read-only source share,
+2 GiB RAM and 2 vCPUs by default. `VM_SSH_PORT=2222` enables the optional local
+SSH forwarding path.
 
-Log into the guest as `arch` (initial password `arch`). **Inside the guest**:
-
-```bash
-sudo pacman -Syu --needed hyprland quickshell firefox foot mesa qt6-declarative qt6-wayland ttf-dejavu python
-sudo poweroff
-```
-
-Restart on the host with `./scripts/run-basic-vm.sh` (or
-`VM_SSH_PORT=2222 ./scripts/run-basic-vm.sh` when using SSH), then log back in.
-This ensures updated kernel modules match the running guest kernel. Continue
-inside the guest:
+In a prepared Arch guest, mount the source share and copy it into a fresh workspace:
 
 ```bash
 sudo modprobe 9pnet_virtio
 sudo modprobe 9p
 sudo mkdir -p /mnt/tessarchy
 sudo mount -t 9p -o trans=virtio,version=9p2000.L,ro tessarchy /mnt/tessarchy
-cp -r /mnt/tessarchy/tessarchy ~/
+cp -r /mnt/tessarchy/tessarchy ~/tessarchy
 cd ~/tessarchy
 ./scripts/setup-guest.sh --autostart
+```
+
+Start the installed session from a local TTY:
+
+```bash
 ~/.local/bin/start-tessarchy
 ```
 
-The pacman command explicitly updates the **guest** and installs dependencies.
-Do not run it on the host for this workflow. The copy command assumes a new
-`~/tessarchy` guest directory; preserve any existing guest work first. Setup
-refuses Omarchy/the host, checks dependencies and syntax, then installs a
-namespaced user copy. Nothing is installed automatically on the host.
+Required guest tools and the full setup/recovery procedure are in the
+[VM guide](docs/vm.md). Dependency installation is an explicit setup step.
 
-With `--autostart`, Tessarchy starts after normal login on tty1 (no autologin).
-Existing `.bash_profile` content is retained and backed up; ending Tessarchy
-returns to the prompt. Omit the flag for manual startup. To undo the login hook:
+## Development
+
+The API baseline is Hyprland 0.56 Lua, Quickshell 0.3.1 and Qt 6. Read
+[AGENTS.md](AGENTS.md), then use the [agent workspace](AGENT-README.md) to choose
+and claim a task.
 
 ```bash
-./scripts/login-session.sh disable
+./scripts/check.sh
 ```
 
-The hook does not affect other TTYs. Initial text input needs a physical keyboard.
-The virtual USB tablet is an absolute mouse, not a multitouch touchscreen.
-See [VM setup](docs/vm.md) for recovery and the alternative stock-ISO route.
-
-## Development install in an Arch guest
-
-Dependencies are **a separate explicit opt-in step**, never installed by scripts:
+For a development install inside the guest:
 
 ```bash
-sudo pacman -S --needed hyprland quickshell firefox foot mesa qt6-declarative qt6-wayland ttf-dejavu
-./scripts/check.sh
 ./scripts/install-dev.sh
 ```
 
-Assumptions: x86_64 Arch, Hyprland **0.56.x** Lua API and Quickshell **0.3.1**.
-Newer versions require revalidation. Bash, Python 3, coreutils, D-Bus and Qt 6
-are required. Optional integration: xdg-desktop-portal-hyprland,
-xdg-desktop-portal-gtk, PipeWire, WirePlumber and XWayland. Dependencies must
-match a consistent Arch system; scripts never upgrade the host.
+Source installs under `~/.local/share/tessarchy` and launchers under
+`~/.local/bin`. A user development copy takes precedence over system packages.
+Shell preferences are in `~/.config/tessarchy/shell.ini`; compositor preferences
+use `~/.config/tessarchy/preferences.lua`.
 
-Log out of other graphical sessions, switch to a **local TTY**, log in as the
-development user, then:
+To remove the development startup hook and installation:
 
 ```bash
-~/.local/bin/start-tessarchy
-```
-
-Defaults are copied under `$XDG_DATA_HOME/tessarchy` (normally
-`~/.local/share/tessarchy`); launchers go in `~/.local/bin`. Existing paths are
-refused. Existing Hyprland/Quickshell/Omarchy configs are untouched. User
-preferences live separately in `~/.config/tessarchy/preferences.lua`; see
-`session/preferences.example.lua`. Dev installation does not register with a
-display manager. Reloaded defaults require uninstall/reinstall; preserve any
-custom source changes in the repository.
-
-```bash
-./scripts/login-session.sh disable  # if enabled
+./scripts/login-session.sh disable
 ./scripts/uninstall-dev.sh
 ```
 
-Uninstall preserves preferences and unknown extra files, and refuses to delete
-modified launchers. Keep the source version used to install for uninstalling.
+The installer keeps Tessarchy namespaced; uninstall preserves user preferences.
+Automated install tests use scratch HOME directories.
 
-## Start the ISO work
+## VM testing update
 
-On a normal Arch terminal with administrator access and internet:
+The Basic VM launcher provides sound, two audio outputs and virtual multitouch.
+Quick controls have a separate top handle and a fixed collapse handle; the dock
+groups app shortcuts before navigation. Audio output selection, mute, volume and
+touch scrolling were exercised in the guest. Software display rendering is the
+accepted default; KVM CPU acceleration remains enabled. See [VM setup](docs/vm.md)
+and the [validation record](docs/testing.md).
+
+## Intel/AMD tablet pilot
+
+The [tablet install guide](docs/tablet-install.md) covers an installed Arch target,
+the `tessarchy-tablet` package profile, service setup and a read-only device
+preflight. It includes everyday apps, firmware, wireless tools, audio, an OSK,
+authorization and portals. The app picker keeps one installed primary app per role.
+The supplied eight-second video is the new optional Plymouth power-on animation.
+The Alpha 4 live ISO remains a live demonstration, not a disk installer.
+
+## Packages and images
 
 ```bash
-sudo pacman -S --needed archiso
-./scripts/stage-iso.sh
-./scripts/build-iso.sh
-./scripts/vm.sh run dist/tessarchy-0.1.0-YYYYMMDD-x86_64.iso
+./scripts/package.sh
 ```
 
-Use the actual ISO filename in `dist/`. Staging is unprivileged; building uses
-sudo for `mkarchiso`, downloads signed repository packages, and creates mounts
-in its work directory. Read [ISO design](docs/iso.md) before building. This
-is a live development image, not an installer or supported distribution.
+This builds five Arch packages into `dist/`: `tessera-shell`,
+`tessarchy-session`, the `tessarchy-tablet` profile, the opt-in `tessarchy-greeter` and `tessarchy-bootsplash`. Package installation and
+service activation are separate operations. The [PIN login guide](docs/phone-login.md)
+covers greetd setup and the tested VM configuration. The [power-on screen guide](docs/boot-screen.md)
+covers the animated Plymouth theme and quiet VM startup.
 
-## Packaging and layout
+The [ISO guide](docs/iso.md) covers staging, an explicitly requested image build,
+boot validation and release publication. Image files are distributed as GitHub
+release assets. Generated build output stays in `build/`, `dist/` and `vm/`.
 
-`./scripts/package.sh` builds two local packages using makepkg without installing
-them or resolving missing dependencies. These copy-only recipes use makepkg
-`--nodeps` so both can be built before either is installed; dependency checks
-still happen when pacman installs them. Build prerequisites: `base-devel` and
-`pacman-contrib` if needed by your Arch tooling. Then explicitly install **both**
-packages with `sudo pacman -U dist/tessera-shell-*.pkg.tar.zst dist/tessarchy-session-*.pkg.tar.zst`.
-Remove with `sudo pacman -R tessarchy-session tessera-shell`. Remove a dev copy
-first to avoid taking precedence over system packages. Local source archives
-use `SKIP` checksums; release packaging and version pinning are future work.
+## Project map
 
-- `shell/`: Tessera QML; `session/`: launcher, Lua config and desktop entry.
-- `scripts/`: local install, checks, packaging, VM and ISO tools.
-- `packaging/`: Arch recipes; `iso/`: package additions and live overlay.
-- `tests/`: safety/integration checks; `assets/`: asset provenance.
-- `docs/`: architecture, VM, ISO, roadmap and manual test checklist.
+| Path | Contents |
+| --- | --- |
+| `shell/` | Tessera QML, policy, helpers, icons and canonical artwork |
+| `session/` | Hyprland Lua, launchers, OSK, screenshots and greeter |
+| `packaging/`, `iso/` | Arch package recipes and live-image overlay |
+| `scripts/`, `tests/` | Development workflows and validation |
+| `assets/`, `website/` | Actual captures, roadmap and GitHub Pages source |
+| `docs/` | Architecture, operating guides, roadmap and evidence |
 
-See [testing status](docs/testing.md) for what was actually checked.
+## Roadmap, branding and sharing
+
+The [project site](https://thediamondsaint.github.io/tessarchy/) contains twenty-one
+real VM captures, the [device roadmap image](assets/roadmap/tessarchy-device-roadmap.png),
+sharing controls and official branding downloads. The
+[logo release](https://github.com/thediamondsaint/tessarchy/releases/tag/brand-kit-20261017)
+includes transparent sizes, SVG, WebP, JPG, ICO, PDF and a spinning GIF.
+
+Agents can claim one of 56 starter tasks in [AGENT-README.md](AGENT-README.md).
+Local session notes belong in the ignored `.HANDOFF.local.md`. A ready-to-copy channel
+update is in [docs/community-update.md](docs/community-update.md).
