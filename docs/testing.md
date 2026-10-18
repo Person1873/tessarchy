@@ -1176,3 +1176,30 @@ CI toolchain now installs it before checkout so Actions creates a Git repository
 rather than a REST source archive. Local final checks pass 73 Python tests
 and 46 Qt Quick results. Publication checks cover the 21-image manifest/ZIP and
 the supplied MP4 hash, plus desktop/phone browser behavior and video decoding.
+
+### Existing installed development VM updated — 2026-10-18
+
+After publication, the owner authorized updating the existing guest. Its previous
+user session/source, system boot configuration and package list were backed up
+inside the VM. The host received no packages or configuration changes.
+
+The guest was fully upgraded, then the four verified Alpha 3 CI packages from
+source `644c34dfb728f09d0b995ee32d35b87c7eb2cdf5` were installed with their
+repository dependencies. Its private development copy was refreshed from that
+same revision, preserving its preferences. NetworkManager now owns Ethernet;
+networkd is disabled/masked to prevent socket reactivation. The existing resolved
+integration remains. The preflight reports no missing packages or manager conflict.
+
+The installed guest rebooted with Linux 7.2.11-arch1-1. Actual boot frames show
+the supplied animation, followed by the existing PIN greeter. Touch PIN login
+reached the updated desktop at the accepted 400×800, scale 1 software display.
+The curated picker, Text Editor launch, OSK visibility and a typed character were
+inspected; the empty test document was discarded. Native touch swipes opened and
+closed the controls drawer. Both audio outputs were detected at their retained
+volume; playback produced a nonzero monitor capture (RMS 503.76 over 241,920 signed
+16-bit samples). Hyprland reported no configuration errors, and neither the system
+nor user manager reported failed units. The VM was left running on the home screen.
+
+This is installed-disk VM evidence. Physical touch hardware, radios, power and
+suspend acceptance remain pending. Stock OSK sizing still needs the separate
+keyboard sizing/accessibility work listed on the task board.
