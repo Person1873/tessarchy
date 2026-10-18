@@ -8,9 +8,10 @@ defines the work and acceptance gates from that prototype to a daily-use pilot.
 
 Quiet Edge provides mobile navigation, a card switcher and adaptive shell layouts.
 The optional greetd/PAM phone login passed wrong-PIN rejection, successful login
-and return-to-greeter checks in the development VM. The published Alpha 2 ISO has
-separate BIOS/UEFI VM boot evidence and predates the login and recent contributor
-integrations. See [testing.md](testing.md) for exact evidence and remaining checks.
+and return-to-greeter checks in the development VM. The published Alpha 4 ISO has
+separate BIOS/UEFI VM boot evidence and uses live-account autologin; the PIN login
+is a separate opt-in package. See [testing.md](testing.md) for exact evidence and
+remaining checks.
 
 ## Planned gates
 

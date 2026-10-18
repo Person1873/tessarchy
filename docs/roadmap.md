@@ -13,11 +13,11 @@ Agents plan and claim implementation work in [AGENT-README.md](../AGENT-README.m
 - Optional squeekboard, MPRIS and PipeWire integrations.
 - Private screenshot helper and camera action.
 - Phone PIN login through greetd/PAM, tested in the development VM.
-- Alpha 2 live tester ISO with BIOS/UEFI VM boot evidence.
+- Alpha 4 live tester ISO with BIOS/UEFI VM boot evidence.
 - GitHub Pages showcase, real captures, official branding and roadmap artwork.
 
-The feature-by-feature validation record is in [testing.md](testing.md). Alpha 2
-contains the earlier Quiet Edge build; release contents are listed on its page.
+The feature-by-feature validation record is in [testing.md](testing.md). Alpha 4
+release contents are listed on its page.
 
 ## Work order
 

@@ -50,7 +50,7 @@ inspected boot captures.
 | Login | Live-account autologin |
 | Storage | Disposable live session; no disk installer or persistence |
 | Text input | Included on-screen keyboard; keep a physical keyboard for recovery |
-| ISO source | `566a4385432697ffbb21147355476bed5727d9f5` |
+| ISO source | `0f71636a0aecb20cd76359a71d2e911eb082cb57` |
 | Installed Arch tablet | Separate package bundle and [manual install guide](docs/tablet-install.md) |
 
 Physical-tablet acceptance is pending. The release distinguishes the ISO's source
