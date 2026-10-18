@@ -15,7 +15,7 @@ mkdir -p -- "$data/session" "$bin"
 cp -R -- "$root/shell" "$data/"
 find "$data/shell" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
 find "$data/shell" -depth -type d -name __pycache__ -empty -delete
-cp -- "$root/session/hyprland.lua" "$data/session/"
+cp -- "$root/session/hyprland.lua" "$root/session/hypridle.conf" "$data/session/"
 cp -- "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessarchy-session-services" "$bin/"
 printf '%s\n' 'tessarchy-dev-v2' > "$marker"
 # Record installed data files relative to the private data directory.

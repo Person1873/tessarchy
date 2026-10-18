@@ -1265,3 +1265,45 @@ Implemented, static validation only; live-session acceptance pending.
 - Not performed: running the shell against a live session bus, delivering a
   real `notify-send`, tapping cards, pop-up stacking on multiple outputs, and
   DND persistence across a restart. These stay on the manual list.
+## Idle blanking through hypridle, 2026-10-18 UTC
+
+Actually performed:
+
+- Reworked the idle PR on the current Lua session: hypridle is started from
+  the existing `hl.on("hyprland.start")` hook using the session data directory,
+  the config keeps one 300-second listener (`hyprctl dispatch dpms off` /
+  `dpms on`) with no lock command, and `misc.key_press_enables_dpms` plus
+  `misc.mouse_move_enables_dpms` are set explicitly so wake input is handled
+  by Hyprland.
+- The Lua stub test now drives the real `hyprland.start` callback and asserts
+  the exact hypridle command with `TESSARCHY_DATA_DIR`; a config test checks
+  the timeout, both dpms commands and the absence of any lock command; the
+  staging test checks the config lands in the image session directory and the
+  packaging installs it; the boot-test script wakes the panel before each
+  capture so idle blanking cannot look like a failed boot.
+- The guest run of the first integration image caught the legacy listener
+  commands failing: under the Lua config, `hyprctl dispatch dpms off` is
+  rewritten to `hl.dispatch(dpms off)` and rejected. The listener now uses the
+  documented Lua dispatch form, `hyprctl dispatch 'hl.dsp.dpms({ action =
+  "disable" })'`, with the matching enable command on resume (see the Hyprland
+  0.56 dispatcher and hypridle documentation).
+- `session/hypridle.conf` parses under hypridle 0.1.8: `Registered timeout
+  rule for 300s` with both dpms commands; a deliberately broken config is
+  rejected by the same parser.
+- `session/hyprland.lua` with the new wake options and hypridle autostart
+  passes `Hyprland --verify-config` (`config ok`) on 0.56.2.
+
+- Full idle-to-blank-and-wake cycle in the guest (build 10 debug image, QEMU
+  x86_64, Hyprland 0.56.2, 20-second debug timeout): hypridle registered the
+  shortened rule, logged `Idled` at 04:22:21, and the monitor read back
+  `dpmsStatus: 0` (blanked output; screendumps of a blanked virtio output are
+  black, so the dpms state is the evidence). Waking input on the session VT
+  produced `Resumed`, then `[LOG] Running hyprctl dispatch 'hl.dsp.dpms({
+  action = "enable" })'` with a plain `ok` and `dpmsStatus: 1` afterwards. A
+  second cycle later in the same run (another `Idled` plus the disable
+  dispatch) also succeeded, showing the Lua dispatch form is accepted in both
+  directions. The idle listener only counts down while the session VT is
+  active; console-side checks read dpms state via `hyprctl monitors` after
+  switching back.
+
+Not performed: hardware idle behavior. It stays in T37.
