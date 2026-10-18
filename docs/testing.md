@@ -1087,3 +1087,10 @@ The software display was accepted by the owner. The publication includes the
 preserved PR #18 contributor merge and guarded power-profile backend, the final
 VM audio/touch profile, the bar/drawer changes and reduced absent-device polling.
 Four Arch packages were rebuilt locally without installing host dependencies.
+
+The site refresh contains seventeen current captures from source commit
+`0b17d39`, plus the three retained historical PIN-login captures. The twenty-image
+ZIP passed CRC and per-image SHA-256 checks; the manifest covers every image.
+Chromium desktop and phone checks passed for image loading, horizontal fit,
+keyboard layout tabs, gallery selection and Escape dismissal, with no JavaScript
+exceptions. The VM was restored to 400×800 with its normal development shell.

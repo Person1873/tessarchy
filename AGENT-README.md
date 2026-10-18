@@ -61,7 +61,7 @@ product UI unless they help the user act.
 | Keyboard | Optional squeekboard, private settings and focus-preserving toggle | Existing VM evidence; expand the application matrix |
 | Published ISO | Alpha 2, x86_64 live session with autologin | BIOS and non-Secure-Boot UEFI VM boot evidence on its release |
 | Physical device | Reference-device selection and bring-up are planned | [Device roadmap](docs/device-roadmap.md) |
-| Website | GitHub Pages, nineteen real VM captures, roadmap, branding and sharing | Desktop/phone browser checks and public asset checks passed |
+| Website | GitHub Pages, twenty real VM captures, roadmap, branding and sharing | Desktop/phone browser checks and public asset checks passed |
 | Baseline checks | 68 Python tests and 42 Qt Quick results at this checkpoint | Run current checks and record current totals |
 
 Alpha 2 predates the PIN login and recent Bluetooth/media/audio/screenshot
@@ -171,6 +171,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T05 | In progress | Codex | feat/vm-touch-refinement | VM touch drawer, scrolling, output switching and compact/wide layouts tested |
 | T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |
 | T09 | Done | Codex | PR #18 | Guarded battery/power-profile integration; unavailable VM state verified |
+| T08 | Done | Codex | VM/touch publication | Seventeen refreshed captures, three retained PIN captures and matching site/ZIP |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |
 
 ### P0 — Validate and finish the current integrations

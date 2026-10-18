@@ -12,7 +12,7 @@ SHOTS = ("phone-home", "phone-launcher", "phone-switcher", "phone-settings",
          "tablet-home", "desktop-home", "phone-controls", "phone-bluetooth",
          "phone-login", "phone-login-rejected", "phone-login-home",
          "tablet-controls", "desktop-controls", "phone-dialer", "phone-contacts",
-         "phone-messages", "phone-sounds", "phone-cellular", "desktop-messages")
+         "phone-messages", "phone-sounds", "phone-cellular", "desktop-messages", "desktop-audio")
 
 
 def main():

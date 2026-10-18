@@ -162,7 +162,7 @@ release assets. Generated build output stays in `build/`, `dist/` and `vm/`.
 
 ## Roadmap, branding and sharing
 
-The [project site](https://thediamondsaint.github.io/tessarchy/) contains nineteen
+The [project site](https://thediamondsaint.github.io/tessarchy/) contains twenty
 real VM captures, the [device roadmap image](assets/roadmap/tessarchy-device-roadmap.png),
 sharing controls and official branding downloads. The
 [logo release](https://github.com/thediamondsaint/tessarchy/releases/tag/brand-kit-20261017)
