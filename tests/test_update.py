@@ -57,12 +57,18 @@ case ${1:-} in
         done
         ;;
     -Syu|-Sy|-S)
-        # Stand in for an upgrade: move the database to the version the test
-        # asked for, so a second pass sees nothing left to do.
+        # Stand in for an install or upgrade: move the database to the version
+        # the test asked for, so a second pass sees nothing left to do. A named
+        # package that was not installed at all becomes installed, because that
+        # is what pacman does with it.
         if [[ -n ${PACMAN_UPGRADE_TO:-} ]]; then
             while read -r name version; do
                 printf '%s %s\\n' "$name" "$PACMAN_UPGRADE_TO"
             done < "$PACMAN_DB" > "$PACMAN_DB.new"
+            for argument in "$@"; do
+                case $argument in -*) continue;; esac
+                printf '%s %s\\n' "$argument" "$PACMAN_UPGRADE_TO" >> "$PACMAN_DB.new"
+            done
             mv "$PACMAN_DB.new" "$PACMAN_DB"
         fi
         ;;
