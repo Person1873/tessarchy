@@ -2,48 +2,35 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-// Windows-XP-style Start button: a raised accent pill with the project mark and
-// an italic label. Rendered as glass, so the fill is the session accent rather
-// than XP's solid green.
+// Compact mark with a shallow background and a full-size touch target.
 Button {
     id: control
     property color accentColor: "#a9e8d5"
     // True while the Start menu is open.
     property bool selected: false
     Layout.minimumHeight: 48
-    Layout.minimumWidth: 132
+    Layout.minimumWidth: 48
     implicitHeight: 48
-    implicitWidth: 132
-    padding: 12
+    implicitWidth: 48
+    padding: 0
     focusPolicy: Qt.NoFocus
-    contentItem: RowLayout {
-        spacing: 8
+    contentItem: Item {
         Image {
+            anchors.centerIn: parent
             source: "../artwork/tessarchy-mark.svg"
             sourceSize.width: 20
             sourceSize.height: 20
-            Layout.alignment: Qt.AlignVCenter
-        }
-        Text {
-            textFormat: Text.PlainText
-            text: control.text
-            color: "#0b1a24"
-            font.pixelSize: 17
-            font.italic: true
-            font.bold: true
-            Layout.alignment: Qt.AlignVCenter
         }
     }
-    background: Rectangle {
-        radius: 10
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Qt.lighter(control.accentColor, 1.12) }
-            GradientStop { position: 0.55; color: control.accentColor }
-            GradientStop { position: 1.0; color: Qt.darker(control.accentColor, 1.12) }
+    background: Item {
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.width
+            height: 32
+            radius: 8
+            color: Qt.alpha(control.accentColor, control.down ? 0.3 : control.selected ? 0.22 : 0.10)
+            border.color: Qt.alpha(control.accentColor, control.selected ? 0.7 : 0.3)
         }
-        border.width: 1
-        border.color: control.selected ? Qt.alpha("#ffffff", 0.85) : Qt.alpha("#ffffff", 0.55)
-        opacity: control.down ? 0.82 : 1.0
     }
     Accessible.name: "Start"
 }

@@ -8,14 +8,15 @@ A per-output status bar reserves 48 logical pixels. Navigation reserves 72 in
 Phone mode, 80 in Tablet and 64 in Desktop. Phone navigation spans the output;
 Tablet uses a centered, rounded panel bounded to 720 pixels. Desktop uses a
 full-width taskbar instead of the floating dock, laid out like Windows XP's but
-rendered in the same glass: a raised accent Start pill with the project mark,
+rendered in the same glass: a narrow logo-only Start button and weather,
 quick-launch buttons, wide bevelled task buttons (the focused window reads as
 pressed), and a sunken tray holding the built-in status indicators (moved off the
 status strip in this mode), the application tray icons and the clock. The task
 strip scrolls within available space and reveals the active window. Tray glyphs
-share a pale-mint palette, 18px size and 48px slots; NetworkManager uses the
+share a pale-mint palette and 18px size, with uniform 32px tray slots
+that are 48px tall; NetworkManager uses the
 matching outlined network glyph. The taskbar stays full width while a page is open so the page reads as a centered sheet. The
-Start pill toggles a Windows-XP-style Start menu: a blue-tinted panel with a
+Start button toggles a Windows-XP-style Start menu: a blue-tinted panel with a
 compact grid of floating app icons and labels, without tile backgrounds. It sits
 flush on the taskbar's top edge and is frosted by the
 same compositor blur rule as the bar and status strip. Desktop
@@ -74,8 +75,9 @@ When a workspace exists, `HyprlandWorkspace.activate()` is used because it
 correctly emits Lua or classic dispatchers depending on `Hyprland.usingLua`;
 for a not-yet-created workspace the shell dispatches a fixed
 `hl.dsp.focus({ workspace = <n> })` expression containing only a number. The
-focused window title sits next to the notification bell and is display-only; no title text
-reaches IPC or shells. Application tray indicators live in the taskbar, not the
+desktop top edge shows only the centered pulldown control. Weather sits next
+to the narrow logo-only Start button; time remains in the taskbar. Phone and
+tablet retain their top-strip clock and indicators. Application tray indicators live in the taskbar, not the
 status strip, because their pixmaps are supplied by the applications and cannot
 match the shell's own icons. The Lua config adds fixed keybindings
 (Super+1-5, Super+Shift+1-5, Super+Q, Super+Tab, directional focus/move,
@@ -216,3 +218,10 @@ and read back the actual level; devices without a backlight hide the control.
 not trust PID files. The toggle persists its preference in shell.ini and reads
 back service state. Missing hyprsunset or an unavailable user manager hides it.
 The ISO includes both backends; the session package lists them as optional.
+
+Alt+Tab uses `QuickSwitcher.qml` in a separate transparent overlay centered on
+the focused output. It displays only application icons, ordered by recent focus;
+the selected icon is larger and brighter. Tab/Shift+Tab cycle, Alt release or
+Enter activates after the keyboard grab is released, and Escape cancels. The
+icon row scrolls to keep selection visible when many windows are open. The
+touch Recents action continues to use `AppSwitcher.qml` and its preview cards.
