@@ -251,6 +251,11 @@ def report_differences(changes: list, installed: dict, available: dict, as_json:
         print("installed:       (no Tessarchy packages found)")
     for package in sorted(installed):
         print(f"  {package:<20} {installed[package]}")
+    if not installed:
+        print("\nThis looks like the live medium: nothing here is installed yet, so"
+              "\n`tessarchy-install` copies this system to a disk, and"
+              "\n`sudo tessarchy-update --apply --packages-only` adopts the packages"
+              "\non this running system instead.")
     if changes:
         print("\nupdates available:")
         for name, mine, theirs in changes:

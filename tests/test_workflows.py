@@ -1,6 +1,7 @@
 """Observable install safety and profile assembly; no GUI or privileged tests."""
 import os
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import unittest
@@ -1085,8 +1086,23 @@ esac
         self.assertNotEqual(result.returncode, 0)
 
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_every_installed_binary_is_given_an_executable_mode(self):
+        # mkarchiso resets the airootfs to a default mode and then applies
+        # profiledef.sh's file_permissions, so a file installed with -m755 but
+        # missing from that list ships as 0644. /usr/bin/tessarchy-update and
+        # tessera-update-notify did, and the medium carried an updater nobody
+        # could run ("exists but is not an executable file").
+        staging = (ROOT / 'scripts/stage-iso.sh').read_text()
+        installed = set()
+        for line in staging.splitlines():
+            if 'install -m755' not in line or '$airoot/usr/bin/' not in line:
+                continue
+            for name in re.findall(r'"\$root/(?:session|scripts)/([A-Za-z0-9._-]+)"', line):
+                installed.add(name)
+        self.assertTrue(installed, 'no install -m755 lines were parsed')
+        for name in sorted(installed):
+            with self.subTest(binary=name):
+                self.assertIn(f'["/usr/bin/{name}"]="0:0:755"', staging)
 
     def test_staging_refuses_to_build_a_medium_without_packages(self):
         repo = self.home / 'source'
@@ -1101,8 +1117,15 @@ if __name__ == '__main__':
         (base / 'profiledef.sh').write_text('file_permissions=()\n')
         (base / 'packages.x86_64').write_text('base\n')
         (base / 'airootfs/etc/passwd').write_text('root:x:0:0:root:/root:/usr/bin/bash\n')
+        # Staging replaces releng's boot entries, so the fixture needs them.
+        entries = base / 'efiboot/loader/entries'
+        entries.mkdir(parents=True)
+        (entries / 'arch.conf').write_text('retained boot asset\n')
         env = dict(self.env, ARCHISO_RELENG=str(base))
         result = subprocess.run([str(repo / 'scripts/stage-iso.sh')], env=env,
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 1)
         self.assertIn('build-packages.sh', result.stderr)
+
+if __name__ == '__main__':
+    unittest.main()
