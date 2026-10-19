@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily check for Tessarchy updates
+
+[Timer]
+# Once a day is enough for a device that is asleep most of the time; the random
+# delay keeps a fleet from hitting the site at the same second.
+OnCalendar=daily
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

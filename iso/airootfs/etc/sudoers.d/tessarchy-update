@@ -1,0 +1,8 @@
+# Updating an installed Tessarchy runs pacman, so it needs root. Checking does
+# not: `tessarchy-update --check` is unprivileged and is what the daily timer and
+# the notification use.
+#
+# Uncomment the line below to let the live user (and a shell button) install an
+# update without a password prompt:
+#
+# tess ALL=(root) NOPASSWD: /usr/bin/tessarchy-update --apply --packages-only

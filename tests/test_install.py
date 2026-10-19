@@ -1,6 +1,8 @@
 import importlib.machinery
 import importlib.util
 from pathlib import Path
+import contextlib
+import io
 import tempfile
 import unittest
 from unittest import mock
@@ -172,6 +174,101 @@ class InstallOrder(unittest.TestCase):
         self.assertIn('kernel', calls)
         self.assertIn('mkinitcpio', calls)
         self.assertLess(calls.index('kernel'), calls.index('mkinitcpio'))
+
+
+class MediumPackages(unittest.TestCase):
+    """The copy of the running system has to end up owned by pacman."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.installer = load_installer()
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.packages = self.root / 'usr/share/tessarchy/pkgs'
+        self.packages.mkdir(parents=True)
+        (self.packages / 'tessera-shell-0.1.0-2-any.pkg.tar.zst').write_bytes(b'x')
+        (self.packages / 'tessarchy-session-0.1.0-2-any.pkg.tar.zst').write_bytes(b'x')
+
+    def fake_status(self, returncode):
+        class Result:
+            def __init__(self):
+                self.returncode = returncode
+                self.stdout = 'tessera-shell 0.1.0-2\ntessarchy-session 0.1.0-2\n'
+                self.stderr = 'error: something went wrong' if returncode else ''
+        return Result()
+
+    def test_the_medium_packages_are_installed_into_the_target(self):
+        installer = self.installer
+        calls = []
+
+        def record(*args, **kwargs):
+            calls.append(args)
+            return self.fake_status(0)
+
+        with mock.patch.object(installer, 'MOUNT', self.root), \
+                mock.patch.object(installer, 'in_target_status', side_effect=record), \
+                mock.patch.object(installer, 'in_target', return_value='') as in_target:
+            installer.adopt_medium_packages()
+
+        command = calls[0]
+        self.assertEqual(command[:4], ('pacman', '-U', '--needed', '--noconfirm'))
+        self.assertEqual(sorted(command[4:]),
+                         ['/usr/share/tessarchy/pkgs/tessarchy-session-0.1.0-2-any.pkg.tar.zst',
+                          '/usr/share/tessarchy/pkgs/tessera-shell-0.1.0-2-any.pkg.tar.zst'])
+        self.assertEqual(in_target.call_args[0][0], 'pacman')
+
+    def test_the_medium_copy_is_not_kept_once_pacman_has_them(self):
+        installer = self.installer
+        with mock.patch.object(installer, 'MOUNT', self.root), \
+                mock.patch.object(installer, 'in_target_status',
+                                  return_value=self.fake_status(0)), \
+                mock.patch.object(installer, 'in_target', return_value=''):
+            installer.adopt_medium_packages()
+        self.assertFalse(self.packages.exists())
+
+    def test_a_medium_without_packages_says_so_and_keeps_going(self):
+        installer = self.installer
+        for archive in self.packages.iterdir():
+            archive.unlink()
+        with mock.patch.object(installer, 'MOUNT', self.root), \
+                mock.patch.object(installer, 'in_target_status') as status, \
+                mock.patch.object(installer, 'in_target'):
+            installer.adopt_medium_packages()
+        status.assert_not_called()
+
+    def test_a_failed_install_warns_without_abandoning_the_install(self):
+        installer = self.installer
+        output = io.StringIO()
+        with mock.patch.object(installer, 'MOUNT', self.root), \
+                mock.patch.object(installer, 'in_target_status',
+                                  return_value=self.fake_status(4)), \
+                mock.patch.object(installer, 'in_target'), \
+                contextlib.redirect_stdout(output):
+            installer.adopt_medium_packages()
+        self.assertIn('Warning', output.getvalue())
+        self.assertIn('something went wrong', output.getvalue())
+        # The packages are left in place: they are the only copy on the machine.
+        self.assertTrue(self.packages.exists())
+
+    def test_packages_are_adopted_before_the_initramfs_is_built(self):
+        installer = self.installer
+        calls = []
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / 'etc').mkdir()
+            with mock.patch.object(installer, 'MOUNT', Path(tmp)), \
+                    mock.patch.object(installer, 'run', return_value=''), \
+                    mock.patch.object(installer, 'stage_kernel',
+                                      side_effect=lambda: calls.append('kernel')), \
+                    mock.patch.object(installer, 'adopt_medium_packages',
+                                      side_effect=lambda: calls.append('packages')), \
+                    mock.patch.object(installer, 'unit_exists', return_value=True), \
+                    mock.patch.object(installer, 'in_target',
+                                      side_effect=lambda *a, **k: calls.append(a[0]) or ''):
+                installer.configure_target('bios', '/dev/vda', 'UUID', 'tessarchy')
+        self.assertLess(calls.index('packages'), calls.index('mkinitcpio'))
 
 
 class LiveOnlyFiles(unittest.TestCase):

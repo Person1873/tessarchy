@@ -31,6 +31,9 @@ file_permissions+=(
   ["/usr/bin/tessarchy-install"]="0:0:755"
   ["/usr/bin/tessarchy-install-ui"]="0:0:755"
   ["/etc/sudoers.d/tessarchy-install"]="0:0:440"
+  ["/etc/sudoers.d/tessarchy-update"]="0:0:440"
+  ["/etc/tessarchy/version"]="0:0:644"
+  ["/etc/pacman.d/tessarchy.conf"]="0:0:644"
   ["/usr/bin/start-tessarchy"]="0:0:755"
   ["/usr/bin/tessera-shell"]="0:0:755"
   ["/usr/bin/tessarchy-osk"]="0:0:755"
@@ -69,6 +72,7 @@ cp -R -- "$root/docs" "$airoot/usr/share/tessarchy/"
 cp -- "$root/session/hyprland.lua" "$root/session/window-controls.lua" "$root/session/hypridle.conf" "$airoot/usr/share/tessarchy/session/"
 install -m755 "$root/session/tessarchy-install" "$root/session/tessarchy-install-ui" "$airoot/usr/bin/"
 install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessera-brightness" "$root/session/tessera-nightlight" "$root/session/tessera-rotate" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"
+install -m755 "$root/session/tessarchy-update" "$root/session/tessera-update-notify" "$airoot/usr/bin/"
 install -m644 "$root/session/tessarchy.desktop" "$airoot/usr/share/wayland-sessions/"
 cp -a "$root/iso/airootfs/." "$airoot/"
 # Convert the supplied clip for initramfs playback; no video decoder runs at boot.
@@ -110,6 +114,48 @@ ln -sf /usr/lib/systemd/system/bluetooth.service "$airoot/etc/systemd/system/mul
 ln -sf /usr/lib/systemd/system/systemd-timesyncd.service "$airoot/etc/systemd/system/multi-user.target.wants/"
 ln -sf /usr/lib/systemd/system/ModemManager.service "$airoot/etc/systemd/system/multi-user.target.wants/"
 ln -sf /run/NetworkManager/resolv.conf "$airoot/etc/resolv.conf"
+# ---------------------------------------------------------------- self-update
+# An installed machine updates from the project's package repository instead of
+# a new ISO. Three things have to be in place before it can.
+release_version="0.1.0-$(date +%Y%m%d)"
+# 1. The repository in pacman's configuration. Arch's own file is copied in and
+#    an Include appended, so the base configuration stays stock and updating
+#    Tessarchy's copy of it is just another package.
+if [[ -f /etc/pacman.conf ]]; then
+    install -Dm644 /etc/pacman.conf "$airoot/etc/pacman.conf"
+    if ! grep -q 'pacman.d/tessarchy.conf' "$airoot/etc/pacman.conf"; then
+        cat >> "$airoot/etc/pacman.conf" <<'PACMAN'
+
+# Tessarchy packages (see /etc/pacman.d/tessarchy.conf)
+Include = /etc/pacman.d/tessarchy.conf
+PACMAN
+    fi
+else
+    echo "stage-iso: no /etc/pacman.conf here; the installed system will need tessarchy-update --enable-repo" >&2
+fi
+# 2. Which medium this is, so the installed system can say what it started from.
+install -Dm644 /dev/stdin "$airoot/etc/tessarchy/version" <<<"$release_version"
+# 3. The packages themselves, so the installer can hand them to pacman and the
+#    machine is package-managed from its first boot. Same packages the repo
+#    serves, which is what makes a later update a download rather than an install.
+packages_dir="$root/dist/repo/${TESSARCHY_ARCH:-x86_64}"
+if compgen -G "$packages_dir/*.pkg.tar.zst" >/dev/null; then
+    install -d "$airoot/usr/share/tessarchy/pkgs"
+    cp "$packages_dir"/*.pkg.tar.zst "$airoot/usr/share/tessarchy/pkgs/"
+else
+    echo "stage-iso: no packages in $packages_dir — run ./scripts/build-packages.sh first" >&2
+    exit 1
+fi
+# Look for updates once a day (system timer) and say so on the user's desktop
+# (user timer, enabled through the skel tree the live user's home is built from).
+install -d "$airoot/etc/systemd/system/timers.target.wants"
+ln -sf /usr/lib/systemd/system/tessarchy-update-check.timer \
+    "$airoot/etc/systemd/system/timers.target.wants/tessarchy-update-check.timer"
+install -d "$airoot/home/tess/.config/systemd/user/timers.target.wants"
+ln -sf ../tessarchy-update-notify.timer \
+    "$airoot/home/tess/.config/systemd/user/timers.target.wants/tessarchy-update-notify.timer"
+# Keep iso_version in the profile and /etc/tessarchy/version identical.
+sed -i "s|^iso_version=.*|iso_version=\"$release_version\"|" "$profile/profiledef.sh"
 printf '\n  \033[1;36mTESSARCHY\033[0m live image — nothing is saved, and the Tessera session starts on tty1 as "tess".\n  Copy it onto a disk with \033[1;36mtessarchy-install\033[0m. Root rescue login stays on this console.\n\n' > "$airoot/etc/issue"
 echo "Profile staged: $profile"
 echo "Review it, then run ./scripts/build-iso.sh"

@@ -979,6 +979,11 @@ esac
             shutil.copytree(ROOT / directory, repo / directory)
         shutil.copy2(ROOT / 'scripts/stage-iso.sh', repo / 'scripts')
         shutil.copy2(ROOT / 'scripts/export-boot-assets.py', repo / 'scripts')
+        # Staging refuses to build a medium that cannot update itself, so the
+        # fixture needs the packages a repository build would have produced.
+        packages = repo / 'dist/repo/x86_64'
+        packages.mkdir(parents=True)
+        (packages / 'tessera-shell-0.1.0-2-any.pkg.tar.zst').write_bytes(b'fake package')
         base = self.home / 'releng'
         (base / 'airootfs/etc/systemd/system/multi-user.target.wants').mkdir(parents=True)
         (base / 'profiledef.sh').write_text('file_permissions=(["/etc/shadow"]="0:0:400")\n')
@@ -1013,6 +1018,29 @@ esac
         self.assertFalse((profile / 'airootfs/etc/systemd/system/sysinit.target.wants/systemd-time-wait-sync.service').is_symlink())
         self.assertTrue(wait_sync.is_symlink())
         self.assertIn('quickshell', (profile / 'packages.x86_64').read_text())
+        # A medium that cannot update itself is not worth shipping: the packages
+        # travel with it, pacman is pointed at the repository, and the machine
+        # learns which medium it came from.
+        self.assertTrue((profile / 'airootfs/usr/share/tessarchy/pkgs/'
+                         'tessera-shell-0.1.0-2-any.pkg.tar.zst').is_file())
+        self.assertTrue((profile / 'airootfs/etc/pacman.d/tessarchy.conf').is_file())
+        self.assertEqual(
+            (profile / 'airootfs/etc/pacman.d/tessarchy.conf').read_text(),
+            (ROOT / 'iso/airootfs/etc/pacman.d/tessarchy.conf').read_text())
+        version = (profile / 'airootfs/etc/tessarchy/version').read_text().strip()
+        self.assertRegex(version, r'^0\.1\.0-\d{8}$')
+        self.assertIn(f'iso_version="{version}"', (profile / 'profiledef.sh').read_text())
+        timer = profile / 'airootfs/etc/systemd/system/timers.target.wants'
+        self.assertTrue((timer / 'tessarchy-update-check.timer').is_symlink())
+        user_timer = profile / 'airootfs/home/tess/.config/systemd/user/timers.target.wants'
+        self.assertTrue((user_timer / 'tessarchy-update-notify.timer').is_symlink())
+        self.assertTrue((profile / 'airootfs/usr/bin/tessarchy-update').is_file())
+        if (ROOT / 'etc/pacman.conf').is_file():
+            staged_pacman = (profile / 'airootfs/etc/pacman.conf').read_text()
+            self.assertIn('Include = /etc/pacman.d/tessarchy.conf', staged_pacman)
+            self.assertIn('[core]', staged_pacman)
+            self.assertEqual(staged_pacman.count('Include = /etc/pacman.d/tessarchy.conf'), 1)
+
         self.assertNotIn('unused-rescue-tool', (profile / 'packages.x86_64').read_text())
         self.assertIn('linux-firmware', (profile / 'packages.x86_64').read_text().splitlines())
         self.assertFalse((profile / 'airootfs/etc/systemd/system/multi-user.target.wants/systemd-networkd.service').is_symlink())
@@ -1049,3 +1077,22 @@ esac
 
 if __name__ == '__main__':
     unittest.main()
+
+    def test_staging_refuses_to_build_a_medium_without_packages(self):
+        repo = self.home / 'source'
+        (repo / 'scripts').mkdir(parents=True)
+        import shutil
+        for directory in ('shell', 'session', 'iso', 'docs'):
+            shutil.copytree(ROOT / directory, repo / directory)
+        shutil.copy2(ROOT / 'scripts/stage-iso.sh', repo / 'scripts')
+        shutil.copy2(ROOT / 'scripts/export-boot-assets.py', repo / 'scripts')
+        base = self.home / 'releng'
+        (base / 'airootfs/etc/systemd/system/multi-user.target.wants').mkdir(parents=True)
+        (base / 'profiledef.sh').write_text('file_permissions=()\n')
+        (base / 'packages.x86_64').write_text('base\n')
+        (base / 'airootfs/etc/passwd').write_text('root:x:0:0:root:/root:/usr/bin/bash\n')
+        env = dict(self.env, ARCHISO_RELENG=str(base))
+        result = subprocess.run([str(repo / 'scripts/stage-iso.sh')], env=env,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('build-packages.sh', result.stderr)

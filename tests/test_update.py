@@ -1,0 +1,434 @@
+"""Tests for tessarchy-update — the tool an installed machine updates itself with.
+
+Everything here runs against a real HTTP server on 127.0.0.1 serving a real
+repository layout, and a stand-in `pacman` on PATH that records what it was
+asked to do. Nothing touches this machine's packages.
+"""
+import contextlib
+import functools
+import http.server
+import importlib.machinery
+import importlib.util
+import json
+import os
+from pathlib import Path
+import tempfile
+import threading
+import unittest
+from unittest import mock
+
+ROOT = Path(__file__).resolve().parents[1]
+UPDATE = ROOT / 'session' / 'tessarchy-update'
+
+
+def load_update():
+    """The updater is an executable script, not an importable module."""
+    loader = importlib.machinery.SourceFileLoader('tessarchy_update', str(UPDATE))
+    spec = importlib.util.spec_from_loader('tessarchy_update', loader)
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    return module
+
+
+class QuietHandler(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, *args):  # keep the test output readable
+        pass
+
+
+def serve(directory: Path):
+    """A real HTTP server on a free port, as a context manager root URL."""
+    handler = functools.partial(QuietHandler, directory=str(directory))
+    server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    return server, f'http://127.0.0.1:{server.server_address[1]}'
+
+
+FAKE_PACMAN = '''#!/usr/bin/env bash
+set -u
+printf '%s\\n' "$*" >> "$PACMAN_LOG"
+case ${1:-} in
+    -Q)
+        shift
+        for name in "$@"; do
+            grep -m1 "^$name " "$PACMAN_DB" 2>/dev/null || true
+        done
+        ;;
+    -Syu|-Sy|-S)
+        # Stand in for an upgrade: move the database to the version the test
+        # asked for, so a second pass sees nothing left to do.
+        if [[ -n ${PACMAN_UPGRADE_TO:-} ]]; then
+            while read -r name version; do
+                printf '%s %s\\n' "$name" "$PACMAN_UPGRADE_TO"
+            done < "$PACMAN_DB" > "$PACMAN_DB.new"
+            mv "$PACMAN_DB.new" "$PACMAN_DB"
+        fi
+        ;;
+esac
+exit 0
+'''
+
+
+class UpdateCase(unittest.TestCase):
+    """Common fixtures: a repository directory, a fake pacman, a state dir."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.update = load_update()
+
+    def setUp(self):
+        self.scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(self.scratch.cleanup)
+        self.root = Path(self.scratch.name)
+        self.repo = self.root / 'repo'
+        self.repo.mkdir()
+        self.log = self.root / 'pacman.log'
+        self.log.write_text('')
+        self.db = self.root / 'pacman.db'
+        self.db.write_text('')
+        bindir = self.root / 'bin'
+        bindir.mkdir()
+        fake = bindir / 'pacman'
+        fake.write_text(FAKE_PACMAN)
+        fake.chmod(0o755)
+        self.environment = {
+            'PATH': f'{bindir}:{os.environ["PATH"]}',
+            'PACMAN_LOG': str(self.log),
+            'PACMAN_DB': str(self.db),
+            'XDG_STATE_HOME': str(self.root / 'state'),
+        }
+        self.pacman = str(fake)
+        self.state = self.root / 'state/tessarchy/update-state.json'
+
+    def publish(self, versions: dict, version='9.9.9', commit='deadbee'):
+        """Write a repository's repo-info.json."""
+        (self.repo / 'repo-info.json').write_text(json.dumps({
+            'version': version,
+            'commit': commit,
+            'architecture': 'x86_64',
+            'packages': {name: {'version': value, 'file': f'{name}-{value}.pkg.tar.zst'}
+                         for name, value in versions.items()},
+        }))
+
+    def installed(self, versions: dict):
+        self.db.write_text(''.join(f'{name} {value}\n' for name, value in versions.items()))
+
+    def run_cli(self, *arguments, expect=None):
+        """Run the CLI the way the timer and a user would, with a fake pacman."""
+        with mock.patch.dict(os.environ, self.environment):
+            status = self.update.main(list(arguments))
+        if expect is not None:
+            self.assertEqual(status, expect)
+        return status
+
+    def recorded(self) -> list:
+        return [line for line in self.log.read_text().splitlines() if line.strip()]
+
+    def invocations(self, *prefixes) -> list:
+        """Recorded pacman calls that a real machine would change state with."""
+        return [line for line in self.recorded()
+                if any(line.startswith(prefix) for prefix in prefixes)]
+
+    def state_json(self) -> dict:
+        return json.loads(self.state.read_text())
+
+    def all_packages(self, version='0.1.0-2'):
+        return {name: version for name in self.update.PACKAGES}
+
+
+class VersionComparison(UpdateCase):
+    def test_orders_simple_versions(self):
+        cases = [
+            ('0.1.0-1', '0.1.0-2', -1),
+            ('0.1.0-2', '0.1.0-2', 0),
+            ('0.2.0', '0.1.9', 1),
+            ('1.0.0-10', '1.0.0-9', 1),
+        ]
+        for left, right, expected in cases:
+            with self.subTest(left=left, right=right):
+                self.assertEqual(self.update.vercmp(left, right), expected)
+
+    def test_matches_pacman_when_it_is_available(self):
+        # The pure-python fallback is only ever used where vercmp is missing, so
+        # it has to agree with pacman wherever pacman can be asked.
+        if not self.update.shutil.which('vercmp'):
+            self.skipTest('vercmp is not installed')
+        cases = [
+            ('0.1.0-1', '0.1.0-2'), ('1.0', '1.0'), ('1.0', '1.0.0'),
+            ('1.0', '1.0a'), ('1.0a', '1.0b'), ('1.0b', '1.1'),
+            ('2.0', '10.0'), ('1.0.0', '1.0.0-1'), ('20261019', '20261020'),
+        ]
+        for left, right in cases:
+            with self.subTest(left=left, right=right):
+                real = self.update.subprocess.run(['vercmp', left, right],
+                                                  capture_output=True, text=True)
+                expected = self.update.vercmp(left, right)
+                self.assertEqual(expected, (int(real.stdout) > 0) - (int(real.stdout) < 0))
+
+
+class RepositoryUrl(UpdateCase):
+    def test_explicit_url_wins(self):
+        self.assertEqual(self.update.repo_url('https://example.test/pkgs/'),
+                         'https://example.test/pkgs')
+
+    def test_environment_overrides_the_default(self):
+        with mock.patch.dict(os.environ, {'TESSARCHY_UPDATE_REPO': 'http://mirror.local/x/'}):
+            self.assertEqual(self.update.repo_url(), 'http://mirror.local/x')
+
+    def test_pacman_conf_supplies_the_url_and_expands_arch(self):
+        conf = self.root / 'tessarchy.conf'
+        conf.write_text('[tessarchy]\nServer = https://example.test/pkgs/$arch\n')
+        with mock.patch.object(self.update, 'REPO_CONF', conf):
+            self.assertEqual(self.update.repo_url(),
+                             f'https://example.test/pkgs/{self.update.arch()}')
+
+    def test_default_points_at_the_project_site(self):
+        with mock.patch.object(self.update, 'REPO_CONF', self.root / 'missing.conf'):
+            with mock.patch.dict(os.environ, {}, clear=False):
+                os.environ.pop('TESSARCHY_UPDATE_REPO', None)
+                self.assertTrue(self.update.repo_url().startswith('https://'))
+                self.assertIn(self.update.arch(), self.update.repo_url())
+
+
+class Check(UpdateCase):
+    def test_reports_what_is_newer_and_exits_ten(self):
+        server, url = serve(self.repo)
+        self.addCleanup(server.shutdown)
+        self.publish({'tessera-shell': '0.2.0-1', 'tessarchy-session': '0.1.0-2'})
+        self.installed({'tessera-shell': '0.1.0-2', 'tessarchy-session': '0.1.0-2'})
+
+        status = self.run_cli('--check', '--repo', url, '--pacman', self.pacman,
+                              expect=self.update.EXIT_UPDATE_AVAILABLE)
+        self.assertEqual(status, 10)
+        self.assertEqual(self.state_json()['pending'], ['tessera-shell'])
+        self.assertEqual(self.state_json()['repo_version'], '9.9.9')
+
+    def test_says_up_to_date_without_state_noise(self):
+        server, url = serve(self.repo)
+        self.addCleanup(server.shutdown)
+        self.publish(self.all_packages('0.1.0-2'))
+        self.installed(self.all_packages('0.1.0-2'))
+
+        self.run_cli('--check', '--repo', url, '--pacman', self.pacman,
+                     expect=self.update.EXIT_UP_TO_DATE)
+        self.assertEqual(self.state_json()['pending'], [])
+
+    def test_a_package_that_is_not_installed_yet_counts_as_an_update(self):
+        server, url = serve(self.repo)
+        self.addCleanup(server.shutdown)
+        self.publish(self.all_packages('0.1.0-2'))
+        self.installed({'tessera-shell': '0.1.0-2'})
+
+        self.run_cli('--check', '--repo', url, '--pacman', self.pacman,
+                     expect=self.update.EXIT_UPDATE_AVAILABLE)
+        self.assertIn('tessarchy-update', self.state_json()['pending'])
+
+    def test_a_missing_repository_is_reported_not_crashed(self):
+        missing = f'http://127.0.0.1:1/pkgs'
+        self.run_cli('--check', '--repo', missing, '--pacman', self.pacman, expect=1)
+        self.assertFalse(self.state_json()['ok'])
+        self.assertIn('error', self.state_json())
+
+    def test_a_page_that_is_not_a_repo_info_is_rejected(self):
+        (self.repo / 'repo-info.json').write_text('<html>hello</html>')
+        server, url = serve(self.repo)
+        self.addCleanup(server.shutdown)
+        self.run_cli('--check', '--repo', url, '--pacman', self.pacman, expect=1)
+
+    def test_quiet_check_says_nothing(self):
+        server, url = serve(self.repo)
+        self.addCleanup(server.shutdown)
+        self.publish(self.all_packages('0.1.0-2'))
+        self.installed(self.all_packages('0.1.0-2'))
+        import io
+        captured = io.StringIO()
+        with contextlib.redirect_stdout(captured), contextlib.redirect_stderr(captured):
+            self.run_cli('--check', '--quiet', '--repo', url, '--pacman', self.pacman)
+        self.assertEqual(captured.getvalue(), '')
+
+
+class Apply(UpdateCase):
+    def setUp(self):
+        super().setUp()
+        self.flag = self.root / 'restart-required'
+        patcher = mock.patch.object(self.update, 'RESTART_FLAG', self.flag)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_default_apply_upgrades_the_whole_system(self):
+        # Tessarchy packages depend on the base system, so updating only them
+        # would be a partial upgrade; the default has to be a full one.
+        server, url = serve(self.repo)
+        self.addCleanup(server.shutdown)
+        self.publish(self.all_packages('0.2.0-1'))
+        self.installed(self.all_packages('0.1.0-2'))
+        self.environment['PACMAN_UPGRADE_TO'] = '0.2.0-1'
+
+        with mock.patch('os.geteuid', return_value=0):
+            self.run_cli('--apply', '--repo', url, '--pacman', self.pacman, expect=0)
+        self.assertEqual(self.invocations('-Syu'), ['-Syu --needed --noconfirm'])
+        self.assertTrue(self.flag.is_file())
+        self.assertEqual(self.state_json()['pending'], [])
+
+    def test_packages_only_passes_the_pending_names(self):
+        server, url = serve(self.repo)
+        self.addCleanup(server.shutdown)
+        self.publish({'tessera-shell': '0.2.0-1', 'tessarchy-session': '0.1.0-2'})
+        self.installed({'tessera-shell': '0.1.0-2', 'tessarchy-session': '0.1.0-2'})
+
+        with mock.patch('os.geteuid', return_value=0):
+            self.run_cli('--apply', '--packages-only', '--repo', url,
+                         '--pacman', self.pacman)
+        self.assertEqual(self.invocations('-Sy'),
+                         ['-Sy --needed --noconfirm tessera-shell'])
+
+    def test_refuses_to_install_without_root(self):
+        with mock.patch('os.geteuid', return_value=1000):
+            self.run_cli('--apply', '--pacman', self.pacman, expect=1)
+        self.assertEqual(self.invocations('-Syu', '-Sy', '-U'), [])
+
+    def test_dry_run_does_not_invoke_pacman(self):
+        server, url = serve(self.repo)
+        self.addCleanup(server.shutdown)
+        self.publish(self.all_packages('0.2.0-1'))
+        self.installed(self.all_packages('0.1.0-2'))
+
+        with mock.patch('os.geteuid', return_value=0):
+            self.run_cli('--apply', '--dry-run', '--repo', url, '--pacman', self.pacman)
+        self.assertEqual(self.invocations('-Syu', '-Sy', '-U'), [])
+        self.assertFalse(self.flag.exists())
+
+    def test_a_failing_pacman_is_reported(self):
+        server, url = serve(self.repo)
+        self.addCleanup(server.shutdown)
+        self.publish(self.all_packages('0.2.0-1'))
+        self.installed(self.all_packages('0.1.0-2'))
+        failing = self.root / 'bin/pacman'
+        failing.write_text('#!/usr/bin/env bash\nexit 3\n')
+        failing.chmod(0o755)
+
+        with mock.patch('os.geteuid', return_value=0):
+            status = self.run_cli('--apply', '--repo', url, '--pacman', str(failing))
+        self.assertEqual(status, 3)
+        self.assertFalse(self.state_json()['ok'])
+
+
+class Offline(UpdateCase):
+    def test_installs_packages_from_a_folder(self):
+        folder = self.root / 'usb'
+        folder.mkdir()
+        package = folder / 'tessera-shell-0.2.0-1-any.pkg.tar.zst'
+        package.write_bytes(b'not really a package')
+        (folder / 'other-thing-1.0-1-any.pkg.tar.zst').write_bytes(b'x')
+
+        with mock.patch('os.geteuid', return_value=0):
+            self.run_cli('--offline', str(folder), '--pacman', self.pacman, expect=0)
+        self.assertEqual(self.invocations('-U'),
+                         [f'-U --needed --noconfirm {package}'])
+
+    def test_a_folder_with_no_packages_is_an_error(self):
+        folder = self.root / 'empty'
+        folder.mkdir()
+        with mock.patch('os.geteuid', return_value=0):
+            self.run_cli('--offline', str(folder), '--pacman', self.pacman, expect=1)
+
+
+class EnableRepo(UpdateCase):
+    def test_writes_the_stanza_and_the_include_once(self):
+        conf = self.root / 'etc/tessarchy.conf'
+        pacman_conf = self.root / 'etc/pacman.conf'
+        pacman_conf.parent.mkdir(parents=True)
+        pacman_conf.write_text('[options]\nArchitecture = auto\n')
+        with mock.patch.object(self.update, 'REPO_CONF', conf), \
+                mock.patch.object(self.update, 'PACMAN_CONF', pacman_conf), \
+                mock.patch('os.geteuid', return_value=0):
+            self.run_cli('--enable-repo', '--repo', 'https://example.test/pkgs')
+            self.run_cli('--enable-repo', '--repo', 'https://example.test/pkgs')
+
+        body = pacman_conf.read_text()
+        self.assertEqual(body.count('Include = ' + str(conf)), 1)
+        self.assertIn('[tessarchy]', conf.read_text())
+        self.assertIn('Server = https://example.test/pkgs/$arch', conf.read_text())
+
+    def test_dry_run_writes_nothing(self):
+        conf = self.root / 'etc/tessarchy.conf'
+        with mock.patch.object(self.update, 'REPO_CONF', conf), \
+                mock.patch('os.geteuid', return_value=0):
+            self.run_cli('--enable-repo', '--dry-run')
+        self.assertFalse(conf.exists())
+
+    def test_the_default_repository_architecture_is_not_written_twice(self):
+        # The fetch URL already ends in the architecture; the pacman Server line
+        # must not end up with .../x86_64/$arch.
+        conf = self.root / 'etc/tessarchy.conf'
+        pacman_conf = self.root / 'etc/pacman.conf'
+        pacman_conf.parent.mkdir(parents=True)
+        pacman_conf.write_text('[options]\n')
+        with mock.patch.object(self.update, 'REPO_CONF', conf), \
+                mock.patch.object(self.update, 'PACMAN_CONF', pacman_conf), \
+                mock.patch.dict(os.environ, {}, clear=False), \
+                mock.patch('os.geteuid', return_value=0):
+            os.environ.pop('TESSARCHY_UPDATE_REPO', None)
+            self.run_cli('--enable-repo')
+        server_line = [line for line in conf.read_text().splitlines()
+                       if line.startswith('Server')][0]
+        self.assertEqual(server_line,
+                         f'Server = {self.update.DEFAULT_REPO}/$arch')
+        # $arch is what pacman expands; the literal architecture must not appear,
+        # or the Server line ends up naming x86_64 twice.
+        self.assertEqual(server_line.count('$arch'), 1)
+        self.assertNotIn(self.update.arch(), server_line)
+
+
+class Status(UpdateCase):
+    def test_json_output_carries_what_a_shell_needs(self):
+        self.installed(self.all_packages('0.1.0-2'))
+        import io
+        captured = io.StringIO()
+        with contextlib.redirect_stdout(captured):
+            self.run_cli('--status', '--json', '--pacman', self.pacman)
+        payload = json.loads(captured.getvalue())
+        self.assertEqual(payload['installed']['tessera-shell'], '0.1.0-2')
+        self.assertIn('repo', payload)
+        self.assertIn('restart_required', payload)
+
+    def test_pending_from_the_last_check_drives_the_exit_code(self):
+        self.state.parent.mkdir(parents=True)
+        self.state.write_text(json.dumps({'pending': ['tessera-shell'], 'ok': True}))
+        self.installed(self.all_packages('0.1.0-2'))
+        self.run_cli('--status', '--pacman', self.pacman,
+                     expect=self.update.EXIT_UPDATE_AVAILABLE)
+
+
+class MediumIntegration(unittest.TestCase):
+    """The medium and the repository have to describe the same product."""
+
+    def test_repo_conf_in_the_medium_matches_the_updater_default(self):
+        update = load_update()
+        conf = (ROOT / 'iso/airootfs/etc/pacman.d/tessarchy.conf').read_text()
+        servers = [line.split('=', 1)[1].strip() for line in conf.splitlines()
+                   if line.strip().startswith('Server')]
+        self.assertEqual(len(servers), 1)
+        self.assertTrue(update.DEFAULT_REPO.startswith('https://'))
+        self.assertEqual(servers[0], update.DEFAULT_REPO + '/$arch')
+
+    def test_the_timer_and_the_notifier_exist_on_the_medium(self):
+        system = ROOT / 'iso/airootfs/etc/systemd/system'
+        skel = ROOT / 'iso/airootfs/etc/skel/.config/systemd/user'
+        self.assertIn('tessarchy-update --check',
+                      (system / 'tessarchy-update-check.service').read_text())
+        self.assertIn('OnCalendar=daily', (system / 'tessarchy-update-check.timer').read_text())
+        self.assertIn('tessera-update-notify',
+                      (skel / 'tessarchy-update-notify.service').read_text())
+        self.assertIn('WantedBy=timers.target',
+                      (skel / 'tessarchy-update-notify.timer').read_text())
+
+    def test_package_list_matches_what_is_shipped(self):
+        update = load_update()
+        for package in update.PACKAGES:
+            with self.subTest(package=package):
+                self.assertTrue((ROOT / f'packaging/{package}/PKGBUILD').is_file())
+
+
+if __name__ == '__main__':
+    unittest.main()

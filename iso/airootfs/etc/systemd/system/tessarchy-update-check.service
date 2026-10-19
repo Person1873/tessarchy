@@ -1,0 +1,13 @@
+[Unit]
+Description=Check whether a newer Tessarchy is published
+Documentation=man:tessarchy-update(1)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+# The state file this writes is world-readable, so the shell and the user-level
+# notifier can see the answer without privileges of their own.
+ExecStart=/usr/bin/tessarchy-update --check --quiet
+# A failed check is not a boot problem: keep the timer quiet, not failed.
+SuccessExitStatus=0 10

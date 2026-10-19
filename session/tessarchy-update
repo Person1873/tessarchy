@@ -1,0 +1,494 @@
+#!/usr/bin/env python3
+"""Keep an installed Tessarchy current without reinstalling from the medium.
+
+An installed machine is the live medium, copied. The medium is versioned by its
+ISO; the parts that change between versions are the shell, the session config
+and the greeter, which are shipped as pacman packages from the Tessarchy
+repository. This tool is the front door to that repository:
+
+    tessarchy-update                     # what is installed, and is there newer
+    tessarchy-update --check             # ask the repository (network)
+    tessarchy-update --apply             # install (root; full system upgrade)
+    tessarchy-update --apply --packages-only
+    tessarchy-update --offline /run/media/usb/tessarchy   # update from a folder
+
+`--check` needs no privileges: it fetches a small repo-info.json and compares it
+with what pacman has installed. `--apply` hands the work to pacman, which is
+what makes this fast and safe: only changed packages are downloaded, file
+ownership and versions are tracked, and the base system is upgraded consistently
+instead of being left half-new.
+
+Nothing here is Arch-specific beyond pacman itself; the repository is plain
+static files, so it can be served from the project website, a USB stick or a
+local mirror (see --repo).
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import platform
+import re
+import shutil
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+# The packages that make up a Tessarchy install. Order matters only for the
+# human-readable output; pacman resolves the dependencies itself.
+PACKAGES = (
+    "tessera-shell",
+    "tessarchy-session",
+    "tessarchy-greeter",
+    "tessarchy-bootsplash",
+    "tessarchy-tablet",
+    "tessarchy-update",
+)
+
+# Shipped on the medium and copied to the installed system by tessarchy-install.
+REPO_CONF = Path("/etc/pacman.d/tessarchy.conf")
+PACMAN_CONF = Path("/etc/pacman.conf")
+VERSION_FILE = Path("/etc/tessarchy/version")
+STATE_FILE = Path("/var/lib/tessarchy/update-state.json")
+RESTART_FLAG = Path("/var/lib/tessarchy/restart-required")
+
+DEFAULT_REPO = "https://thediamondsaint.github.io/tessarchy/pkgs"
+PACMAN = "pacman"
+REPO_MARKER = "# tessarchy repository (tessarchy-update --enable-repo)"
+
+# Exit codes: 0 nothing to do, 10 an update is available, 1 the check failed.
+EXIT_UP_TO_DATE = 0
+EXIT_UPDATE_AVAILABLE = 10
+
+
+class UpdateError(RuntimeError):
+    """Something we cannot fix from here; the message is shown to the user."""
+
+
+# ------------------------------------------------------------------- versions
+def arch() -> str:
+    """The package architecture, spelled the way pacman and the repo use it."""
+    machine = platform.machine()
+    return {"amd64": "x86_64", "arm64": "aarch64"}.get(machine, machine)
+
+
+def version_key(version: str) -> list:
+    """A comparable key for a pacman version string.
+
+    pacman splits a version on '.', '_', '+' and '-' into alternating segments
+    and compares numbers numerically and the rest alphabetically, with digits
+    sorting after letters (so 1.0a < 1.0). `vercmp` from pacman is the real
+    implementation; this is used when it is not installed.
+    """
+    key = []
+    for segment in re.split(r"([._+-])", version):
+        if segment in ("", ".", "_", "+", "-"):
+            key.append((-1, segment))
+            continue
+        for part in re.findall(r"\d+|\D+", segment):
+            if part.isdigit():
+                key.append((1, int(part), ""))
+            else:
+                key.append((0, 0, part))
+    return key
+
+
+def vercmp(left: str, right: str) -> int:
+    """-1, 0 or 1 for left older than, equal to, or newer than right."""
+    if shutil.which("vercmp"):
+        result = subprocess.run(
+            ["vercmp", left, right], capture_output=True, text=True, check=False
+        )
+        if result.returncode == 0 and result.stdout.strip().lstrip("+-").isdigit():
+            return (int(result.stdout.strip()) > 0) - (int(result.stdout.strip()) < 0)
+    left_key, right_key = version_key(left), version_key(right)
+    return (left_key > right_key) - (left_key < right_key)
+
+
+def installed_versions(pacman: str = PACMAN) -> dict:
+    """Installed version of every Tessarchy package, from pacman's own database."""
+    versions = {}
+    for package in PACKAGES:
+        result = subprocess.run(
+            [pacman, "-Q", package], capture_output=True, text=True, check=False
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            parts = result.stdout.split()
+            if len(parts) >= 2:
+                versions[package] = parts[1]
+    return versions
+
+
+# ------------------------------------------------------------------ repository
+def repo_url(explicit: str | None = None) -> str:
+    if explicit:
+        return explicit.rstrip("/")
+    if os.environ.get("TESSARCHY_UPDATE_REPO"):
+        return os.environ["TESSARCHY_UPDATE_REPO"].rstrip("/")
+    if REPO_CONF.is_file():
+        for line in REPO_CONF.read_text().splitlines():
+            match = re.match(r"\s*Server\s*=\s*(\S+)", line)
+            if match:
+                return match.group(1).replace("$arch", arch()).rstrip("/")
+    return f"{DEFAULT_REPO}/{arch()}"
+
+
+def fetch_repo_info(url: str, timeout: float = 20.0) -> dict:
+    """Download and parse repo-info.json — the repository's own summary."""
+    target = f"{url}/repo-info.json"
+    try:
+        with urllib.request.urlopen(target, timeout=timeout) as response:
+            payload = json.loads(response.read().decode())
+    except urllib.error.HTTPError as error:
+        raise UpdateError(f"{target}: HTTP {error.code}") from error
+    except urllib.error.URLError as error:
+        raise UpdateError(f"{target}: {error.reason}") from error
+    except (TimeoutError, json.JSONDecodeError) as error:
+        raise UpdateError(f"{target}: {error}") from error
+    if not isinstance(payload, dict) or "packages" not in payload:
+        raise UpdateError(f"{target}: not a Tessarchy repo-info.json")
+    return payload
+
+
+def pending(installed: dict, available: dict) -> list:
+    """[(package, installed_version, repo_version)] for packages that are newer."""
+    changes = []
+    for package, info in sorted(available.get("packages", {}).items()):
+        if package not in PACKAGES:
+            continue
+        repo_version = info.get("version") if isinstance(info, dict) else info
+        mine = installed.get(package)
+        if not repo_version:
+            continue
+        if mine is None or vercmp(mine, repo_version) < 0:
+            changes.append((package, mine or "not installed", repo_version))
+    return changes
+
+
+# ----------------------------------------------------------------------- state
+def state_path() -> Path:
+    """The state file, falling back to the user's own state directory."""
+    if STATE_FILE.parent.is_dir() and os.access(STATE_FILE.parent, os.W_OK):
+        return STATE_FILE
+    return Path(
+        os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")
+    ) / "tessarchy/update-state.json"
+
+
+def write_state(**values) -> Path:
+    path = state_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        previous = {}
+        if path.is_file():
+            try:
+                previous = json.loads(path.read_text())
+            except json.JSONDecodeError:
+                previous = {}
+        previous.update(values)
+        previous["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+        path.write_text(json.dumps(previous, indent=2, sort_keys=True) + "\n")
+        os.chmod(path, 0o644)
+    except OSError as error:
+        print(f"tessarchy-update: cannot record state: {error}", file=sys.stderr)
+    return path
+
+
+def read_state() -> dict:
+    path = state_path()
+    if not path.is_file():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError:
+        return {}
+
+
+def system_version() -> str:
+    """The version recorded when this machine was installed."""
+    if VERSION_FILE.is_file():
+        return VERSION_FILE.read_text().strip()
+    return "unknown"
+
+
+# ---------------------------------------------------------------------- output
+def report_differences(changes: list, installed: dict, available: dict, as_json: bool) -> None:
+    if as_json:
+        print(json.dumps({
+            "installed": installed,
+            "repo_version": available.get("version"),
+            "repo_commit": available.get("commit"),
+            "pending": [
+                {"package": name, "installed": mine, "available": theirs}
+                for name, mine, theirs in changes
+            ],
+        }, indent=2, sort_keys=True))
+        return
+    print(f"system version:  {system_version()}")
+    print(f"repo version:    {available.get('version', 'unknown')}")
+    if not installed:
+        print("installed:       (no Tessarchy packages found)")
+    for package in sorted(installed):
+        print(f"  {package:<20} {installed[package]}")
+    if changes:
+        print("\nupdates available:")
+        for name, mine, theirs in changes:
+            print(f"  {name:<20} {mine} -> {theirs}")
+        print("\nrun: sudo tessarchy-update --apply")
+    else:
+        print("\nTessarchy is up to date.")
+
+
+# -------------------------------------------------------------------- commands
+def command_check(args) -> int:
+    url = repo_url(args.repo)
+    if not args.quiet:
+        print(f"checking {url}")
+    try:
+        available = fetch_repo_info(url, args.timeout)
+    except UpdateError as error:
+        write_state(repo=url, ok=False, error=str(error))
+        print(f"tessarchy-update: {error}", file=sys.stderr)
+        return 1
+    installed = installed_versions(args.pacman)
+    changes = pending(installed, available)
+    write_state(
+        repo=url,
+        ok=True,
+        error=None,
+        installed=installed,
+        repo_version=available.get("version"),
+        pending=[name for name, _, _ in changes],
+    )
+    if args.json or not args.quiet:
+        report_differences(changes, installed, available, args.json)
+    return EXIT_UPDATE_AVAILABLE if changes else EXIT_UP_TO_DATE
+
+
+def pacman_commands(args, pending_names: list) -> list:
+    """The pacman invocations --apply would run, in order."""
+    if args.packages_only:
+        return [[args.pacman, "-Sy", "--needed", "--noconfirm", *pending_names]]
+    # A full upgrade: the Tessarchy packages depend on the base system, so
+    # updating only them on top of an old base is a partial upgrade.
+    return [[args.pacman, "-Syu", "--needed", "--noconfirm"]]
+
+
+def request_restart(reason: str) -> None:
+    """Leave a marker so the shell and the user know a re-login is needed.
+
+    Best effort: on a machine where /var/lib is not writable the update itself
+    still succeeded, and the printed instructions are the fallback.
+    """
+    try:
+        RESTART_FLAG.parent.mkdir(parents=True, exist_ok=True)
+        RESTART_FLAG.write_text(reason)
+    except OSError as error:
+        print(f"tessarchy-update: cannot record the re-login marker: {error}",
+              file=sys.stderr)
+
+
+def command_apply(args) -> int:
+    if hasattr(os, "geteuid") and os.geteuid() != 0:
+        print("tessarchy-update: --apply installs packages; run it with sudo",
+              file=sys.stderr)
+        return 1
+    installed = installed_versions(args.pacman)
+    try:
+        available = fetch_repo_info(repo_url(args.repo), args.timeout)
+    except UpdateError as error:
+        print(f"tessarchy-update: {error}", file=sys.stderr)
+        return 1
+    changes = pending(installed, available)
+    if not changes and not args.force:
+        print("Tessarchy is already up to date.")
+        return EXIT_UP_TO_DATE
+    names = [name for name, _, _ in changes]
+    print("updating: " + ", ".join(names))
+    for command in pacman_commands(args, names):
+        print("+ " + " ".join(command))
+        if args.dry_run:
+            continue
+        result = subprocess.run(command, check=False)
+        if result.returncode != 0:
+            write_state(ok=False, error=f"{command[0]} exited {result.returncode}",
+                        pending=names)
+            print(f"tessarchy-update: {' '.join(command)} failed ({result.returncode})",
+                  file=sys.stderr)
+            return result.returncode
+    now_installed = installed_versions(args.pacman)
+    remaining = pending(now_installed, available)
+    if not args.dry_run:
+        write_state(ok=True, error=None, installed=now_installed,
+                    repo_version=available.get("version"), pending=[r[0] for r in remaining])
+        if not remaining:
+            request_restart(
+                "Tessarchy was updated. Log out and back in (or reboot) so the "
+                "new shell and session config are loaded.\n"
+            )
+    if remaining:
+        print("still behind: " + ", ".join(name for name, _, _ in remaining))
+        return EXIT_UPDATE_AVAILABLE
+    print("updated. Log out and back in, or reboot, to load the new shell.")
+    return EXIT_UP_TO_DATE
+
+
+def command_offline(args) -> int:
+    if hasattr(os, "geteuid") and os.geteuid() != 0:
+        print("tessarchy-update: --offline installs packages; run it with sudo",
+              file=sys.stderr)
+        return 1
+    source = Path(args.offline).expanduser()
+    packages = sorted(source.glob("*.pkg.tar.zst")) if source.is_dir() else [source]
+    packages = [package for package in packages
+                if any(package.name.startswith(name) for name in PACKAGES)]
+    if not packages:
+        print(f"tessarchy-update: no Tessarchy packages in {source}", file=sys.stderr)
+        return 1
+    command = [args.pacman, "-U", "--needed", "--noconfirm", *map(str, packages)]
+    print("+ " + " ".join(command))
+    if args.dry_run:
+        return EXIT_UP_TO_DATE
+    result = subprocess.run(command, check=False)
+    if result.returncode == 0:
+        write_state(ok=True, error=None, installed=installed_versions(args.pacman),
+                    offline=str(source))
+        print("installed from " + str(source))
+    return result.returncode
+
+
+def command_status(args) -> int:
+    installed = installed_versions(args.pacman)
+    state = read_state()
+    if args.json:
+        print(json.dumps({
+            "system_version": system_version(),
+            "repo": repo_url(args.repo),
+            "installed": installed,
+            "last_check": state.get("updated_at"),
+            "last_error": state.get("error"),
+            "pending": state.get("pending", []),
+            "restart_required": RESTART_FLAG.exists(),
+        }, indent=2, sort_keys=True))
+        return EXIT_UPDATE_AVAILABLE if state.get("pending") else EXIT_UP_TO_DATE
+    print(f"system version:   {system_version()}")
+    print(f"repository:       {repo_url(args.repo)}")
+    print(f"packages:         {len(installed)}/{len(PACKAGES)} installed")
+    for name in sorted(installed):
+        print(f"  {name:<20} {installed[name]}")
+    if state.get("updated_at"):
+        print(f"last check:       {state['updated_at']}")
+    if state.get("error"):
+        print(f"last error:       {state['error']}")
+    if state.get("pending"):
+        print("pending:          " + ", ".join(state["pending"]))
+        print("\nrun: sudo tessarchy-update --apply")
+    elif state:
+        print("pending:          none")
+    else:
+        print("pending:          unknown (run tessarchy-update --check)")
+    if RESTART_FLAG.exists():
+        print("\na previous update is waiting for a logout/reboot.")
+    if args.online:
+        return command_check(args)
+    return EXIT_UPDATE_AVAILABLE if state.get("pending") else EXIT_UP_TO_DATE
+
+
+def command_enable_repo(args) -> int:
+    """Write the repository into this machine's pacman configuration."""
+    if hasattr(os, "geteuid") and os.geteuid() != 0:
+        print("tessarchy-update: --enable-repo writes /etc; run it with sudo",
+              file=sys.stderr)
+        return 1
+    url = repo_url(args.repo)
+    # --repo and the environment name the directory that holds repo-info.json,
+    # which already ends in the architecture; pacman's Server wants the base and
+    # expands $arch itself, so write one $arch and no architecture twice.
+    suffix = "/" + arch()
+    base = url[: -len(suffix)] if url.endswith(suffix) else url
+    stanza = (
+        f"{REPO_MARKER}\n"
+        f"[tessarchy]\n"
+        f"SigLevel = Optional TrustAll\n"
+        f"Server = {base}/$arch\n"
+    )
+    if args.dry_run:
+        print(f"would write {REPO_CONF}:\n{stanza}")
+        return EXIT_UP_TO_DATE
+    REPO_CONF.parent.mkdir(parents=True, exist_ok=True)
+    REPO_CONF.write_text(stanza)
+    include = f"Include = {REPO_CONF}"
+    existing = PACMAN_CONF.read_text() if PACMAN_CONF.is_file() else ""
+    if include in existing:
+        print(f"{PACMAN_CONF} already includes {REPO_CONF}")
+    else:
+        with PACMAN_CONF.open("a") as handle:
+            handle.write(f"\n{REPO_MARKER}\n{include}\n")
+        print(f"added {include} to {PACMAN_CONF}")
+    print(f"repository: {url}")
+    return EXIT_UP_TO_DATE
+
+
+# ------------------------------------------------------------------------ main
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="tessarchy-update",
+        description="Update an installed Tessarchy from its package repository.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Exit codes: 0 up to date, 10 update available, 1 the check failed.\n"
+            "The repository is plain static files: --repo also accepts a local\n"
+            "mirror or an http server on your network."
+        ),
+    )
+    commands = parser.add_mutually_exclusive_group()
+    commands.add_argument("--status", action="store_true",
+                          help="what is installed and what the last check found (default)")
+    commands.add_argument("--check", action="store_true",
+                          help="ask the repository whether anything is newer")
+    commands.add_argument("--apply", action="store_true",
+                          help="install available updates (root)")
+    commands.add_argument("--offline", metavar="PATH",
+                          help="install .pkg.tar.zst files from a folder or medium (root)")
+    commands.add_argument("--enable-repo", action="store_true",
+                          help="write the Tessarchy repository into pacman.conf (root)")
+    parser.add_argument("--repo", help="repository base URL (or TESSARCHY_UPDATE_REPO)")
+    parser.add_argument("--pacman", default=PACMAN,
+                        help=f"pacman executable to use (default: {PACMAN})")
+    parser.add_argument("--packages-only", action="store_true",
+                        help="with --apply: only the Tessarchy packages, not the base system")
+    parser.add_argument("--force", action="store_true",
+                        help="with --apply: run even when nothing looks newer")
+    parser.add_argument("--online", action="store_true",
+                        help="with --status: also ask the repository")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="print what would happen without changing anything")
+    parser.add_argument("--json", action="store_true", help="machine-readable output")
+    parser.add_argument("--quiet", action="store_true",
+                        help="print nothing unless something is wrong (exit code carries the answer)")
+    parser.add_argument("--timeout", type=float, default=20.0,
+                        help="network timeout in seconds (default: 20)")
+    return parser
+
+
+def main(argv=None) -> int:
+    args = build_parser().parse_args(argv)
+    try:
+        if args.check:
+            return command_check(args)
+        if args.apply:
+            return command_apply(args)
+        if args.offline:
+            return command_offline(args)
+        if args.enable_repo:
+            return command_enable_repo(args)
+        return command_status(args)
+    except KeyboardInterrupt:
+        return 130
+
+
+if __name__ == "__main__":
+    sys.exit(main())

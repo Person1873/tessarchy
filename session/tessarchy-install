@@ -72,6 +72,12 @@ def in_target(*cmd, check=True, capture=False):
     return run(["arch-chroot", str(MOUNT)] + list(cmd), check=check, capture=capture)
 
 
+def in_target_status(*cmd):
+    """Run inside the new root and keep the exit code instead of raising."""
+    return subprocess.run(["arch-chroot", str(MOUNT)] + list(cmd), text=True,
+                          capture_output=True, check=False)
+
+
 SYSTEMD_UNIT_DIRS = ("etc/systemd/system", "usr/lib/systemd/system", "lib/systemd/system")
 UNIT_SUFFIXES = (".service", ".socket", ".target")
 
@@ -277,6 +283,43 @@ def drop_live_only_files() -> None:
         motd.unlink()
 
 
+PACKAGE_DIR = Path("/usr/share/tessarchy/pkgs")
+
+
+def adopt_medium_packages() -> None:
+    """Install the medium's own packages into the target.
+
+    The installer copies the running system, so the shell and the session arrive
+    as loose files with no owner. Installing the packages this medium carries on
+    top of that copy leaves an installed machine that pacman manages: `pacman -Q`
+    can say what is installed, and tessarchy-update can ask the repository what
+    is newer instead of guessing at file contents. That is what turns the next
+    version into a download rather than another install from scratch.
+    """
+    directory = MOUNT / PACKAGE_DIR.relative_to("/")
+    packages = sorted(directory.glob("*.pkg.tar.zst"))
+    if not packages:
+        print("Note    : this medium carries no packages; run "
+              "`tessarchy-update --enable-repo` on first boot before updating")
+        return
+    inside = [f"{PACKAGE_DIR}/{package.name}" for package in packages]
+    result = in_target_status("pacman", "-U", "--needed", "--noconfirm", *inside)
+    if result.returncode != 0:
+        # Not fatal: the copied system still boots, it just is not tracked by
+        # pacman yet, and the user can install the packages later by hand.
+        detail = (result.stderr or result.stdout or "").strip().splitlines()
+        print(f"Warning : installing the medium's packages failed "
+              f"({result.returncode}): {detail[-1] if detail else 'no output'}")
+        return
+    installed = in_target("pacman", "-Q", *[p.name.split("-")[0] for p in packages],
+                          check=False, capture=True)
+    count = len([line for line in installed.splitlines() if line.strip()])
+    print(f"Packages: {count} installed from the medium (pacman owns them now)")
+    # pacman keeps its own copies in /var/cache/pacman/pkg, so the medium's copy
+    # is only extra disk on a machine that will never write to the medium.
+    shutil.rmtree(directory, ignore_errors=True)
+
+
 def configure_target(firmware: str, disk: str, root_uuid: str, hostname: str) -> None:
     # The live image boots off an ISO; an installed system needs an ordinary
     # initramfs built from its own configuration.
@@ -285,6 +328,7 @@ def configure_target(firmware: str, disk: str, root_uuid: str, hostname: str) ->
     (MOUNT / "etc/fstab").write_text(run(["genfstab", "-U", str(MOUNT)], capture=True))
 
     stage_kernel()
+    adopt_medium_packages()
     in_target("mkinitcpio", "-P")
     for unit in ("NetworkManager", "bluetooth", "greetd"):
         if not unit_exists(unit):

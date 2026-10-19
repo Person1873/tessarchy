@@ -13,7 +13,10 @@ on:
       - 'iso/**'
       - 'shell/**'
       - 'session/**'
+      - 'packaging/**'
       - 'scripts/stage-iso.sh'
+      - 'scripts/package.sh'
+      - 'scripts/build-packages.sh'
       - 'scripts/boot-test-iso.py'
 
 permissions:
@@ -38,8 +41,14 @@ jobs:
             --volume "$PWD:/workspace" --workdir /workspace \
             --env "TESSARCHY_COMMIT=$GITHUB_SHA" \
             archlinux:base bash -euo pipefail -c '
-              pacman -Syu --noconfirm --needed archiso ffmpeg
+              pacman -Syu --noconfirm --needed archiso ffmpeg base-devel
+              # The medium carries the packages an installed machine updates from,
+              # so build the repository first: staging refuses an image without it.
+              useradd -m builder
+              chown -R builder /workspace
+              su builder -c "./scripts/build-packages.sh"
               ./scripts/stage-iso.sh
+              test -f dist/repo/x86_64/repo-info.json
               mkarchiso -v -w build/iso-work -o dist build/iso-profile 2>&1 | tee dist/build.log
               cp build/iso-work/iso/arch/pkglist.x86_64.txt dist/packages.txt
               printf "Commit: %s\nBuilt: %s\n" "$TESSARCHY_COMMIT" "$(date -u --iso-8601=seconds)" > dist/build-info.txt
@@ -113,9 +122,10 @@ jobs:
           [[ $RELEASE_TAG =~ ^v[0-9][0-9A-Za-z.-]*$ ]]
           gh release create "$RELEASE_TAG" --draft --prerelease --target "$GITHUB_SHA" \
             --title "Tessarchy $RELEASE_TAG — tester ISO" \
-            --notes "Tester ISO draft. Review the attached BIOS/UEFI boot captures before publishing. Carries tessarchy-install, which copies the live system to an internal disk (see docs/live-install.md); no persistence; physical keyboard required." \
+            --notes "Tester ISO draft. Review the attached BIOS/UEFI boot captures before publishing. Carries tessarchy-install, which copies the live system to an internal disk (see docs/live-install.md), and the Tessarchy packages themselves, so an installed machine updates in place with tessarchy-update (see docs/updates.md) instead of another ISO; no persistence on the medium; physical keyboard required." \
             dist/tessarchy-*.iso dist/SHA256SUMS dist/build-info.txt dist/packages.txt \
-            dist/build.log dist/boot-bios.png dist/boot-uefi.png dist/launcher-bios.png dist/launcher-uefi.png dist/boot-evidence.tar.gz dist/BOOT-TESTING.md
+            dist/build.log dist/boot-bios.png dist/boot-uefi.png dist/launcher-bios.png dist/launcher-uefi.png dist/boot-evidence.tar.gz dist/BOOT-TESTING.md \
+            dist/repo/x86_64/repo-info.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
