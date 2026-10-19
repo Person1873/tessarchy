@@ -14,7 +14,7 @@ tar --exclude=__pycache__ --exclude='*.pyc' --exclude='*.pyo' --exclude='*.ppm' 
     scripts/export-brand-assets.py scripts/export-boot-assets.py
 # Every directory under packaging/ that has a PKGBUILD is part of the release;
 # adding a package means adding a directory, not editing this list.
-mapfile -t packages < <(cd "$root/packaging" && ls -d */ | tr -d /)
+mapfile -t packages < <(find "$root/packaging" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
 for package in "${packages[@]}"; do
     work=$root/build/packages/$package
     rm -rf "$work"

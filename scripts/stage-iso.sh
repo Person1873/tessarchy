@@ -134,7 +134,8 @@ else
     echo "stage-iso: no /etc/pacman.conf here; the installed system will need tessarchy-update --enable-repo" >&2
 fi
 # 2. Which medium this is, so the installed system can say what it started from.
-install -Dm644 /dev/stdin "$airoot/etc/tessarchy/version" <<<"$release_version"
+install -d "$airoot/etc/tessarchy"
+printf '%s\n' "$release_version" > "$airoot/etc/tessarchy/version"
 # 3. The packages themselves, so the installer can hand them to pacman and the
 #    machine is package-managed from its first boot. Same packages the repo
 #    serves, which is what makes a later update a download rather than an install.
