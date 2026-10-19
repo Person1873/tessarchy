@@ -19,6 +19,14 @@ TestCase {
             }
         }
     }
+    // Phone and Tablet share one dock: no Settings button (status bar has it).
+    function test_touch_docks_have_the_same_buttons() {
+        compare(Policy.dockLayout("phone", 400, false).columns, 5);
+        compare(Policy.dockLayout("tablet", 800, false).columns, 5);
+        compare(Policy.dockLayout("phone", 400, true).columns, 6);
+        compare(Policy.dockLayout("tablet", 800, true).columns, 6);
+        compare(Policy.dockLayout("tablet", 800, true).rows, 1);
+    }
     // Every bar floats and centres its rows: equal inset above and below.
     function test_bar_rows_are_centred_in_a_floating_frame() {
         for (const mode of ["phone", "tablet", "desktop"]) {

@@ -65,9 +65,11 @@ function barGeometry(mode, rows) {
     };
 }
 
+// Touch docks: Phone, Messages, Back, Home, Recents and the optional Keyboard.
+// Settings lives in the status bar and pull-down, not the dock.
 function dockLayout(mode, width, keyboard) {
     const bar = barGeometry(mode, 1);
-    const count = (mode === "phone" ? 5 : 6) + (keyboard && mode !== "desktop" ? 1 : 0);
+    const count = 5 + (keyboard && mode !== "desktop" ? 1 : 0);
     const dockWidth = Math.min(Math.max(0, width - 2 * bar.side), bar.maxWidth);
     const capacity = Math.max(1, Math.floor((dockWidth - 2 * bar.padding + bar.columnGap) / (bar.row + bar.columnGap)));
     const columns = capacity >= count ? count : Math.min(3, capacity);

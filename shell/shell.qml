@@ -531,15 +531,6 @@ ShellRoot {
                             onClicked: panel.showPage("messages")
                         }
                         NavButton {
-                            visible: !surface.isPhone
-                            text: "Settings"
-                            symbol: "settings"
-                            showLabel: shellPreferences.showLabels
-                            accentColor: root.accentColor
-                            selected: panel.page === "settings"
-                            onClicked: panel.showPage("settings")
-                        }
-                        NavButton {
                             // Panel never takes keyboard focus, so the app keeps its text field.
                             visible: root.oskAvailable && surface.mode !== "desktop"
                             text: "Keyboard"

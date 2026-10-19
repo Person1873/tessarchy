@@ -1654,3 +1654,10 @@ was measured and not changed: its icon and label sit 7 px from the top of the
 bottom, so the earlier "content sits low" reading came from the row placement.
 The two-row figure is 1 px off because its lower row's labels have no
 descenders. An open Phone page rendered normally. `./scripts/check.sh` passed.
+
+The touch dock no longer carries a Settings button (owner decision: the status
+bar gear and the pull-down already open Settings); Phone and Tablet docks now
+have the same five buttons plus the optional Keyboard. Executed by an agent in
+the QEMU VM (Tablet, 1280x800, keyboard enabled): the dock shows Phone,
+Messages, Keyboard, Back, Home and Recents in one row. `./scripts/check.sh`
+passed (105 Python tests, 1 skipped; 51 Qt Quick tests).
