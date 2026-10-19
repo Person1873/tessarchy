@@ -1,0 +1,308 @@
+#!/usr/bin/env python3
+"""Install Tessarchy from the live image onto a disk.
+
+The live session is already the product: boot it, use it, and judge whether the
+hardware works. This tool copies that running system onto an internal disk and
+makes it bootable, so nothing has to be downloaded and the installed machine
+behaves like the one that was just tested.
+
+    tessarchy-install --check               # will this machine run it?
+    tessarchy-install --list                # candidate disks
+    tessarchy-install --disk /dev/nvme0n1   # install (erases that disk)
+
+Only whole disks are accepted. Everything on the chosen disk is destroyed.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
+
+ESP_MIB = 512
+BIOS_BOOT_MIB = 1
+MOUNT = Path("/mnt")
+LIVE_MOUNT = Path("/run/archiso/bootmnt")
+
+# Never copied into the target: kernel filesystems, the live medium, and this
+# installer's own mountpoint.
+EXCLUDES = [
+    "/dev/*", "/proc/*", "/sys/*", "/run/*", "/tmp/*", "/mnt/*",
+    "/media/*", "/lost+found", "/swapfile", "/var/tmp/*", "/etc/machine-id",
+]
+
+
+class InstallerError(RuntimeError):
+    """A precondition or step failed; the message is shown to the user."""
+
+
+# ---------------------------------------------------------------- shell glue
+
+def run(cmd, *, check=True, capture=False):
+    result = subprocess.run(list(cmd), text=True, capture_output=capture, check=False)
+    if check and result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip()
+        raise InstallerError(f"{' '.join(map(str, cmd))} failed: {detail[:400]}")
+    return (result.stdout or "") if capture else ""
+
+
+def in_target(*cmd, check=True):
+    """Run inside the new root; arch-chroot binds /dev, /proc and /sys."""
+    return run(["arch-chroot", str(MOUNT)] + list(cmd), check=check)
+
+
+def require_root() -> None:
+    if os.geteuid() != 0:
+        raise InstallerError("Run as root: sudo tessarchy-install")
+
+
+def require_tools(*tools) -> None:
+    missing = [t for t in tools if not shutil.which(t)]
+    if missing:
+        raise InstallerError("Missing tools: " + ", ".join(missing))
+
+
+# ------------------------------------------------------------- device probes
+
+def live_medium_device() -> str | None:
+    """Device backing the running live image, so it can never be the target."""
+    try:
+        source = run(["findmnt", "-n", "-o", "SOURCE", str(LIVE_MOUNT)],
+                     check=False, capture=True).strip()
+    except Exception:
+        return None
+    if not source:
+        return None
+    return run(["lsblk", "-no", "PKNAME", source], check=False, capture=True).strip() or None
+
+
+def list_disks() -> list[dict]:
+    data = json.loads(run(["lsblk", "-J", "-d", "-o", "NAME,SIZE,MODEL,TRAN,TYPE"],
+                          capture=True) or "{}")
+    live = live_medium_device()
+    disks = []
+    for dev in data.get("blockdevices", []):
+        name = dev.get("name", "")
+        # Whole disks only: no loops, zram, optical or ram devices.
+        if dev.get("type") != "disk" or dev.get("tran") == "loop":
+            continue
+        if name.startswith(("loop", "zram", "ram", "sr", "dm-")):
+            continue
+        disks.append({
+            "path": f"/dev/{name}",
+            "size": dev.get("size") or "?",
+            "model": (dev.get("model") or "disk").strip(),
+            "transport": dev.get("tran") or "",
+            "live": bool(live and name == live),
+        })
+    return disks
+
+
+def firmware_mode() -> str:
+    return "uefi" if Path("/sys/firmware/efi").is_dir() else "bios"
+
+
+# ---------------------------------------------------------- readiness report
+
+def check_report() -> int:
+    firmware = firmware_mode()
+    gpu = run(["sh", "-c", "lspci -nn 2>/dev/null | grep -Ei 'vga|3d|display' | cut -d: -f3- | head -3"],
+              check=False, capture=True).strip()
+    session = os.environ.get("XDG_SESSION_TYPE") or "unknown"
+    mem = run(["sh", "-c", "awk '/MemTotal/{printf \"%.1f\", $2/1048576}' /proc/meminfo"],
+              check=False, capture=True).strip()
+    touch = run(["sh", "-c", "grep -l -i -E 'touch|tablet|pen' /sys/class/input/input*/name 2>/dev/null | wc -l"],
+                check=False, capture=True).strip()
+    disks = [d for d in list_disks() if not d["live"]]
+    try:
+        memory_ok = float(mem or 0) >= 3.5
+    except ValueError:
+        memory_ok = False
+
+    rows = [
+        ("Firmware", f"{firmware.upper()} boot", True),
+        ("Display", gpu or "no GPU reported", bool(gpu)),
+        ("Session", f"running live in {session}", session == "wayland"),
+        ("Memory", f"{mem} GiB", memory_ok),
+        ("Touch input", f"{touch or 0} device(s)", int(touch or 0) > 0),
+        ("Install target", f"{len(disks)} candidate disk(s)", bool(disks)),
+    ]
+    print("Tessarchy readiness check\n")
+    for label, value, ok in rows:
+        print(f"  {'ok  ' if ok else 'note'}  {label:<14} {value}")
+    print("\nWhat you are using now is what gets installed: the installer copies")
+    print("this running system rather than downloading a second one.")
+    return 0
+
+
+# -------------------------------------------------------------------- layout
+
+def plan_partitions(firmware: str) -> list[dict]:
+    """Fresh GPT layout with explicit offsets, in MiB from the start of disk."""
+    if firmware == "uefi":
+        esp_end = 1 + ESP_MIB
+        return [
+            {"number": 1, "role": "esp", "start": 1, "end": esp_end, "fs": "fat32"},
+            {"number": 2, "role": "root", "start": esp_end, "end": "-1", "fs": "ext4"},
+        ]
+    bios_end = 1 + BIOS_BOOT_MIB
+    esp_end = bios_end + ESP_MIB
+    return [
+        {"number": 1, "role": "bios", "start": 1, "end": bios_end, "fs": None},
+        {"number": 2, "role": "esp", "start": bios_end, "end": esp_end, "fs": "fat32"},
+        {"number": 3, "role": "root", "start": esp_end, "end": "-1", "fs": "ext4"},
+    ]
+
+
+def part_path(disk: str, number: int) -> str:
+    # nvme0n1p1, mmcblk0p1, sda1
+    return f"{disk}{'p' if disk[-1].isdigit() else ''}{number}"
+
+
+def validate_target(disk: str) -> dict:
+    disks = {d["path"]: d for d in list_disks()}
+    if disk not in disks:
+        raise InstallerError(f"{disk} is not a whole disk on this machine")
+    if disks[disk]["live"]:
+        raise InstallerError("That is the live medium — pick the disk you want to overwrite")
+    return disks[disk]
+
+
+# ---------------------------------------------------------------- the install
+
+def copy_system() -> None:
+    args = ["rsync", "-aHAX", "--numeric-ids", "--one-file-system"]
+    for pattern in EXCLUDES:
+        args += ["--exclude", pattern]
+    run(args + ["/", f"{MOUNT}/"])
+    for d in ("dev", "proc", "sys", "run", "tmp", "boot"):
+        (MOUNT / d).mkdir(exist_ok=True)
+
+
+def write_boot_loader(firmware: str, disk: str, root_uuid: str) -> None:
+    if firmware == "uefi":
+        in_target("bootctl", "--esp-path=/boot", "install")
+        entry = MOUNT / "boot/loader/entries/tessarchy.conf"
+        entry.parent.mkdir(parents=True, exist_ok=True)
+        entry.write_text(textwrap.dedent(f"""\
+            title   Tessarchy
+            linux   /vmlinuz-linux
+            initrd  /initramfs-linux.img
+            options root=UUID={root_uuid} rw quiet splash loglevel=3
+            """))
+        (MOUNT / "boot/loader/loader.conf").write_text(
+            "default tessarchy.conf\ntimeout 3\nconsole-mode max\n")
+        return
+    in_target("grub-install", "--target=i386-pc", f"--boot-directory=/boot", disk)
+    in_target("grub-mkconfig", "-o", "/boot/grub/grub.cfg")
+
+
+def configure_target(firmware: str, disk: str, root_uuid: str, hostname: str) -> None:
+    # The live image boots off an ISO; an installed system needs an ordinary
+    # initramfs built from its own configuration.
+    for stray in (MOUNT / "etc/mkinitcpio.conf.d").glob("archiso*.conf"):
+        stray.unlink()
+    (MOUNT / "etc/hostname").write_text(f"{hostname}\n")
+    (MOUNT / "etc/fstab").write_text(run(["genfstab", "-U", str(MOUNT)], capture=True))
+
+    in_target("mkinitcpio", "-P")
+    in_target("systemctl", "enable", "NetworkManager")
+    in_target("systemctl", "enable", "bluetooth", check=False)
+    in_target("systemctl", "enable", "greetd", check=False)
+    write_boot_loader(firmware, disk, root_uuid)
+
+
+def install(disk: str, assume_yes: bool) -> int:
+    require_root()
+    require_tools("lsblk", "parted", "wipefs", "mkfs.fat", "mkfs.ext4", "rsync",
+                  "genfstab", "mkinitcpio", "arch-chroot", "blkid")
+    info = validate_target(disk)
+    firmware = firmware_mode()
+    plan = plan_partitions(firmware)
+    root_part = next(p for p in plan if p["role"] == "root")
+    esp_part = next(p for p in plan if p["role"] == "esp")
+
+    print(f"Target  : {disk}  {info['size']}  {info['model']}")
+    print(f"Firmware: {firmware.upper()}")
+    print("This erases every partition on that disk.")
+    if not assume_yes:
+        if input("Type the disk path again to confirm: ").strip() != disk:
+            print("Aborted; nothing was written.")
+            return 1
+    else:
+        print("Confirmed by --yes.")
+
+    run(["wipefs", "-a", disk], check=False)
+    run(["parted", "-s", disk, "mklabel", "gpt"])
+    for part in plan:
+        if part["role"] == "bios":
+            run(["parted", "-s", disk, "mkpart", "biosgrub",
+                 f"{part['start']}MiB", f"{part['end']}MiB"])
+            run(["parted", "-s", disk, "set", str(part["number"]), "bios_grub", "on"])
+        elif part["role"] == "esp":
+            run(["parted", "-s", disk, "mkpart", "esp", "fat32",
+                 f"{part['start']}MiB", f"{part['end']}MiB"])
+            run(["parted", "-s", disk, "set", str(part["number"]), "esp", "on"])
+        else:
+            run(["parted", "-s", disk, "mkpart", "root", "ext4",
+                 f"{part['start']}MiB", "100%"])
+    run(["udevadm", "settle"], check=False)
+
+    run(["mkfs.fat", "-F32", "-n", "TESSARCHY_EFI", part_path(disk, esp_part["number"])])
+    run(["mkfs.ext4", "-F", "-L", "tessarchy", part_path(disk, root_part["number"])])
+
+    MOUNT.mkdir(exist_ok=True)
+    run(["mount", part_path(disk, root_part["number"]), str(MOUNT)])
+    (MOUNT / "boot").mkdir(exist_ok=True)
+    run(["mount", part_path(disk, esp_part["number"]), str(MOUNT / "boot")])
+
+    print("Copying the running system (the slow part)…")
+    copy_system()
+    root_uuid = run(["blkid", "-s", "UUID", "-o", "value",
+                     part_path(disk, root_part["number"])], capture=True).strip()
+    configure_target(firmware, disk, root_uuid, "tessarchy")
+    run(["umount", "-R", str(MOUNT)], check=False)
+    print("\nDone. Remove the live medium and reboot into the installed disk.")
+    return 0
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="tessarchy-install",
+        description="Install the running Tessarchy live system onto a disk.")
+    parser.add_argument("--check", action="store_true",
+                        help="report whether this machine is a good fit")
+    parser.add_argument("--list", action="store_true", help="list candidate disks")
+    parser.add_argument("--disk", help="target whole disk, e.g. /dev/nvme0n1")
+    parser.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
+    args = parser.parse_args(argv)
+
+    try:
+        if args.check:
+            return check_report()
+        if args.list or not args.disk:
+            live = live_medium_device()
+            print("Candidate disks (the live medium is marked and refused):")
+            for d in list_disks():
+                mark = "  <- live medium, not a target" if d["live"] else ""
+                print(f"  {d['path']:<16} {d['size']:>8}  {d['model']}{mark}")
+            if live:
+                print(f"\nLive medium: /dev/{live}")
+            if not args.disk:
+                print("\nChoose one with: sudo tessarchy-install --disk /dev/<name>")
+                return 0
+        return install(args.disk, args.yes)
+    except InstallerError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    except KeyboardInterrupt:
+        print("\nAborted.", file=sys.stderr)
+        return 130
+
+
+if __name__ == "__main__":
+    sys.exit(main())

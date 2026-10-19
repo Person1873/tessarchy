@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Install Tessarchy
+Comment=Copy this live system onto a disk and make it bootable
+Exec=foot -e sudo -n tessarchy-install
+Icon=drive-harddisk
+Terminal=false
+StartupNotify=false
+Categories=System;
+Keywords=install;setup;disk;
