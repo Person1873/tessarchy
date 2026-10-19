@@ -20,10 +20,10 @@ git log -5 --oneline origin/main
 gh pr list
 ```
 
-`main` is the integration branch. `build/live-iso` is the public development
-branch and the website's activity source. Both were synchronized after the
-roadmap/site update. Fetch current refs before starting; commit IDs in handoff
-records describe checkpoints, not permanent branch positions.
+`main` is the integration branch and the website's publication/activity source.
+`build/live-iso` is a legacy development branch and does not deploy automatically.
+Fetch current refs before starting; commit IDs in handoff records describe
+checkpoints, not permanent branch positions.
 
 ## Product and design
 
@@ -59,10 +59,10 @@ product UI unless they help the user act.
 | Audio/media | Optional PipeWire output/application controls and MPRIS controls integrated | Automated checks pass; real audio signal/output/touch acceptance passed; real player acceptance is next |
 | Screenshots | Print and pull-down camera action; unique private PNGs | Helper tests pass; end-to-end VM action check is next |
 | Keyboard | Optional squeekboard, private settings and focus-preserving toggle | Existing VM evidence; expand the application matrix |
-| Published ISO | Alpha 3 Intel/AMD tablet pilot, x86_64 live session with autologin | BIOS and non-Secure-Boot UEFI VM boot evidence on its release |
+| Published ISO | Alpha 4 Intel/AMD tablet pilot, x86_64 live session with autologin | BIOS and non-Secure-Boot UEFI VM boot evidence on its release |
 | Physical device | Reference-device selection and bring-up are planned | [Device roadmap](docs/device-roadmap.md) |
 | Website | GitHub Pages, twenty-one real VM captures, roadmap, branding and sharing | Desktop/phone browser checks and public asset checks passed |
-| Baseline checks | 73 Python tests and 46 Qt Quick results at this checkpoint | Run current checks and record current totals |
+| Baseline checks | 105 Python tests, 62 Qt Quick results and 4 website tests in the T73 audit | Run current checks and record current totals |
 
 Alpha 3 adds the tablet package set, curated launcher and supplied boot video.
 Its live account autologins; installed tablets retain their existing login.
@@ -168,7 +168,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 
 | Task ID | Status | Owner | Branch / PR | Next action or evidence |
 | --- | --- | --- | --- | --- |
-| T73 | In progress | Codex | review/audit-2026-10-19 | Audit site and current PRs; integrate smallest compatible changes, fix confirmed defects, run checks and record remaining blockers |
+| T73 | Review | Codex | review/audit-2026-10-19 | Audit site and current PRs; integrate smallest compatible changes, fix confirmed defects, run checks and record remaining blockers |
 | T05 | In progress | Codex | feat/vm-touch-refinement | VM touch drawer, scrolling, output switching and compact/wide layouts tested |
 | T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |
 | T09 | Done | Codex | PR #18 | Guarded battery/power-profile integration; unavailable VM state verified |

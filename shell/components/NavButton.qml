@@ -30,6 +30,7 @@ TouchButton {
                 height: control.iconSize
             }
             Text {
+                textFormat: Text.PlainText
                 visible: control.showLabel
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: control.text

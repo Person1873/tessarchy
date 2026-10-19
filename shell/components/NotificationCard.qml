@@ -27,6 +27,7 @@ Button {
                 Layout.fillWidth: true
                 spacing: 6
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: card.notification.appName || "Notification"
                     color: card.accentColor
@@ -38,6 +39,7 @@ Button {
                     elide: Text.ElideRight
                 }
                 Text {
+                    textFormat: Text.PlainText
                     visible: card.notification.urgency === 2
                     text: "IMPORTANT"
                     color: "#ffc2cd"
@@ -48,6 +50,7 @@ Button {
                 }
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: card.notification.summary || ""
                 color: "#f0f5ff"
@@ -58,6 +61,7 @@ Button {
                 elide: Text.ElideRight
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 visible: text.length > 0
                 text: card.notification.body || ""

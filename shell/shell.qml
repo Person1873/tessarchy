@@ -519,6 +519,7 @@ ShellRoot {
                     GridLayout {
                         visible: surface.mode !== "desktop"
                         Layout.fillWidth: true
+                        Layout.fillHeight: false
                         Layout.preferredHeight: surface.bar.rowsHeight
                         columns: surface.dock.columns
                         columnSpacing: surface.bar.columnGap
@@ -581,6 +582,7 @@ ShellRoot {
                     RowLayout {
                         visible: surface.mode === "desktop"
                         Layout.fillWidth: true
+                        Layout.fillHeight: false
                         Layout.preferredHeight: surface.bar.row
                         spacing: 0
                         StartButton {

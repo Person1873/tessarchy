@@ -84,6 +84,10 @@ class Workflows(unittest.TestCase):
         result = subprocess.run(command, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         with zipfile.ZipFile(destination / 'assets/screenshots.zip') as archive:
+            count = sum(name.endswith('.png') for name in archive.namelist())
+            page = (destination / 'index.html').read_text()
+            self.assertIn(f'includes {count} published captures', page)
+            self.assertNotIn('{{SCREENSHOT_COUNT}}', page)
             self.assertEqual(archive.read('phone-switcher.png'),
                              (ROOT / 'assets/screenshots/phone-switcher.png').read_bytes())
             self.assertEqual(archive.read('phone-login.png'),

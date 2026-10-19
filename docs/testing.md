@@ -1720,3 +1720,44 @@ have the same five buttons plus the optional Keyboard. Executed by an agent in
 the QEMU VM (Tablet, 1280x800, keyboard enabled): the dock shows Phone,
 Messages, Keyboard, Back, Home and Recents in one row. `./scripts/check.sh`
 passed (105 Python tests, 1 skipped; 51 Qt Quick tests).
+
+
+## Repository, website and small-PR integration audit — 2026-10-19 (T73)
+
+Integrated #51, #44, #45 and #48 in an isolated worktree from main, preserving
+all contributor commits. Resolved #48 against the current desktop spacing and
+retained both validation histories. The source checkout's active installation
+and update work was left untouched.
+
+Confirmed and fixed:
+
+- Notification labels/bodies used automatic rich-text detection despite the
+  plain-text contract. External contact, message, file and switcher text now
+  renders literally. A Qt regression verifies that markup-like notification
+  names, summaries and bodies expose no rendered hyperlinks.
+- Nested dock/taskbar layouts could stretch when pages expanded. Both rows now
+  explicitly decline the parent's extra vertical space while page content fills it.
+- The website described Alt+Tab as the touch card switcher, linked activity/docs
+  to an older branch, and claimed nineteen screenshots while shipping twenty-one.
+  Copy matches the integrated icon switcher; screenshot count comes from the bundle.
+- Release discovery examined only five releases and assumed metadata shapes.
+  It now examines up to 100, skips drafts/non-ISO releases, preserves fallback
+  links on malformed data and reads activity from main. Only main publishes Pages
+  automatically, preventing an older development branch from replacing the site.
+- Offscreen Qt tests inherited the host platform theme. The check script clears
+  it explicitly; it also runs the dependency-free Node website tests when available.
+
+Actual validation: ./scripts/check.sh passed 105 Python tests, 62 Qt Quick
+results and four Node website tests. Lua parsing, both Hyprland configurations,
+desktop entry validation and QML lint passed. Fish and ShellCheck are unavailable
+locally and remain CI checks. Website tests exercise release filtering beyond
+five newer non-ISO releases, invalid metadata/fallbacks, literal commit summaries,
+keyboard layout selection and matching gallery image/caption changes.
+
+Built a fresh static site with current release metadata. All 23 local resources
+and seven nonempty fragment links resolve; the ZIP contains 21 PNG captures and
+the displayed count agrees. Its bundled published release is Alpha 4; later
+release drafts remain excluded. No browser surface was available for a new visual
+inspection, and no new VM, ISO boot or physical-device acceptance was performed.
+The live page was fetched before changes and identified af042fb as its source;
+publication verification is recorded separately after deployment.
