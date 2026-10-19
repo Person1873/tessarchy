@@ -210,16 +210,54 @@ class MediumPackages(unittest.TestCase):
             return self.fake_status(0)
 
         with mock.patch.object(installer, 'MOUNT', self.root), \
+                mock.patch.object(installer, 'archive_paths',
+                                  side_effect=lambda package: [
+                                      '/usr/bin/' + package.name.split('.pkg')[0],
+                                      '/usr/share/tessarchy/shell/shell.qml']), \
                 mock.patch.object(installer, 'in_target_status', side_effect=record), \
                 mock.patch.object(installer, 'in_target', return_value='') as in_target:
             installer.adopt_medium_packages()
 
         command = calls[0]
+        # Each package may replace the files it carries — the copies the
+        # installer just made are otherwise "conflicting files" pacman refuses.
         self.assertEqual(command[:4], ('pacman', '-U', '--needed', '--noconfirm'))
-        self.assertEqual(sorted(command[4:]),
+        first_package = command.index(
+            '/usr/share/tessarchy/pkgs/tessarchy-session-0.1.0-2-any.pkg.tar.zst')
+        self.assertEqual(list(command[4:first_package]),
+                         ['--overwrite', '/usr/bin/tessarchy-session-0.1.0-2-any',
+                          '--overwrite', '/usr/bin/tessera-shell-0.1.0-2-any',
+                          '--overwrite', '/usr/share/tessarchy/shell/shell.qml'])
+        self.assertEqual(sorted(command[first_package:]),
                          ['/usr/share/tessarchy/pkgs/tessarchy-session-0.1.0-2-any.pkg.tar.zst',
                           '/usr/share/tessarchy/pkgs/tessera-shell-0.1.0-2-any.pkg.tar.zst'])
         self.assertEqual(in_target.call_args[0][0], 'pacman')
+
+    def test_the_permission_covers_only_what_the_packages_carry(self):
+        # The narrow list comes from the archives themselves.
+        installer = self.installer
+        listing = 'usr/\n.PKGINFO\nusr/bin/tessarchy-update\nusr/share/tessarchy/\n'
+        with mock.patch.object(installer.subprocess, 'run',
+                               return_value=type('R', (), {'returncode': 0,
+                                                           'stdout': listing})()):
+            paths = installer.archive_paths(Path('tessera-shell-0.1.0-2-any.pkg.tar.zst'))
+        self.assertEqual(paths, ['/usr/bin/tessarchy-update'])
+
+    def test_a_failed_package_step_shows_the_reason_not_the_warnings(self):
+        installer = self.installer
+        noise = '\n'.join([f"warning: database file for 'x' does not exist" for _ in range(8)]
+                          + ['error: failed to commit transaction (conflicting files)',
+                             'tessarchy-bootsplash: /usr/share/plymouth/logo-0.png exists in filesystem'])
+        result = type('R', (), {'returncode': 1, 'stdout': '', 'stderr': noise})()
+        printed = []
+        with mock.patch.object(installer, 'MOUNT', self.root), \
+                mock.patch.object(installer, 'archive_paths', return_value=['*']), \
+                mock.patch.object(installer, 'in_target_status', return_value=result), \
+                mock.patch.object(installer, 'in_target'), \
+                mock.patch('builtins.print', side_effect=lambda *a, **k: printed.append(str(a[0]))):
+            installer.adopt_medium_packages()
+        self.assertTrue(any('conflicting files' in line for line in printed))
+        self.assertTrue(any('logo-0.png' in line for line in printed))
 
     def test_the_medium_copy_is_not_kept_once_pacman_has_them(self):
         installer = self.installer

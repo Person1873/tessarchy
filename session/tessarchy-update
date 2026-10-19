@@ -257,7 +257,10 @@ def report_differences(changes: list, installed: dict, available: dict, as_json:
               "\n`sudo tessarchy-update --apply --packages-only` adopts the packages"
               "\non this running system instead.")
     if changes:
-        print("\nupdates available:")
+        if installed:
+            print("\nupdates available:")
+        else:
+            print("\nthe repository offers (nothing is installed here yet):")
         for name, mine, theirs in changes:
             print(f"  {name:<20} {mine} -> {theirs}")
         print("\nrun: sudo tessarchy-update --apply")
@@ -278,23 +281,51 @@ def command_check(args) -> int:
         return 1
     installed = installed_versions(args.pacman)
     changes = pending(installed, available)
+    # On the live medium nothing is installed yet, so these are installs rather
+    # than updates: a timer or a notifier that called them "behind" would cry
+    # wolf once a day on every medium. --apply still adopts them (that is the
+    # documented way onto the repository), and a partly installed machine does
+    # report the rest.
+    relevant = changes if installed else []
     write_state(
         repo=url,
         ok=True,
         error=None,
         installed=installed,
         repo_version=available.get("version"),
-        pending=[name for name, _, _ in changes],
+        pending=[name for name, _, _ in relevant],
     )
     if args.json or not args.quiet:
         report_differences(changes, installed, available, args.json)
-    return EXIT_UPDATE_AVAILABLE if changes else EXIT_UP_TO_DATE
+    return EXIT_UPDATE_AVAILABLE if relevant else EXIT_UP_TO_DATE
+
+
+def adoption_flags(pacman: str, names: list) -> list:
+    """Flags needed when the packages are being installed for the first time.
+
+    On an installed machine the files belong to the packages already and an
+    upgrade replaces them; on a machine that has only ever had them copied
+    (a live medium, or an install whose package step failed) those files exist
+    on disk owned by nothing, and pacman refuses that with "failed to commit
+    transaction (conflicting files)". Installing them for the first time is
+    therefore allowed to replace the files they carry.
+    """
+    installed = installed_versions(pacman)
+    fresh = [name for name in names if name not in installed]
+    if not fresh:
+        return []
+    print(f"Note    : {', '.join(sorted(fresh))} not package-managed here yet, "
+          f"so the packages may replace the copies on disk", file=sys.stderr)
+    return ["--overwrite", "*"]
 
 
 def pacman_commands(args, pending_names: list) -> list:
     """The pacman invocations --apply would run, in order."""
     if args.packages_only:
-        return [[args.pacman, "-Sy", "--needed", "--noconfirm", *pending_names]]
+        command = [args.pacman, "-Sy", "--needed", "--noconfirm"]
+        command += adoption_flags(args.pacman, pending_names)
+        command += pending_names
+        return [command]
     # A full upgrade: the Tessarchy packages depend on the base system, so
     # updating only them on top of an old base is a partial upgrade.
     return [[args.pacman, "-Syu", "--needed", "--noconfirm"]]
@@ -384,7 +415,10 @@ def command_offline(args) -> int:
     if not packages:
         print(f"tessarchy-update: no Tessarchy packages in {source}", file=sys.stderr)
         return 1
-    command = [args.pacman, "-U", "--needed", "--noconfirm", *map(str, packages)]
+    command = [args.pacman, "-U", "--needed", "--noconfirm"]
+    command += adoption_flags(args.pacman, [name for name in PACKAGES
+                                            if any(p.name.startswith(name) for p in packages)])
+    command += [*map(str, packages)]
     print("+ " + " ".join(command))
     if args.dry_run:
         return EXIT_UP_TO_DATE

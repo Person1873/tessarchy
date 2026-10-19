@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import tempfile
 import threading
 import unittest
@@ -243,6 +244,21 @@ class Check(UpdateCase):
                      expect=self.update.EXIT_UPDATE_AVAILABLE)
         self.assertIn('tessarchy-update', self.state_json()['pending'])
 
+    def test_a_live_medium_is_not_behind_anything(self):
+        # Nothing is installed there yet, so the repository's packages are
+        # installs, not updates: a timer must not report a medium as "behind"
+        # once a day, every day.
+        url = self.repo_server()
+        self.publish(self.all_packages('0.1.0-2'))
+        import io
+        captured = io.StringIO()
+        with contextlib.redirect_stdout(captured):
+            status = self.run_cli('--check', '--repo', url, '--pacman', self.pacman)
+        self.assertEqual(status, self.update.EXIT_UP_TO_DATE)
+        self.assertEqual(self.state_json()['pending'], [])
+        self.assertIn('the repository offers', captured.getvalue())
+        self.assertIn('live medium', captured.getvalue())
+
     def test_a_missing_repository_is_reported_not_crashed(self):
         missing = f'http://127.0.0.1:1/pkgs'
         self.run_cli('--check', '--repo', missing, '--pacman', self.pacman, expect=1)
@@ -343,6 +359,63 @@ class Apply(UpdateCase):
         self.assertFalse(self.state_json()['ok'])
 
 
+class Notifier(UpdateCase):
+    """The desktop notice: it has to be readable, and quiet when told nothing."""
+
+    def notifier(self, check_output: str, check_status: int, notify_exit: int = 0):
+        """Run the real notifier against stubbed tessarchy-update and notify-send."""
+        bindir = self.root / 'bin'
+        (bindir / 'tessarchy-update').write_text(
+            '#!/usr/bin/env bash\ncat <<\'OUT\'\n' + check_output + 'OUT\n'
+            f'exit {check_status}\n')
+        (bindir / 'tessarchy-update').chmod(0o755)
+        notify = bindir / 'notify-send'
+        # One line per invocation, so a multi-line body does not look like two
+        # notifications.
+        notify.write_text('#!/usr/bin/env bash\n'
+                          'printf \'%s\\n\' "$*" | tr \'\\n\' \'|\' >> "$NOTIFY_LOG"\n'
+                          'printf \'\\n\' >> "$NOTIFY_LOG"\n'
+                          f'exit {notify_exit}\n')
+        notify.chmod(0o755)
+        log = self.root / 'notify.log'
+        environment = dict(os.environ, PATH=f'{bindir}:{os.environ["PATH"]}',
+                           NOTIFY_LOG=str(log))
+        result = subprocess.run([str(ROOT / 'session/tessera-update-notify')],
+                                env=environment, capture_output=True, text=True)
+        return result, (log.read_text().splitlines() if log.exists() else [])
+
+    def test_the_summary_is_readable(self):
+        result, calls = self.notifier(
+            'checking somewhere\nupdates available:\n'
+            '  tessera-shell        0.1.0-2 -> 0.1.0-3\n'
+            '  tessarchy-session    0.1.0-2 -> 0.1.0-3\n', 10)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(len(calls), 1)
+        self.assertIn('--app-name=Tessarchy', calls[0])
+        self.assertIn('Tessarchy update available', calls[0])
+        self.assertIn('tessera-shell 0.1.0-2 -> 0.1.0-3, '
+                      'tessarchy-session 0.1.0-2 -> 0.1.0-3', calls[0])
+
+    def test_nothing_new_means_no_notification(self):
+        result, calls = self.notifier('checking somewhere\nTessarchy is up to date.\n', 0)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(calls, [])
+
+    def test_a_failed_check_says_nothing(self):
+        result, calls = self.notifier('tessarchy-update: no route to host\n', 1)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(calls, [])
+
+    def test_a_session_without_a_notification_service_is_not_silent(self):
+        # notify-send is installed but no service owns the bus name: say what
+        # the update was in the journal instead of telling nobody at all.
+        result, _ = self.notifier(
+            'checking somewhere\nupdates available:\n  tessera-shell 1 -> 2\n',
+            10, notify_exit=1)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn('tessera-shell 1 -> 2', result.stderr)
+
+
 class Offline(UpdateCase):
     def test_installs_packages_from_a_folder(self):
         folder = self.root / 'usb'
@@ -353,8 +426,40 @@ class Offline(UpdateCase):
 
         with mock.patch('os.geteuid', return_value=0):
             self.run_cli('--offline', str(folder), '--pacman', self.pacman, expect=0)
+        # Nothing is package-managed here yet, so the files on disk must be
+        # allowed to give way to the packages that own them.
+        self.assertEqual(self.invocations('-U'),
+                         [f'-U --needed --noconfirm --overwrite * {package}'])
+
+    def test_a_machine_that_already_owns_them_gets_no_overwrite(self):
+        folder = self.root / 'usb'
+        folder.mkdir()
+        package = folder / 'tessera-shell-0.2.0-1-any.pkg.tar.zst'
+        package.write_bytes(b'not really a package')
+        self.installed({'tessera-shell': '0.1.0-2'})
+
+        with mock.patch('os.geteuid', return_value=0):
+            self.run_cli('--offline', str(folder), '--pacman', self.pacman, expect=0)
         self.assertEqual(self.invocations('-U'),
                          [f'-U --needed --noconfirm {package}'])
+
+    def test_packages_only_on_a_machine_that_owns_them_gets_no_overwrite(self):
+        self.configure_repo(self.repo_server())
+        self.publish(self.all_packages('0.1.0-3'))
+        self.installed({'tessera-shell': '0.1.0-2'})
+        with mock.patch('os.geteuid', return_value=0):
+            self.run_cli('--apply', '--packages-only', '--force', '--pacman',
+                         self.pacman, expect=0)
+        self.assertEqual(self.invocations('-Sy'),
+                         ['-Sy --needed --noconfirm tessera-shell'])
+
+    def test_adopting_on_a_machine_that_owns_nothing_overwrites(self):
+        self.configure_repo(self.repo_server())
+        self.publish(self.all_packages('0.1.0-2'))
+        with mock.patch('os.geteuid', return_value=0):
+            self.run_cli('--apply', '--packages-only', '--force', '--pacman',
+                         self.pacman, expect=0)
+        self.assertIn('--overwrite *', self.invocations('-Sy')[0])
 
     def test_a_folder_with_no_packages_is_an_error(self):
         folder = self.root / 'empty'

@@ -16,11 +16,15 @@ status=$?
 
 # "updates available:" is followed by "  name  old -> new" rows.
 summary=$(printf '%s\n' "$output" | sed -n '/^updates available:/,$p' | tail -n +2 \
-    | sed 's/^ *//; s/  */ /g' | paste -sd', ' -)
+    | sed 's/^ *//; s/  */ /g' | paste -sd, - | sed 's/,/, /g')
 [[ -n $summary ]] || summary="a newer shell is published"
 
-notify-send --app-name=Tessarchy --urgency=low \
+if ! notify-send --app-name=Tessarchy --urgency=low \
     "Tessarchy update available" \
     "$summary
-Run: sudo tessarchy-update --apply" 2>/dev/null
+Run: sudo tessarchy-update --apply" 2>/dev/null; then
+    # No notification service on this session: leave a line in the journal
+    # rather than telling nobody at all.
+    printf 'tessera-update-notify: %s\n' "$summary" >&2
+fi
 exit 0
