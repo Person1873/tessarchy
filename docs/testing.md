@@ -2,6 +2,9 @@
 
 ## Surface shape theme, 2026-10-19
 
+Branch `feat/theme-shape`, implementation commit `e6e7fee`, draft PR #47:
+https://github.com/thediamondsaint/tessarchy/pull/47 (stacked on #9).
+
 Executed in the running QEMU guest using source based on PR #9 (`a6b357a`)
 and the shape worktree, with the VM's Virtual-1 at 1280×800, scale 1.
 The guest ran Hyprland 0.56.2 and Quickshell 0.3.2. Captures in ignored `vm/`:
