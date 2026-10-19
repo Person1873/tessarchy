@@ -67,9 +67,27 @@ def run(cmd, *, check=True, capture=False):
     return (result.stdout or "") if capture else ""
 
 
-def in_target(*cmd, check=True):
+def in_target(*cmd, check=True, capture=False):
     """Run inside the new root; arch-chroot binds /dev, /proc and /sys."""
-    return run(["arch-chroot", str(MOUNT)] + list(cmd), check=check)
+    return run(["arch-chroot", str(MOUNT)] + list(cmd), check=check, capture=capture)
+
+
+SYSTEMD_UNIT_DIRS = ("etc/systemd/system", "usr/lib/systemd/system", "lib/systemd/system")
+UNIT_SUFFIXES = (".service", ".socket", ".target")
+
+
+def unit_exists(unit: str) -> bool:
+    """Is this systemd unit present in the target at all?
+
+    The live image and the packaged install do not carry the same packages, so
+    an unconditional `systemctl enable` can be a silent no-op. Say what
+    happened instead of claiming a service was enabled.
+    """
+    for directory in SYSTEMD_UNIT_DIRS:
+        for suffix in UNIT_SUFFIXES:
+            if (MOUNT / directory / f"{unit}{suffix}").is_file():
+                return True
+    return False
 
 
 def require_root() -> None:
@@ -245,19 +263,40 @@ def write_boot_loader(firmware: str, disk: str, root_uuid: str) -> None:
     in_target("grub-mkconfig", "-o", "/boot/grub/grub.cfg")
 
 
+def drop_live_only_files() -> None:
+    """Remove text and hooks that only make sense on the live medium.
+
+    The installed copy inherits the airootfs verbatim, including the archiso
+    mkinitcpio hook and a motd that describes a throwaway system. Both are
+    wrong once the same tree lives on a disk.
+    """
+    for stray in (MOUNT / "etc/mkinitcpio.conf.d").glob("archiso*.conf"):
+        stray.unlink()
+    motd = MOUNT / "etc/motd"
+    if motd.is_file() and "live image" in motd.read_text(errors="replace"):
+        motd.unlink()
+
+
 def configure_target(firmware: str, disk: str, root_uuid: str, hostname: str) -> None:
     # The live image boots off an ISO; an installed system needs an ordinary
     # initramfs built from its own configuration.
-    for stray in (MOUNT / "etc/mkinitcpio.conf.d").glob("archiso*.conf"):
-        stray.unlink()
+    drop_live_only_files()
     (MOUNT / "etc/hostname").write_text(f"{hostname}\n")
     (MOUNT / "etc/fstab").write_text(run(["genfstab", "-U", str(MOUNT)], capture=True))
 
     stage_kernel()
     in_target("mkinitcpio", "-P")
-    in_target("systemctl", "enable", "NetworkManager")
-    in_target("systemctl", "enable", "bluetooth", check=False)
-    in_target("systemctl", "enable", "greetd", check=False)
+    for unit in ("NetworkManager", "bluetooth", "greetd"):
+        if not unit_exists(unit):
+            # The ISO ships no greetd, so an installed system starts its
+            # session from the same tty1 autologin the live medium uses.
+            print(f"Note    : {unit} is not in this image; nothing to enable")
+            continue
+        # check=False keeps a late failure from abandoning an otherwise
+        # complete install; the resulting state is printed either way.
+        in_target("systemctl", "enable", unit, check=False)
+        state = in_target("systemctl", "is-enabled", unit, check=False, capture=True).strip()
+        print(f"Enable  : {unit} ({state or 'no state reported'})")
     write_boot_loader(firmware, disk, root_uuid)
 
 

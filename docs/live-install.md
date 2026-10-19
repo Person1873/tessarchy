@@ -55,10 +55,15 @@ The tool then:
    the installed system would otherwise have no kernel to build an initramfs
    around.
 4. Generates `fstab`, writes the hostname, drops the live image's archiso
-   initramfs hook and rebuilds a normal initramfs.
+   initramfs hook and its live-only motd, then rebuilds a normal initramfs.
+   The copy is the live tree verbatim, so anything that only describes a
+   throwaway system has to be removed deliberately.
 5. Installs the bootloader: systemd-boot with a `Tessarchy` entry on UEFI,
    GRUB on legacy BIOS.
-6. Enables NetworkManager, Bluetooth and the greeter.
+6. Enables NetworkManager and Bluetooth. The greeter is enabled only when the
+   image ships `greetd`; the current ISO does not, so an installed system
+   starts its session from the same tty1 autologin as the live medium. What
+   you tested is what you get.
 
 The confirmation prompt repeats the target path; `--yes` skips it for scripted
 installs.

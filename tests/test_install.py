@@ -165,12 +165,78 @@ class InstallOrder(unittest.TestCase):
                     mock.patch.object(installer, 'run', return_value=''), \
                     mock.patch.object(installer, 'stage_kernel',
                                       side_effect=lambda: calls.append('kernel')), \
+                    mock.patch.object(installer, 'unit_exists', return_value=True), \
                     mock.patch.object(installer, 'in_target',
-                                      side_effect=lambda *a, **k: calls.append(a[0])):
+                                      side_effect=lambda *a, **k: calls.append(a[0]) or ''):
                 installer.configure_target('bios', '/dev/vda', 'UUID', 'tessarchy')
         self.assertIn('kernel', calls)
         self.assertIn('mkinitcpio', calls)
         self.assertLess(calls.index('kernel'), calls.index('mkinitcpio'))
+
+
+class LiveOnlyFiles(unittest.TestCase):
+    """The live medium's own text and hooks must not survive the copy."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.installer = load_installer()
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        (self.root / 'etc/mkinitcpio.conf.d').mkdir(parents=True)
+
+    def test_the_archiso_hook_and_the_live_motd_are_removed(self):
+        (self.root / 'etc/mkinitcpio.conf.d/archiso.conf').write_text('HOOKS=(archiso)\n')
+        (self.root / 'etc/motd').write_text('Tessarchy live image. Nothing is saved.\n')
+        with mock.patch.object(self.installer, 'MOUNT', self.root):
+            self.installer.drop_live_only_files()
+        self.assertFalse((self.root / 'etc/mkinitcpio.conf.d/archiso.conf').exists())
+        self.assertFalse((self.root / 'etc/motd').exists())
+
+    def test_an_unrelated_motd_is_kept(self):
+        (self.root / 'etc/motd').write_text('Welcome to the build server.\n')
+        with mock.patch.object(self.installer, 'MOUNT', self.root):
+            self.installer.drop_live_only_files()
+        self.assertTrue((self.root / 'etc/motd').exists())
+
+
+class UnitEnablement(unittest.TestCase):
+    """Only claim to enable services the target actually carries."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.installer = load_installer()
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        units = self.root / 'usr/lib/systemd/system'
+        units.mkdir(parents=True)
+        for unit in ('NetworkManager', 'bluetooth'):
+            (units / f'{unit}.service').write_text('')
+
+    def test_a_unit_file_in_the_target_is_found(self):
+        with mock.patch.object(self.installer, 'MOUNT', self.root):
+            self.assertTrue(self.installer.unit_exists('NetworkManager'))
+            self.assertFalse(self.installer.unit_exists('greetd'))
+
+    def test_the_image_does_not_enable_a_unit_it_does_not_ship(self):
+        installer = self.installer
+        enabled = []
+        (self.root / 'etc').mkdir()
+        with mock.patch.object(installer, 'MOUNT', self.root), \
+                mock.patch.object(installer, 'run', return_value=''), \
+                mock.patch.object(installer, 'stage_kernel'), \
+                mock.patch.object(installer, 'in_target',
+                                  side_effect=lambda *a, **k: (
+                                      enabled.append(a[2]) if a[:2] == ('systemctl', 'enable') else None) or ''):
+            installer.configure_target('bios', '/dev/vda', 'UUID', 'tessarchy')
+        self.assertIn('NetworkManager', enabled)
+        self.assertIn('bluetooth', enabled)
+        self.assertNotIn('greetd', enabled)
 
 
 if __name__ == '__main__':
