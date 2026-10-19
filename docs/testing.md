@@ -1982,3 +1982,10 @@ metadata exposed unchanged shell/session package revisions despite their changed
 content; bumped those package revisions so installed systems detect this update.
 The full final local check rerun passed, and fresh-session real swipe-up and
 mouse double-click each closed one app immediately.
+
+Verified the revised public shell/session 0.1.0-3 archives contain the exact
+current AppSwitcher.qml and hyprland.lua. The development guest's read-only
+`tessarchy-update --check` reported both upgrades from 0.1.0-2 and exited 10 as
+expected; no system upgrade was applied. The 38 updater tests passed. Arch CI
+caught the tablet bundle's old, pinned package filenames after the revision bump;
+updated the bundle list and tablet installation examples to the new revisions.
