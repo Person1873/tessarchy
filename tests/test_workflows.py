@@ -997,8 +997,13 @@ esac
         result = subprocess.run(command, env=env, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         profile = repo / 'build/iso-profile'
-        self.assertEqual((profile / 'efiboot/loader/entries/arch.conf').read_text(),
-                         'retained boot asset')
+        # Staging deliberately replaces releng's boot menus with Tessarchy's.
+        self.assertFalse((profile / 'efiboot/loader/entries/arch.conf').exists())
+        self.assertIn('Tessarchy',
+                      (profile / 'efiboot/loader/entries/01-tessarchy-linux.conf').read_text())
+        self.assertIn('Tessarchy', (profile / 'syslinux/archiso_head.cfg').read_text())
+        self.assertTrue((profile / 'syslinux/tessarchy-menu.png').is_file())
+        self.assertIn('tessarchy', (profile / 'grub/loopback.cfg').read_text())
         self.assertEqual((profile / 'airootfs/etc/passwd').read_text(),
                          'root:x:0:0:root:/root:/usr/bin/bash\n')
         self.assertIn('/usr/bin/zsh', (base / 'airootfs/etc/passwd').read_text())

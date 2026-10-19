@@ -1,16 +1,29 @@
 
+[1;36m
+              ▄▄▄▄▄▄▄▄
+            ▄█▀▀▀▀▀▀▀▀█▄
+           █▀▀▀▀▀▀▀▀▀▀▀▀█▄
+           █            ▀█▄
+           █  ▄▄▄▄▄▄▄▄  █ ▀▄
+           █▄█▀▀▀▀▀▀▀▀█▄█   █
+            █          █    █
+            █          █   █
+             █▄▄▄▄▄▄▄▄█  █
+               ▀▀▀▀▀▀▀▀▀▀
+[0m[1;36m      T E S S A R C H Y[0m   [2;36mquiet edge · live image[0m
+
   Tessarchy live image. Nothing is written to the medium: this system runs
   from RAM and every change is gone at reboot.
 
-  A graphical session starts automatically on tty1 (live user "tess",
-  password login disabled). Exit Tessera to return to this console and run
-  start-tessarchy to launch it again. Root rescue login remains available
-  on this console after the session exits.
+  The Tessera session starts automatically on tty1 as the live user "tess"
+  (password login disabled). Exit the session to come back to this console
+  and run start-tessarchy to launch it again. Root rescue login is available
+  here once the session has exited.
 
   To copy this running system onto an internal disk:
 
-      sudo tessarchy-install --check            # will this machine run it?
-      sudo tessarchy-install --list             # candidate disks
+      sudo tessarchy-install --check             will this machine run it?
+      sudo tessarchy-install --list              candidate disks
       sudo tessarchy-install --disk /dev/nvme0n1
 
   Everything on the chosen disk is erased. See

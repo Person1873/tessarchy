@@ -16,6 +16,14 @@ entry = Sprite();
 frame = 0;
 mode = "normal";
 
+# The clip assembles the mark, holds it, then fades it out in its last frames.
+# Playing to the end and stopping there leaves the screen empty (just the dark
+# background and the cursor) for the rest of the boot, which reads as a failed
+# splash. Hold the settled frame instead: logo-rest.png is exported by
+# scripts/export-boot-assets.py as the brightest frame of the clip, and
+# test_boot.py asserts the two stay in step.
+REST_FRAME = 120;
+
 fun center_text(sprite, text, y)
 {
     image = Image.Text(text, 0.78, 0.86, 0.89, 1, "DejaVu Sans 11");
@@ -25,10 +33,17 @@ fun center_text(sprite, text, y)
 
 fun refresh()
 {
-    if (mode == "normal" && frame < 159)
+    if (mode != "normal") return;
+    if (frame < REST_FRAME)
     {
         global.frame++;
         logo.SetImage(Image("logo-" + frame + ".png").Scale(size, size));
+        return;
+    }
+    if (frame == REST_FRAME)
+    {
+        global.frame++;
+        logo.SetImage(Image("logo-rest.png").Scale(size, size));
     }
 }
 

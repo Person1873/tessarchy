@@ -17,8 +17,8 @@ cat >> "$profile/profiledef.sh" <<'PROFILE'
 # Tessarchy overrides: stock releng boot placeholders and install_dir retained.
 iso_name="tessarchy"
 iso_label="TESSARCHY_$(date +%Y%m)"
-iso_publisher="Tessarchy prototype"
-iso_application="Tessarchy live development session"
+iso_publisher="Tessarchy"
+iso_application="Tessarchy live image"
 iso_version="0.1.0-$(date +%Y%m%d)"
 arch="x86_64"
 kernel_params_x86_64="quiet splash loglevel=3 systemd.show_status=false"
@@ -42,6 +42,24 @@ file_permissions+=(
   ["/usr/bin/tessera-rotate"]="0:0:755"
 )
 PROFILE
+# Replace releng's Arch-branded boot menus with Tessarchy's. Anything NOT
+# overridden here is copied from releng and ships as Arch branding — which is
+# how "Arch Linux install medium", Arch's menu splash and the HDT entry kept
+# reaching the medium. The override tree mirrors the profile layout
+# (syslinux/, grub/, efiboot/), and its files keep the %INSTALL_DIR% / %ARCH%
+# / %ARCHISO_UUID% / %KERNEL_PARAMS% tokens mkarchiso substitutes.
+rm -f "$profile"/syslinux/archiso_head.cfg \
+      "$profile"/syslinux/archiso_sys.cfg \
+      "$profile"/syslinux/archiso_sys-linux.cfg \
+      "$profile"/syslinux/archiso_tail.cfg \
+      "$profile"/syslinux/archiso_pxe-linux.cfg \
+      "$profile"/syslinux/splash.png \
+      "$profile"/syslinux/hdt.c32
+rm -rf -- "$profile/syslinux/hdt"
+rm -f "$profile"/grub/loopback.cfg \
+      "$profile"/efiboot/loader/loader.conf
+find "$profile/efiboot/loader/entries" -name '*.conf' -delete
+cp -a -- "$root/iso/boot/." "$profile/"
 airoot=$profile/airootfs
 mkdir -p "$airoot/usr/share/tessarchy/session" "$airoot/usr/bin" "$airoot/usr/share/wayland-sessions"
 cp -R -- "$root/shell" "$airoot/usr/share/tessarchy/"
@@ -92,6 +110,6 @@ ln -sf /usr/lib/systemd/system/bluetooth.service "$airoot/etc/systemd/system/mul
 ln -sf /usr/lib/systemd/system/systemd-timesyncd.service "$airoot/etc/systemd/system/multi-user.target.wants/"
 ln -sf /usr/lib/systemd/system/ModemManager.service "$airoot/etc/systemd/system/multi-user.target.wants/"
 ln -sf /run/NetworkManager/resolv.conf "$airoot/etc/resolv.conf"
-printf 'Tessarchy live prototype. tty1: tess autologin; no password login.\n' > "$airoot/etc/issue"
+printf '\n  \033[1;36mTESSARCHY\033[0m live image — nothing is saved, and the Tessera session starts on tty1 as "tess".\n  Copy it onto a disk with \033[1;36mtessarchy-install\033[0m. Root rescue login stays on this console.\n\n' > "$airoot/etc/issue"
 echo "Profile staged: $profile"
 echo "Review it, then run ./scripts/build-iso.sh"
