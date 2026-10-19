@@ -1,5 +1,38 @@
 # Validation and manual acceptance
 
+## PR #12 rebase onto upstream AppSwitcher (2026-10-19)
+
+Actually performed in a separate worktree: `./scripts/check.sh` passed:
+`Ran 105 tests in 18.670s`, `OK (skipped=1)`, Qt
+`Totals: 49 passed, 0 failed, 0 skipped, 0 blacklisted, 2066ms`,
+and Hyprland `config ok`. `/usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml`
+on changed QML exited 0 (PanelWindow/margins metadata warnings also appear
+in upstream shell.qml; the new swipe transform produces a layout-positioning
+warning). The Lua fake-Hyprland split test was ported to the
+current config and covers pair creation, maximize exemption, ratio, swap,
+new-app isolation, dialog preservation, close cleanup, and unsplit.
+
+Upstream's AppSwitcher already has live `ScreencopyView` previews, full-width
+titles, glyph return/close controls, and default-off dock labels; these are
+not duplicated. Its QuickSettings already has glyph navigation/radio/volume/
+screenshot controls. This branch adds a tablet-only Split action, a split
+divider, swipe-to-request-close on previews (capture source dropped first,
+150 ms delay, then the normal **confirmation** screen), and side-by-side
+glyph confirmation actions. Carousel scrolling remains available from the
+title and gaps; preview swipes are reserved for close. Colours added reuse
+the exact existing upstream values; no Theme singleton exists in this main.
+
+**Not yet re-verified after rebase:** No QEMU guest used for this rebase.
+In the guest, check split pairing and divider touch drag/double-tap/swap/
+unsplit at tablet portrait and landscape sizes, newly opened app isolation,
+closing one partner, split restore after shell restart, and OSK overlap.
+Check short/long preview swipes, confirmation Cancel/Close including an app
+with unsaved work, rapid close with live preview (watch Wayland invalid-object
+errors), carousel scrolling from title/gaps, keyboard Alt-Tab and screen
+reader names. Check narrow phone confirmation layout and hardware touch.
+Earlier guest checks from the pre-rebase branch do **not** validate this UI.
+
+
 ## Actually performed, 2026-10-16
 
 Environment: Omarchy/Arch, Hyprland 0.56.2-2, Quickshell 0.3.1-1,
