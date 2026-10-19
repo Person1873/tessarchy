@@ -1619,7 +1619,7 @@ physical display remains pending.
 
 ## System theme, 2026-10-17
 
-Actually performed by an agent (Hermes, for person1873) in the development QEMU
+Actually performed by an agent in the development QEMU
 guest (720x1440, Hyprland 0.56.2, Quickshell 0.3.2, squeekboard, foot 1.28.0):
 
 - `tessarchy-theme apply` staged Tessera; shell icons and colours rendered as before.
