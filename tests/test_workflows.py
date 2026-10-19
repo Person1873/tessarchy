@@ -768,6 +768,7 @@ local function get(sel)
 end
 local function action(kind) return function(a) a = a or {}; a.kind = kind; return a end end
 local next_ws = 7
+local rules = {}
 local function run(a)
     table.insert(actions, a)
     local w = get(a.window)
@@ -786,6 +787,10 @@ local function run(a)
 end
 hl = {
     layer_rule = function() end,
+    workspace_rule = function(spec)
+        rules[spec.workspace] = { spec = spec, on = false }
+        return { set_enabled = function(_, on) rules[spec.workspace].on = on end }
+    end,
     monitor = function() end, config = function() end, bind = function() end,
     on = function(name, callback) callbacks[name] = callback end,
     dispatch = run,
@@ -805,6 +810,7 @@ tessarchy.split("address:0xa", "address:0xb")
 assert(a.tags[1] == "split" and b.tags[1] == "split" and #c.tags == 0)
 assert(a.fullscreen == 0 and b.fullscreen == 0)
 assert(a.workspace.id == 7 and b.workspace.id == 7 and active == a)
+assert(rules["7"].on and rules["7"].spec.gaps_in == 24 and rules["7"].spec.no_rounding, "split gap rule")
 b.at = { x = 0, y = 624 }
 actions = {}; callbacks["window.active"](b)
 assert(#actions == 0, "split focus must not maximize")
@@ -813,6 +819,10 @@ assert(#actions == 1 and actions[1].kind == "resize" and actions[1].window == "a
 assert(actions[1].x == 800 and actions[1].y == 288)
 actions = {}; tessarchy.ratio(0.05)
 assert(actions[1].y == 230, "ratio clamps to 20%")
+b.at = { x = 0, y = 672 }
+actions = {}; tessarchy.ratio(0.25)
+assert(actions[1].y == 276, "gap midpoint sits at the ratio")
+b.at = { x = 0, y = 624 }
 actions = {}; tessarchy.swap()
 assert(actions[#actions].kind == "layout" and actions[#actions].msg == "swapsplit")
 local d = win("0xd", 48); d.workspace = { id = 7 }; d.fullscreen = 0
@@ -823,6 +833,7 @@ callbacks["window.open"](e)
 assert(e.workspace.id == 7, "dialog stays with pair")
 actions = {}; callbacks["window.close"](b)
 assert(#a.tags == 0 and a.fullscreen == 1, "partner unsplit after close")
+assert(not rules["7"].on, "gap rule dropped after close")
 tessarchy.split("address:0xa", "address:0xc")
 c.at = { x = 400, y = 48 }
 active = c; tessarchy.unsplit()

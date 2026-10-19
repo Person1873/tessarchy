@@ -85,8 +85,20 @@ local function split_windows(workspace)
     end)
     return found
 end
+-- Split workspaces leave a gap the divider's width (2 x gaps_in = 48) so the
+-- bar never covers app content, and square corners so edge text isn't clipped.
+local split_rules = {}
+local function split_layout(workspace, on)
+    local key = tostring(workspace)
+    if not split_rules[key] then
+        if not on then return end
+        split_rules[key] = hl.workspace_rule({ workspace = key, gaps_in = 24, no_rounding = true })
+    end
+    split_rules[key]:set_enabled(on)
+end
 local function untag(window)
     hl.dispatch(hl.dsp.window.tag({ window = "address:" .. window.address, tag = "-split" }))
+    if window.workspace then split_layout(window.workspace.id, false) end
 end
 tessarchy = tessarchy or {}
 function tessarchy.split(a, b)
@@ -104,6 +116,7 @@ function tessarchy.split(a, b)
     end
     hl.dispatch(hl.dsp.window.move({ window = a, workspace = "emptynm" }))
     local workspace = hl.get_window(a).workspace.id
+    split_layout(workspace, true)
     hl.dispatch(hl.dsp.window.move({ window = b, workspace = tostring(workspace) }))
     local pair = split_windows(workspace)
     if #pair == 2 and pair[1].address ~= first.address then
@@ -119,12 +132,15 @@ function tessarchy.ratio(ratio)
     ratio = math.max(0.2, math.min(0.8, tonumber(ratio) or 0.5))
     local first, second = pair[1], pair[2]
     local sel = "address:" .. first.address
+    -- Place the gap's midpoint, not the first window's edge, at the ratio.
     if first.at.x ~= second.at.x then
         local total = second.at.x + second.size.x - first.at.x
-        hl.dispatch(hl.dsp.window.resize({ window = sel, x = math.floor(total * ratio), y = first.size.y }))
+        local gap = second.at.x - first.at.x - first.size.x
+        hl.dispatch(hl.dsp.window.resize({ window = sel, x = math.floor(total * ratio - gap / 2), y = first.size.y }))
     else
         local total = second.at.y + second.size.y - first.at.y
-        hl.dispatch(hl.dsp.window.resize({ window = sel, x = first.size.x, y = math.floor(total * ratio) }))
+        local gap = second.at.y - first.at.y - first.size.y
+        hl.dispatch(hl.dsp.window.resize({ window = sel, x = first.size.x, y = math.floor(total * ratio - gap / 2) }))
     end
 end
 function tessarchy.swap()

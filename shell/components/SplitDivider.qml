@@ -38,7 +38,8 @@ PanelWindow {
     readonly property int pairY: active ? pair[0].at[1] - originY : 0
     readonly property int pairW: active ? (sideBySide ? pair[1].at[0] + pair[1].size[0] - pair[0].at[0] : pair[0].size[0]) : 1
     readonly property int pairH: active ? (sideBySide ? pair[0].size[1] : pair[1].at[1] + pair[1].size[1] - pair[0].at[1]) : 1
-    readonly property int boundary: active ? (sideBySide ? pair[0].size[0] : pair[0].size[1]) : 0
+    // Midpoint of the gap between the two apps.
+    readonly property int boundary: active ? Math.round(sideBySide ? (pair[0].size[0] + pair[1].at[0] - pair[0].at[0]) / 2 : (pair[0].size[1] + pair[1].at[1] - pair[0].at[1]) / 2) : 0
     property bool dragging: false
     property real dragRatio: 0.5
     // Touch keeps reporting positions relative to where the bar was pressed,
@@ -90,7 +91,9 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        color: "transparent"
+        // Opaque so the home screen's clock never shows through the gap
+        // (upstream status bar tint).
+        color: "#101b30"
         Rectangle {
             anchors.centerIn: parent
             width: divider.sideBySide ? 6 : parent.width
