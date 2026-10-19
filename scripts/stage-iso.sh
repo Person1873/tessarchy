@@ -75,6 +75,13 @@ install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$ro
 install -m755 "$root/session/tessarchy-update" "$root/session/tessera-update-notify" "$airoot/usr/bin/"
 install -m644 "$root/session/tessarchy.desktop" "$airoot/usr/share/wayland-sessions/"
 cp -a "$root/iso/airootfs/." "$airoot/"
+# A mirror, a lab or a CI job can point the medium — and every machine installed
+# from it — at another repository, without editing a tracked file:
+#   TESSARCHY_REPO_URL=http://mirror.test/pkgs ./scripts/stage-iso.sh
+if [[ -n ${TESSARCHY_REPO_URL:-} ]]; then
+    sed -i "s|^Server = .*|Server = ${TESSARCHY_REPO_URL%/}/\$arch|" \
+        "$airoot/etc/pacman.d/tessarchy.conf"
+fi
 # Convert the supplied clip for initramfs playback; no video decoder runs at boot.
 theme=$airoot/usr/share/plymouth/themes/tessarchy
 python3 "$root/scripts/export-boot-assets.py" --output "$theme"

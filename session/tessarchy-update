@@ -123,17 +123,35 @@ def installed_versions(pacman: str = PACMAN) -> dict:
 
 
 # ------------------------------------------------------------------ repository
+def configured_repo_base() -> str:
+    """What this machine is set up to update from, ignoring the environment.
+
+    pacman only ever reads this (through /etc/pacman.d/tessarchy.conf), so it is
+    the answer to 'what will an install actually use'.
+    """
+    if REPO_CONF.is_file():
+        for line in REPO_CONF.read_text().splitlines():
+            match = re.match(r"\s*Server\s*=\s*(\S+)", line)
+            if match:
+                value = match.group(1).replace("$arch", arch()).rstrip("/")
+                suffix = "/" + arch()
+                return value[: -len(suffix)] if value.endswith(suffix) else value
+    return DEFAULT_REPO
+
+
 def repo_url(explicit: str | None = None) -> str:
     if explicit:
         return explicit.rstrip("/")
     if os.environ.get("TESSARCHY_UPDATE_REPO"):
         return os.environ["TESSARCHY_UPDATE_REPO"].rstrip("/")
-    if REPO_CONF.is_file():
-        for line in REPO_CONF.read_text().splitlines():
-            match = re.match(r"\s*Server\s*=\s*(\S+)", line)
-            if match:
-                return match.group(1).replace("$arch", arch()).rstrip("/")
-    return f"{DEFAULT_REPO}/{arch()}"
+    return f"{configured_repo_base()}/{arch()}"
+
+
+def repo_base(url: str | None = None) -> str:
+    """The repository URL without its architecture, as pacman's Server spells it."""
+    resolved = repo_url(url)
+    suffix = "/" + arch()
+    return resolved[: -len(suffix)] if resolved.endswith(suffix) else resolved
 
 
 def fetch_repo_info(url: str, timeout: float = 20.0) -> dict:
@@ -296,6 +314,19 @@ def command_apply(args) -> int:
         print("tessarchy-update: --apply installs packages; run it with sudo",
               file=sys.stderr)
         return 1
+    # pacman is what installs, and pacman reads the machine's own repository
+    # configuration. Checking another source is fine; installing from one that
+    # this machine is not set up for would silently do something else, so say so
+    # instead of pretending --repo was honoured.
+    if args.repo or os.environ.get("TESSARCHY_UPDATE_REPO"):
+        requested = args.repo or os.environ["TESSARCHY_UPDATE_REPO"]
+        wanted, configured = repo_base(requested), configured_repo_base()
+        if wanted != configured:
+            print(f"tessarchy-update: this machine updates from {configured}/$arch,\n"
+                  f"  not {wanted}/$arch. Run\n"
+                  f"    sudo tessarchy-update --enable-repo --repo {wanted}\n"
+                  f"  first, then update again.", file=sys.stderr)
+            return 1
     installed = installed_versions(args.pacman)
     try:
         available = fetch_repo_info(repo_url(args.repo), args.timeout)

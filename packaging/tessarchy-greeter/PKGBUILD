@@ -4,7 +4,11 @@ pkgrel=1
 pkgdesc='Tessarchy phone-style greetd PIN sign-in'
 arch=('any')
 license=('MIT')
-depends=('tessarchy-session=0.1.0' 'greetd' 'hyprland>=0.56')
+depends=('tessarchy-session=0.1.0' 'hyprland>=0.56')
+# greetd is what runs this greeter as a login manager. The medium starts the
+# session from tty1 instead and does not ship greetd, so depending on it would
+# make this package uninstallable on the very system it was built for.
+optdepends=('greetd: run the PIN sign-in as the login manager')
 backup=('etc/greetd/tessarchy.toml' 'etc/tessarchy/login-user')
 source=("tessarchy-$pkgver.tar.gz")
 sha256sums=('SKIP')

@@ -43,6 +43,7 @@ network-manager-applet
 networkmanager
 noto-fonts
 noto-fonts-emoji
+pacman
 papers
 parted
 pipewire
@@ -54,6 +55,8 @@ polkit
 power-profiles-daemon
 python
 python-gobject
+qt6-declarative
+qt6-wayland
 quickshell
 rsync
 rtkit

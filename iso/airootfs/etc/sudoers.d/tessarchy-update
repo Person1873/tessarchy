@@ -1,8 +1,17 @@
 # Updating an installed Tessarchy runs pacman, so it needs root. Checking does
-# not: `tessarchy-update --check` is unprivileged and is what the daily timer and
-# the notification use.
+# not: `tessarchy-update --check` is unprivileged, and that is what the daily
+# timer and the desktop notice use.
 #
-# Uncomment the line below to let the live user (and a shell button) install an
-# update without a password prompt:
+# A machine installed from this medium is a single-user device and its user has
+# no password to type, so without one grant it could never install an update.
+# The line below is the whole update path as the shell and the documentation
+# use it: it installs the project's own packages from the configured
+# repository, and nothing else. It cannot be used to change where updates come
+# from (that is --enable-repo, which asks for a password) or to install anything
+# outside the repository.
+tess ALL=(root) NOPASSWD: /usr/bin/tessarchy-update --apply --packages-only
 #
-# tess ALL=(root) NOPASSWD: /usr/bin/tessarchy-update --apply --packages-only
+# A full system upgrade (`tessarchy-update --apply`) installs packages the
+# project does not own, so it deliberately still asks for a password:
+#
+# tess ALL=(root) NOPASSWD: /usr/bin/tessarchy-update --apply

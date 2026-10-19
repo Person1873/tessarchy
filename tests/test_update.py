@@ -12,6 +12,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import tempfile
 import threading
 import unittest
@@ -121,6 +122,28 @@ class UpdateCase(unittest.TestCase):
             self.assertEqual(status, expect)
         return status
 
+    def configure_repo(self, url):
+        """Point this machine's own repository configuration at url.
+
+        --apply installs through pacman, which reads /etc/pacman.d/tessarchy.conf,
+        so a test that installs has to configure the machine the way an installed
+        one is configured by its medium.
+        """
+        conf = self.root / 'etc/tessarchy.conf'
+        conf.parent.mkdir(parents=True, exist_ok=True)
+        conf.write_text('[tessarchy]\nSigLevel = Optional TrustAll\n'
+                        f'Server = {url}/$arch\n')
+        patcher = mock.patch.object(self.update, 'REPO_CONF', conf)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return conf
+
+    def repo_server(self):
+        server, url = serve(self.repo)
+        self.addCleanup(server.shutdown)
+        self.configure_repo(url)
+        return url
+
     def recorded(self) -> list:
         return [line for line in self.log.read_text().splitlines() if line.strip()]
 
@@ -192,8 +215,7 @@ class RepositoryUrl(UpdateCase):
 
 class Check(UpdateCase):
     def test_reports_what_is_newer_and_exits_ten(self):
-        server, url = serve(self.repo)
-        self.addCleanup(server.shutdown)
+        url = self.repo_server()
         self.publish({'tessera-shell': '0.2.0-1', 'tessarchy-session': '0.1.0-2'})
         self.installed({'tessera-shell': '0.1.0-2', 'tessarchy-session': '0.1.0-2'})
 
@@ -204,8 +226,7 @@ class Check(UpdateCase):
         self.assertEqual(self.state_json()['repo_version'], '9.9.9')
 
     def test_says_up_to_date_without_state_noise(self):
-        server, url = serve(self.repo)
-        self.addCleanup(server.shutdown)
+        url = self.repo_server()
         self.publish(self.all_packages('0.1.0-2'))
         self.installed(self.all_packages('0.1.0-2'))
 
@@ -214,8 +235,7 @@ class Check(UpdateCase):
         self.assertEqual(self.state_json()['pending'], [])
 
     def test_a_package_that_is_not_installed_yet_counts_as_an_update(self):
-        server, url = serve(self.repo)
-        self.addCleanup(server.shutdown)
+        url = self.repo_server()
         self.publish(self.all_packages('0.1.0-2'))
         self.installed({'tessera-shell': '0.1.0-2'})
 
@@ -231,13 +251,11 @@ class Check(UpdateCase):
 
     def test_a_page_that_is_not_a_repo_info_is_rejected(self):
         (self.repo / 'repo-info.json').write_text('<html>hello</html>')
-        server, url = serve(self.repo)
-        self.addCleanup(server.shutdown)
+        url = self.repo_server()
         self.run_cli('--check', '--repo', url, '--pacman', self.pacman, expect=1)
 
     def test_quiet_check_says_nothing(self):
-        server, url = serve(self.repo)
-        self.addCleanup(server.shutdown)
+        url = self.repo_server()
         self.publish(self.all_packages('0.1.0-2'))
         self.installed(self.all_packages('0.1.0-2'))
         import io
@@ -258,8 +276,7 @@ class Apply(UpdateCase):
     def test_default_apply_upgrades_the_whole_system(self):
         # Tessarchy packages depend on the base system, so updating only them
         # would be a partial upgrade; the default has to be a full one.
-        server, url = serve(self.repo)
-        self.addCleanup(server.shutdown)
+        url = self.repo_server()
         self.publish(self.all_packages('0.2.0-1'))
         self.installed(self.all_packages('0.1.0-2'))
         self.environment['PACMAN_UPGRADE_TO'] = '0.2.0-1'
@@ -271,8 +288,7 @@ class Apply(UpdateCase):
         self.assertEqual(self.state_json()['pending'], [])
 
     def test_packages_only_passes_the_pending_names(self):
-        server, url = serve(self.repo)
-        self.addCleanup(server.shutdown)
+        url = self.repo_server()
         self.publish({'tessera-shell': '0.2.0-1', 'tessarchy-session': '0.1.0-2'})
         self.installed({'tessera-shell': '0.1.0-2', 'tessarchy-session': '0.1.0-2'})
 
@@ -288,8 +304,7 @@ class Apply(UpdateCase):
         self.assertEqual(self.invocations('-Syu', '-Sy', '-U'), [])
 
     def test_dry_run_does_not_invoke_pacman(self):
-        server, url = serve(self.repo)
-        self.addCleanup(server.shutdown)
+        url = self.repo_server()
         self.publish(self.all_packages('0.2.0-1'))
         self.installed(self.all_packages('0.1.0-2'))
 
@@ -298,9 +313,24 @@ class Apply(UpdateCase):
         self.assertEqual(self.invocations('-Syu', '-Sy', '-U'), [])
         self.assertFalse(self.flag.exists())
 
+    def test_refuses_to_install_at_another_source(self):
+        # pacman installs from this machine's configuration, so an --apply that
+        # names a different repository would quietly do something else.
+        url = self.repo_server()
+        self.publish(self.all_packages('0.2.0-1'))
+        self.installed(self.all_packages('0.1.0-2'))
+        import io
+        errors = io.StringIO()
+        with mock.patch('os.geteuid', return_value=0), \
+                contextlib.redirect_stderr(errors):
+            status = self.run_cli('--apply', '--repo', 'https://elsewhere.test/pkgs',
+                                  '--pacman', self.pacman)
+        self.assertEqual(status, 1)
+        self.assertIn('--enable-repo', errors.getvalue())
+        self.assertEqual(self.invocations('-Syu', '-Sy', '-U'), [])
+
     def test_a_failing_pacman_is_reported(self):
-        server, url = serve(self.repo)
-        self.addCleanup(server.shutdown)
+        url = self.repo_server()
         self.publish(self.all_packages('0.2.0-1'))
         self.installed(self.all_packages('0.1.0-2'))
         failing = self.root / 'bin/pacman'
@@ -422,6 +452,43 @@ class MediumIntegration(unittest.TestCase):
                       (skel / 'tessarchy-update-notify.service').read_text())
         self.assertIn('WantedBy=timers.target',
                       (skel / 'tessarchy-update-notify.timer').read_text())
+
+    def test_the_medium_lets_its_own_user_install_tessarchy_packages(self):
+        # A machine installed from this medium is a single-user device and its
+        # user has no password to type, so without exactly this grant an
+        # installed machine could never apply an update at all.
+        sudoers = (ROOT / 'iso/airootfs/etc/sudoers.d/tessarchy-update').read_text()
+        grants = [line.strip() for line in sudoers.splitlines()
+                  if line.strip() and not line.strip().startswith('#')]
+        self.assertEqual(
+            grants,
+            ['tess ALL=(root) NOPASSWD: /usr/bin/tessarchy-update --apply --packages-only'])
+        # Changing where updates come from is a separate, password-protected
+        # step, and a full system upgrade still asks for a password.
+        self.assertNotIn('--enable-repo', grants[0])
+        self.assertNotIn('NOPASSWD: /usr/bin/tessarchy-update --apply$',
+                         '\n'.join(grants))
+
+    def test_the_medium_carries_what_its_packages_depend_on(self):
+        # A medium whose own packages cannot be installed is useless: pacman
+        # refuses the whole transaction when one dependency is missing, and that
+        # is exactly what the first install of this feature did
+        # (tessarchy-greeter depended on greetd, which the medium deliberately
+        # does not ship because the session starts from tty1 instead).
+        shipped = set((ROOT / 'iso/packages.x86_64').read_text().split())
+        ours = {path.parent.name for path in (ROOT / 'packaging').glob('*/PKGBUILD')}
+        for pkgbuild in sorted((ROOT / 'packaging').glob('*/PKGBUILD')):
+            declared = re.search(r"^depends=\((.*?)\)", pkgbuild.read_text(), re.S | re.M)
+            if not declared:
+                continue
+            for entry in re.findall(r"'([^']+)'", declared.group(1)):
+                base = re.split(r'[<>=]', entry)[0]
+                if base in ours:
+                    continue
+                with self.subTest(package=pkgbuild.parent.name, dependency=entry):
+                    self.assertIn(base, shipped,
+                                  f'{pkgbuild.parent.name} needs {entry}, which the '
+                                  f'medium does not install')
 
     def test_package_list_matches_what_is_shipped(self):
         update = load_update()

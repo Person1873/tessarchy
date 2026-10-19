@@ -1040,6 +1040,16 @@ esac
             self.assertIn('Include = /etc/pacman.d/tessarchy.conf', staged_pacman)
             self.assertIn('[core]', staged_pacman)
             self.assertEqual(staged_pacman.count('Include = /etc/pacman.d/tessarchy.conf'), 1)
+        # A mirror build points the medium (and the machines installed from it)
+        # at another repository without editing a tracked file.
+        shutil.rmtree(repo / 'build', ignore_errors=True)
+        mirror = subprocess.run(command, env=dict(env, TESSARCHY_REPO_URL='http://mirror.test/pkgs/'),
+                                capture_output=True, text=True)
+        self.assertEqual(mirror.returncode, 0, mirror.stdout + mirror.stderr)
+        staged_conf = (profile / 'airootfs/etc/pacman.d/tessarchy.conf').read_text()
+        self.assertIn('Server = http://mirror.test/pkgs/$arch', staged_conf)
+        self.assertNotIn('thediamondsaint', staged_conf)
+        self.assertNotIn('http://mirror.test/pkgs/$arch/$arch', staged_conf)
 
         self.assertNotIn('unused-rescue-tool', (profile / 'packages.x86_64').read_text())
         self.assertIn('linux-firmware', (profile / 'packages.x86_64').read_text().splitlines())

@@ -83,6 +83,13 @@ TESSARCHY_UPDATE_REPO=http://192.168.1.10:8000/pkgs/x86_64 tessarchy-update
 
 ## Known gaps
 
+- **A full system upgrade still asks for a password.** The medium grants its
+  own user exactly one thing without a password —
+  `/usr/bin/tessarchy-update --apply --packages-only` — because an installed
+  Tessarchy has a single user with no password to type, and without that grant
+  it could never install an update at all. `--apply` (the whole base system) and
+  `--enable-repo` (changing where updates come from) both still require one.
+  See `iso/airootfs/etc/sudoers.d/tessarchy-update`.
 - **The repository is not signed.** `SigLevel = Optional TrustAll` means the
   packages are trusted because they arrive over HTTPS from the project's own
   site. Signing the database with a project key is the next step; until then a
@@ -93,3 +100,19 @@ TESSARCHY_UPDATE_REPO=http://192.168.1.10:8000/pkgs/x86_64 tessarchy-update
 - **No shell button yet.** `tessarchy-update --check --json` and
   `/var/lib/tessarchy/update-state.json` are already there for the shell to
   read; the UI is not wired up.
+
+## Building an image for your own mirror
+
+`stage-iso.sh` takes the repository URL from
+`iso/airootfs/etc/pacman.d/tessarchy.conf`, and can point elsewhere without
+editing it:
+
+```
+TESSARCHY_REPO_URL=http://mirror.test/pkgs ./scripts/stage-iso.sh
+```
+
+Every machine installed from that medium then updates from that mirror.
+`--repo` / `TESSARCHY_UPDATE_REPO` override the *check* anywhere, but an
+*install* uses what the machine is configured for — `--apply` refuses a source
+the machine is not set up for and tells you to run `--enable-repo` first.
+

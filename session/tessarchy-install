@@ -335,9 +335,12 @@ def adopt_medium_packages() -> None:
     if result.returncode != 0:
         # Not fatal: the copied system still boots, it just is not tracked by
         # pacman yet, and the user can install the packages later by hand.
-        detail = (result.stderr or result.stdout or "").strip().splitlines()
         print(f"Warning : installing the medium's packages failed "
-              f"({result.returncode}): {detail[-1] if detail else 'no output'}")
+              f"({result.returncode}) — this install is not package-managed, so "
+              f"tessarchy-update will need `--enable-repo` first")
+        for line in (result.stderr or result.stdout or "").splitlines()[:5]:
+            if line.strip():
+                print(f"          {line.strip()}")
         return
     installed = in_target("pacman", "-Q", *[p.name.split("-")[0] for p in packages],
                           check=False, capture=True)
