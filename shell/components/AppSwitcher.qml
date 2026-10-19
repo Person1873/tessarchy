@@ -5,25 +5,35 @@ import "../SwitcherPolicy.js" as SwitcherPolicy
 import Quickshell
 import Quickshell.Wayland
 
+// Phone app switcher: a horizontal stack of full-height app previews.
+// Cards are bare screenshots on rounded glass — no borders, no title rows and
+// no action buttons. Tap a card to bring that app forward, swipe up to close it
+// (the card flies off the top), swipe sideways to move through the stack.
+// Keyboard stepping stays available for hardware keyboards.
 FocusScope {
     id: control
     property var windows: []
     property color accentColor: "#a9e8d5"
     property bool reducedMotion: false
     property bool fillApp: false
-    // Launcher label differs by layout: touch has a Home button, desktop has a
-    // Start menu.
-    property string emptyHint: "Your open apps will appear here.\nTap Home to launch your first."
+    property string emptyHint: "No open apps"
     property var pendingTarget: null
     property var selection: null
     property var activateTarget: target => target.activate()
     readonly property int currentIndex: cards.currentIndex
+    /// Screen the apps are running on; keeps card previews at the real aspect
+    /// so nothing is letterboxed inside a taller card.
+    property var screenSize: Qt.size(400, 800)
+    readonly property real aspect: screenSize.height > 0 ? screenSize.width / screenSize.height : 0.5
+    /// Every card keeps the same footprint so the stack looks even.
+    readonly property real cardWidth: Math.min(Math.max(180, width - 72), 320)
+    readonly property real cardHeight: Math.min(height, cardWidth / Math.max(0.2, aspect))
     signal activated
     signal dismissed
     signal closeRequested(var target)
 
     function selectActive() {
-        cards.currentIndex = SwitcherPolicy.activeIndex(windows);
+        cards.currentIndex = Math.max(0, SwitcherPolicy.activeIndex(windows));
         selection = windows[cards.currentIndex] || null;
     }
     function step(direction) {
@@ -74,140 +84,175 @@ FocusScope {
     Keys.onEnterPressed: activateCurrent()
     Keys.onEscapePressed: dismissed()
 
-    ColumnLayout {
+    ListView {
+        id: cards
         anchors.fill: parent
-        spacing: 12
-        ListView {
-            id: cards
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            // Keep the requested app stable while the floating dock expands.
-            onWidthChanged: Qt.callLater(() => { if (control.selection && !moving) currentIndex = control.windows.indexOf(control.selection); })
-            onMovementEnded: control.selection = control.windows[currentIndex] || null
-            orientation: ListView.Horizontal
-            model: control.windows
-            spacing: 16
-            clip: true
-            snapMode: ListView.SnapOneItem
-            highlightRangeMode: ListView.StrictlyEnforceRange
-            preferredHighlightBegin: (width - Math.min(width * 0.82, 340)) / 2
-            preferredHighlightEnd: preferredHighlightBegin
-            highlightMoveDuration: control.reducedMotion ? 0 : 180
-            boundsBehavior: Flickable.StopAtBounds
-            delegate: Item {
-                id: card
-                required property var modelData
-                required property int index
-                readonly property var handle: modelData.wayland
-                readonly property var entry: handle ? DesktopEntries.heuristicLookup(handle.appId) : null
-                width: Math.min(cards.width * 0.82, 340)
-                height: cards.height
-                scale: ListView.isCurrentItem ? 1 : 0.94
-                Behavior on scale { NumberAnimation { duration: control.reducedMotion ? 0 : 180 } }
-                ColumnLayout {
+        // Keep the requested app stable while the sheet resizes underneath it.
+        onWidthChanged: Qt.callLater(() => { if (control.selection && !moving) currentIndex = control.windows.indexOf(control.selection); })
+        onMovementEnded: control.selection = control.windows[currentIndex] || null
+        orientation: ListView.Horizontal
+        model: control.windows
+        spacing: 10
+        clip: true
+        snapMode: ListView.SnapOneItem
+        highlightRangeMode: ListView.StrictlyEnforceRange
+        preferredHighlightBegin: (width - control.cardWidth) / 2
+        preferredHighlightEnd: preferredHighlightBegin
+        highlightMoveDuration: control.reducedMotion ? 0 : 180
+        boundsBehavior: Flickable.StopAtBounds
+        delegate: Item {
+            id: card
+            required property var modelData
+            required property int index
+            readonly property var handle: modelData.wayland
+            // Dismissal state lives on the delegate so the fly-off animation
+            // outlives the model entry it belongs to.
+            property bool closing: false
+            readonly property real sourceAspect: (preview.sourceSize.height > 0)
+                ? preview.sourceSize.width / preview.sourceSize.height : control.aspect
+            readonly property real cardHeight: Math.min(cards.height,
+                control.cardWidth / Math.max(0.2, sourceAspect))
+            width: control.cardWidth
+            height: cards.height
+            scale: ListView.isCurrentItem ? 1 : 0.93
+            opacity: closing ? 0 : ListView.isCurrentItem ? 1 : 0.7
+            transformOrigin: Item.Center
+            Behavior on scale { NumberAnimation { duration: control.reducedMotion ? 0 : 160 } }
+            Behavior on opacity { NumberAnimation { duration: control.reducedMotion ? 0 : 160 } }
+            Behavior on y {
+                enabled: !dismissDrag.active
+                NumberAnimation { duration: control.reducedMotion ? 0 : 220; easing.type: Easing.OutCubic }
+            }
+
+            Rectangle {
+                id: screen
+                width: control.cardWidth
+                height: card.cardHeight
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+                radius: 24
+                clip: true
+                color: "#0d1622"
+                ScreencopyView {
+                    id: preview
                     anchors.fill: parent
-                    spacing: 10
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Rectangle {
-                            Layout.preferredWidth: 32; Layout.preferredHeight: 32; radius: 10
-                            color: Qt.alpha(control.accentColor, 0.16)
-                            Image { anchors.centerIn: parent; width: 22; height: 22; source: card.entry && card.entry.icon ? Quickshell.iconPath(card.entry.icon) : "../artwork/tessarchy-mark.svg"; sourceSize.width: 22; sourceSize.height: 22 }
-                        }
-                        Text {
-                            Layout.fillWidth: true
-                            text: card.entry ? card.entry.name : card.handle ? card.handle.appId : "Application"
-                            color: "#edf5fa"; font.pixelSize: 13; elide: Text.ElideRight
-                        }
-                    }
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        radius: 20
-                        color: "#4018283d"
-                        border.color: card.ListView.isCurrentItem ? Qt.alpha(control.accentColor, 0.65) : "#34465e"
-                        Item {
-                            anchors.fill: parent
-                            anchors.margins: 8
-                            clip: true
-                            ScreencopyView {
-                                id: preview
-                                anchors.fill: parent
-                                captureSource: control.visible ? card.handle : null
-                                live: control.visible
-                                paintCursor: false
-                                constraintSize: Qt.size(width, height)
-                            }
-                            Column {
-                                visible: !preview.hasContent
-                                anchors.centerIn: parent
-                                width: parent.width - 24
-                                spacing: 14
-                                Image { anchors.horizontalCenter: parent.horizontalCenter; source: "../artwork/tessarchy-mark.svg"; width: 48; height: 48 }
-                                Text { width: parent.width; text: card.modelData.title || "Untitled window"; color: "#edf5fa"; wrapMode: Text.WrapAnywhere; horizontalAlignment: Text.AlignHCenter }
-                                Text { width: parent.width; text: "Preview unavailable"; color: "#a7bbca"; horizontalAlignment: Text.AlignHCenter; font.pixelSize: 12 }
-                            }
-                            // Taps select; horizontal drags are stolen by the ListView.
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: { cards.currentIndex = card.index; control.selection = card.modelData; control.activateCurrent(); }
-                                Accessible.name: "Switch to " + (card.modelData.title || "Untitled window")
-                                Accessible.role: Accessible.Button
-                            }
-                        }
+                    captureSource: control.visible && !card.closing ? card.handle : null
+                    live: control.visible
+                    paintCursor: false
+                }
+                // Unavailable previews fall back to the window title on the same
+                // card, with no extra frame around it.
+                Column {
+                    visible: !preview.hasContent
+                    anchors.centerIn: parent
+                    width: parent.width - 40
+                    spacing: 12
+                    Image {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        source: "../artwork/tessarchy-mark.svg"
+                        width: 44
+                        height: 44
                     }
                     Text {
-                        Layout.fillWidth: true
+                        width: parent.width
                         text: card.modelData.title || "Untitled window"
-                        color: "#edf5fa"; font.pixelSize: 14; elide: Text.ElideRight
+                        color: "#f2f8ff"
+                        wrapMode: Text.WrapAnywhere
                         horizontalAlignment: Text.AlignHCenter
+                        font.pixelSize: 13
                     }
                 }
             }
-            Text {
-                visible: cards.count === 0
-                anchors.centerIn: parent
-                width: parent.width - 32
-                text: control.emptyHint
-                color: "#b7c7cc"
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.WordWrap
+
+            // Mouse exits: a small close target in the card's top-right corner.
+            // Swipe-up still works for touch.
+            Rectangle {
+                id: closeButton
+                width: 26
+                height: 26
+                radius: 13
+                z: 2
+                anchors.top: screen.top
+                anchors.right: screen.right
+                anchors.topMargin: 8
+                anchors.rightMargin: 8
+                color: closeArea.pressed ? "#e6dfe9f6" : closeArea.containsMouse ? "#c2162334" : "#8c0d1622"
+                border.width: 1
+                border.color: closeArea.containsMouse ? "#9fd8ff" : "#4d6b86"
+                Text {
+                    anchors.centerIn: parent
+                    text: "\u00d7"
+                    color: closeArea.containsMouse ? "#0d1622" : "#eaf4ff"
+                    font.pixelSize: 16
+                    font.bold: true
+                }
+                MouseArea {
+                    id: closeArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    Accessible.name: "Close " + (card.modelData.title || "window")
+                    Accessible.role: Accessible.Button
+                    onClicked: {
+                        if (card.closing) return;
+                        card.closing = true;
+                        card.y = -card.height;
+                        control.closeRequested(card.handle);
+                    }
+                }
             }
-        }
-        Row {
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 6
-            Repeater {
-                model: Math.min(cards.count, 9)
-                Rectangle {
-                    required property int index
-                    width: 5; height: 5; radius: 3
-                    color: index === cards.currentIndex ? control.accentColor : "#668fa6b6"
+
+            MouseArea {
+                anchors.fill: screen
+                // Taps pick the app; the vertical DragHandler below steals the
+                // gesture when the finger travels up.
+                onClicked: {
+                    cards.currentIndex = card.index;
+                    control.selection = card.modelData;
+                    control.activateCurrent();
+                }
+                Accessible.name: "Switch to " + (card.modelData.title || "Untitled window")
+                Accessible.role: Accessible.Button
+            }
+
+            DragHandler {
+                id: dismissDrag
+                target: null
+                xAxis.enabled: false
+                yAxis.minimum: 0
+                dragThreshold: 8
+                grabPermissions: PointerHandler.CanTakeOverFromAnything
+                // Distance travelled upward; read on release to decide.
+                property real travel: 0
+                onActiveChanged: {
+                    if (active) {
+                        travel = 0;
+                        return;
+                    }
+                    if (card.closing) return;
+                    if (travel > 72) {
+                        card.closing = true;
+                        card.y = -card.height;
+                        control.closeRequested(card.handle);
+                    } else {
+                        card.y = 0;
+                    }
+                }
+                onActiveTranslationChanged: {
+                    if (!active || card.closing) return;
+                    travel = activeTranslation.y;
+                    card.y = Math.max(0, travel);
                 }
             }
         }
-        RowLayout {
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 16
-            TouchButton {
-                id: returnButton
-                text: "Return to app"
-                implicitWidth: 56
-                enabled: !!(control.windows[cards.currentIndex] && control.windows[cards.currentIndex].wayland)
-                accentColor: control.accentColor
-                background: Rectangle { radius: 28; color: returnButton.down ? "#66a9e8d5" : "#351c2c43"; border.color: "#409dbbad" }
-                contentItem: Image { source: "../icons/return.svg"; sourceSize.width: 22; sourceSize.height: 22; fillMode: Image.Pad; opacity: parent.enabled ? 1 : 0.35 }
-                onClicked: control.activateCurrent()
-            }
-            TouchButton {
-                id: closeButton
-                text: "Close window…"
-                implicitWidth: 56
-                enabled: !!(control.windows[cards.currentIndex] && control.windows[cards.currentIndex].wayland)
-                background: Rectangle { radius: 28; color: closeButton.down ? "#66a9e8d5" : "#351c2c43"; border.color: "#409dbbad" }
-                contentItem: Image { source: "../icons/close.svg"; sourceSize.width: 22; sourceSize.height: 22; fillMode: Image.Pad; opacity: parent.enabled ? 1 : 0.35 }
-                onClicked: control.closeRequested(control.windows[cards.currentIndex].wayland)
-            }
+        Text {
+            visible: cards.count === 0
+            anchors.centerIn: parent
+            width: parent.width - 48
+            text: control.emptyHint
+            color: "#dfeaf4"
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
         }
     }
 }

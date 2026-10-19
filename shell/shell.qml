@@ -77,7 +77,7 @@ ShellRoot {
         property bool reducedMotion: false
         property bool showLabels: false
         property bool use24Hour: true
-        property real barOpacity: 0.22
+        property real barOpacity: 0.44
         property real wallpaperDim: 0.12
         property bool doNotDisturb: false
         // "windowed" opens desktop windows floating and sized; "tiled" restores
@@ -236,8 +236,8 @@ ShellRoot {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottomMargin: panel.expanded || surface.mode === "desktop" ? 0 : 12
                     width: panel.expanded ? expandedContent.width : parent.width
-                    radius: panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
-                    color: panel.expanded ? (panel.page === "windows" ? "#b3101b30" : "#c2101b30") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
+                    radius: panel.expanded && panel.page === "windows" ? 0 : panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
+                    color: panel.expanded ? (panel.page === "windows" ? "#8c070d16" : "#e20f1c2e") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
                     border.width: 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
                 }
@@ -332,6 +332,10 @@ ShellRoot {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             windows: Hyprland.toplevels.values
+                            // Apps fill the area between the status bar and the dock.
+                            // Screencopy excludes the reserved top strip, so the capture is one
+                            // status-bar height shorter than the window itself.
+                            screenSize: Qt.size(surface.modelData.width, Math.max(1, surface.modelData.height - surface.navHeight - 96))
                             fillApp: surface.mode !== "desktop"
                             emptyHint: surface.mode === "desktop"
                                 ? "Your open apps will appear here.\nOpen one from the Start menu."
@@ -341,9 +345,10 @@ ShellRoot {
                             activateTarget: target => root.activateHandle(target)
                             onActivated: panel.page = ""
                             onDismissed: panel.page = ""
+                            // Swipe-up and the card's × dismiss the app at once;
+                            // the confirm page stays for the settings action.
                             onCloseRequested: target => {
-                                panel.closeTarget = target;
-                                panel.page = "close";
+                                if (target) target.close();
                             }
                         }
                         ScrollView {
@@ -876,7 +881,7 @@ ShellRoot {
                     anchors.fill: parent
                     radius: statusBar.drawerOpen ? 28 : 0
                     visible: surface.mode !== "desktop" || statusBar.drawerOpen
-                    color: Qt.rgba(0.063, 0.106, 0.188, statusBar.drawerOpen ? 0.76 : shellPreferences.barOpacity)
+                    color: Qt.rgba(0.063, 0.106, 0.188, statusBar.drawerOpen ? 0.92 : shellPreferences.barOpacity)
                     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.alpha(root.accentColor, 0.1) }
                 }
                 WlrLayershell.namespace: "tessera-status"
@@ -908,7 +913,7 @@ ShellRoot {
                     anchors.fill: parent
                     anchors.leftMargin: surface.mode === "desktop" ? 0 : 18
                     anchors.rightMargin: surface.mode === "desktop" ? 0 : 8
-                    spacing: surface.modelData.width < 360 ? 4 : 8
+                    spacing: surface.mode === "phone" ? 4 : surface.modelData.width < 360 ? 4 : 8
                     TouchButton {
                         id: mobileClock
                         visible: surface.mode !== "desktop"
@@ -936,12 +941,7 @@ ShellRoot {
                         Accessible.name: statusBar.drawerOpen ? "Collapse quick controls" : "Open quick controls, or swipe down"
                         padding: 0
                         background: Item {}
-                        contentItem: Column {
-                            spacing: 4
-                            topPadding: 15
-                            Rectangle { anchors.horizontalCenter: parent.horizontalCenter; width: 28; height: 3; radius: 2; color: root.accentColor }
-                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: statusBar.drawerOpen ? "⌃" : "⌄"; color: root.accentColor; font.pixelSize: 14 }
-                        }
+                        contentItem: Item { }
                         onClicked: statusBar.toggleDrawer()
                     }
                     WeatherChip {
@@ -954,6 +954,7 @@ ShellRoot {
                     // mode; the mobile strip keeps them along the top edge.
                     StatusIndicators {
                         visible: surface.mode !== "desktop"
+                        compact: surface.mode === "phone"
                         accentColor: root.accentColor
                         notificationCount: root.notificationCount
                         cellularStrength: root.cellularStrength
@@ -969,6 +970,7 @@ ShellRoot {
                         showVolume: surface.modelData.width >= 700
                         showSettings: surface.modelData.width >= 560
                         onNotificationsRequested: panel.showPage("notifications")
+                        onPanelRequested: statusBar.toggleDrawer()
                         onMuteToggled: root.audioSink.audio.muted = !root.audioSink.audio.muted
                         onSettingsRequested: { statusBar.drawerOpen = false; panel.showPage("settings"); }
                     }

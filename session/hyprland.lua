@@ -3,10 +3,6 @@
 local session = debug.getinfo(1, "S").source:sub(2):match("^(.*)/[^/]+$")
 local data = os.getenv("TESSARCHY_DATA_DIR") or session:match("^(.*)/session$")
 TessarchyWindows = dofile(session .. "/window-controls.lua")
-local bars = data .. "/plugins/hyprbars.so"
-local barsFile = io.open(bars, "r")
-if barsFile then barsFile:close(); hl.plugin.load(bars) end
-TessarchyWindows.configure_bars()
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
 hl.config({
     general = { gaps_in = 0, gaps_out = 0, border_size = 0, layout = "dwindle",
@@ -43,6 +39,25 @@ local function shell_mode(monitor)
     if math.min(width, height) < 600 then return "phone" end
     if width >= 1100 and height >= 650 then return "desktop" end
     return "tablet"
+end
+-- Title bars are desktop chrome. Phone and tablet apps fill the screen with no
+-- decorations, so the plugin is loaded only for the desktop layout.
+local function desktop_layout(monitor)
+    return monitor ~= nil and shell_mode(monitor) == "desktop"
+end
+local startMonitor = hl.get_active_monitor and hl.get_active_monitor() or nil
+if not startMonitor and hl.get_monitors then
+    local monitors = hl.get_monitors()
+    startMonitor = monitors and monitors[1] or nil
+end
+local bars = data .. "/plugins/hyprbars.so"
+local barsFile = io.open(bars, "r")
+if barsFile and desktop_layout(startMonitor) then
+    barsFile:close()
+    hl.plugin.load(bars)
+    TessarchyWindows.configure_bars()
+elseif barsFile then
+    barsFile:close()
 end
 -- Desktop window style, chosen in Settings: "windowed" floats ordinary windows
 -- at a conventional size, anything else leaves the dwindle tiling in place.
@@ -105,6 +120,21 @@ hl.on("window.open", function(window)
     end
     maximize_if_mobile(window)
     fit_dialog(window)
+end)
+-- Re-fit existing windows when the display size changes (rotation, dock, or a
+-- manual mode switch). Windows opened at a larger resolution keep that
+-- geometry otherwise: a 960px-wide window stays 960px on a 400px phone and
+-- hangs off-screen.
+hl.on("monitor.layout_changed", function(monitor)
+    for _, window in ipairs(hl.get_windows()) do
+        if not monitor or window.monitor == monitor then
+            if window.floating then
+                fit_dialog(window)
+            else
+                maximize_if_mobile(window)
+            end
+        end
+    end
 end)
 hl.on("window.active", maximize_if_mobile)
 hl.on("hyprland.start", function ()

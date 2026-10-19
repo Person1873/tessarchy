@@ -8,25 +8,40 @@ Item {
     // Negative means no backend/device; bind a real signal value here later.
     property real strength: -1
     property bool uniform: false
-    Layout.preferredWidth: 18
-    Layout.preferredHeight: 20
-    Accessible.name: label + (strength < 0 ? " unavailable" : " connected")
+    // Mobile strip shows a steady medium signal when no radio backend reports
+    // a real value, instead of a crossed-out glyph.
+    property bool showFallback: false
+    property int fallbackLevel: 2
+    signal clicked
+    readonly property bool reported: strength >= 0
+    readonly property bool fallback: !reported && showFallback
+    Layout.preferredWidth: uniform ? 28 : 18
+    Layout.preferredHeight: 48
+    Accessible.name: label + (reported || fallback ? " connected" : " unavailable")
+    Accessible.role: Accessible.Button
     Image {
         anchors.centerIn: parent
-        width: 18
-        height: 18
-        source: "../icons/" + indicator.symbol + ".svg"
-        sourceSize.width: 18
-        sourceSize.height: 18
-        opacity: indicator.uniform || indicator.strength >= 0 ? 1 : 0.35
+        width: indicator.uniform ? 20 : 18
+        height: width
+        source: indicator.fallback
+            ? "../icons/" + indicator.symbol + "-" + indicator.fallbackLevel + ".svg"
+            : "../icons/" + indicator.symbol + ".svg"
+        sourceSize.width: indicator.uniform ? 20 : 18
+        sourceSize.height: indicator.uniform ? 20 : 18
+        opacity: indicator.uniform || indicator.reported || indicator.fallback ? 1 : 0.35
     }
     Rectangle {
-        visible: indicator.strength < 0
+        visible: !indicator.reported && !indicator.fallback
         anchors.centerIn: parent
         width: 22
         height: 1.5
         radius: 1
         rotation: -45
         color: indicator.uniform ? "#d0f3e9" : "#879caa"
+    }
+    MouseArea {
+        anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
+        onClicked: indicator.clicked()
     }
 }

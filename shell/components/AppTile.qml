@@ -7,7 +7,7 @@ TouchButton {
     required property string symbol
     Layout.fillWidth: true
     Layout.preferredWidth: 1
-    implicitHeight: 116
+    implicitHeight: 96
     contentItem: Item {
         Column {
             anchors.centerIn: parent
@@ -15,18 +15,17 @@ TouchButton {
             spacing: 12
             Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: 56
-                height: 56
-                radius: 18
+                width: 52
+                height: 52
+                radius: 16
                 rotation: 0
                 color: Qt.alpha(control.accentColor, control.selected ? 0.4 : 0.18)
-                border.color: Qt.alpha(control.accentColor, 0.3)
                 Image {
                     anchors.centerIn: parent
                     rotation: 0
                     source: control.iconSource || "../icons/" + control.symbol + ".svg"
-                    sourceSize.width: 28
-                    sourceSize.height: 28
+                    sourceSize.width: 24
+                    sourceSize.height: 24
                 }
             }
             Text {
@@ -36,7 +35,7 @@ TouchButton {
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 color: "#f0f5ff"
-                font.pixelSize: 16
+                font.pixelSize: 13
             }
         }
     }
