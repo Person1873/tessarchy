@@ -41,7 +41,9 @@ ShellRoot {
                 check(switcher.currentIndex === 1, "active app selection");
                 const cards = Array.from(switcher.children).find(child => child.objectName === "appSwitcherCards");
                 check(cards.objectName === "appSwitcherCards", "card view");
-                check(cards.itemAtIndex(0).width < switcher.cardWidth, "overlapping cards");
+                const left = cards.itemAtIndex(0).mapToItem(switcher, 0, 0).x;
+                const front = cards.itemAtIndex(1).mapToItem(switcher, 0, 0).x;
+                check(front > left && front - left < switcher.cardWidth, "overlapping cards");
                 check(cards.itemAtIndex(1).z > cards.itemAtIndex(0).z, "selected card in front");
                 for (const size of [[320, 480], [400, 680], [430, 800]]) {
                     window.implicitWidth = size[0];
@@ -56,6 +58,8 @@ ShellRoot {
                 check(switcher.selection === windows[2], "retain app after removal");
                 switcher.windows = [windows[0]];
                 check(switcher.selection === windows[0], "replace vanished selection");
+                check(cards.contentWidth >= switcher.cardWidth, "last card full pointer area");
+                check(cards.itemAtIndex(0).width >= switcher.cardWidth, "last card delegate spans preview");
                 switcher.windows = [];
                 check(switcher.selection === null, "empty state");
                 switcher.windows = windows;

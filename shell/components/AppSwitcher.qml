@@ -104,8 +104,9 @@ FocusScope {
         }
         orientation: ListView.Horizontal
         model: control.windows
-        spacing: control.phoneMode ? 0 : 10
+        spacing: control.phoneMode ? -control.cardWidth * 0.76 : 10
         cacheBuffer: control.phoneMode ? control.cardWidth * 3 : 0
+        contentWidth: count ? (count - 1) * (control.cardWidth + spacing) + control.cardWidth : 0
         clip: true
         snapMode: ListView.SnapOneItem
         highlightRangeMode: ListView.StrictlyEnforceRange
@@ -122,18 +123,36 @@ FocusScope {
             readonly property real distance: Math.abs(position)
             transform: Translate {
                 x: control.phoneMode && card.position < 0
-                    ? card.distance * card.width - control.cardWidth * (card.distance <= 1 ? card.distance * 0.12 : 0.12 + (card.distance - 1) * 0.06)
+                    ? card.distance * (card.width + cards.spacing) - control.cardWidth * (card.distance <= 1 ? card.distance * 0.12 : 0.12 + (card.distance - 1) * 0.06)
                     : 0
             }
             z: control.phoneMode ? 100 - distance : 0
             // Dismissal state lives on the delegate so the fly-off animation
             // outlives the model entry it belongs to.
             property bool closing: false
+            function activateCard() {
+                if (!control.visible || closing || control.windows.indexOf(modelData) < 0) return;
+                cards.currentIndex = index;
+                control.selection = modelData;
+                control.activateCurrent();
+            }
+            function closeCard() {
+                if (closing || !handle || control.windows.indexOf(modelData) < 0) return;
+                singleClick.stop();
+                closing = true;
+                y = -height;
+                control.closeRequested(handle);
+            }
+            Timer {
+                id: singleClick
+                interval: Application.styleHints.mouseDoubleClickInterval
+                onTriggered: card.activateCard()
+            }
             readonly property real sourceAspect: (preview.sourceSize.height > 0)
                 ? preview.sourceSize.width / preview.sourceSize.height : control.aspect
             readonly property real cardHeight: control.phoneMode ? control.cardHeight : Math.min(cards.height,
                 control.cardWidth / Math.max(0.2, sourceAspect))
-            width: control.phoneMode ? control.cardWidth * 0.24 : control.cardWidth
+            width: control.cardWidth
             height: cards.height
             scale: control.phoneMode ? 1 - Math.min(2, distance) * 0.035 : ListView.isCurrentItem ? 1 : 0.93
             opacity: closing ? 0 : control.phoneMode ? (distance > 2.5 ? 0 : 1 - Math.min(2, distance) * 0.12) : ListView.isCurrentItem ? 1 : 0.7
@@ -145,7 +164,12 @@ FocusScope {
                 NumberAnimation { duration: control.reducedMotion ? 0 : 220; easing.type: Easing.OutCubic }
             }
 
+            Connections {
+                target: cards
+                function onDraggingChanged() { if (cards.dragging) singleClick.stop(); }
+            }
             onVisibleChanged: {
+                singleClick.stop();
                 if (visible) { closing = false; y = 0; }
             }
             Row {
@@ -247,22 +271,20 @@ FocusScope {
                     Accessible.name: "Close " + (card.modelData.title || "window")
                     Accessible.role: Accessible.Button
                     onClicked: {
-                        if (card.closing) return;
-                        card.closing = true;
-                        card.y = -card.height;
-                        control.closeRequested(card.handle);
+                        card.closeCard();
                     }
                 }
             }
 
             MouseArea {
                 anchors.fill: screen
-                // Taps pick the app; the vertical DragHandler below steals the
-                // gesture when the finger travels up.
-                onClicked: {
-                    cards.currentIndex = card.index;
-                    control.selection = card.modelData;
-                    control.activateCurrent();
+                // Mouse activation waits for the double-click interval; touch taps activate immediately.
+                onClicked: mouse => {
+                    if (mouse.source === Qt.MouseEventNotSynthesized) singleClick.restart();
+                    else card.activateCard();
+                }
+                onDoubleClicked: mouse => {
+                    if (mouse.source === Qt.MouseEventNotSynthesized) card.closeCard();
                 }
                 Accessible.name: "Switch to " + (card.modelData.title || "Untitled window")
                 Accessible.role: Accessible.Button
@@ -280,14 +302,13 @@ FocusScope {
                 property real travel: 0
                 onActiveChanged: {
                     if (active) {
+                        singleClick.stop();
                         travel = 0;
                         return;
                     }
                     if (card.closing) return;
                     if (travel > 72) {
-                        card.closing = true;
-                        card.y = -card.height;
-                        control.closeRequested(card.handle);
+                        card.closeCard();
                     } else {
                         card.y = 0;
                     }

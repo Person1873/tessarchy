@@ -358,11 +358,7 @@ ShellRoot {
                             activateTarget: target => root.activateHandle(target)
                             onActivated: panel.page = ""
                             onDismissed: panel.page = ""
-                            onCloseRequested: target => {
-                                if (!target) return;
-                                panel.closeTarget = target;
-                                panel.page = "close";
-                            }
+                            onCloseRequested: target => { if (target) target.close(); }
                         }
                         ScrollView {
                             visible: panel.page !== "windows"
@@ -540,6 +536,7 @@ ShellRoot {
                         }
                     }
                     GridLayout {
+                        layer.enabled: panel.page === "windows"
                         visible: surface.mode !== "desktop"
                         Layout.fillWidth: true
                         Layout.fillHeight: false

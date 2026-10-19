@@ -1743,9 +1743,15 @@ installer/update changes were not modified.
 Phone Recents now uses overlapping rounded live previews, app icon/name headers
 and a blurred wallpaper backdrop. The selected app stays stable during layout
 and window-model changes. The shell passes the compositor's active window because
-Wayland activation flags may be false while the shell is being used. Upward
-swipes request the existing close confirmation; Cancel retains the app. Closing
-the final app shows the empty state. Tablet retains its spaced carousel and
+Wayland activation flags may be false while the shell is being used. Per the
+owner's follow-up, upward swipes and mouse double-clicks close the app immediately
+and keep Recents open. A touch tap activates immediately; a single mouse click
+waits for the system double-click interval before activating. Pending mouse
+activation is cancelled when the card hides or a swipe begins. Each delegate
+and the list content span the full preview so the final card accepts clicks
+across its width. The navigation dock uses its own render layer in Recents so
+rounded preview clipping does not suppress its icons. Closing the final app
+shows the empty state. Tablet retains its spaced carousel and
 Desktop retains its icon switcher.
 
 Ordinary phone windows use independent full-size floating surfaces, tagged for
@@ -1775,9 +1781,13 @@ errors. No ISO was built or booted for this change.
   portrait reference's aspect ratio. Apps fill 390×720 between the status bar
   and dock. Real touch swipes and card activation were checked at this size.
 - Genuine QMP touch swipes navigated the stack and a card tap activated the
-  selected app. Upward swipe, cancellation and confirmed closure worked. Closed
-  all three disposable apps one at a time; the final closure showed the empty
-  state. Reopened three apps for the final preview and left the VM running.
+  selected app. The initial confirmation flow was superseded by the owner's
+  immediate-close request. Actual mouse double-click closed Calculator and
+  upward touch swipe closed Files without a dialog or leaving Recents. Single
+  mouse click and touch tap still activated apps. Double-clicking the last Foot
+  card reached the empty state directly. Reopened three apps for the final
+  preview and left the VM running. Direct-close evidence is in the local
+  `direct-close-results.txt` and `direct-close-empty.png`.
 - Removed the temporary diagnostic IPC before the final capture. Screenshots
   under `build/phone-session/` show the real guest. The final 390×844 capture
   uses guest Grim; QEMU's PPM dump showed row-stride corruption at that width.
