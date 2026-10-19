@@ -1661,3 +1661,29 @@ have the same five buttons plus the optional Keyboard. Executed by an agent in
 the QEMU VM (Tablet, 1280x800, keyboard enabled): the dock shows Phone,
 Messages, Keyboard, Back, Home and Recents in one row. `./scripts/check.sh`
 passed (105 Python tests, 1 skipped; 51 Qt Quick tests).
+
+## Navigation gestures (T21) — 2026-10-19
+
+Phone and Tablet default to gesture navigation; Settings → Navigation →
+Buttons restores Back, Home and Recents in the dock. Desktop is unchanged.
+Hyprland's own `gesture` bindings are touchpad-only, so the shell catches
+touch swipes on thin layer-shell strips: a full-width bottom strip covering the
+gap below the dock (Phone 20 px, Tablet 24 px; it never covers a dock button)
+and 16 px left/right strips between the status bar and the dock. A touch that
+starts in a strip does not reach the application below it. Thresholds live in
+`LayoutPolicy.js`: 48 px travel, Recents after a 350 ms hold.
+
+Executed by an agent in the QEMU VM (1280x800, theme tessera) with real kernel
+touch events from `scripts/guest-touch.py` (uinput, through libinput and
+Hyprland; not a hardware touchscreen). Phone, Gestures: the dock showed Phone,
+Messages and Keyboard with the handle pill; swipe up from the bottom edge
+opened Home; swipe up and hold opened Recents; a right-edge swipe closed
+Recents; a left-edge swipe closed Home and the pull-down drawer; a 30 px swipe
+did nothing; tapping Phone in the dock still opened the Phone page. Settings →
+Buttons (tapped) switched the dock live to Phone, Messages, Keyboard, Back,
+Home, Recents, removed the gesture layers, persisted `navigation=buttons`, and
+the same bottom swipe then did nothing. Tablet, Gestures: Home, Recents and
+both Back swipes behaved the same. Rotation, multiple outputs and a hardware
+touchscreen were not tested. `./scripts/check.sh` passed (106 Python tests,
+1 skipped; 64 Qt Quick tests, including press/move/release sequences on the
+gesture strip).

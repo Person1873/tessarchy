@@ -221,7 +221,7 @@ Read [pr-triage.md](docs/pr-triage.md) and inspect current PR heads first.
 
 | ID | Task | Completion result |
 | --- | --- | --- |
-| T21 | Add configurable navigation gestures | Discoverable settings, conflict handling and visible-button fallback |
+| T21 | Add configurable navigation gestures | — | `feat/nav-gestures` (stacked on #48) | In progress: edge-strip swipes for Home, Recents (hold) and Back, handle pill, Settings → Navigation Gestures/Buttons fallback; guest swipes verified with uinput touch, hardware touchscreen pending |
 | T22 | Refine switcher transitions | Smooth card movement, stable selection and rapid window-close handling |
 | T23 | Expand the keyboard/application matrix | Foot, browser forms, passwords, multiline fields and dialogs tested |
 | T24 | Audit scaling and accessibility | Logical target sizes, readable contrast, text scaling and accessible names checked |
