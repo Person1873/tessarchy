@@ -335,6 +335,15 @@ def read_archive_listing(package: Path) -> str:
     return ""
 
 
+def package_name(package: Path) -> str:
+    """The package's own name, from its file name.
+
+    A package file is name-version-release-arch.pkg.tar.zst, and while a package
+    name may contain hyphens, none of the last three fields can.
+    """
+    return "-".join(package.name.split(".pkg")[0].split("-")[:-3])
+
+
 def archive_paths(package: Path) -> list[str]:
     """The absolute paths a package archive installs.
 
@@ -408,7 +417,7 @@ def adopt_medium_packages() -> None:
         for line in lines[-6:]:
             print(f"          {line}")
         return
-    installed = in_target("pacman", "-Q", *[p.name.split("-")[0] for p in packages],
+    installed = in_target("pacman", "-Q", *[package_name(p) for p in packages],
                           check=False, capture=True)
     count = len([line for line in installed.splitlines() if line.strip()])
     print(f"Packages: {count} installed from the medium (pacman owns them now)")
@@ -500,6 +509,13 @@ def install(disk: str, assume_yes: bool) -> int:
 
 
 def main(argv=None) -> int:
+    # Progress is watched in a terminal as often as it is saved to a log; a
+    # redirected stdout would otherwise hold every line until the process ends,
+    # while the subprocesses it runs write theirs immediately.
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except (AttributeError, ValueError):
+        pass
     parser = argparse.ArgumentParser(
         prog="tessarchy-install",
         description="Install the running Tessarchy live system onto a disk.")

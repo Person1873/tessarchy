@@ -244,6 +244,31 @@ class MediumPackages(unittest.TestCase):
             paths = installer.archive_paths(Path('tessera-shell-0.1.0-2-any.pkg.tar.zst'))
         self.assertEqual(paths, ['/usr/bin/tessarchy-update'])
 
+    def test_the_count_uses_the_packages_own_names(self):
+        installer = self.installer
+        names = [installer.package_name(Path(name)) for name in (
+            'tessarchy-bootsplash-0.1.0-2-any.pkg.tar.zst',
+            'tessarchy-update-0.1.0-1-any.pkg.tar.zst',
+            'tessera-shell-0.1.0-2-any.pkg.tar.zst')]
+        self.assertEqual(names, ['tessarchy-bootsplash', 'tessarchy-update', 'tessera-shell'])
+
+    def test_the_count_reports_what_pacman_installed(self):
+        # The first install said "Packages: 0 installed" after installing all
+        # six, because the query asked pacman for "tessarchy" instead of
+        # "tessarchy-session".
+        installer = self.installer
+        printed = []
+        installed = 'tessera-shell 0.1.0-2\ntessarchy-session 0.1.0-2\n'
+        with mock.patch.object(installer, 'MOUNT', self.root), \
+                mock.patch.object(installer, 'archive_paths', return_value=['*']), \
+                mock.patch.object(installer, 'in_target_status',
+                                  return_value=self.fake_status(0)), \
+                mock.patch.object(installer, 'in_target', return_value=installed), \
+                mock.patch('builtins.print',
+                           side_effect=lambda *a, **k: printed.append(str(a[0]))):
+            installer.adopt_medium_packages()
+        self.assertIn('Packages: 2 installed from the medium', printed[-1])
+
     def test_a_failed_package_step_shows_the_reason_not_the_warnings(self):
         installer = self.installer
         noise = '\n'.join([f"warning: database file for 'x' does not exist" for _ in range(8)]
