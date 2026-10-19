@@ -1,46 +1,33 @@
-# Pull request review — 2026-10-18
+# Pull request review — 2026-10-19
 
-## Update — window previews and display controls
+Review order prioritizes bounded changes and preserves contributor commits. PR #52
+integrated the first four entries into main; its combined checks and follow-up
+fixes are recorded in docs/testing.md. GitHub mergeability and CI
+status are snapshots, so refresh them before the next integration.
 
-#16 is closed as superseded by the current card switcher. #19 is reconciled with
-current main: display controls live in the pull-down panel, brightness writes
-read back hardware state, and night light uses a transient user service instead
-of signalling a PID file. See docs/testing.md for validation and hardware gaps.
+| Order | PR | Review result / next action |
+| --- | --- | --- |
+| 1 | #51 QML lint | Integrated into main: unused imports, night-light process name and typed audio loader. Combined source checks passed. |
+| 2 | #44 Desktop taskbar polish | Integrated into main: task overflow, Start menu and consistent indicators. Preserved its commits and tests. |
+| 3 | #45 Icon-only Alt+Tab | Integrated after #44 through #52; the original stacked PR was closed after verifying its head is an ancestor of main. Kept compact desktop spacing and the separate touch Recents switcher. |
+| 4 | #48 Shared navigation geometry | Integrated after #45. Resolved shell geometry against current desktop spacing; retained both testing records. Added explicit non-stretching dock/taskbar rows. |
+| 5 | #46 Window controls and live installer | Separate review. Its scope now includes disk installation and boot branding. PR #53 merged T74 fail-closed live-medium/mounted-target/kernel checks into its feature branch, with mocked destructive operations; installed-disk and fresh-image acceptance remain separate. Reconcile with the integrated main before merging. |
+| 6 | #38 ARM development VM | Conflicts with main. Reconcile VM scripts in isolation, validate downloads and source sharing, then boot the ARM guest. An emulated guest is not phone hardware acceptance. |
+| 7 | #23 Wi-Fi association | Conflicts with main. Rework against current controls and NetworkManager setup; accept scanner ownership, credentials/cancellation, device/service replacement and keyboard entry before integration. |
+| 8 | #9 System themes | Broad foundation for #47/#50 and part of the portal stack. Current CI fails: Ubuntu lacks QtQuick.Effects for MediaPanel/PinScreen, and Arch ShellCheck rejects terminal-escape printf strings (SC1003). Fix the declared Qt dependency and shell formatting before reviewing runtime theme behavior. |
+| 9 | #47 Theme shapes | Depends on #9 and inherits failing checks. Review the data parser, limits, generated compositor values and reset behavior after the theme foundation works. |
+| 10 | #50 Theme extras | Draft, stacked on #47/#9, checks failing. Keep icon/theme changes and default-off borders isolated until dependencies pass. |
+| 11 | #49 Navigation gestures | Draft, stacked on #48. Reconcile against the combined shell, preserve the buttons fallback, then test edge interception, cancellation, scaling and real touch. |
+| 12 | #20 Keyboard page guard | Draft. Extract only behavior missing from current focus/page guards; test open/close transitions and retained text focus without importing unrelated stack changes. |
+| 13 | #12 Tablet split | Draft. Needs a focused two-app focus/restore/mode-transition review after navigation stabilizes. |
+| 14 | #10 Touch file dialogs | Draft. Current Arch logs show missing GTK3 development metadata/headers during build and ISO staging tests. Fix declared CI/build dependencies, then review portal IPC, cancellation, overwrite and fallback behavior separately. |
 
-## Earlier easiest-PR pass
+#16 is already closed as superseded. Power, idle blanking, notifications,
+rotation and brightness/night light are already integrated; the previous
+contradictory defer/skip table has been removed. The unfinished theme worktree in
+build/integration remains untouched.
 
-The three smallest genuine integrations are merged: **#21** idle blanking,
-**#22** display rotation and **#13** notification center. #16 window previews is
-confirmed **superseded** by the current AppSwitcher (its grid would replace the
-card switcher); closing it is the resolution, not a merge. Still open: **#23**
-Wi-Fi, **#19** brightness/night light (fix the unguarded PID kill first), **#12**
-tablet split, and the **#9 → #10 → #11 → #20** theme/portal/keyboard stack. The
-original ranking below is retained for reference.
-
-The existing PRs were rescanned after the Phone/Messages checkpoint.
-Order reflects integration effort and product risk against the current shell.
-The owner authorized skipping disruptive or difficult work.
-
-| Order | PR | Decision | Current reason |
-| --- | --- | --- | --- |
-| 1 | #18 Power panel | Integrated | Added missing-service and supported-profile guards, authoritative readback, unavailable battery state and tests. Preserved current app UI and manifest-based uninstall. |
-| 2 | #21 Idle blanking | Defer | The branch now uses Lua DPMS correctly. Integration still changes session startup and capture wake input; hypridle is absent in the VM and blank/wake/PIN acceptance needs a dedicated test. |
-| 3 | #23 Wi-Fi | Defer | The updated branch includes PSK entry and scanner handling. It replaces the image's wired network service; device replacement/scanner ownership and NetworkManager/keyboard association still need acceptance without losing connectivity. |
-| 4 | #22 Rotation | Defer | The updated helper now writes Lua and attempts rollback. Monitor parsing, preserved settings and touch-coordinate recovery still affect the display path; avoid changing it during this app checkpoint. |
-| 5 | #13 Notifications | Defer | A new D-Bus notification server, history and popup lifecycle need reconciliation with current layered panels and native phone alerts. Keep this as a focused integration. |
-| 6 | #19 Brightness/night light | Skip for safety | The night-light helper still trusts kill -0 on a PID file, then kills that PID without checking process identity. Brightness also needs real backlight/permission validation. |
-| 7 | #16 Window previews | Skip as superseded | Current card previews already implement the requested switcher. The old shell/grid patch would replace current UI behavior. |
-| 8 | #9 System theme | Defer | Broad shell/application/keyboard changes across49 files. Existing unfinished review in build/integration is preserved. |
-| 9 | #11 Keyboard sizing | Defer dependencies | Its current diff includes the theme/portal stack across58 files. The narrower-width/48px-height exception is already authorized; extract sizing after its dependencies are reviewed. |
-| 10 | #20 Keyboard page guard | Defer dependencies | Current shell already hides the keyboard when opening pages/controls. This59-file stacked branch includes theme/portal/keyboard changes that need separate review. |
-| 11 | #12 Tablet split | Defer | Layout, focus and workspace transitions would substantially change current navigation and the card switcher. |
-| 12 | #10 Third-party file dialogs | Defer | A57-file theme/portal stack includes new C and GTK IPC, cancellation and overwrite paths. Tessera's new in-panel browser solves its own photo/tone selection without merging that wider portal stack. |
-
-PR #28 (remove the live-boot NTP gate) is integrated. Its contributor commit
-is preserved as a merge parent. A staging regression check asserts removal of
-the inherited time-wait link, and Alpha 3 reached Tessera in BIOS and UEFI with
-no network adapter.
-
-Contributor branches and original commits are preserved, including the
-unfinished theme review in `build/integration`. Check GitHub for current status.
-Actual checks and device acceptance remain in [testing.md](testing.md).
+The audit fixes literal rendering of external text, page-expansion layout,
+website activity/release handling and publication source. Actual hardware,
+visual browser, new ISO boot and installer acceptance must not be inferred from
+static checks. See docs/testing.md and docs/live-install.md on the installer branch.

@@ -29,6 +29,27 @@ class Workflows(unittest.TestCase):
         self.assertIn(marker + '_TEST_PASS', result.stdout + result.stderr)
         self.assertNotIn(marker + '_TEST_FAIL', result.stdout + result.stderr)
 
+    def test_bar_geometry_comes_from_one_set_of_constants(self):
+        import re
+        shell = (ROOT / 'shell/shell.qml').read_text()
+        policy = (ROOT / 'shell/LayoutPolicy.js').read_text()
+        self.assertIn('function barGeometry(mode, rows)', policy)
+        self.assertRegex(shell, r'property var bar: Policy\.barGeometry\(mode, dock\.rows\)')
+        self.assertRegex(shell, r'property int navHeight: bar\.height\n')
+        panel = shell[shell.index('id: panel\n'):shell.index('id: statusBar\n')]
+        # The frame and its content margins: no literal except the open-page flush 0.
+        margins = re.findall(r'^ {20}anchors\.\w*[mM]argins?:.*$', panel, re.M)
+        self.assertGreaterEqual(len(margins), 5, margins)
+        for line in margins:
+            self.assertNotRegex(line.replace('panel.expanded ? 0 :', ''), r'\d', line)
+        dock = panel[panel.index('columns: surface.dock.columns') - 200:]
+        dock = dock[:dock.index('NavButton {')]
+        for key in ('Layout.preferredHeight', 'columnSpacing', 'rowSpacing'):
+            line = re.search(key + r':.*', dock).group(0)
+            self.assertNotRegex(line, r'\d', line)
+        taskbar = panel[panel.index('visible: surface.mode === "desktop"\n'):]
+        self.assertIn('Layout.preferredHeight: surface.bar.row\n', taskbar[:200])
+
     def test_display_controls_restore_failed_brightness_and_apply_night_preference(self):
         stubs = self.home / 'display-bin'
         stubs.mkdir()
@@ -64,6 +85,10 @@ class Workflows(unittest.TestCase):
         result = subprocess.run(command, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         with zipfile.ZipFile(destination / 'assets/screenshots.zip') as archive:
+            count = sum(name.endswith('.png') for name in archive.namelist())
+            page = (destination / 'index.html').read_text()
+            self.assertIn(f'includes {count} published captures', page)
+            self.assertNotIn('{{SCREENSHOT_COUNT}}', page)
             self.assertEqual(archive.read('phone-switcher.png'),
                              (ROOT / 'assets/screenshots/phone-switcher.png').read_bytes())
             self.assertEqual(archive.read('phone-login.png'),

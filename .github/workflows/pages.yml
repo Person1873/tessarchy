@@ -1,7 +1,7 @@
 name: Project website
 on:
   push:
-    branches: [main, build/live-iso]
+    branches: [main]
     paths:
       - 'website/**'
       - 'assets/screenshots/**'

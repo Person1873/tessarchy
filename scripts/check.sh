@@ -10,6 +10,7 @@ py=$(command -v python || command -v python3 || true)
 [[ -n "$py" ]] || { echo "FAIL: neither python nor python3 is installed" >&2; exit 1; }
 "$py" -m py_compile session/tessarchy-install session/tessarchy-update session/tessarchy-readiness
 "$py" -m unittest discover -s tests -v
+if command -v node >/dev/null; then node --test tests/website.test.cjs; else echo "SKIP: Node.js website checks unavailable"; fi
 # Discover the installed Qt tools and import root on Arch and Debian.
 qml_root=""
 for dir in /usr/lib/qt6/qml /usr/lib/*/qt6/qml; do
@@ -18,7 +19,7 @@ done
 runner=$(command -v qmltestrunner || true)
 if [[ -z "$runner" && -x /usr/lib/qt6/bin/qmltestrunner ]]; then runner=/usr/lib/qt6/bin/qmltestrunner; fi
 if [[ -n "$runner" && -n "$qml_root" ]]; then
-    HOME="$scratch" XDG_CONFIG_HOME="$scratch/config" QT_QPA_PLATFORM=offscreen \
+    HOME="$scratch" XDG_CONFIG_HOME="$scratch/config" QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME='' \
         QML2_IMPORT_PATH="$qml_root" "$runner" -input tests/qml
 else echo "SKIP: Qt Quick Test unavailable"; fi
 compiler=$(command -v luac || command -v luac5.4 || true)

@@ -161,8 +161,7 @@ ColumnLayout {
         Layout.fillWidth: true
         active: sheet.visible && sheet.audioExpanded && sheet.audioBackendAvailable
         visible: active
-        source: "AudioPanel.qml"
-        onLoaded: item.accentColor = Qt.binding(() => sheet.accentColor)
+        sourceComponent: Component { AudioPanel { accentColor: sheet.accentColor } }
     }
     NavButton {
         text: "Screenshot"

@@ -15,9 +15,9 @@ ColumnLayout {
     spacing: 6
 
     function applyPreference() {
-        if (available && !action.running) {
-            action.command = ["tessera-nightlight", nightLight ? "on" : "off"];
-            action.running = true;
+        if (available && !applier.running) {
+            applier.command = ["tessera-nightlight", nightLight ? "on" : "off"];
+            applier.running = true;
         }
     }
     onNightLightChanged: { if (initialized) applyPreference(); }
@@ -35,7 +35,7 @@ ColumnLayout {
         }
     }
     Process {
-        id: action
+        id: applier
         onExited: (code, status) => {
             control.error = code === 0 && status === 0 ? "" : "Could not change night light";
             probe.running = true;
@@ -44,7 +44,7 @@ ColumnLayout {
     TouchButton {
         visible: control.available
         Layout.fillWidth: true
-        enabled: !action.running && !probe.running
+        enabled: !applier.running && !probe.running
         text: control.active ? "Night light on" : "Night light"
         selected: control.active
         accentColor: control.accentColor

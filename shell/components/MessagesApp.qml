@@ -19,7 +19,7 @@ ColumnLayout {
         target: app.backend
         function onCompleted(action, success) { if (action === "send-sms" && success) compose.text = ""; }
     }
-    Text { text: app.backend.state.cellular.label; color: "#9eb6c3"; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+    Text { textFormat: Text.PlainText; text: app.backend.state.cellular.label; color: "#9eb6c3"; Layout.fillWidth: true; wrapMode: Text.WordWrap }
     RowLayout {
         Layout.fillWidth: true
         GlassField { id: recipient; text: app.recipient; placeholderText: "Phone number"; inputMethodHints: Qt.ImhDialableCharactersOnly; onTextEdited: app.recipient = text; maximumLength: 32 }
@@ -52,13 +52,13 @@ ColumnLayout {
                     onClicked: app.recipient = modelData
                 }
             }
-            Text { visible: app.threads.length === 0; text: "Start a conversation. Your SMS threads stay here."; color: "#9eb6c3"; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+            Text { textFormat: Text.PlainText; visible: app.threads.length === 0; text: "Start a conversation. Your SMS threads stay here."; color: "#9eb6c3"; Layout.fillWidth: true; wrapMode: Text.WordWrap }
         }
         ColumnLayout {
             Layout.fillWidth: true
             Layout.preferredWidth: app.wide ? 420 : 1
             visible: app.recipient !== ""
-            Text { text: app.backend.contactName(app.recipient); color: app.accentColor; font.pixelSize: 20; Layout.fillWidth: true; elide: Text.ElideRight }
+            Text { textFormat: Text.PlainText; text: app.backend.contactName(app.recipient); color: app.accentColor; font.pixelSize: 20; Layout.fillWidth: true; elide: Text.ElideRight }
             Repeater {
                 model: app.backend.state.messages.filter(m => m.number === app.recipient)
                 delegate: Rectangle {
@@ -73,7 +73,7 @@ ColumnLayout {
                         id: bubble
                         x: 12; y: 12; width: parent.width - 24; spacing: 8
                         Text { text: messageCard.modelData.text; textFormat: Text.PlainText; color: "#eef6f8"; font.pixelSize: 16; width: parent.width; wrapMode: Text.WrapAnywhere }
-                        Text { text: messageCard.modelData.status + (messageCard.modelData.timestamp ? " · " + messageCard.modelData.timestamp : ""); color: "#91abb8"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                        Text { textFormat: Text.PlainText; text: messageCard.modelData.status + (messageCard.modelData.timestamp ? " · " + messageCard.modelData.timestamp : ""); color: "#91abb8"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                     }
                 }
             }
@@ -95,8 +95,8 @@ ColumnLayout {
                 enabled: !app.backend.busy && !!app.backend.state.cellular.sms && !!app.backend.state.cellular.registered && compose.text.trim().length > 0 && compose.text.length <= 1600
                 onClicked: app.backend.request("send-sms", {number: app.recipient, text: compose.text})
             }
-            Text { text: compose.text.length + "/1600 · SMS"; color: "#91abb8"; font.pixelSize: 11 }
+            Text { textFormat: Text.PlainText; text: compose.text.length + "/1600 · SMS"; color: "#91abb8"; font.pixelSize: 11 }
         }
     }
-    Text { text: app.backend.state.error || app.backend.state.notice || ""; visible: text.length > 0; color: app.backend.state.error ? "#efb6bd" : app.accentColor; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+    Text { textFormat: Text.PlainText; text: app.backend.state.error || app.backend.state.notice || ""; visible: text.length > 0; color: app.backend.state.error ? "#efb6bd" : app.accentColor; Layout.fillWidth: true; wrapMode: Text.WordWrap }
 }

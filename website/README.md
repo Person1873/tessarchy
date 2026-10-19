@@ -15,10 +15,10 @@ The builder refuses existing destinations. Pick a new output for another build.
 No Node packages or host dependencies are installed.
 
 The Pages workflow rebuilds and publishes on changes to source, shell, docs,
-reference brief and screenshots on `build/live-iso` or `main`. The current
-public development source is `build/live-iso`; keep these branches in sync when
-merging the project. GitHub Pages is configured for Actions deployments and
-allows these two branches. No source is merged automatically.
+reference brief and screenshots on `main`, which is also the activity source.
+GitHub Pages uses Actions deployments. The legacy `build/live-iso` branch does
+not deploy automatically, so an older branch cannot replace the integrated site.
+No source is merged automatically.
 
 A build bundles current public release metadata; the browser additionally reads
 public GitHub release and commit metadata, with usable fallback links on failure.

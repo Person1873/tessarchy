@@ -24,11 +24,54 @@ function panelWidth(mode, width) {
     return mode === "phone" ? width : Math.min(Math.max(0, width - 24), mode === "desktop" ? 760 : 720);
 }
 
+// Nav/task bar geometry. Every bar dimension in shell.qml derives from these.
+// row: touch row height; rowGap/columnGap: spacing between dock buttons;
+// inset: frame edge to the row, equal above and below; gap: frame to the
+// bottom screen edge; side: least frame-to-side-edge gap (0 spans the screen);
+// padding: frame edge to the first and last button; maxWidth: widest dock.
+const BAR_ROW = 48;
+const BAR_ROW_GAP = 8;
+const BAR_COLUMN_GAP = 4;
+const BAR_MODES = {
+    desktop: {inset: 4, gap: 8, side: 0, padding: 10, maxWidth: 448},
+    tablet: {inset: 12, gap: 12, side: 16, padding: 16, maxWidth: 448},
+    phone: {inset: 8, gap: 12, side: 16, padding: 12, maxWidth: 376}
+};
+// Open pages keep their own frame margins, flush with the screen bottom.
+const BAR_PAGE = {top: 12, desktopTop: 8, bottom: 12};
+
+// Desktop always shows one taskbar row; touch docks may wrap to several.
+function barGeometry(mode, rows) {
+    const spec = BAR_MODES[mode] || BAR_MODES.tablet;
+    const count = mode === "desktop" ? 1 : Math.max(1, rows || 1);
+    const rowsHeight = count * BAR_ROW + (count - 1) * BAR_ROW_GAP;
+    const frameHeight = rowsHeight + 2 * spec.inset;
+    return {
+        row: BAR_ROW,
+        rowGap: BAR_ROW_GAP,
+        columnGap: BAR_COLUMN_GAP,
+        rows: count,
+        rowsHeight: rowsHeight,
+        inset: spec.inset,
+        gap: spec.gap,
+        side: spec.side,
+        padding: spec.padding,
+        maxWidth: spec.maxWidth,
+        frameHeight: frameHeight,
+        // The layer surface holds the frame plus the gap below it.
+        height: frameHeight + spec.gap,
+        pageTop: mode === "desktop" ? BAR_PAGE.desktopTop : BAR_PAGE.top,
+        pageBottom: BAR_PAGE.bottom
+    };
+}
+
+// Touch docks: Phone, Messages, Back, Home, Recents and the optional Keyboard.
+// Settings lives in the status bar and pull-down, not the dock.
 function dockLayout(mode, width, keyboard) {
-    const count = (mode === "phone" ? 5 : 6) + (keyboard && mode !== "desktop" ? 1 : 0);
-    const dockWidth = Math.min(Math.max(0, width - 32), mode === "phone" ? 376 : 448);
-    const padding = mode === "phone" ? 24 : 32;
-    const capacity = Math.max(1, Math.floor((dockWidth - padding + 4) / 52));
+    const bar = barGeometry(mode, 1);
+    const count = 5 + (keyboard && mode !== "desktop" ? 1 : 0);
+    const dockWidth = Math.min(Math.max(0, width - 2 * bar.side), bar.maxWidth);
+    const capacity = Math.max(1, Math.floor((dockWidth - 2 * bar.padding + bar.columnGap) / (bar.row + bar.columnGap)));
     const columns = capacity >= count ? count : Math.min(3, capacity);
     return {width: dockWidth, columns: columns, rows: Math.ceil(count / columns)};
 }
