@@ -1,0 +1,18 @@
+Generated with the built-in image_gen tool.
+
+Use case: ads-marketing.
+Create a polished finished Discord promotional ad for Tessarchy OS. Landscape 1536x1024 composition, exceptionally legible at Discord preview size, premium independent Linux product campaign with restrained beautiful art direction.
+References: image 1 actual phone home UI, image 2 actual tablet home UI, image 3 official transparent Tessarchy mint geometric mark. Preserve the official mark's exact shape; preserve the screenshot wallpaper and shell interface accurately in display presentations. Use these images as visual references, not as material to rewrite. Do not include the mistaken small TESSARCHY spelling in the screenshot; wordmark elsewhere must read TESSARCHY correctly.
+Brand: midnight navy, pale mint, glacier green, white, shallow frosted glass. Background a beautiful cinematic dark glacial valley with luminous mint ice, atmospheric depth, subtle texture, no purple or generic neon circuitry. Sparse composition with elegant typography and clear hierarchy.
+Layout: official logo and TESSARCHY wordmark top left. Big editorial headline on left; one beautiful tall phone concept frame front right and wider landscape tablet/display concept behind it, screens showing faithful Tessera home UIs from references with mint glacier wallpaper and floating glass icon navigation. Hardware must be modest generic dark frames, no Apple logos or camera notches, no invented app grids. Subtle mint rim illumination. Let devices feel tactile and desirable without crowding copy. Label device scene in small readable text "Concept devices · Development UI". Smaller horizontal feature labels beneath headline. Bottom footer with a strong mint CTA pill and the exact website URL, clearly readable on a dark solid area. Generous safe margins around all copy, no tiny paragraphs.
+Use EXACT ad copy, no additional claims:
+"TESSARCHY"
+"Touch-first Linux."
+"Your next chapter."
+"Built on Arch. Shaped around Tessera."
+"Adaptive layouts   •   Glass navigation   •   Open source"
+"Explore the alpha"
+"thediamondsaint.github.io/tessarchy/"
+Small status line: "Alpha prototype · x86_64 VM testing · Hardware support in development"
+Scene caption: "Concept devices · Development UI"
+Typography: modern sophisticated sans serif, bold white headline, mint accent on second headline line, easy reading and immaculate spelling. Make Tessarchy branding prominent and memorable. No purchase/pricing language. No claims of supported phone hardware or working cellular service. No extra text, watermarks, badges, Discord logo or QR code.
