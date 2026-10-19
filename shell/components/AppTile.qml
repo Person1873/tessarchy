@@ -17,10 +17,11 @@ TouchButton {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: 56
                 height: 56
-                radius: 18
+                radius: Theme.radius("tile", 18, height)
                 rotation: 0
                 color: Qt.alpha(control.accentColor, control.selected ? 0.4 : 0.18)
                 border.color: Qt.alpha(control.accentColor, 0.3)
+                border.width: Theme.borderWidth(1)
                 Icon {
                     anchors.centerIn: parent
                     rotation: 0

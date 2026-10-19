@@ -11,9 +11,9 @@ TouchButton {
     Layout.preferredWidth: 1
     implicitHeight: 84
     background: Rectangle {
-        radius: 12
+        radius: Theme.radius("tile", 12, height)
         color: control.down ? Theme.tilePressed : control.selected ? Theme.tileSelected : Theme.tileGlass
-        border.width: 1
+        border.width: Theme.borderWidth(1)
         border.color: Theme.tileBorder
     }
     contentItem: ColumnLayout {
@@ -24,9 +24,9 @@ TouchButton {
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: 40
             implicitHeight: 40
-            radius: 11
+            radius: Theme.radius("tile", 11, height)
             color: Theme.tileIconGlass
-            border.width: 1
+            border.width: Theme.borderWidth(1)
             border.color: Theme.tileIconBorder
             Image {
                 anchors.centerIn: parent

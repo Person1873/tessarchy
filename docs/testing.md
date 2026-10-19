@@ -1,5 +1,28 @@
 # Validation and manual acceptance
 
+## Surface shape theme, 2026-10-19
+
+Executed in the running QEMU guest using source based on PR #9 (`a6b357a`)
+and the shape worktree, with the VM's Virtual-1 at 1280×800, scale 1.
+The guest ran Hyprland 0.56.2 and Quickshell 0.3.2. Captures in ignored `vm/`:
+`shape-baseline-1280.png` (complete `a6b357a` shell),
+`shape-default-complete.png`, `shape-custom-complete.png`, and
+`shape-reverted-complete.png`. The first two have the same rounded glass
+shapes and layout on visual inspection; clock, weather and app focus can
+change between captures. A scratch user theme with radius 4, border 2,
+window rounding 4, and blur disabled made Start/task buttons squarer and
+the wallpaper sharp behind the bars without restarting the shell. Reverting
+to `tessera` restored rounded/blurred glass in the screenshot. Actual
+`hyprctl getoption` reported rounding 4/blur false, then 18/true.
+
+`./scripts/check.sh`: 111 Python tests passed, one skipped for unavailable
+GObject metadata; available QML, Lua and syntax checks passed. Fish and
+shellcheck unavailable (skipped). The shape-specific Quickshell harness passed
+numeric overrides, radius and border caps, invalid values and reset. Guest
+`Hyprland --verify-config -c .../session/hyprland.lua` returned `config ok`.
+No physical-device or touch-interaction acceptance was performed; screenshot
+inspection covers visual change and restoration, not input hit testing.
+
 ## Actually performed, 2026-10-16
 
 Environment: Omarchy/Arch, Hyprland 0.56.2-2, Quickshell 0.3.1-1,

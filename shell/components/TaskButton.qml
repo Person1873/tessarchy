@@ -36,20 +36,20 @@ Button {
         }
     }
     background: Rectangle {
-        radius: 8
+        radius: Theme.radius("button", 8, height)
         color: control.selected ? Theme.taskSelected(control.accentColor)
                                 : control.down ? Theme.taskDown(control.accentColor)
                                                : Theme.taskIdle
-        border.width: 1
+        border.width: Theme.borderWidth(1)
         border.color: control.selected ? Theme.taskSelectedBorder(control.accentColor) : Theme.taskBorder
         // Inner bevel: light on top for a raised look, dark when the window has
         // focus so the button reads as pressed.
         Rectangle {
             anchors.fill: parent
             anchors.margins: 1
-            radius: 7
+            radius: Theme.radius("button", 7, height)
             color: "transparent"
-            border.width: 1
+            border.width: Theme.borderWidth(1)
             border.color: control.selected ? Theme.taskPressedBevel : Theme.taskBevel
         }
     }

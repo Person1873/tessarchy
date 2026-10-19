@@ -14,9 +14,10 @@ TextField {
     padding: 14
     selectByMouse: true
     background: Rectangle {
-        radius: 16
+        radius: Theme.radius("field", 16, height)
         color: Theme.glass
         border.color: field.activeFocus ? Theme.accent : Theme.inputBorder
+        border.width: Theme.borderWidth(1)
     }
     Accessible.name: placeholderText
 }

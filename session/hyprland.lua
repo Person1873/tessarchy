@@ -1,12 +1,26 @@
 -- Tessarchy defaults: Hyprland 0.56.x Lua API.
 -- This is loaded explicitly, never over the user's Hyprland config.
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
+local surface = { window_rounding = 18, blur_enabled = true, blur_size = 4, blur_passes = 2 }
+local state = os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")
+local surface_file = io.open(state .. "/tessarchy/theme/surface.lua", "r")
+if surface_file then
+    surface_file:close()
+    local ok, values = pcall(dofile, state .. "/tessarchy/theme/surface.lua")
+    if ok and type(values) == "table" then
+        for key, default in pairs(surface) do
+            local value = values[key]
+            if type(value) == type(default) and (type(value) ~= "number" or
+               (value >= 0 and value <= 32)) then surface[key] = value end
+        end
+    end
+end
 hl.config({
     general = { gaps_in = 0, gaps_out = 0, border_size = 0, layout = "dwindle",
                 -- Let windows be resized by dragging an edge or corner, with a
                 -- finger-sized grab area (borders are invisible in this theme).
                 resize_on_border = true, extend_border_grab_area = 24 },
-    decoration = { rounding = 18, blur = { enabled = true, size = 4, passes = 2 }, shadow = { enabled = false } },
+    decoration = { rounding = surface.window_rounding, blur = { enabled = surface.blur_enabled, size = surface.blur_size, passes = surface.blur_passes }, shadow = { enabled = false } },
     animations = { enabled = false },
     input = { kb_layout = "us", follow_mouse = 0 },
     misc = { disable_hyprland_logo = true, disable_splash_rendering = true,
@@ -14,7 +28,7 @@ hl.config({
              key_press_enables_dpms = true, mouse_move_enables_dpms = true },
 })
 -- Frost only Tessera glass surfaces; leave applications unchanged.
-hl.layer_rule({ match = { namespace = "tessera(-status|-start)?" }, blur = true, ignore_alpha = 0.01 })
+hl.layer_rule({ match = { namespace = "tessera(-status|-start)?" }, blur = surface.blur_enabled, ignore_alpha = 0.01 })
 -- Read the same saved mode as Tessera when a new ordinary app opens.
 -- Existing windows and floating dialogs are left alone when modes change.
 local function shell_mode(monitor)

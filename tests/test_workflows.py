@@ -10,6 +10,41 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Workflows(unittest.TestCase):
+    def test_shell_shape_literals_live_in_theme_tokens(self):
+        # Tiny decorative marks and circular avatars retain fixed geometry.
+        legacy = {'StatusIcon.qml': 1, 'ContactAvatar.qml': 1,
+                  'SettingsPage.qml': 1, 'shell.qml': 2}
+        pattern = re.compile(r'\bradius:\s*(?:\d+|width\s*/\s*2)\b')
+        paths = list((ROOT / 'shell').glob('*.qml')) + list((ROOT / 'shell/components').glob('*.qml'))
+        for path in paths:
+            if path.name == 'Theme.qml':
+                continue
+            offenders = [n for n, line in enumerate(path.read_text().splitlines(), 1)
+                         if pattern.search(line)]
+            self.assertLessEqual(len(offenders), legacy.get(path.name, 0),
+                                 f'{path.name}: raw radius at {offenders}')
+        self.assertEqual(sum(legacy.values()), 5)
+
+    def test_shell_shape_overrides_clamp_and_reset(self):
+        import shutil
+        quickshell = shutil.which('qs')
+        if not quickshell:
+            self.skipTest('Quickshell runtime unavailable')
+        runtime = self.home / 'runtime'
+        runtime.mkdir(mode=0o700)
+        shell = self.home / 'shell'
+        shutil.copytree(ROOT / 'shell', shell)
+        harness = shell / 'shape-harness.qml'
+        harness.write_text((ROOT / 'tests/quickshell/shape.qml').read_text()
+                           .replace('../../shell/components', 'components'))
+        result = subprocess.run([quickshell, '--no-color', '-p', str(harness)],
+                                env=dict(self.env, QT_QPA_PLATFORM='offscreen', QT_QPA_PLATFORMTHEME='',
+                                         XDG_RUNTIME_DIR=str(runtime)),
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('SHAPE_TEST_PASS', result.stdout + result.stderr)
+        self.assertNotIn('SHAPE_TEST_FAIL', result.stdout + result.stderr)
+
     def test_shell_colors_live_in_theme_tokens(self):
         pattern = re.compile(r'#[0-9a-fA-F]{6,8}\b|Qt\.rgba\s*\(')
         paths = list((ROOT / 'shell').glob('*.qml')) + list((ROOT / 'shell/components').glob('*.qml'))
@@ -21,7 +56,8 @@ class Workflows(unittest.TestCase):
             self.assertEqual(offenders, [], f'{path.name}: colour literals')
         # Every semantic token is loadable from shell.toml and pinned by Tessera.
         theme = (ROOT / 'shell/components/Theme.qml').read_text()
-        tokens = re.findall(r'token\("([a-z_]+)"', theme)
+        tokens = re.findall(r'property color \w+: token\("([a-z_]+)"', theme)
+        self.assertGreater(len(tokens), 50)
         allowed = re.search(r'const allowed = \[(.*?)\];', theme, re.S).group(1)
         tessera = (ROOT / 'themes/tessera/shell.toml').read_text()
         for name in tokens:
@@ -320,6 +356,31 @@ class Workflows(unittest.TestCase):
         self.assertEqual(user_foot.read_text(), 'font=monospace:size=14\n')
         self.theme('set', 'tessera')
         self.assertEqual((state / 'theme/wallpaper').read_text().strip(), '')
+
+    def test_theme_surface_defaults_overrides_and_invalid_values(self):
+        state = self.home / 'state/tessarchy/theme'
+        defaults = 'return { window_rounding = 18, blur_enabled = true, blur_size = 4, blur_passes = 2 }\n'
+        self.assertEqual(self.theme('set', 'tessera').returncode, 0)
+        self.assertEqual((state / 'surface.lua').read_text(), defaults)
+        custom = self.home / 'config/tessarchy/themes/shape'
+        custom.mkdir(parents=True)
+        (custom / 'colors.toml').write_text((ROOT / 'themes/tessera/colors.toml').read_text())
+        (custom / 'shell.toml').write_text('[surface]\nradius_card = 4\nradius_button = 4\n'
+                                           'border_width = 3\nwindow_rounding = 4\nblur_enabled = false\n'
+                                           'blur_size = 8\nblur_passes = 3\n')
+        result = self.theme('set', 'shape')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((state / 'surface.lua').read_text(),
+                         'return { window_rounding = 4, blur_enabled = false, blur_size = 8, blur_passes = 3 }\n')
+        self.assertIn('radius_card = 4', (state / 'colors.toml').read_text())
+        (custom / 'shell.toml').write_text('[surface]\nwindow_rounding = 4; os.execute("false")\n'
+                                           'blur_enabled = "false"\nblur_size = -1\nblur_passes = 999\n'
+                                           'radius_card = "garbage"\nborder_width = 9\n')
+        result = self.theme('set', 'shape')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((state / 'surface.lua').read_text(), defaults)
+        self.assertEqual(self.theme('set', 'tessera-light').returncode, 0)
+        self.assertEqual((state / 'surface.lua').read_text(), defaults)
 
     def test_run_launches_apps_in_theme_mode(self):
         stubs = self.home / 'bin'

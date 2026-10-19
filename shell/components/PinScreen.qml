@@ -109,9 +109,9 @@ FocusScope {
                         model: 4
                         delegate: Rectangle {
                             required property int index
-                            width: 11; height: 11; radius: 6
+                            width: 11; height: 11; radius: Theme.radius("tile", 6, height)
                             color: index < screen.digits.length ? Theme.pinDot : "transparent"
-                            border { color: Theme.pinDotBorder; width: 1.5 }
+                            border { color: Theme.pinDotBorder; width: Theme.borderWidth(1.5) }
                         }
                     }
                 }
@@ -178,10 +178,10 @@ FocusScope {
                                 }
                             }
                             background: Rectangle {
-                                radius: width / 2
+                                radius: Theme.radius("button", width / 2, height)
                                 color: key.down ? Theme.pinKeyPressed : Theme.pinKey
                                 border.color: key.activeFocus ? Theme.accent : Theme.pinKeyBorder
-                                border.width: key.activeFocus ? 2 : 1
+                                border.width: Theme.borderWidth(key.activeFocus ? 2 : 1)
                             }
                             onClicked: { if (erase) screen.eraseDigit(); else screen.appendDigit(modelData.digit); }
                         }

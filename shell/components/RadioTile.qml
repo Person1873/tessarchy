@@ -14,7 +14,7 @@ TouchButton {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 12
             Rectangle {
-                width: 40; height: 40; radius: 20
+                width: 40; height: 40; radius: Theme.radius("tile", 20, height)
                 color: tile.selected ? Theme.selected(tile.accentColor) : Theme.glass
                 Icon { anchors.centerIn: parent; symbol: tile.symbol; size: 22; color: Theme.text; opacity: tile.enabled ? 1 : 0.4 }
             }

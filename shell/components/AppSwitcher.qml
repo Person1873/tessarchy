@@ -106,7 +106,7 @@ FocusScope {
                     RowLayout {
                         Layout.fillWidth: true
                         Rectangle {
-                            Layout.preferredWidth: 32; Layout.preferredHeight: 32; radius: 10
+                            Layout.preferredWidth: 32; Layout.preferredHeight: 32; radius: Theme.radius("tile", 10, height)
                             color: Qt.alpha(control.accentColor, 0.16)
                             Image { anchors.centerIn: parent; width: 22; height: 22; source: card.entry && card.entry.icon ? Quickshell.iconPath(card.entry.icon) : "../artwork/tessarchy-mark.svg"; sourceSize.width: 22; sourceSize.height: 22 }
                         }
@@ -119,8 +119,9 @@ FocusScope {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        radius: 20
+                        radius: Theme.radius("card", 20, height)
                         color: Theme.switcherCard
+                        border.width: Theme.borderWidth(1)
                         border.color: card.ListView.isCurrentItem ? Theme.switcherSelectedBorder(control.accentColor) : Theme.selection
                         Item {
                             anchors.fill: parent
@@ -177,7 +178,7 @@ FocusScope {
                 model: Math.min(cards.count, 9)
                 Rectangle {
                     required property int index
-                    width: 5; height: 5; radius: 3
+                    width: 5; height: 5; radius: Theme.radius("tile", 3, height)
                     color: index === cards.currentIndex ? control.accentColor : Theme.textMuted
                 }
             }
@@ -191,7 +192,7 @@ FocusScope {
                 implicitWidth: 56
                 enabled: !!(control.windows[cards.currentIndex] && control.windows[cards.currentIndex].wayland)
                 accentColor: control.accentColor
-                background: Rectangle { radius: 28; color: returnButton.down ? Theme.pressed(control.accentColor) : Theme.switcherButton; border.color: Theme.switcherButtonBorder }
+                background: Rectangle { radius: Theme.radius("button", 28, height); color: returnButton.down ? Theme.pressed(control.accentColor) : Theme.switcherButton; border.width: Theme.borderWidth(1); border.color: Theme.switcherButtonBorder }
                 contentItem: Icon { symbol: "return"; size: 22; color: Theme.text; opacity: parent.enabled ? 1 : 0.35 }
                 onClicked: control.activateCurrent()
             }
@@ -200,7 +201,7 @@ FocusScope {
                 text: "Close window…"
                 implicitWidth: 56
                 enabled: !!(control.windows[cards.currentIndex] && control.windows[cards.currentIndex].wayland)
-                background: Rectangle { radius: 28; color: closeButton.down ? Theme.pressed(control.accentColor) : Theme.switcherButton; border.color: Theme.switcherButtonBorder }
+                background: Rectangle { radius: Theme.radius("button", 28, height); color: closeButton.down ? Theme.pressed(control.accentColor) : Theme.switcherButton; border.width: Theme.borderWidth(1); border.color: Theme.switcherButtonBorder }
                 contentItem: Icon { symbol: "close"; size: 22; color: Theme.text; opacity: parent.enabled ? 1 : 0.35 }
                 onClicked: control.closeRequested(control.windows[cards.currentIndex].wayland)
             }

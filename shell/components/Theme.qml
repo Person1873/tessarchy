@@ -21,6 +21,12 @@ QtObject {
     function token(name, fallback) {
         return shellOverrides[name] === undefined ? fallback : shellOverrides[name];
     }
+    // Preserve each control's original radius until a surface override is supplied.
+    function radius(name, fallback, height) {
+        const value = shellOverrides["radius_" + name];
+        return value === undefined ? fallback : Math.min(value, Math.max(0, height / 2));
+    }
+    function borderWidth(fallback) { return token("border_width", fallback); }
     readonly property color glass: token("glass", Qt.alpha(surface, 0.31))
     readonly property color glassBorder: token("glass_border", Qt.alpha(selection, 0.31))
     readonly property color glassStrong: token("glass_strong", Qt.alpha(background, 0.76))
@@ -89,6 +95,7 @@ QtObject {
         // inherit the previous theme's colour (especially after light -> dark).
         shellOverrides = ({});
         const overrides = {};
+        const shapeKeys = ["radius_card", "radius_tile", "radius_field", "radius_button", "border_width"];
         const allowed = ["glass", "glass_border", "glass_strong", "switcher_glass", "bar_tint", "danger_surface",
             "start_header_top", "start_header_bottom", "start_header_text", "tile_glass", "tile_selected", "tile_pressed",
             "tile_border", "tile_icon_glass", "tile_icon_border", "switcher_card", "switcher_button", "switcher_button_border",
@@ -99,13 +106,23 @@ QtObject {
             "notification_card", "notification_card_pressed", "urgent_text", "urgent_border", "lock_scrim",
             "lock_muted_text", "pin_dot", "pin_dot_border", "pin_key", "pin_key_pressed", "pin_key_border"];
         const lines = String(raw || "").split("\n");
-        let shellLayer = false;
+        let section = "";
         for (let i = 0; i < lines.length; i++) {
-            if (lines[i].trim() === "[tessera]") { shellLayer = true; continue; }
+            const heading = lines[i].trim().match(/^\[([^\]]+)\]$/);
+            if (heading) { section = heading[1]; continue; }
+            if (section === "surface") {
+                const shape = lines[i].match(/^\s*([a-z_]+)\s*=\s*(\d+(?:\.\d+)?)\s*(?:#.*)?$/);
+                if (shape && shapeKeys.indexOf(shape[1]) >= 0) {
+                    const value = Number(shape[2]);
+                    if (Number.isFinite(value) && value >= 0)
+                        overrides[shape[1]] = shape[1] === "border_width" ? Math.min(value, 4) : value;
+                }
+                continue;
+            }
             const match = lines[i].match(/^\s*([A-Za-z0-9_]+)\s*=\s*["']?(#[0-9A-Fa-f]{6,8}|light|dark)/);
             if (!match) continue;
             const value = match[2];
-            if (shellLayer) {
+            if (section === "tessera") {
                 if (allowed.indexOf(match[1]) >= 0 && /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(value))
                     overrides[match[1]] = value;
                 continue;

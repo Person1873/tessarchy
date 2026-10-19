@@ -40,7 +40,7 @@ RowLayout {
         padding: 0
         focusPolicy: Qt.NoFocus
         background: Rectangle {
-            radius: 12
+            radius: Theme.radius("tile", 12, height)
             color: bellButton.down ? Qt.alpha(control.accentColor, 0.3)
                                    : control.notificationsSelected ? Qt.alpha(control.accentColor, 0.15) : "transparent"
         }
@@ -59,7 +59,7 @@ RowLayout {
                 anchors.topMargin: control.compact ? 1 : 8
                 width: 14
                 height: 14
-                radius: 7
+                radius: Theme.radius("tile", 7, height)
                 color: Theme.danger
                 Text {
                     anchors.centerIn: parent
@@ -120,7 +120,7 @@ RowLayout {
         focusPolicy: Qt.NoFocus
         enabled: control.audioAvailable
         background: Rectangle {
-            radius: 12
+            radius: Theme.radius("tile", 12, height)
             color: volumeButton.down ? Qt.alpha(control.accentColor, 0.3) : "transparent"
         }
         contentItem: Icon {
@@ -144,7 +144,7 @@ RowLayout {
         padding: 0
         focusPolicy: Qt.NoFocus
         background: Rectangle {
-            radius: 12
+            radius: Theme.radius("tile", 12, height)
             color: settingsButton.down ? Qt.alpha(control.accentColor, 0.3)
                                        : control.settingsSelected ? Qt.alpha(control.accentColor, 0.15) : "transparent"
         }

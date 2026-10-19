@@ -83,9 +83,9 @@ Button {
         }
     }
     background: Rectangle {
-        radius: 14
+        radius: Theme.radius("card", 14, height)
         color: card.down ? Theme.notificationCardPressed : Theme.notificationCard
-        border.width: 1
+        border.width: Theme.borderWidth(1)
         border.color: card.notification.urgency === 2 ? Theme.urgentBorder : Qt.alpha(card.accentColor, 0.35)
     }
     Accessible.name: (card.notification.appName || "Notification") + ": " + card.notification.summary

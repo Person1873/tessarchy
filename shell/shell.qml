@@ -275,9 +275,9 @@ ShellRoot {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottomMargin: panel.expanded ? 0 : (surface.mode === "desktop" ? 8 : 12)
                     width: panel.expanded ? expandedContent.width : parent.width
-                    radius: panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
+                    radius: Theme.radius("card", panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26), height)
                     color: panel.expanded ? (panel.page === "windows" ? Theme.switcherGlass : Theme.glassStrong) : Theme.bar(shellPreferences.barOpacity)
-                    border.width: 1
+                    border.width: Theme.borderWidth(1)
                     border.color: Qt.alpha(root.accentColor, 0.15)
                 }
                 WlrLayershell.namespace: "tessera"
@@ -699,9 +699,9 @@ ShellRoot {
                             implicitHeight: 48
                             implicitWidth: trayRow.implicitWidth + 12
                             Layout.alignment: Qt.AlignVCenter
-                            radius: 8
+                            radius: Theme.radius("tile", 8, height)
                             color: Theme.trayGlass
-                            border.width: 1
+                            border.width: Theme.borderWidth(1)
                             border.color: Theme.trayBorder
                             RowLayout {
                                 id: trayRow
@@ -801,7 +801,7 @@ ShellRoot {
                 color: "transparent"
                 Rectangle {
                     anchors.fill: parent
-                    radius: statusBar.drawerOpen ? 28 : 0
+                    radius: Theme.radius("card", statusBar.drawerOpen ? 28 : 0, height)
                     color: statusBar.drawerOpen ? Theme.glassStrong : Theme.bar(shellPreferences.barOpacity)
                     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.alpha(root.accentColor, 0.1) }
                 }
@@ -1033,7 +1033,7 @@ ShellRoot {
                     // Same frosted glass as the taskbar: a translucent accent
                     // fill the compositor blurs behind (namespace tessera-start).
                     color: Theme.bar(shellPreferences.barOpacity)
-                    border.width: 1
+                    border.width: Theme.borderWidth(1)
                     border.color: Qt.alpha(root.accentColor, 0.15)
                     // Blue header band, the Start menu's signature.
                     Rectangle {
@@ -1177,7 +1177,7 @@ ShellRoot {
                     y: homeClock.y + 104
                     width: homeClock.width + 48
                     height: homeClock.height - 104 + 16
-                    radius: 28
+                    radius: Theme.radius("card", 28, height)
                     color: Qt.alpha(Theme.background, 0.55)
                 }
                 Column {
