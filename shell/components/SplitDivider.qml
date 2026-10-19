@@ -118,8 +118,8 @@ PanelWindow {
                 if (Math.abs(along - pressAt) < 12)
                     return;
                 moved = true;
-                divider.heldLeft = divider.margins.left;
-                divider.heldTop = divider.margins.top;
+                divider.heldLeft = divider.sideBySide ? divider.pairX + divider.boundary - divider.thickness / 2 : divider.pairX;
+                divider.heldTop = divider.sideBySide ? divider.pairY : divider.pairY + divider.boundary - divider.thickness / 2;
                 divider.dragging = true;
             }
             divider.dragRatio = Math.max(0.2, Math.min(0.8, (startOffset + along) / total));

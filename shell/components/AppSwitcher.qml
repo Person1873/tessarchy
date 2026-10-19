@@ -106,10 +106,12 @@ FocusScope {
                 height: cards.height
                 scale: ListView.isCurrentItem ? 1 : 0.94
                 Behavior on scale { NumberAnimation { duration: control.reducedMotion ? 0 : 180 } }
-                ColumnLayout {
+                Item {
                     anchors.fill: parent
-                    spacing: 10
                     transform: Translate { x: card.swipeOffset }
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 10
                     RowLayout {
                         Layout.fillWidth: true
                         Rectangle {
@@ -157,10 +159,12 @@ FocusScope {
                                 preventStealing: true
                                 property real startX: 0
                                 property bool dragged: false
-                                onPressed: mouse => { startX = mouse.x; dragged = false; card.swipeOffset = 0; }
+                                // The preview translates during the gesture; measure
+                                // in scene coordinates to avoid halving the swipe.
+                                onPressed: mouse => { startX = mapToItem(null, mouse.x, mouse.y).x; dragged = false; card.swipeOffset = 0; }
                                 onPositionChanged: mouse => {
                                     if (pressed) {
-                                        card.swipeOffset = mouse.x - startX;
+                                        card.swipeOffset = mapToItem(null, mouse.x, mouse.y).x - startX;
                                         if (Math.abs(card.swipeOffset) > 8) dragged = true;
                                     }
                                 }
@@ -200,6 +204,7 @@ FocusScope {
                         text: card.modelData.title || "Untitled window"
                         color: "#edf5fa"; font.pixelSize: 14; elide: Text.ElideRight
                         horizontalAlignment: Text.AlignHCenter
+                    }
                     }
                 }
             }
