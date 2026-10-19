@@ -225,9 +225,10 @@ class MediumPackages(unittest.TestCase):
         first_package = command.index(
             '/usr/share/tessarchy/pkgs/tessarchy-session-0.1.0-2-any.pkg.tar.zst')
         self.assertEqual(list(command[4:first_package]),
+                         # Each package's own paths, in order, without repeats.
                          ['--overwrite', '/usr/bin/tessarchy-session-0.1.0-2-any',
-                          '--overwrite', '/usr/bin/tessera-shell-0.1.0-2-any',
-                          '--overwrite', '/usr/share/tessarchy/shell/shell.qml'])
+                          '--overwrite', '/usr/share/tessarchy/shell/shell.qml',
+                          '--overwrite', '/usr/bin/tessera-shell-0.1.0-2-any'])
         self.assertEqual(sorted(command[first_package:]),
                          ['/usr/share/tessarchy/pkgs/tessarchy-session-0.1.0-2-any.pkg.tar.zst',
                           '/usr/share/tessarchy/pkgs/tessera-shell-0.1.0-2-any.pkg.tar.zst'])

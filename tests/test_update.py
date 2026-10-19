@@ -444,21 +444,23 @@ class Offline(UpdateCase):
                          [f'-U --needed --noconfirm {package}'])
 
     def test_packages_only_on_a_machine_that_owns_them_gets_no_overwrite(self):
-        self.configure_repo(self.repo_server())
-        self.publish(self.all_packages('0.1.0-3'))
-        self.installed({'tessera-shell': '0.1.0-2'})
+        url = self.repo_server()
+        self.publish({'tessera-shell': '0.2.0-1', 'tessarchy-session': '0.1.0-2'})
+        self.installed({'tessera-shell': '0.1.0-2', 'tessarchy-session': '0.1.0-2'})
+        self.environment['PACMAN_UPGRADE_TO'] = '0.2.0-1'
         with mock.patch('os.geteuid', return_value=0):
-            self.run_cli('--apply', '--packages-only', '--force', '--pacman',
-                         self.pacman, expect=0)
+            self.run_cli('--apply', '--packages-only', '--repo', url,
+                         '--pacman', self.pacman, expect=0)
         self.assertEqual(self.invocations('-Sy'),
                          ['-Sy --needed --noconfirm tessera-shell'])
 
     def test_adopting_on_a_machine_that_owns_nothing_overwrites(self):
-        self.configure_repo(self.repo_server())
+        url = self.repo_server()
         self.publish(self.all_packages('0.1.0-2'))
+        self.environment['PACMAN_UPGRADE_TO'] = '0.1.0-2'
         with mock.patch('os.geteuid', return_value=0):
-            self.run_cli('--apply', '--packages-only', '--force', '--pacman',
-                         self.pacman, expect=0)
+            self.run_cli('--apply', '--packages-only', '--repo', url, '--force',
+                         '--pacman', self.pacman, expect=0)
         self.assertIn('--overwrite *', self.invocations('-Sy')[0])
 
     def test_a_folder_with_no_packages_is_an_error(self):
