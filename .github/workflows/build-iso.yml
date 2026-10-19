@@ -7,6 +7,10 @@ on:
         description: 'Optional prerelease tag; creates a draft for review after boot captures'
         required: false
         type: string
+      repo_url:
+        description: 'Optional: point the medium at another package repository (mirror or test build)'
+        required: false
+        type: string
   pull_request:
     paths:
       - '.github/workflows/build-iso.yml'
@@ -34,12 +38,15 @@ jobs:
         run: ./scripts/check.sh
       - name: Build Arch live image in disposable container
         shell: bash
+        env:
+          REPO_URL: ${{ inputs.repo_url }}
         run: |
           set -euo pipefail
           mkdir -p dist
           docker run --privileged --rm \
             --volume "$PWD:/workspace" --workdir /workspace \
             --env "TESSARCHY_COMMIT=$GITHUB_SHA" \
+            --env "TESSARCHY_REPO_URL=${REPO_URL:-}" \
             archlinux:base bash -euo pipefail -c '
               pacman -Syu --noconfirm --needed archiso ffmpeg base-devel
               # The medium carries the packages an installed machine updates from,
