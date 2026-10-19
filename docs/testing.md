@@ -1615,3 +1615,23 @@ source tree, rejection of edited/missing launcher originals, legacy uninstall
 and long/empty event messages. No host settings, development
 installation or running VM were modified. Fractional-scale acceptance on a
 physical display remains pending.
+
+## Desktop taskbar inset — 2026-10-19
+
+Defect: in Desktop mode the bar frame spans y 0–56 of the 64 px panel, but the
+content column used top/bottom margins 8/8, so the 48 px taskbar row spanned
+y 8–56. Its bottom edge coincided with the frame's, and the Start button's
+border drew over the frame border. The row now uses margins 4/12 (y 4–52),
+4 px clear of the frame on both sides; the row stays 48 px tall. Expanded pages
+keep their previous margins.
+
+Executed by an agent in the QEMU VM (1280x800, theme tessera, Desktop mode),
+deploying `main` and then this branch. Pixel rows sampled at x=60 inside the Start
+button: the frame border is at y 736 and y 791. Before, the button spanned y 744–791
+(7 rows clear above, none below). After, it spans y 740–787 (3 rows clear above
+and 3 below). Left/right margins are 10/10 against the full-width frame.
+
+Tablet and Phone were checked and not changed: their rows are not flush (Tablet
+12 px above and below inside the 72 px frame; Phone 12 px above and 4 px below
+inside the 64 px frame). A Tablet capture with this branch differed from `main`
+by 21 pixels (clock/cursor). `./scripts/check.sh` passed.

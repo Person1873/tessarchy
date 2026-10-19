@@ -290,8 +290,9 @@ ShellRoot {
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 12
-                    anchors.topMargin: surface.mode === "desktop" ? 8 : 12
-                    anchors.bottomMargin: panel.expanded ? 12 : surface.mode === "desktop" ? 8 : 16
+                    // Desktop centres the 48 px taskbar row in the 56 px frame (4 px above and below).
+                    anchors.topMargin: surface.mode === "desktop" ? (panel.expanded ? 8 : 4) : 12
+                    anchors.bottomMargin: panel.expanded ? 12 : surface.mode === "desktop" ? 12 : 16
                     anchors.leftMargin: surface.isPhone ? 12 : surface.mode === "desktop" ? 10 : 16
                     anchors.rightMargin: surface.isPhone ? 12 : surface.mode === "desktop" ? 10 : 16
                     spacing: 8
