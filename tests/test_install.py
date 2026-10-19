@@ -283,6 +283,7 @@ class MediumPackages(unittest.TestCase):
         installer = self.installer
         output = io.StringIO()
         with mock.patch.object(installer, 'MOUNT', self.root), \
+                mock.patch.object(installer, 'archive_paths', return_value=['*']), \
                 mock.patch.object(installer, 'in_target_status',
                                   return_value=self.fake_status(4)), \
                 mock.patch.object(installer, 'in_target'), \
