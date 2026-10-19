@@ -25,8 +25,8 @@ Button {
     }
     background: Rectangle {
         radius: 12
-        color: control.down ? Qt.alpha(control.accentColor, 0.28) : control.destructive ? Qt.alpha(Theme.dangerSurface, 0.53) : control.selected ? Qt.alpha(control.accentColor, 0.18) : Qt.alpha(Theme.surface, 0.31)
-        border.color: control.destructive ? Theme.danger : control.selected ? control.accentColor : Qt.alpha(Theme.selection, 0.31)
+        color: control.down ? Theme.pressed(control.accentColor) : control.destructive ? Theme.dangerSurface : control.selected ? Theme.selected(control.accentColor) : Theme.glass
+        border.color: control.destructive ? Theme.danger : control.selected ? control.accentColor : Theme.glassBorder
     }
     Accessible.name: text
 }

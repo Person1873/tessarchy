@@ -276,7 +276,7 @@ ShellRoot {
                     anchors.bottomMargin: panel.expanded ? 0 : (surface.mode === "desktop" ? 8 : 12)
                     width: panel.expanded ? expandedContent.width : parent.width
                     radius: panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
-                    color: Qt.alpha(Theme.background, panel.expanded ? (panel.page === "windows" ? 0.70 : 0.76) : shellPreferences.barOpacity)
+                    color: panel.expanded ? (panel.page === "windows" ? Theme.switcherGlass : Theme.glassStrong) : Theme.bar(shellPreferences.barOpacity)
                     border.width: 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
                 }
@@ -700,9 +700,9 @@ ShellRoot {
                             implicitWidth: trayRow.implicitWidth + 12
                             Layout.alignment: Qt.AlignVCenter
                             radius: 8
-                            color: Qt.alpha("#000000", 0.20)
+                            color: Theme.trayGlass
                             border.width: 1
-                            border.color: Qt.alpha("#ffffff", 0.12)
+                            border.color: Theme.trayBorder
                             RowLayout {
                                 id: trayRow
                                 anchors.centerIn: parent
@@ -754,7 +754,7 @@ ShellRoot {
                                 }
                                 Text {
                                     text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "h:mm" : "h:mm AP")
-                                    color: "#e2edf1"
+                                    color: Theme.panelText
                                     font.pixelSize: 12
                                     leftPadding: 6
                                     rightPadding: 10
@@ -802,7 +802,7 @@ ShellRoot {
                 Rectangle {
                     anchors.fill: parent
                     radius: statusBar.drawerOpen ? 28 : 0
-                    color: Qt.alpha(Theme.background, statusBar.drawerOpen ? 0.76 : shellPreferences.barOpacity)
+                    color: statusBar.drawerOpen ? Theme.glassStrong : Theme.bar(shellPreferences.barOpacity)
                     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.alpha(root.accentColor, 0.1) }
                 }
                 WlrLayershell.namespace: "tessera-status"
@@ -846,7 +846,7 @@ ShellRoot {
                         background: Item {}
                         contentItem: Text {
                             text: mobileClock.text
-                            color: "#f0f5ff"
+                            color: Theme.text
                             verticalAlignment: Text.AlignVCenter
                             font { pixelSize: 16; weight: Font.DemiBold; letterSpacing: 0.2 }
                         }
@@ -898,7 +898,7 @@ ShellRoot {
                     Text {
                         visible: surface.showWorkspaces && surface.mode === "desktop" && text.length > 0
                         text: root.activeWindow ? (root.activeWindow.title || "") : ""
-                        color: "#d0dced"
+                        color: Theme.panelMutedText
                         font.pixelSize: 13
                         elide: Text.ElideRight
                         Layout.fillWidth: true
@@ -921,7 +921,7 @@ ShellRoot {
                         Text {
                             Layout.alignment: Qt.AlignVCenter
                             text: Math.round(weatherBackend.state.temperature) + (weatherBackend.state.unit || "")
-                            color: "#e2edf1"
+                            color: Theme.panelText
                             font.pixelSize: 12
                             Accessible.name: (weatherBackend.state.description || "Weather") + ", " + text + (weatherBackend.state.stale ? ", last observation" : "")
                         }
@@ -1032,7 +1032,7 @@ ShellRoot {
                     topRightRadius: 16
                     // Same frosted glass as the taskbar: a translucent accent
                     // fill the compositor blurs behind (namespace tessera-start).
-                    color: Qt.alpha(Theme.background, shellPreferences.barOpacity)
+                    color: Theme.bar(shellPreferences.barOpacity)
                     border.width: 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
                     // Blue header band, the Start menu's signature.
@@ -1044,8 +1044,8 @@ ShellRoot {
                         topLeftRadius: parent.topLeftRadius
                         topRightRadius: parent.topRightRadius
                         gradient: Gradient {
-                            GradientStop { position: 0.0; color: Qt.rgba(0.16, 0.30, 0.62, 0.55) }
-                            GradientStop { position: 1.0; color: Qt.rgba(0.10, 0.18, 0.40, 0.12) }
+                            GradientStop { position: 0.0; color: Theme.startHeaderTop }
+                            GradientStop { position: 1.0; color: Theme.startHeaderBottom }
                         }
                     }
                     ColumnLayout {
@@ -1054,7 +1054,7 @@ ShellRoot {
                         spacing: 10
                         Text {
                             text: "ALL APPS"
-                            color: "#dbe8ff"
+                            color: Theme.startHeaderText
                             Layout.leftMargin: 2
                             font {
                                 pixelSize: 11

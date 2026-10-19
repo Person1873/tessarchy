@@ -7,7 +7,7 @@ import QtQuick.Layouts
 // than XP's solid green.
 Button {
     id: control
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     // True while the launcher page this button opens is on screen.
     property bool selected: false
     Layout.minimumHeight: 48
@@ -26,7 +26,7 @@ Button {
         }
         Text {
             text: control.text
-            color: "#0b1a24"
+            color: Theme.startButtonText
             font.pixelSize: 17
             font.italic: true
             font.bold: true
@@ -41,7 +41,7 @@ Button {
             GradientStop { position: 1.0; color: Qt.darker(control.accentColor, 1.12) }
         }
         border.width: 1
-        border.color: control.selected ? Qt.alpha("#ffffff", 0.85) : Qt.alpha("#ffffff", 0.55)
+        border.color: control.selected ? Theme.startButtonSelectedBorder : Theme.startButtonBorder
         opacity: control.down ? 0.82 : 1.0
     }
     Accessible.name: "Start"

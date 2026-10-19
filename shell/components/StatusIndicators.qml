@@ -7,7 +7,7 @@ import QtQuick.Layouts
 // beside the clock like a Windows notification area.
 RowLayout {
     id: control
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     property bool compact: false
     property int notificationCount: 0
     property int cellularStrength: -1
@@ -45,11 +45,11 @@ RowLayout {
                                    : control.notificationsSelected ? Qt.alpha(control.accentColor, 0.15) : "transparent"
         }
         contentItem: Item {
-            Image {
+            Icon {
                 anchors.centerIn: parent
-                source: "../icons/bell.svg"
-                sourceSize.width: control.glyphSize
-                sourceSize.height: control.glyphSize
+                symbol: "bell"
+                size: control.glyphSize
+                color: Theme.text
             }
             Rectangle {
                 visible: control.notificationCount > 0
@@ -60,11 +60,11 @@ RowLayout {
                 width: 14
                 height: 14
                 radius: 7
-                color: "#e2796d"
+                color: Theme.danger
                 Text {
                     anchors.centerIn: parent
                     text: control.notificationCount
-                    color: "#21151a"
+                    color: Theme.darkerBackground
                     font.pixelSize: 9
                     font.bold: true
                 }
@@ -73,13 +73,13 @@ RowLayout {
         Accessible.name: control.notificationCount > 0 ? "Notifications, " + control.notificationCount + " unread" : "Notifications"
         onClicked: control.notificationsRequested()
     }
-    Image {
+    Icon {
         visible: control.airplaneOn
         Layout.preferredWidth: 18
         Layout.preferredHeight: 18
-        source: "../icons/airplane.svg"
-        sourceSize.width: 18
-        sourceSize.height: 18
+        symbol: "airplane"
+        size: 18
+        color: Theme.text
         Accessible.name: "Airplane mode on"
     }
     StatusIcon {
@@ -94,16 +94,16 @@ RowLayout {
     }
     RowLayout {
         spacing: 4
-        Image {
-            source: "../icons/battery.svg"
-            sourceSize.width: control.compact ? 18 : 22
-            sourceSize.height: control.compact ? 18 : 22
+        Icon {
+            symbol: "battery"
+            size: control.compact ? 18 : 22
+            color: Theme.text
             opacity: control.batteryPresent ? 1 : 0.35
         }
         Text {
             visible: control.showBatteryText
             text: control.batteryPresent ? Math.round(control.batteryPercent * 100) + "%" : "—"
-            color: "#a9e8d5"
+            color: Theme.accent
             font.pixelSize: control.compact ? 10 : 11
             Accessible.name: control.batteryPresent ? "Battery " + text : "Battery status unavailable"
         }
@@ -123,12 +123,12 @@ RowLayout {
             radius: 12
             color: volumeButton.down ? Qt.alpha(control.accentColor, 0.3) : "transparent"
         }
-        contentItem: Image {
+        contentItem: Icon {
             anchors.centerIn: parent
             opacity: control.audioAvailable ? 1 : 0.35
-            source: "../icons/" + (control.audioMuted ? "volume-muted" : "volume") + ".svg"
-            sourceSize.width: control.glyphSize
-            sourceSize.height: control.glyphSize
+            symbol: control.audioMuted ? "volume-muted" : "volume"
+            size: control.glyphSize
+            color: Theme.text
         }
         Accessible.name: control.audioMuted ? "Unmute audio" : "Mute audio"
         onClicked: control.muteToggled()
@@ -148,11 +148,11 @@ RowLayout {
             color: settingsButton.down ? Qt.alpha(control.accentColor, 0.3)
                                        : control.settingsSelected ? Qt.alpha(control.accentColor, 0.15) : "transparent"
         }
-        contentItem: Image {
+        contentItem: Icon {
             anchors.centerIn: parent
-            source: "../icons/settings.svg"
-            sourceSize.width: control.glyphSize
-            sourceSize.height: control.glyphSize
+            symbol: "settings"
+            size: control.glyphSize
+            color: Theme.text
         }
         Accessible.name: "Settings"
         onClicked: control.settingsRequested()

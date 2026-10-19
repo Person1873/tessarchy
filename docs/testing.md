@@ -1636,3 +1636,32 @@ guest (720x1440, Hyprland 0.56.2, Quickshell 0.3.2, squeekboard, foot 1.28.0):
 - Firefox follows dark/light only under `GTK_THEME`; it does not get the palette.
 - Window borders are not themed: this branch sets `border_size = 0`.
 - Not checked: real hardware.
+
+## Desktop glass theme follow-up, 2026-10-19
+
+Actually performed in the development QEMU guest (1280×800 Desktop, Foot
+window open), against `origin/main` af042fb, pre-fix PR #9 3d415d3, and the
+fixed branch. Captured Start, taskbar, switcher and quick drawer with the
+VM framebuffer; switched tessera -> tessera-light **without restarting** the
+shell and inspected each image directly. Side-by-side captures in ignored
+`vm/glass-{start,taskbar,quick,switcher}-comparison.png` (left-to-right:
+main, pre-fix PR, fixed dark, fixed light; switcher uses PR, dark, light).
+
+Pre-fix: the dark Start/taskbar looked close to main, but the Start header,
+tiles, app switcher preview and buttons, tray bevel, quick-settings text and
+input fields retained hard-coded blue/white from upstream. Light mode kept
+those blues and white glyphs on a pale panel. The rebased TouchButton's
+destructive fill additionally re-alpha'd an already-translucent danger tint.
+Fixed: desktop surface colours now resolve through Theme semantic tokens;
+Tessera's optional `shell.toml` reproduces the upstream dark glass, while
+unlayered light/Omarchy palettes derive translucent colours. The Start header
+gradient, taskbar bevel and compositor blur rules are unchanged. Quick radio
+glyphs and tray indicators tint to the foreground on light backgrounds.
+
+The focused window title is displayed in the **status strip**, not in a
+shell-drawn app title bar; that label and taskbar text now follow Theme. The
+VM's existing Foot opened tiled and covered most of the desktop; no claim is
+made about app-owned title bar theming. It remained dark after changing theme
+because it was opened directly (not through the themed Foot launcher).
+Guest lacks tessera-brightness/nightlight and UPower; those warnings were
+already present and do not block rendering. Physical hardware not checked.

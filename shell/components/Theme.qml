@@ -1,10 +1,10 @@
 pragma Singleton
 import QtQuick
 
-// The active system theme. shell.qml feeds it the colors.toml that
-// tessarchy-theme stages (Omarchy's format); defaults are the Tessera palette
-// so components still render before, or without, a staged theme.
+// Omarchy palette plus optional Tessera shell.toml semantic overrides.
+// Every value derives from the active palette when no shell layer is present.
 QtObject {
+    id: theme
     property string mode: "dark"
     property color background: "#101b30"
     property color darkBackground: "#0b1424"
@@ -17,15 +17,76 @@ QtObject {
     property color muted: "#7a8589"
     property color accent: "#a9e8d5"
     property color danger: "#ef8a9b"
-    readonly property color dangerSurface: Qt.tint(surface, Qt.alpha(danger, 0.35))
+    property var shellOverrides: ({})
+    function token(name, fallback) {
+        return shellOverrides[name] === undefined ? fallback : shellOverrides[name];
+    }
+    readonly property color glass: token("glass", Qt.alpha(surface, 0.31))
+    readonly property color glassBorder: token("glass_border", Qt.alpha(selection, 0.31))
+    readonly property color glassStrong: token("glass_strong", Qt.alpha(background, 0.76))
+    readonly property color switcherGlass: token("switcher_glass", Qt.alpha(background, 0.70))
+    readonly property color barTint: token("bar_tint", background)
+    readonly property color dangerSurface: token("danger_surface", Qt.alpha(danger, 0.26))
+    readonly property color startHeaderTop: token("start_header_top", Qt.alpha(selection, 0.55))
+    readonly property color startHeaderBottom: token("start_header_bottom", Qt.alpha(selection, 0.12))
+    readonly property color startHeaderText: token("start_header_text", text)
+    readonly property color tileGlass: token("tile_glass", Qt.alpha(selection, 0.42))
+    readonly property color tileSelected: token("tile_selected", Qt.alpha(accent, 0.55))
+    readonly property color tilePressed: token("tile_pressed", Qt.alpha(accent, 0.65))
+    readonly property color tileBorder: token("tile_border", Qt.alpha(accent, 0.26))
+    readonly property color tileIconGlass: token("tile_icon_glass", Qt.alpha(accent, 0.55))
+    readonly property color tileIconBorder: token("tile_icon_border", Qt.alpha(accent, 0.35))
+    readonly property color switcherCard: token("switcher_card", Qt.alpha(surface, 0.25))
+    readonly property color switcherButton: token("switcher_button", Qt.alpha(surface, 0.21))
+    readonly property color switcherButtonBorder: token("switcher_button_border", Qt.alpha(accent, 0.25))
+    readonly property color trayGlass: token("tray_glass", Qt.alpha(darkerBackground, 0.20))
+    readonly property color trayBorder: token("tray_border", Qt.alpha(text, 0.12))
+    readonly property color taskIdle: token("task_idle", Qt.alpha(text, 0.06))
+    readonly property color taskBorder: token("task_border", Qt.alpha(text, 0.16))
+    readonly property color taskBevel: token("task_bevel", Qt.alpha(text, 0.12))
+    readonly property color taskPressedBevel: token("task_pressed_bevel", Qt.alpha(darkerBackground, 0.30))
+    readonly property color startButtonText: token("start_button_text", darkBackground)
+    readonly property color startButtonBorder: token("start_button_border", Qt.alpha(text, 0.55))
+    readonly property color startButtonSelectedBorder: token("start_button_selected_border", Qt.alpha(text, 0.85))
+    readonly property color inputText: token("input_text", text)
+    readonly property color inputPlaceholder: token("input_placeholder", textMuted)
+    readonly property color inputSelection: token("input_selection", selection)
+    readonly property color inputBorder: token("input_border", glassBorder)
+    readonly property color panelText: token("panel_text", textSecondary)
+    readonly property color panelMutedText: token("panel_muted_text", textMuted)
+    readonly property color tileText: token("tile_text", text)
+    // Existing user setting still controls only the bar and Start menu opacity.
+    function bar(opacity) { return Qt.alpha(barTint, opacity); }
+    function selected(accentColor) { return Qt.alpha(accentColor, 0.18); }
+    function pressed(accentColor) { return Qt.alpha(accentColor, 0.28); }
+    function taskSelected(accentColor) { return Qt.alpha(accentColor, 0.26); }
+    function taskDown(accentColor) { return Qt.alpha(accentColor, 0.20); }
+    function taskSelectedBorder(accentColor) { return Qt.alpha(accentColor, 0.85); }
+    function switcherSelectedBorder(accentColor) { return Qt.alpha(accentColor, 0.65); }
 
     function load(raw) {
+        // Assign defaults before reading new theme: a missing key must not
+        // inherit the previous theme's colour (especially after light -> dark).
+        shellOverrides = ({});
+        const overrides = {};
+        const allowed = ["glass", "glass_border", "glass_strong", "switcher_glass", "bar_tint", "danger_surface",
+            "start_header_top", "start_header_bottom", "start_header_text", "tile_glass", "tile_selected", "tile_pressed",
+            "tile_border", "tile_icon_glass", "tile_icon_border", "switcher_card", "switcher_button", "switcher_button_border",
+            "tray_glass", "tray_border", "task_idle", "task_border", "task_bevel", "task_pressed_bevel",
+            "start_button_text", "start_button_border", "start_button_selected_border", "input_text", "input_placeholder",
+            "input_selection", "input_border", "panel_text", "panel_muted_text", "tile_text"];
         const lines = String(raw || "").split("\n");
+        let shellLayer = false;
         for (let i = 0; i < lines.length; i++) {
-            const match = lines[i].match(/^\s*([A-Za-z0-9_]+)\s*=\s*["']?(#[0-9A-Fa-f]{6}|light|dark)/);
-            if (!match)
-                continue;
+            if (lines[i].trim() === "[tessera]") { shellLayer = true; continue; }
+            const match = lines[i].match(/^\s*([A-Za-z0-9_]+)\s*=\s*["']?(#[0-9A-Fa-f]{6,8}|light|dark)/);
+            if (!match) continue;
             const value = match[2];
+            if (shellLayer) {
+                if (allowed.indexOf(match[1]) >= 0 && /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(value))
+                    overrides[match[1]] = value;
+                continue;
+            }
             switch (match[1]) {
             case "mode": mode = value; break;
             case "background": background = value; break;
@@ -41,5 +102,6 @@ QtObject {
             case "red": danger = value; break;
             }
         }
+        shellOverrides = overrides;
     }
 }

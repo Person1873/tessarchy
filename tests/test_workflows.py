@@ -1,5 +1,6 @@
 """Observable install safety and profile assembly; no GUI or privileged tests."""
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -9,6 +10,31 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Workflows(unittest.TestCase):
+    def test_shell_colors_live_in_theme_tokens(self):
+        # Temporary migration exceptions: mobile login/communications, the
+        # notification/audio/settings subpages and greeter are not in the
+        # desktop-glass pass. Caps keep this debt from silently increasing.
+        legacy = {
+            'PinScreen.qml': 12, 'MessagesApp.qml': 10, 'CellularSettings.qml': 10,
+            'PowerPanel.qml': 7, 'PhoneApp.qml': 6, 'NotificationCard.qml': 6,
+            'SoundSettings.qml': 5, 'AudioControls.qml': 5,
+            'NotificationCenter.qml': 4,
+            'SettingsPage.qml': 3, 'MediaPanel.qml': 3,
+            'BrightnessControl.qml': 3, 'BluetoothPanel.qml': 3,
+            'RotationControl.qml': 2, 'NightLightToggle.qml': 2,
+            'LocalFilePicker.qml': 2, 'greeter.qml': 1, 'ContactAvatar.qml': 1,
+        }
+        pattern = re.compile(r'#[0-9a-fA-F]{6,8}\b|Qt\.rgba\s*\(')
+        paths = list((ROOT / 'shell').glob('*.qml')) + list((ROOT / 'shell/components').glob('*.qml'))
+        for path in paths:
+            if path.name == 'Theme.qml':
+                continue  # Only the theme engine may hold colour literals.
+            offenders = [number for number, line in enumerate(path.read_text().splitlines(), 1)
+                         if pattern.search(line)]
+            self.assertLessEqual(len(offenders), legacy.get(path.name, 0),
+                                 f'{path.name}: colour literals at {offenders}')
+        self.assertEqual(sum(legacy.values()), 85)
+
     def run_quickshell_harness(self, name, marker):
         import shutil
         quickshell = shutil.which('qs')
@@ -267,9 +293,11 @@ class Workflows(unittest.TestCase):
         self.assertEqual(self.theme('apply').returncode, 0)
         self.assertEqual((state / 'theme/name').read_text().strip(), 'tessera')
         self.assertIn('accent = "#a9e8d5"', (state / 'theme/colors.toml').read_text())
+        self.assertIn('glass = "#501c2c43"', (state / 'theme/colors.toml').read_text())
         result = self.theme('set', 'tessera-light')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual((state / 'theme/mode').read_text().strip(), 'light')
+        self.assertNotIn('[tessera]', (state / 'theme/colors.toml').read_text())
         css = (state / 'osk/gtk-3.0/gtk.css').read_text()
         self.assertIn('#Return { background: #1f8a72', css)
         self.assertIn('sq_view { background-color: #cfd9e4', css)
@@ -289,6 +317,7 @@ class Workflows(unittest.TestCase):
         user_foot.write_text('font=monospace:size=14\n')
         self.assertIn('paper\tlight\t#fafafa\t#202020\t#3366cc', self.theme('list').stdout)
         self.assertEqual(self.theme('set', 'paper').returncode, 0)
+        self.assertNotIn('[tessera]', (state / 'theme/colors.toml').read_text())
         self.assertEqual((state / 'theme/mode').read_text().strip(), 'light')
         self.assertEqual((state / 'theme/wallpaper').read_text().strip(), str(mine / 'backgrounds/1.png'))
         foot = (state / 'theme/foot.ini').read_text()

@@ -12,11 +12,9 @@ TouchButton {
     implicitHeight: 84
     background: Rectangle {
         radius: 12
-        color: control.down ? Qt.rgba(0.24, 0.38, 0.78, 0.55)
-                            : control.selected ? Qt.rgba(0.20, 0.33, 0.68, 0.55)
-                                               : Qt.rgba(0.13, 0.22, 0.46, 0.42)
+        color: control.down ? Theme.tilePressed : control.selected ? Theme.tileSelected : Theme.tileGlass
         border.width: 1
-        border.color: Qt.rgba(0.56, 0.71, 1.0, 0.26)
+        border.color: Theme.tileBorder
     }
     contentItem: ColumnLayout {
         anchors.centerIn: parent
@@ -27,9 +25,9 @@ TouchButton {
             implicitWidth: 40
             implicitHeight: 40
             radius: 11
-            color: Qt.rgba(0.24, 0.40, 0.82, 0.55)
+            color: Theme.tileIconGlass
             border.width: 1
-            border.color: Qt.rgba(0.62, 0.76, 1.0, 0.35)
+            border.color: Theme.tileIconBorder
             Image {
                 anchors.centerIn: parent
                 source: control.iconSource || "../icons/" + control.symbol + ".svg"
@@ -43,7 +41,7 @@ TouchButton {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             maximumLineCount: 1
-            color: "#e8f0ff"
+            color: Theme.tileText
             font.pixelSize: 12
         }
     }

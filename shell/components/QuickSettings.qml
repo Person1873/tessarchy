@@ -9,7 +9,7 @@ ColumnLayout {
     required property string activeMode
     required property var date
     property bool use24Hour: true
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     property var bluetoothAdapter: null
     property bool bluetoothExpanded: false
     property var mediaPlayer: null
@@ -30,10 +30,10 @@ ColumnLayout {
             spacing: 4
             Text {
                 text: Qt.formatDateTime(sheet.date, sheet.use24Hour ? "h:mm" : "h:mm AP")
-                color: "#f0f5ff"
+                color: Theme.text
                 font { pixelSize: 34; weight: Font.Light; letterSpacing: -1 }
             }
-            Text { text: Qt.formatDateTime(sheet.date, "dddd, MMMM d"); color: "#a7bdc6"; font.pixelSize: 12 }
+            Text { text: Qt.formatDateTime(sheet.date, "dddd, MMMM d"); color: Theme.textMuted; font.pixelSize: 12 }
         }
         NavButton {
             anchors.right: parent.right
@@ -90,7 +90,7 @@ ColumnLayout {
     }
     Text {
         text: "Layout · " + sheet.activeMode
-        color: "#a7bdc6"
+        color: Theme.textMuted
         font.pixelSize: 12
     }
     RowLayout {
@@ -123,7 +123,7 @@ ColumnLayout {
         visible: !!sheet.radios.state.error
         Layout.fillWidth: true
         text: sheet.radios.state.error || ""
-        color: "#ebbbbd"; font.pixelSize: 12; wrapMode: Text.WordWrap
+        color: Theme.danger; font.pixelSize: 12; wrapMode: Text.WordWrap
     }
     RowLayout {
         Layout.fillWidth: true
@@ -146,7 +146,7 @@ ColumnLayout {
     }
     Text {
         text: sheet.audioAvailable ? "Volume · " + Math.round(sheet.audioSink.audio.volume * 100) + "%" : "Audio output unavailable"
-        color: "#99afbe"; font.pixelSize: 11
+        color: Theme.textMuted; font.pixelSize: 11
         Layout.alignment: Qt.AlignHCenter
     }
     TouchButton {
@@ -180,7 +180,7 @@ ColumnLayout {
     }
     Text {
         visible: brightness.available || nightLight.available
-        text: "Display"; color: "#a7bdc6"; font.pixelSize: 12
+        text: "Display"; color: Theme.textMuted; font.pixelSize: 12
     }
     BrightnessControl { id: brightness; Layout.fillWidth: true; accentColor: sheet.accentColor }
     NightLightToggle {
@@ -196,7 +196,7 @@ ColumnLayout {
     PowerPanel { Layout.fillWidth: true; accentColor: sheet.accentColor }
     Text {
         text: "Airplane mode switches all detected radios"
-        color: "#99afbe"; font.pixelSize: 10
+        color: Theme.textMuted; font.pixelSize: 10
         Layout.alignment: Qt.AlignHCenter
     }
 }

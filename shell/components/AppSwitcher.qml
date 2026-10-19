@@ -8,7 +8,7 @@ import Quickshell.Wayland
 FocusScope {
     id: control
     property var windows: []
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     property bool reducedMotion: false
     property bool fillApp: false
     property var pendingTarget: null
@@ -113,15 +113,15 @@ FocusScope {
                         Text {
                             Layout.fillWidth: true
                             text: card.entry ? card.entry.name : card.handle ? card.handle.appId : "Application"
-                            color: "#edf5fa"; font.pixelSize: 13; elide: Text.ElideRight
+                            color: Theme.text; font.pixelSize: 13; elide: Text.ElideRight
                         }
                     }
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         radius: 20
-                        color: "#4018283d"
-                        border.color: card.ListView.isCurrentItem ? Qt.alpha(control.accentColor, 0.65) : "#34465e"
+                        color: Theme.switcherCard
+                        border.color: card.ListView.isCurrentItem ? Theme.switcherSelectedBorder(control.accentColor) : Theme.selection
                         Item {
                             anchors.fill: parent
                             anchors.margins: 8
@@ -140,8 +140,8 @@ FocusScope {
                                 width: parent.width - 24
                                 spacing: 14
                                 Image { anchors.horizontalCenter: parent.horizontalCenter; source: "../artwork/tessarchy-mark.svg"; width: 48; height: 48 }
-                                Text { width: parent.width; text: card.modelData.title || "Untitled window"; color: "#edf5fa"; wrapMode: Text.WrapAnywhere; horizontalAlignment: Text.AlignHCenter }
-                                Text { width: parent.width; text: "Preview unavailable"; color: "#a7bbca"; horizontalAlignment: Text.AlignHCenter; font.pixelSize: 12 }
+                                Text { width: parent.width; text: card.modelData.title || "Untitled window"; color: Theme.text; wrapMode: Text.WrapAnywhere; horizontalAlignment: Text.AlignHCenter }
+                                Text { width: parent.width; text: "Preview unavailable"; color: Theme.textMuted; horizontalAlignment: Text.AlignHCenter; font.pixelSize: 12 }
                             }
                             // Taps select; horizontal drags are stolen by the ListView.
                             MouseArea {
@@ -155,7 +155,7 @@ FocusScope {
                     Text {
                         Layout.fillWidth: true
                         text: card.modelData.title || "Untitled window"
-                        color: "#edf5fa"; font.pixelSize: 14; elide: Text.ElideRight
+                        color: Theme.text; font.pixelSize: 14; elide: Text.ElideRight
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
@@ -165,7 +165,7 @@ FocusScope {
                 anchors.centerIn: parent
                 width: parent.width - 32
                 text: "Your open apps will appear here.\nTap Home to launch your first."
-                color: "#b7c7cc"
+                color: Theme.textSecondary
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
             }
@@ -178,7 +178,7 @@ FocusScope {
                 Rectangle {
                     required property int index
                     width: 5; height: 5; radius: 3
-                    color: index === cards.currentIndex ? control.accentColor : "#668fa6b6"
+                    color: index === cards.currentIndex ? control.accentColor : Theme.textMuted
                 }
             }
         }
@@ -191,8 +191,8 @@ FocusScope {
                 implicitWidth: 56
                 enabled: !!(control.windows[cards.currentIndex] && control.windows[cards.currentIndex].wayland)
                 accentColor: control.accentColor
-                background: Rectangle { radius: 28; color: returnButton.down ? "#66a9e8d5" : "#351c2c43"; border.color: "#409dbbad" }
-                contentItem: Image { source: "../icons/return.svg"; sourceSize.width: 22; sourceSize.height: 22; fillMode: Image.Pad; opacity: parent.enabled ? 1 : 0.35 }
+                background: Rectangle { radius: 28; color: returnButton.down ? Theme.pressed(control.accentColor) : Theme.switcherButton; border.color: Theme.switcherButtonBorder }
+                contentItem: Icon { symbol: "return"; size: 22; color: Theme.text; opacity: parent.enabled ? 1 : 0.35 }
                 onClicked: control.activateCurrent()
             }
             TouchButton {
@@ -200,8 +200,8 @@ FocusScope {
                 text: "Close window…"
                 implicitWidth: 56
                 enabled: !!(control.windows[cards.currentIndex] && control.windows[cards.currentIndex].wayland)
-                background: Rectangle { radius: 28; color: closeButton.down ? "#66a9e8d5" : "#351c2c43"; border.color: "#409dbbad" }
-                contentItem: Image { source: "../icons/close.svg"; sourceSize.width: 22; sourceSize.height: 22; fillMode: Image.Pad; opacity: parent.enabled ? 1 : 0.35 }
+                background: Rectangle { radius: 28; color: closeButton.down ? Theme.pressed(control.accentColor) : Theme.switcherButton; border.color: Theme.switcherButtonBorder }
+                contentItem: Icon { symbol: "close"; size: 22; color: Theme.text; opacity: parent.enabled ? 1 : 0.35 }
                 onClicked: control.closeRequested(control.windows[cards.currentIndex].wayland)
             }
         }
