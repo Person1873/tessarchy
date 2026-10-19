@@ -160,7 +160,7 @@ class Workflows(unittest.TestCase):
         self.env = dict(os.environ, HOME=str(self.home),
                         XDG_DATA_HOME=str(self.home / 'data'),
                         XDG_CONFIG_HOME=str(self.home / 'config'))
-        for variable in ('DISPLAY', 'WAYLAND_DISPLAY', 'TESSARCHY_DATA_DIR'):
+        for variable in ('DISPLAY', 'WAYLAND_DISPLAY', 'TESSARCHY_DATA_DIR', 'DBUS_SESSION_BUS_ADDRESS'):
             self.env.pop(variable, None)
 
     def run_script(self, name, expected=0, env=None):
@@ -359,7 +359,8 @@ class Workflows(unittest.TestCase):
 
     def test_theme_surface_defaults_overrides_and_invalid_values(self):
         state = self.home / 'state/tessarchy/theme'
-        defaults = 'return { window_rounding = 18, blur_enabled = true, blur_size = 4, blur_passes = 2 }\n'
+        borders = 'window_border = 0, window_border_active = "rgb(a9e8d5)", window_border_inactive = "rgb(34465e)"'
+        defaults = f'return {{ window_rounding = 18, blur_enabled = true, blur_size = 4, blur_passes = 2, {borders} }}\n'
         self.assertEqual(self.theme('set', 'tessera').returncode, 0)
         self.assertEqual((state / 'surface.lua').read_text(), defaults)
         custom = self.home / 'config/tessarchy/themes/shape'
@@ -371,7 +372,7 @@ class Workflows(unittest.TestCase):
         result = self.theme('set', 'shape')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual((state / 'surface.lua').read_text(),
-                         'return { window_rounding = 4, blur_enabled = false, blur_size = 8, blur_passes = 3 }\n')
+                         f'return {{ window_rounding = 4, blur_enabled = false, blur_size = 8, blur_passes = 3, {borders} }}\n')
         self.assertIn('radius_card = 4', (state / 'colors.toml').read_text())
         (custom / 'shell.toml').write_text('[surface]\nwindow_rounding = 4; os.execute("false")\n'
                                            'blur_enabled = "false"\nblur_size = -1\nblur_passes = 999\n'
@@ -380,7 +381,131 @@ class Workflows(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual((state / 'surface.lua').read_text(), defaults)
         self.assertEqual(self.theme('set', 'tessera-light').returncode, 0)
-        self.assertEqual((state / 'surface.lua').read_text(), defaults)
+        self.assertIn('blur_passes = 2, window_border = 0, window_border_active = "rgb(1f8a72)"',
+                      (state / 'surface.lua').read_text())
+
+    def hyprland_config(self):
+        # Evaluate session/hyprland.lua with a stub hl and print what it configures.
+        script = r'''local seen = {}
+local noop = function() end
+hl = setmetatable({ config = function(t) seen = t end, dsp = setmetatable({}, { __index = function()
+    return setmetatable({}, { __index = function() return noop end, __call = noop }) end }) },
+    { __index = function() return noop end })
+dofile(arg[1])
+local g, col = seen.general, seen.general.col or {}
+local group = seen.group and seen.group.col or {}
+print(g.border_size, col.active_border, col.inactive_border, group.border_active, group.border_inactive)
+'''
+        env = dict(self.env, XDG_STATE_HOME=str(self.home / 'state'))
+        result = subprocess.run(['lua', '-', str(ROOT / 'session/hyprland.lua')],
+                                input=script, text=True, capture_output=True, env=env)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        return result.stdout.split()
+
+    def test_theme_window_borders_default_off_clamp_and_fall_back(self):
+        import shutil
+        if not shutil.which('lua'):
+            self.skipTest('Lua interpreter unavailable')
+        state = self.home / 'state/tessarchy/theme'
+        # No staged theme: the session config keeps border_size 0 and Hyprland's colours.
+        self.assertEqual(self.hyprland_config(), ['0', 'nil', 'nil', 'nil', 'nil'])
+        self.assertEqual(self.theme('set', 'tessera').returncode, 0)
+        self.assertEqual(self.hyprland_config(), ['0', 'rgb(a9e8d5)', 'rgb(34465e)', 'rgb(a9e8d5)', 'rgb(34465e)'])
+        custom = self.home / 'config/tessarchy/themes/framed'
+        custom.mkdir(parents=True)
+        (custom / 'colors.toml').write_text((ROOT / 'themes/tessera/colors.toml').read_text())
+        shell = lambda body: (custom / 'shell.toml').write_text('[surface]\n' + body)
+        shell('window_border = 2\nwindow_border_active = "#FF8800"  # orange\n'
+              'window_border_inactive = "#202020"\n')
+        self.assertEqual(self.theme('set', 'framed').returncode, 0)
+        self.assertIn('window_border = 2, window_border_active = "rgb(ff8800)", window_border_inactive = "rgb(202020)"',
+                      (state / 'surface.lua').read_text())
+        self.assertEqual(self.hyprland_config(), ['2', 'rgb(ff8800)', 'rgb(202020)', 'rgb(ff8800)', 'rgb(202020)'])
+        shell('window_border = 9\n')
+        self.theme('set', 'framed')
+        self.assertEqual(self.hyprland_config()[0], '4')
+        # Invalid widths and colours fall back to no border and palette colours.
+        for bad in ('window_border = -1\nwindow_border_active = "red"\nwindow_border_inactive = #123456\n',
+                    'window_border = 2.5\nwindow_border_active = "#12345"\n',
+                    'window_border = "2"\nwindow_border_active = "#123456"; os.execute("false")\n',
+                    'window_border = 2; os.exit(1)\nwindow_border_inactive = "#zzzzzz"\n'):
+            shell(bad)
+            self.assertEqual(self.theme('set', 'framed').returncode, 0, bad)
+            self.assertEqual(self.hyprland_config(), ['0', 'rgb(a9e8d5)', 'rgb(34465e)', 'rgb(a9e8d5)', 'rgb(34465e)'], bad)
+        # A hand-edited out-of-range staged file is still refused by the session.
+        (state / 'surface.lua').write_text('return { window_border = 12, window_border_active = "red; x" }\n')
+        self.assertEqual(self.hyprland_config(), ['0', 'nil', 'nil', 'nil', 'nil'])
+        self.assertEqual(self.theme('set', 'tessera').returncode, 0)
+        self.assertEqual(self.hyprland_config()[0], '0')
+
+    def test_theme_never_sources_theme_hyprland_or_chromium_files(self):
+        import shutil
+        if not shutil.which('lua'):
+            self.skipTest('Lua interpreter unavailable')
+        marker = self.home / 'theme-code-ran'
+        custom = self.home / 'config/tessarchy/themes/coded'
+        custom.mkdir(parents=True)
+        (custom / 'colors.toml').write_text((ROOT / 'themes/tessera/colors.toml').read_text())
+        (custom / 'hyprland.lua').write_text(f'os.execute("touch {marker}")\nerror("theme code ran")\n')
+        (custom / 'chromium.theme').write_text('255,0,0\n')
+        result = self.theme('set', 'coded')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.hyprland_config()[0], '0')
+        self.assertFalse(marker.exists())
+        staged = self.home / 'state/tessarchy/theme'
+        self.assertEqual(sorted(p.name for p in staged.iterdir()),
+                         ['colors.toml', 'foot.ini', 'mode', 'name', 'surface.lua', 'wallpaper'])
+        for path in staged.iterdir():
+            self.assertNotIn('theme code ran', path.read_text())
+
+    def test_theme_icon_theme_is_validated_and_applied_only_when_installed(self):
+        stubs = self.home / 'bin'
+        stubs.mkdir()
+        log = self.home / 'gsettings.log'
+        (stubs / 'gsettings').write_text(f'#!/bin/bash\necho \"$*\" >> {log}\n')
+        (stubs / 'gsettings').chmod(0o755)
+        (self.home / 'data/icons/Good-Icons').mkdir(parents=True)
+        (self.home / 'data/icons/Good-Icons/index.theme').write_text('[Icon Theme]\nName=Good\n')
+        (self.home / 'data/icons/No-Index').mkdir(parents=True)
+        env = dict(self.env, PATH=f'{stubs}:{os.environ["PATH"]}', XDG_DATA_DIRS=str(self.home / 'none'),
+                   DBUS_SESSION_BUS_ADDRESS='unix:path=/nonexistent')
+        custom = self.home / 'config/tessarchy/themes/iconic'
+        custom.mkdir(parents=True)
+        (custom / 'colors.toml').write_text((ROOT / 'themes/tessera/colors.toml').read_text())
+        staged = self.home / 'state/tessarchy/theme/icons'
+        calls = lambda: log.read_text().splitlines() if log.exists() else []
+        # Omarchy's icons.theme has no trailing newline.
+        (custom / 'icons.theme').write_text('Good-Icons')
+        self.assertEqual(self.theme('set', 'iconic', env=env).returncode, 0)
+        self.assertEqual(calls(), ['set org.gnome.desktop.interface icon-theme Good-Icons'])
+        self.assertEqual(staged.read_text(), 'Good-Icons\n')
+        for bad in ('Missing-Icons', 'No-Index', '../data/icons/Good-Icons', 'Good Icons', '$(touch x)',
+                    '-Good-Icons', '', 'A' * 65, 'Good-Icons/../Good-Icons'):
+            (custom / 'icons.theme').write_text(bad + '\n')
+            self.assertEqual(self.theme('set', 'iconic', env=env).returncode, 0, bad)
+            self.assertEqual(len(calls()), 1, bad)
+            self.assertFalse(staged.exists(), bad)
+        # Surrounding whitespace is tolerated; no session bus means no GSettings write.
+        (custom / 'icons.theme').write_text('  Good-Icons \n')
+        self.assertEqual(self.theme('set', 'iconic', env=dict(env, DBUS_SESSION_BUS_ADDRESS='')).returncode, 0)
+        self.assertEqual(len(calls()), 1)
+        self.assertEqual(staged.read_text(), 'Good-Icons\n')
+        # A theme without icons.theme leaves the current icon theme alone.
+        self.assertEqual(self.theme('set', 'tessera', env=env).returncode, 0)
+        self.assertEqual(len(calls()), 1)
+        self.assertFalse(staged.exists())
+
+    def test_theme_list_reports_preview_images(self):
+        custom = self.home / 'config/tessarchy/themes/pictured'
+        custom.mkdir(parents=True)
+        (custom / 'colors.toml').write_text('background = "#101010"\nforeground = "#f0f0f0"\naccent = "#ff8800"\n')
+        (custom / 'preview.png').write_bytes(b'png')
+        rows = {line.split('\t')[0]: line.split('\t') for line in self.theme('list').stdout.splitlines()}
+        self.assertEqual(rows['pictured'], ['pictured', 'dark', '#101010', '#f0f0f0', '#ff8800', str(custom / 'preview.png')])
+        self.assertEqual(rows['tessera'][5], '')
+        settings = (ROOT / 'shell/components/SettingsPage.qml').read_text()
+        self.assertIn('fillMode: Image.PreserveAspectCrop', settings)
+        self.assertIn('preview: field[5] || ""', (ROOT / 'shell/shell.qml').read_text())
 
     def test_run_launches_apps_in_theme_mode(self):
         stubs = self.home / 'bin'

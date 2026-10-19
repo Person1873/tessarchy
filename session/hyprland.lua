@@ -1,7 +1,10 @@
 -- Tessarchy defaults: Hyprland 0.56.x Lua API.
 -- This is loaded explicitly, never over the user's Hyprland config.
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
-local surface = { window_rounding = 18, blur_enabled = true, blur_size = 4, blur_passes = 2 }
+-- Theme surface values; window borders stay off unless a theme sets a width.
+local surface = { window_rounding = 18, blur_enabled = true, blur_size = 4, blur_passes = 2, window_border = 0 }
+local surface_max = { window_border = 4 }
+local border_colors = {}
 local state = os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")
 local surface_file = io.open(state .. "/tessarchy/theme/surface.lua", "r")
 if surface_file then
@@ -11,15 +14,28 @@ if surface_file then
         for key, default in pairs(surface) do
             local value = values[key]
             if type(value) == type(default) and (type(value) ~= "number" or
-               (value >= 0 and value <= 32)) then surface[key] = value end
+               (value >= 0 and value <= (surface_max[key] or 32))) then surface[key] = value end
+        end
+        for _, key in ipairs({ "window_border_active", "window_border_inactive" }) do
+            local value = values[key]
+            if type(value) == "string" and value:match("^rgb%(%x%x%x%x%x%x%)$") then border_colors[key] = value end
         end
     end
 end
+local general = { gaps_in = 0, gaps_out = 0, border_size = surface.window_border, layout = "dwindle",
+                  -- Let windows be resized by dragging an edge or corner, with a
+                  -- finger-sized grab area (borders are invisible unless themed).
+                  resize_on_border = true, extend_border_grab_area = 24 }
+local group = nil
+if border_colors.window_border_active and border_colors.window_border_inactive then
+    general.col = { active_border = border_colors.window_border_active,
+                    inactive_border = border_colors.window_border_inactive }
+    group = { col = { border_active = border_colors.window_border_active,
+                      border_inactive = border_colors.window_border_inactive } }
+end
 hl.config({
-    general = { gaps_in = 0, gaps_out = 0, border_size = 0, layout = "dwindle",
-                -- Let windows be resized by dragging an edge or corner, with a
-                -- finger-sized grab area (borders are invisible in this theme).
-                resize_on_border = true, extend_border_grab_area = 24 },
+    general = general,
+    group = group,
     decoration = { rounding = surface.window_rounding, blur = { enabled = surface.blur_enabled, size = surface.blur_size, passes = surface.blur_passes }, shadow = { enabled = false } },
     animations = { enabled = false },
     input = { kb_layout = "us", follow_mouse = 0 },

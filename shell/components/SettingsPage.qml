@@ -13,7 +13,7 @@ ColumnLayout {
     required property int displayWidth
     required property int displayHeight
     property color accentColor: Theme.accent
-    // tessarchy-theme list rows: { name, mode, background, foreground, accent }.
+    // tessarchy-theme list rows: { name, mode, background, foreground, accent, preview }.
     property var themes: []
     property string currentTheme: ""
     signal themeRequested(string name)
@@ -160,14 +160,16 @@ ColumnLayout {
                 accentColor: modelData.accent
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
-                // Each button previews its theme's own palette.
+                // The theme's preview.png when it ships one; otherwise its palette.
+                readonly property bool hasPreview: modelData.preview !== undefined && modelData.preview.length > 0 && previewImage.status !== Image.Error
+                Layout.preferredHeight: hasPreview ? Math.min(Math.round(width * 9 / 16), 120) + 32 : 56
                 contentItem: Text {
                     text: themeButton.modelData.name
                     color: themeButton.modelData.foreground
                     font.pixelSize: 15
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+                    verticalAlignment: themeButton.hasPreview ? Text.AlignBottom : Text.AlignVCenter
                     elide: Text.ElideRight
                 }
                 background: Rectangle {
@@ -175,7 +177,20 @@ ColumnLayout {
                     color: themeButton.modelData.background
                     border.width: themeButton.selected ? Theme.borderWidth(3) : Theme.borderWidth(1)
                     border.color: themeButton.selected ? themeButton.modelData.accent : Theme.selection
+                    Image {
+                        id: previewImage
+                        anchors.fill: parent
+                        anchors.margins: 6
+                        anchors.bottomMargin: 32
+                        visible: themeButton.hasPreview
+                        source: themeButton.modelData.preview ? "file://" + themeButton.modelData.preview : ""
+                        sourceSize.width: 480
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        clip: true
+                    }
                     Rectangle {
+                        visible: !themeButton.hasPreview
                         anchors.bottom: parent.bottom
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottomMargin: 6

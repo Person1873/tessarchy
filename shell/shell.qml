@@ -125,7 +125,8 @@ ShellRoot {
                     mode: field[1],
                     background: field[2],
                     foreground: field[3],
-                    accent: field[4]
+                    accent: field[4],
+                    preview: field[5] || ""
                 };
             })
         }
