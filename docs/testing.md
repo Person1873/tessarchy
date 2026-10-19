@@ -1973,3 +1973,12 @@ The website labels the current phone dimensions and immediate Recents dismissal,
 and distinguishes development installer/update tooling from the tester release.
 Browser UI verification was unavailable because this session exposes no browser;
 website behavior is covered by the existing Node tests and asset/ZIP checks.
+
+Publication result: PR #55 merged at b7cba7f. Its Ubuntu/Arch source checks,
+ISO build and Pages workflow passed. Verified all 21 publicly served image
+hashes, the 23-entry downloadable ZIP and its embedded manifest, phone dimensions,
+Alpha 4 release fallback, and the package repository's source commit. Public
+metadata exposed unchanged shell/session package revisions despite their changed
+content; bumped those package revisions so installed systems detect this update.
+The full final local check rerun passed, and fresh-session real swipe-up and
+mouse double-click each closed one app immediately.

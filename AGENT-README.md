@@ -170,7 +170,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | --- | --- | --- | --- | --- |
 | T73 | Done | Codex | review/audit-2026-10-19 | PR #52 merged; small PRs integrated, shell/site defects fixed, CI and live Pages verified |
 | T74 | Done | Codex | PR #53 | Installer preflight safeguards merged into the feature branch; full installer integration and installed-disk acceptance remain open |
-| T76 | Review | Codex | PR #55 | Refresh all showcase captures and publish current source/site with provenance and verified deployment |
+| T76 | Done | Codex | PR #55 | All 21 captures refreshed; public image/ZIP hashes and deployed package repository verified; shell/session revisions raised for installed updates |
 | T75 | Done | Codex | PR #55 | Real phone previews and touch/close/empty-state checks passed at 390×844, 400×800 and 360×800; audio signal/UI checks passed, physical Wi-Fi untested |
 | T05 | In progress | Codex | feat/vm-touch-refinement | VM touch drawer, scrolling, output switching and compact/wide layouts tested |
 | T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |
