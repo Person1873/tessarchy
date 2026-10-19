@@ -1736,3 +1736,90 @@ suite covers 28 cases, including empty mount lists, mapped children and ambiguou
 backing devices. No actual installation, privileged image build, ISO boot or
 physical-device acceptance was performed. The original checkout's concurrent
 installer/update changes were not modified.
+
+
+## Phone Recents reference layout — 2026-10-19 (T75)
+
+Phone Recents now uses overlapping rounded live previews, app icon/name headers
+and a blurred wallpaper backdrop. The selected app stays stable during layout
+and window-model changes. The shell passes the compositor's active window because
+Wayland activation flags may be false while the shell is being used. Upward
+swipes request the existing close confirmation; Cancel retains the app. Closing
+the final app shows the empty state. Tablet retains its spaced carousel and
+Desktop retains its icon switcher.
+
+Ordinary phone windows use independent full-size floating surfaces, tagged for
+refitting after display, dock and keyboard changes. This prevents background
+windows shrinking into tiled previews. Floating dialogs and application fullscreen
+are preserved. Layer changes receive a deferred refit after exclusive areas settle.
+
+Actual validation: `./scripts/check.sh` passed 197 Python tests and 58 Qt Quick
+results, plus available Lua, Hyprland, desktop-entry and QML checks. Fish and
+ShellCheck are unavailable locally; existing unrelated metadata warnings remain.
+The Quickshell component test checks explicit active selection, portrait bounds,
+stacking, model replacement and the empty state. Lua policy tests cover phone
+bounds, keyboard dismissal, scaling, rotation, monitor offsets and dialog/desktop
+behavior. The final visual refinement also passed the focused runtime test and
+QML lint.
+
+Actual development VM: QEMU/KVM, 2 GiB RAM, two vCPUs, software virtio VGA,
+virtio multitouch, HDA and USB audio, and user-mode Ethernet. Installed the
+working development shell and compositor policy into the guest after backing up
+the previous shell. Checked matching source hashes and empty compositor config
+errors. No ISO was built or booted for this change.
+
+- Inspected real Calculator, Files and Foot previews at 400×800 and 360×800,
+  scale 1. At 360 pixels the dock uses two rows and the app area refits to
+  360×620. Restoring 400×800 restores the 400×676 app area.
+- The final saved guest geometry is 390×844, scale 1, matching the supplied
+  portrait reference's aspect ratio. Apps fill 390×720 between the status bar
+  and dock. Real touch swipes and card activation were checked at this size.
+- Genuine QMP touch swipes navigated the stack and a card tap activated the
+  selected app. Upward swipe, cancellation and confirmed closure worked. Closed
+  all three disposable apps one at a time; the final closure showed the empty
+  state. Reopened three apps for the final preview and left the VM running.
+- Removed the temporary diagnostic IPC before the final capture. Screenshots
+  under `build/phone-session/` show the real guest. The final 390×844 capture
+  uses guest Grim; QEMU's PPM dump showed row-stride corruption at that width.
+  Source hashes, versions, settled window bounds and results are recorded in
+  the local ignored `provenance.json` beside the captures.
+
+### Audio
+
+Played a generated four-second 440 Hz stereo tone in the guest and recorded
+QEMU's actual PipeWire playback ports on the host. Each recording contains
+288,000 stereo frames at 48 kHz, signed 16-bit samples, including surrounding
+silence. Both outputs produced nonzero samples; guest mute produced exact silence.
+This validates the guest-to-host signal path, without claiming an audible
+speaker assessment or microphone input.
+
+| Guest output | Peak | RMS |
+| --- | ---: | ---: |
+| QEMU USB Audio | 195 | 100.93 |
+| HDA built-in output | 2818 | 1444.79 |
+| HDA muted | 0 | 0.00 |
+
+Actual phone touch controls changed volume from 40% to 65%, toggled mute and
+selected each output. Restored the guest's USB default, both outputs at 40%,
+unmuted. Host speaker/microphone preferences were unchanged. Local WAV files and
+`audio-results.json` retain the measurements.
+
+### Wi-Fi readiness
+
+The guest boots with NetworkManager enabled and active. Verified installed
+NetworkManager, wpa_supplicant, linux-firmware, wireless-regdb, the connection
+editor, nm-applet and an active polkit agent. The active graphical session is
+allowed Wi-Fi power, scanning, network control and its own connection profiles;
+SSH-session permission results differ. Wired DHCP/DNS/HTTPS worked, including an
+HTTP 200 from archlinux.org.
+
+The guest exposes only Ethernet and loopback. There is no Wi-Fi adapter, access
+point inventory or RF signal to test. The networking helper from the separate
+9aa85fd candidate was queried against the real guest bus: it reported internet
+access, no error and Wi-Fi unavailable with unknown signal. This query did not
+merge or deploy the pending native networking interface from PR #54. The current
+phone drawer only provides radio power; native network selection remains on that
+separate branch. Physical scanning, password authentication, DHCP/reconnect and
+firmware compatibility must be tested with the intended adapter before calling
+Wi-Fi ready out of the box on a device. No host radio or network configuration
+was changed.

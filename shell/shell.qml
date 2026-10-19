@@ -227,7 +227,7 @@ ShellRoot {
                     right: surface.mode === "desktop"
                 }
                 implicitWidth: expanded ? Policy.panelWidth(surface.mode, surface.modelData.width) : surface.dock.width
-                implicitHeight: expanded ? Math.min(page === "windows" ? surface.modelData.height - 60 : page === "apps" ? surface.launcherRows * 124 + 156 : surface.mode === "tablet" ? 740 : 640, surface.modelData.height - 64) : surface.navHeight
+                implicitHeight: expanded && surface.isPhone && page === "windows" ? surface.modelData.height - 48 : expanded ? Math.min(page === "windows" ? surface.modelData.height - 60 : page === "apps" ? surface.launcherRows * 124 + 156 : surface.mode === "tablet" ? 740 : 640, surface.modelData.height - 64) : surface.navHeight
                 exclusiveZone: surface.navHeight
                 color: "transparent"
                 Rectangle {
@@ -235,11 +235,16 @@ ShellRoot {
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottomMargin: panel.expanded || surface.mode === "desktop" ? 0 : 12
-                    width: panel.expanded ? expandedContent.width : parent.width
+                    width: surface.isPhone && panel.page === "windows" ? parent.width : panel.expanded ? expandedContent.width : parent.width
                     radius: panel.expanded && panel.page === "windows" ? 0 : panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
                     color: panel.expanded ? (panel.page === "windows" ? "#8c070d16" : "#e20f1c2e") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
-                    border.width: 1
+                    border.width: surface.isPhone && panel.page === "windows" ? 0 : 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
+                    Loader {
+                        anchors.fill: parent
+                        active: surface.isPhone && panel.page === "windows"
+                        sourceComponent: RecentsBackdrop {}
+                    }
                 }
                 WlrLayershell.namespace: "tessera"
                 WlrLayershell.layer: WlrLayer.Top
@@ -331,11 +336,19 @@ ShellRoot {
                             visible: panel.page === "windows"
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            windows: Hyprland.toplevels.values
-                            // Apps fill the area between the status bar and the dock.
-                            // Screencopy excludes the reserved top strip, so the capture is one
-                            // status-bar height shorter than the window itself.
-                            screenSize: Qt.size(surface.modelData.width, Math.max(1, surface.modelData.height - surface.navHeight - 96))
+                            windows: surface.isPhone ? root.switcherWindows.slice().reverse() : Hyprland.toplevels.values
+                            phoneMode: surface.isPhone
+                            activeWindow: root.activeWindow
+                            iconForWindow: window => {
+                                const entry = window.wayland ? DesktopEntries.heuristicLookup(window.wayland.appId) : null;
+                                return entry && entry.icon ? Quickshell.iconPath(entry.icon, true) : "";
+                            }
+                            nameForWindow: window => {
+                                const entry = window.wayland ? DesktopEntries.heuristicLookup(window.wayland.appId) : null;
+                                return entry ? entry.name : (window.wayland && window.wayland.appId) || window.title || "Application";
+                            }
+                            // Phone previews match the app area between the status bar and dock.
+                            screenSize: Qt.size(surface.modelData.width, Math.max(1, surface.modelData.height - surface.navHeight - 48))
                             fillApp: surface.mode !== "desktop"
                             emptyHint: surface.mode === "desktop"
                                 ? "Your open apps will appear here.\nOpen one from the Start menu."
@@ -345,10 +358,10 @@ ShellRoot {
                             activateTarget: target => root.activateHandle(target)
                             onActivated: panel.page = ""
                             onDismissed: panel.page = ""
-                            // Swipe-up and the card's × dismiss the app at once;
-                            // the confirm page stays for the settings action.
                             onCloseRequested: target => {
-                                if (target) target.close();
+                                if (!target) return;
+                                panel.closeTarget = target;
+                                panel.page = "close";
                             }
                         }
                         ScrollView {

@@ -168,6 +168,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 
 | Task ID | Status | Owner | Branch / PR | Next action or evidence |
 | --- | --- | --- | --- | --- |
+| T75 | Review | Codex | feat/phone-recents-stack | Real phone previews and touch/close/empty-state checks passed at 390×844, 400×800 and 360×800; audio signal/UI checks passed, physical Wi-Fi untested |
 | T74 | Review | Codex | fix/live-installer-preflight | Refuse unidentified live sources and mounted targets before destructive commands; validate with mocked disk operations |
 | T05 | In progress | Codex | feat/vm-touch-refinement | VM touch drawer, scrolling, output switching and compact/wide layouts tested |
 | T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |

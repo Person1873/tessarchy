@@ -1,21 +1,20 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import "../SwitcherPolicy.js" as SwitcherPolicy
-import Quickshell
 import Quickshell.Wayland
+import Quickshell.Widgets
 
-// Phone app switcher: a horizontal stack of full-height app previews.
-// Cards are bare screenshots on rounded glass — no borders, no title rows and
-// no action buttons. Tap a card to bring that app forward, swipe up to close it
-// (the card flies off the top), swipe sideways to move through the stack.
-// Keyboard stepping stays available for hardware keyboards.
+// Live app previews with an overlapping stack and app headers in phone mode.
 FocusScope {
     id: control
     property var windows: []
+    property var activeWindow: null
     property color accentColor: "#a9e8d5"
     property bool reducedMotion: false
     property bool fillApp: false
+    property bool phoneMode: false
+    property var iconForWindow: window => ""
+    property var nameForWindow: window => window.title || "Untitled window"
     property string emptyHint: "No open apps"
     property var pendingTarget: null
     property var selection: null
@@ -26,14 +25,21 @@ FocusScope {
     property var screenSize: Qt.size(400, 800)
     readonly property real aspect: screenSize.height > 0 ? screenSize.width / screenSize.height : 0.5
     /// Every card keeps the same footprint so the stack looks even.
-    readonly property real cardWidth: Math.min(Math.max(180, width - 72), 320)
-    readonly property real cardHeight: Math.min(height, cardWidth / Math.max(0.2, aspect))
+    readonly property real cardWidth: phoneMode ? Math.min(width * 0.78, Math.max(1, height - 100) * aspect) : Math.min(Math.max(180, width - 72), 320)
+    readonly property real cardHeight: Math.min(height - (phoneMode ? 56 : 0), cardWidth / Math.max(0.2, aspect))
     signal activated
     signal dismissed
     signal closeRequested(var target)
 
+    onWindowsChanged: {
+        if (windows.indexOf(selection) < 0) selectActive();
+        else cards.currentIndex = windows.indexOf(selection);
+        Qt.callLater(() => { cards.currentIndex = control.windows.indexOf(control.selection); });
+    }
+
     function selectActive() {
-        cards.currentIndex = Math.max(0, SwitcherPolicy.activeIndex(windows));
+        const active = windows.indexOf(activeWindow);
+        cards.currentIndex = Math.max(0, active >= 0 ? active : SwitcherPolicy.activeIndex(windows));
         selection = windows[cards.currentIndex] || null;
     }
     function step(direction) {
@@ -58,7 +64,7 @@ FocusScope {
             control.pendingTarget = null;
             if (target) {
                 control.activateTarget(target);
-                if (control.fillApp) target.maximized = true;
+                if (control.fillApp && !control.phoneMode) target.maximized = true;
             }
         }
     }
@@ -86,13 +92,20 @@ FocusScope {
 
     ListView {
         id: cards
+        objectName: "appSwitcherCards"
         anchors.fill: parent
         // Keep the requested app stable while the sheet resizes underneath it.
         onWidthChanged: Qt.callLater(() => { if (control.selection && !moving) currentIndex = control.windows.indexOf(control.selection); })
-        onMovementEnded: control.selection = control.windows[currentIndex] || null
+        property bool browsing: false
+        onDraggingChanged: if (dragging) browsing = true
+        onMovementEnded: {
+            if (browsing) control.selection = control.windows[currentIndex] || null;
+            browsing = false;
+        }
         orientation: ListView.Horizontal
         model: control.windows
-        spacing: 10
+        spacing: control.phoneMode ? 0 : 10
+        cacheBuffer: control.phoneMode ? control.cardWidth * 3 : 0
         clip: true
         snapMode: ListView.SnapOneItem
         highlightRangeMode: ListView.StrictlyEnforceRange
@@ -105,18 +118,26 @@ FocusScope {
             required property var modelData
             required property int index
             readonly property var handle: modelData.wayland
+            readonly property real position: (x - cards.contentX - cards.preferredHighlightBegin) / Math.max(1, width + cards.spacing)
+            readonly property real distance: Math.abs(position)
+            transform: Translate {
+                x: control.phoneMode && card.position < 0
+                    ? card.distance * card.width - control.cardWidth * (card.distance <= 1 ? card.distance * 0.12 : 0.12 + (card.distance - 1) * 0.06)
+                    : 0
+            }
+            z: control.phoneMode ? 100 - distance : 0
             // Dismissal state lives on the delegate so the fly-off animation
             // outlives the model entry it belongs to.
             property bool closing: false
             readonly property real sourceAspect: (preview.sourceSize.height > 0)
                 ? preview.sourceSize.width / preview.sourceSize.height : control.aspect
-            readonly property real cardHeight: Math.min(cards.height,
+            readonly property real cardHeight: control.phoneMode ? control.cardHeight : Math.min(cards.height,
                 control.cardWidth / Math.max(0.2, sourceAspect))
-            width: control.cardWidth
+            width: control.phoneMode ? control.cardWidth * 0.24 : control.cardWidth
             height: cards.height
-            scale: ListView.isCurrentItem ? 1 : 0.93
-            opacity: closing ? 0 : ListView.isCurrentItem ? 1 : 0.7
-            transformOrigin: Item.Center
+            scale: control.phoneMode ? 1 - Math.min(2, distance) * 0.035 : ListView.isCurrentItem ? 1 : 0.93
+            opacity: closing ? 0 : control.phoneMode ? (distance > 2.5 ? 0 : 1 - Math.min(2, distance) * 0.12) : ListView.isCurrentItem ? 1 : 0.7
+            transformOrigin: control.phoneMode ? Item.Left : Item.Center
             Behavior on scale { NumberAnimation { duration: control.reducedMotion ? 0 : 160 } }
             Behavior on opacity { NumberAnimation { duration: control.reducedMotion ? 0 : 160 } }
             Behavior on y {
@@ -124,14 +145,44 @@ FocusScope {
                 NumberAnimation { duration: control.reducedMotion ? 0 : 220; easing.type: Easing.OutCubic }
             }
 
-            Rectangle {
+            onVisibleChanged: {
+                if (visible) { closing = false; y = 0; }
+            }
+            Row {
+                visible: control.phoneMode && card.x <= cards.contentX + cards.preferredHighlightBegin + card.width * 0.5
+                anchors.left: screen.left
+                anchors.bottom: screen.top
+                anchors.bottomMargin: 10
+                width: screen.width
+                spacing: 8
+                Image {
+                    width: 28
+                    height: 28
+                    source: control.iconForWindow(card.modelData) || "../artwork/tessarchy-mark.svg"
+                    sourceSize: Qt.size(56, 56)
+                    fillMode: Image.PreserveAspectFit
+                }
+                Text {
+                    objectName: "appSwitcherName" + card.index
+                    visible: card.distance < 0.55
+                    width: Math.max(0, screen.width - 36)
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: control.nameForWindow(card.modelData)
+                    textFormat: Text.PlainText
+                    color: "#ffffff"
+                    font.pixelSize: 20
+                    font.weight: Font.DemiBold
+                    elide: Text.ElideRight
+                }
+            }
+
+            ClippingRectangle {
                 id: screen
                 width: control.cardWidth
                 height: card.cardHeight
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-                radius: 24
-                clip: true
+                x: control.phoneMode ? 0 : (card.width - width) / 2
+                radius: control.phoneMode ? 36 : 24
                 color: "#0d1622"
                 ScreencopyView {
                     id: preview
@@ -156,6 +207,7 @@ FocusScope {
                     Text {
                         width: parent.width
                         text: card.modelData.title || "Untitled window"
+                        textFormat: Text.PlainText
                         color: "#f2f8ff"
                         wrapMode: Text.WrapAnywhere
                         horizontalAlignment: Text.AlignHCenter
@@ -168,9 +220,10 @@ FocusScope {
             // Swipe-up still works for touch.
             Rectangle {
                 id: closeButton
-                width: 26
-                height: 26
-                radius: 13
+                width: 48
+                height: 48
+                radius: 24
+                visible: !control.phoneMode
                 z: 2
                 anchors.top: screen.top
                 anchors.right: screen.right
@@ -217,9 +270,10 @@ FocusScope {
 
             DragHandler {
                 id: dismissDrag
+                parent: screen
                 target: null
                 xAxis.enabled: false
-                yAxis.minimum: 0
+                yAxis.maximum: 0
                 dragThreshold: 8
                 grabPermissions: PointerHandler.CanTakeOverFromAnything
                 // Distance travelled upward; read on release to decide.
@@ -240,8 +294,8 @@ FocusScope {
                 }
                 onActiveTranslationChanged: {
                     if (!active || card.closing) return;
-                    travel = activeTranslation.y;
-                    card.y = Math.max(0, travel);
+                    travel = -activeTranslation.y;
+                    card.y = Math.min(0, activeTranslation.y);
                 }
             }
         }

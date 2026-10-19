@@ -76,10 +76,31 @@ local function desktop_windowed()
     end
     return value == "windowed"
 end
--- Re-maximize ordinary mobile windows when they become active.
+-- Phone windows retain full preview dimensions when another app becomes active.
+local function phone_window(window)
+    for _, tag in ipairs(type(window.tags) == "table" and window.tags or {}) do
+        if tag == "tessarchy-phone" then return true end
+    end
+    return false
+end
 local function maximize_if_mobile(window)
-    if not window or window.floating or window.fullscreen ~= 0 or not window.monitor then return end
-    if shell_mode(window.monitor) ~= "desktop" then
+    if not window or window.fullscreen ~= 0 or not window.monitor then return end
+    if window.floating and not phone_window(window) then return end
+    if shell_mode(window.monitor) == "phone" then
+        local monitor = window.monitor
+        local width, height = monitor.width / monitor.scale, monitor.height / monitor.scale
+        if monitor.transform % 2 == 1 then width, height = height, width end
+        local reserved = type(monitor.reserved) == "table" and monitor.reserved or {}
+        local left, top = reserved.left or 0, reserved.top or 0
+        width = math.max(1, math.floor(width - left - (reserved.right or 0)))
+        height = math.max(1, math.floor(height - top - (reserved.bottom or 0)))
+        if not window.floating then
+            hl.dispatch(hl.dsp.window.tag({ window = window, tag = "+tessarchy-phone" }))
+            hl.dispatch(hl.dsp.window.float({ window = window, action = "set" }))
+        end
+        hl.dispatch(hl.dsp.window.resize({ window = window, x = width, y = height }))
+        hl.dispatch(hl.dsp.window.move({ window = window, x = (monitor.x or 0) + left, y = (monitor.y or 0) + top }))
+    elseif not window.floating and shell_mode(window.monitor) == "tablet" then
         hl.dispatch(hl.dsp.window.fullscreen({ window = window, mode = "maximized", action = "set" }))
     end
 end
@@ -125,17 +146,28 @@ end)
 -- manual mode switch). Windows opened at a larger resolution keep that
 -- geometry otherwise: a 960px-wide window stays 960px on a 400px phone and
 -- hangs off-screen.
-hl.on("monitor.layout_changed", function(monitor)
+local function refit_windows(monitor)
     for _, window in ipairs(hl.get_windows()) do
         if not monitor or window.monitor == monitor then
-            if window.floating then
+            if phone_window(window) then
+                maximize_if_mobile(window)
+            elseif window.floating then
                 fit_dialog(window)
             else
                 maximize_if_mobile(window)
             end
         end
     end
+end
+local function refit_after_layers()
+    if hl.timer then hl.timer(function() refit_windows(nil) end, { timeout = 150, type = "oneshot" }) end
+end
+hl.on("monitor.layout_changed", function(monitor)
+    refit_windows(monitor)
+    refit_after_layers()
 end)
+hl.on("layer.opened", refit_after_layers)
+hl.on("layer.closed", refit_after_layers)
 hl.on("window.active", maximize_if_mobile)
 hl.on("hyprland.start", function ()
     hl.exec_cmd("tessarchy-session-services")

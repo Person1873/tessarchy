@@ -633,11 +633,14 @@ hl = {
     dsp = { exec_cmd = function(command) return { exec = command } end, exit = function() end,
             focus = function(target) return target end,
             window = { fullscreen = function(action) return action end,
+                       tag = function(action) return action end,
+                       float = function(action) return action end,
+                       center = function(action) return action end,
                        close = function() return {} end,
                        cycle_next = function() return {} end,
                        move = function(target) return target end,
                        drag = function() return {} end,
-                       resize = function() return {} end } }
+                       resize = function(action) return action end } }
 }
 dofile(arg[1])
 -- Desktop bindings stay present and are built from fixed keys and dispatchers.
@@ -671,14 +674,14 @@ local function check(mode, width, height, scale, transform, floating, fullscreen
         assert(actions[1].window == window and actions[1].mode == "maximized")
     end
 end
-check("auto", 400, 800, 1, 0, false, 0, 1)
+check("auto", 400, 800, 1, 0, false, 0, 4)
 check("auto", 800, 1280, 1, 0, false, 0, 1)
-check("auto", 1280, 800, 1, 0, false, 0, 0)
-check("auto", 1280, 800, 2, 0, false, 0, 1)
+check("auto", 1280, 800, 1, 0, false, 0, 3)
+check("auto", 1280, 800, 2, 0, false, 0, 4)
 check("auto", 1280, 800, 1, 1, false, 0, 1)
-check("desktop", 400, 800, 1, 0, false, 0, 0)
-check("phone", 1280, 800, 1, 0, false, 0, 1)
-check("invalid", 400, 800, 1, 0, false, 0, 1)
+check("desktop", 400, 800, 1, 0, false, 0, 3)
+check("phone", 1280, 800, 1, 0, false, 0, 4)
+check("invalid", 400, 800, 1, 0, false, 0, 4)
 check("phone", 400, 800, 1, 0, true, 0, 0)
 check("phone", 400, 800, 1, 0, false, 2, 0)
 '''
@@ -700,7 +703,8 @@ hl = {
     dispatch = function(a) table.insert(actions, a) end,
     dsp = { exec_cmd = function() end, exit = function() end, focus = function() end,
             window = { fullscreen = action("fullscreen"), resize = action("resize"),
-                       center = action("center"), move = function() end,
+                       center = action("center"), move = action("move"),
+                       float = action("float"), tag = action("tag"),
                        close = function() end, cycle_next = function() end,
                        drag = function() end } }
 }
@@ -719,6 +723,27 @@ mode("auto")
 local app = { floating = false, fullscreen = 0, monitor = monitor(720, 1440) }
 local a = fire("window.active", app)
 assert(#a == 1 and a[1].kind == "fullscreen" and a[1].mode == "maximized" and a[1].window == app)
+local phone = { floating = false, fullscreen = 0, monitor = monitor(400, 800), tags = {} }
+a = fire("window.active", phone)
+assert(#a == 4 and a[1].kind == "tag" and a[2].kind == "float", "independent phone surface")
+assert(a[3].kind == "resize" and a[3].x == 400 and a[3].y == 672, "phone app bounds")
+assert(a[4].kind == "move" and a[4].x == 0 and a[4].y == 48, "below status bar")
+phone.floating = true; phone.tags = { "tessarchy-phone" }
+phone.monitor.reserved.bottom = 400
+a = fire("window.active", phone)
+assert(#a == 2 and a[1].y == 352, "keyboard shrinks tracked apps")
+phone.monitor.reserved.bottom = 80
+a = fire("window.active", phone)
+assert(a[1].y == 672, "keyboard dismissal restores full preview size")
+phone.monitor.transform = 1
+a = fire("window.active", phone)
+assert(a[1].x == 800 and a[1].y == 272, "rotation uses logical phone bounds")
+phone.monitor.scale = 2; phone.monitor.transform = 0
+phone.monitor.x = -200; phone.monitor.y = 100
+phone.monitor.reserved = {left = 8, right = 12, top = 24, bottom = 40}
+a = fire("window.active", phone)
+assert(a[1].x == 180 and a[1].y == 336, "scaled reserved area")
+assert(a[2].x == -192 and a[2].y == 124, "monitor offset")
 app.fullscreen = 1
 assert(#fire("window.active", app) == 0, "already maximized")
 assert(#fire("window.active", nil) == 0, "no active window")
@@ -764,7 +789,7 @@ hl = {
     dispatch = function(a) table.insert(actions, a) end,
     dsp = { exec_cmd = function() end, exit = function() end, focus = function() end,
             window = { fullscreen = action("fullscreen"), resize = action("resize"),
-                       center = action("center"), float = action("float"),
+                       center = action("center"), float = action("float"), tag = action("tag"),
                        move = action("move"), drag = action("drag"),
                        close = action("close"), cycle_next = action("cycle") } }
 }
@@ -800,11 +825,12 @@ assert(#fire("window.open", tiled) == 0, "tiled desktop must not touch new windo
 -- Already-floating windows and dialogs are never re-floated.
 prefer("desktop")
 assert(#fire("window.open", { floating = true, fullscreen = 0, monitor = monitor(1920, 1080) }) == 0)
--- The windowed setting is Desktop-only; phones keep maximizing.
+-- Phone surfaces retain full size independently of Desktop window settings.
 prefer("phone", "windowed")
 local phone = { floating = false, fullscreen = 0, monitor = monitor(720, 1440) }
 a = fire("window.open", phone)
-assert(#a == 1 and a[1].kind == "fullscreen" and a[1].mode == "maximized")
+assert(#a == 4 and a[1].kind == "tag" and a[2].kind == "float")
+assert(a[3].kind == "resize" and a[3].x == 720 and a[3].y == 1440)
 '''
         result = subprocess.run(['lua', '-', str(ROOT / 'session/hyprland.lua')],
                                 input=script, text=True, capture_output=True, env=self.env)
