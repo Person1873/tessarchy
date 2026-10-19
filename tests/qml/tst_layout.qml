@@ -10,13 +10,36 @@ TestCase {
             for (const width of [320, 360, 400, 800, 1280]) {
                 for (const keyboard of [true, false]) {
                     const dock = Policy.dockLayout(mode, width, keyboard);
-                    const available = dock.width - (mode === "phone" ? 24 : 32);
-                    verify((available - (dock.columns - 1) * 4) / dock.columns >= 48);
+                    const bar = Policy.barGeometry(mode, dock.rows);
+                    const available = dock.width - 2 * bar.padding;
+                    verify((available - (dock.columns - 1) * bar.columnGap) / dock.columns >= 48);
                     verify(dock.width <= width);
                     verify(dock.rows >= 1);
                 }
             }
         }
+    }
+    // Every bar floats and centres its rows: equal inset above and below.
+    function test_bar_rows_are_centred_in_a_floating_frame() {
+        for (const mode of ["phone", "tablet", "desktop"]) {
+            for (const rows of [1, 2, 3]) {
+                const bar = Policy.barGeometry(mode, rows);
+                const shown = mode === "desktop" ? 1 : rows;
+                compare(bar.row, 48);
+                compare(bar.rowsHeight, shown * bar.row + (shown - 1) * bar.rowGap);
+                compare(bar.height, bar.frameHeight + bar.gap);
+                verify(bar.gap > 0);
+                verify(bar.inset > 0);
+                // Content margins used by shell.qml: top inset, bottom inset + gap.
+                const above = bar.inset;
+                const below = bar.height - bar.gap - (bar.inset + bar.rowsHeight);
+                compare(above, below);
+            }
+        }
+        compare(Policy.barGeometry("desktop", 1).frameHeight, 56);
+        compare(Policy.barGeometry("tablet", 1).frameHeight, 72);
+        compare(Policy.barGeometry("phone", 1).frameHeight, 64);
+        compare(Policy.barGeometry("phone", 2).frameHeight, 120);
     }
     Component {
         id: markFactory

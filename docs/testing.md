@@ -1616,22 +1616,41 @@ and long/empty event messages. No host settings, development
 installation or running VM were modified. Fractional-scale acceptance on a
 physical display remains pending.
 
-## Desktop taskbar inset — 2026-10-19
+## Floating, centred nav bar from shared constants — 2026-10-19
 
-Defect: in Desktop mode the bar frame spans y 0–56 of the 64 px panel, but the
-content column used top/bottom margins 8/8, so the 48 px taskbar row spanned
-y 8–56. Its bottom edge coincided with the frame's, and the Start button's
-border drew over the frame border. The row now uses margins 4/12 (y 4–52),
-4 px clear of the frame on both sides; the row stays 48 px tall. Expanded pages
-keep their previous margins.
+Defect: the collapsed bar's panel height, frame bottom margin and content
+margins were three independent per-mode literals in `shell/shell.qml`, and they
+had drifted. On `main` the Desktop taskbar row was flush with the frame bottom,
+and the touch docks sat low: Tablet and Phone stretched the dock grid into a
+content area taller than the row (Qt layouts fill by default), with 12/16 px
+margins, so the row ended 16/8 px (Tablet) and 12/4 px (Phone, and a two-row
+dock) from the frame edges.
 
-Executed by an agent in the QEMU VM (1280x800, theme tessera, Desktop mode),
-deploying `main` and then this branch. Pixel rows sampled at x=60 inside the Start
-button: the frame border is at y 736 and y 791. Before, the button spanned y 744–791
-(7 rows clear above, none below). After, it spans y 740–787 (3 rows clear above
-and 3 below). Left/right margins are 10/10 against the full-width frame.
+Every bar dimension now comes from `Policy.barGeometry(mode, rows)` in
+`shell/LayoutPolicy.js` (`BAR_ROW` 48, `BAR_ROW_GAP` 8, `BAR_COLUMN_GAP` 4, and
+per mode in `BAR_MODES`: inset, gap, side, padding, maxWidth; `BAR_PAGE` for
+open pages). Frame height is rows plus two insets; the panel adds the gap below
+the frame, so the row sits `inset` from the frame on both sides by construction.
+Values: Desktop inset 4, gap 8, side 0 (full width), frame 56; Tablet inset 12,
+gap 12, side 16, frame 72; Phone inset 8, gap 12, side 16, frame 64 (120 for two
+rows). `dockLayout` takes its side gap, padding and button pitch from the same
+constants. Open-page geometry is unchanged.
 
-Tablet and Phone were checked and not changed: their rows are not flush (Tablet
-12 px above and below inside the 72 px frame; Phone 12 px above and 4 px below
-inside the 64 px frame). A Tablet capture with this branch differed from `main`
-by 21 pixels (clock/cursor). `./scripts/check.sh` passed.
+Executed by an agent in the QEMU VM (theme tessera, bar opacity 1 for sampling,
+1280x800; the two-row dock at scale 3.2 rotated to 250x400 logical, Phone),
+deploying `main` and then this branch. Logical pixels from the frame edge to
+the 48 px row, then to the visible icon/label extent (top/bottom):
+
+| Mode | Frame | Row before | Row after | Content before | Content after |
+|---|---|---|---|---|---|
+| Desktop | 56 | 8/0 | 4/4 | 8/2 | 4/4 |
+| Tablet | 72 | 16/8 | 12/12 | 23/15 | 19/19 |
+| Phone | 64 | 12/4 | 8/8 | 19/11 | 15/15 |
+| Phone, 2 rows | 120 | 12/4 | 8/8 | 20/13 | 16/17 |
+
+The frame keeps a 12 px (Desktop 8 px) gap above the screen bottom. NavButton
+was measured and not changed: its icon and label sit 7 px from the top of the
+48 px button and 7 px (labels with descenders) or 9 px (without) from the
+bottom, so the earlier "content sits low" reading came from the row placement.
+The two-row figure is 1 px off because its lower row's labels have no
+descenders. An open Phone page rendered normally. `./scripts/check.sh` passed.
