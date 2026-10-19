@@ -168,6 +168,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 
 | Task ID | Status | Owner | Branch / PR | Next action or evidence |
 | --- | --- | --- | --- | --- |
+| T74 | Review | Codex | fix/live-installer-preflight | Refuse unidentified live sources and mounted targets before destructive commands; validate with mocked disk operations |
 | T05 | In progress | Codex | feat/vm-touch-refinement | VM touch drawer, scrolling, output switching and compact/wide layouts tested |
 | T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |
 | T09 | Done | Codex | PR #18 | Guarded battery/power-profile integration; unavailable VM state verified |

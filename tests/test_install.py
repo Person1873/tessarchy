@@ -95,7 +95,8 @@ class DiskSelection(unittest.TestCase):
                 self.installer.validate_target('/dev/sda')
 
     def test_unknown_disk_is_refused(self):
-        with mock.patch.object(self.installer, 'list_disks', return_value=[]):
+        with mock.patch.object(self.installer, 'live_medium_device', return_value='sr0'), \
+                mock.patch.object(self.installer, 'list_disks', return_value=[]):
             with self.assertRaises(self.installer.InstallerError):
                 self.installer.validate_target('/dev/nope')
 
@@ -238,6 +239,105 @@ class UnitEnablement(unittest.TestCase):
         self.assertIn('bluetooth', enabled)
         self.assertNotIn('greetd', enabled)
 
+
+
+class DestructivePreflight(unittest.TestCase):
+    def setUp(self):
+        self.installer = load_installer()
+
+    def test_whole_disk_live_media_and_optical_sources_are_identified(self):
+        import json
+        for source, kind, expected in (('/dev/sdb', 'disk', 'sdb'), ('/dev/sr0', 'rom', 'sr0')):
+            def probe(cmd, **kwargs):
+                return source if cmd[0] == 'findmnt' else json.dumps({
+                    'blockdevices': [{'name': source, 'type': kind}]})
+            with self.subTest(source=source), mock.patch.object(self.installer, 'run', side_effect=probe):
+                self.assertEqual(self.installer.live_medium_device(), expected)
+
+    def test_partition_and_mapper_sources_resolve_to_the_backing_disk(self):
+        import json
+        data = {'blockdevices': [{'name': '/dev/mapper/live', 'type': 'dm', 'children': [
+            {'name': '/dev/sdb1', 'type': 'part', 'children': [{'name': '/dev/sdb', 'type': 'disk'}]}]}]}
+        with mock.patch.object(self.installer, 'run', side_effect=[
+                '/dev/mapper/live', json.dumps(data)]):
+            self.assertEqual(self.installer.live_medium_device(), 'sdb')
+
+    def test_unidentified_live_medium_stops_install_even_with_yes(self):
+        installer = self.installer
+        with mock.patch.object(installer, 'require_root'), \
+                mock.patch.object(installer, 'require_tools'), \
+                mock.patch.object(installer, 'live_medium_device', return_value=None), \
+                mock.patch.object(installer, 'list_disks', return_value=[
+                    {'path': '/dev/vda', 'live': False, 'size': '40G', 'model': 'fixture'}]), \
+                mock.patch.object(installer, 'run', side_effect=AssertionError('Reached a disk command')):
+            with self.assertRaises(installer.InstallerError):
+                installer.install('/dev/vda', True)
+
+    def test_mounted_partitions_swap_and_mapped_children_are_refused(self):
+        import json
+        installer = self.installer
+        for mount in ('/', '/home', '[SWAP]'):
+            data = {'blockdevices': [{'name': '/dev/vda', 'type': 'disk', 'mountpoints': [None],
+                    'children': [{'name': '/dev/mapper/data', 'type': 'crypt', 'mountpoints': [mount]}]}]}
+            with self.subTest(mount=mount), \
+                    mock.patch.object(installer, 'live_medium_device', return_value='sr0'), \
+                    mock.patch.object(installer, 'list_disks', return_value=[{'path': '/dev/vda', 'live': False}]), \
+                    mock.patch.object(installer, 'run', return_value=json.dumps(data)):
+                with self.assertRaises(installer.InstallerError):
+                    installer.validate_target('/dev/vda')
+
+    def test_unmounted_target_is_accepted_after_complete_probe(self):
+        import json
+        installer = self.installer
+        info = {'path': '/dev/vda', 'live': False}
+        data = {'blockdevices': [{'name': '/dev/vda', 'type': 'disk', 'mountpoints': [None],
+                'children': [{'name': '/dev/vda1', 'type': 'part', 'mountpoints': []}]}]}
+        with mock.patch.object(installer, 'live_medium_device', return_value='sr0'), \
+                mock.patch.object(installer, 'list_disks', return_value=[info]), \
+                mock.patch.object(installer, 'run', return_value=json.dumps(data)):
+            self.assertEqual(installer.validate_target('/dev/vda'), info)
+
+    def test_unknown_mount_state_is_refused(self):
+        import json
+        installer = self.installer
+        with mock.patch.object(installer, 'live_medium_device', return_value='sr0'), \
+                mock.patch.object(installer, 'list_disks', return_value=[{'path': '/dev/vda', 'live': False}]), \
+                mock.patch.object(installer, 'run', return_value=json.dumps({
+                    'blockdevices': [{'name': '/dev/vda', 'type': 'disk'}]})):
+            with self.assertRaises(installer.InstallerError):
+                installer.validate_target('/dev/vda')
+
+    def test_ambiguous_backing_disks_are_not_treated_as_a_known_live_source(self):
+        import json
+        data = {'blockdevices': [{'name': '/dev/sda', 'type': 'disk'},
+                                 {'name': '/dev/sdb', 'type': 'disk'}]}
+        with mock.patch.object(self.installer, 'run', side_effect=[
+                '/dev/mapper/live', json.dumps(data)]):
+            self.assertIsNone(self.installer.live_medium_device())
+
+    def test_existing_installation_mount_stops_before_partitioning(self):
+        installer = self.installer
+        with mock.patch.object(installer, 'require_root'), \
+                mock.patch.object(installer, 'require_tools'), \
+                mock.patch.object(installer, 'validate_target', return_value={'size': '40G', 'model': 'fixture'}), \
+                mock.patch.object(installer, 'firmware_mode', return_value='uefi'), \
+                mock.patch.object(installer, 'medium_kernel'), \
+                mock.patch.object(installer, 'MOUNT') as mount, \
+                mock.patch.object(installer, 'run', side_effect=AssertionError('Reached a disk command')):
+            mount.is_mount.return_value = True
+            with self.assertRaises(installer.InstallerError):
+                installer.install('/dev/vda', True)
+
+    def test_missing_kernel_stops_before_partitioning(self):
+        installer = self.installer
+        with mock.patch.object(installer, 'require_root'), \
+                mock.patch.object(installer, 'require_tools'), \
+                mock.patch.object(installer, 'validate_target', return_value={'size': '40G', 'model': 'fixture'}), \
+                mock.patch.object(installer, 'firmware_mode', return_value='uefi'), \
+                mock.patch.object(installer, 'medium_kernel', side_effect=installer.InstallerError('Missing kernel')), \
+                mock.patch.object(installer, 'run', side_effect=AssertionError('Reached a disk command')):
+            with self.assertRaises(installer.InstallerError):
+                installer.install('/dev/vda', True)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1711,3 +1711,28 @@ Actual 1280×800 VM checks with a temporary Foot window:
 Local ignored evidence: `build/desktop-session/minimized.png`,
 `minimized-alt-tab.png`, `window-close-confirmation.png` and the review scripts.
 Physical touchscreen acceptance and a newly booted ISO were not tested.
+
+
+## Live-installer destructive preflight audit — 2026-10-19 (T74)
+
+Reviewed the installer at the c2dd99d checkpoint in an isolated worktree. Tests
+first reproduced whole-disk/mapper source misidentification, acceptance without
+an identified live medium, acceptance of mounted targets/active swap and reaching
+a destructive command before checking the live kernel. The original implementation
+failed eight assertions/subcases in the new preflight tests; all disk commands
+were mocked and no block device was modified.
+
+The helper now walks inverse lsblk ancestry to identify the backing disk, with
+explicit optical-media handling. Unknown or ambiguous sources stop installation.
+Target validation rejects mounted descendants, active swap and unknown mount
+state. Kernel presence, bootloader/mount tooling and an already-mounted install
+directory are checked before erasing partitions, including with --yes.
+
+Actual validation: ./scripts/check.sh passed 147 Python tests and 58 Qt Quick
+results, plus available Lua, Hyprland, desktop-entry and QML checks. Fish and
+ShellCheck are unavailable locally. This branch predates the separate T73 lint
+cleanup and retains those earlier QML metadata warnings. The focused installer
+suite covers 28 cases, including empty mount lists, mapped children and ambiguous
+backing devices. No actual installation, privileged image build, ISO boot or
+physical-device acceptance was performed. The original checkout's concurrent
+installer/update changes were not modified.
