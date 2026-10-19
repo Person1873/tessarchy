@@ -36,10 +36,21 @@ LIVE_MOUNT = Path("/run/archiso/bootmnt")
 EXCLUDES = [
     "/dev/*", "/proc/*", "/sys/*", "/run/*", "/tmp/*", "/mnt/*",
     "/media/*", "/lost+found", "/swapfile", "/var/tmp/*", "/etc/machine-id",
-    # The live image's archiso initramfs is large and useless once installed;
-    # mkinitcpio rebuilds both images into the 512 MiB ESP.
+    # archiso strips the boot files out of the airootfs, so the live root has
+    # no kernel of its own; the target's kernel comes from the medium
+    # (see stage_kernel) and mkinitcpio rebuilds the initramfs into the ESP.
     "/boot/initramfs-linux*.img",
+    "/boot/vmlinuz-linux",
 ]
+
+# The kernel the live medium booted. archiso keeps it outside the airootfs —
+# the live root's /boot is empty — and an installed system cannot build an
+# initramfs without a kernel image in its own /boot.
+KERNEL_NAME = "vmlinuz-linux"
+MEDIUM_KERNEL_PATHS = (
+    LIVE_MOUNT / "arch/boot/x86_64" / KERNEL_NAME,
+    LIVE_MOUNT / "boot" / KERNEL_NAME,
+)
 
 
 class InstallerError(RuntimeError):
@@ -189,6 +200,33 @@ def copy_system() -> None:
         (MOUNT / d).mkdir(exist_ok=True)
 
 
+def medium_kernel() -> Path:
+    """The kernel image sitting on the live medium."""
+    for path in MEDIUM_KERNEL_PATHS:
+        if path.is_file():
+            return path
+    raise InstallerError(
+        "no kernel to install: the live medium has no "
+        + " or ".join(str(p) for p in MEDIUM_KERNEL_PATHS))
+
+
+def stage_kernel(target: Path = MOUNT) -> Path:
+    """Copy the medium's kernel into the target's /boot.
+
+    Nothing in the running live root can serve as the installed system's
+    kernel: archiso keeps its boot files on the ISO, so rsync copies an empty
+    /boot and `mkinitcpio -P` fails with "must be readable" before any
+    initramfs exists. The kernel that booted the medium is the same build as
+    the /usr/lib/modules tree being copied, so it belongs in the target.
+    """
+    source = medium_kernel()
+    destination = Path(target) / "boot" / KERNEL_NAME
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, destination)
+    print(f"Kernel  : {source} -> {destination}")
+    return destination
+
+
 def write_boot_loader(firmware: str, disk: str, root_uuid: str) -> None:
     if firmware == "uefi":
         in_target("bootctl", "--esp-path=/boot", "install")
@@ -215,6 +253,7 @@ def configure_target(firmware: str, disk: str, root_uuid: str, hostname: str) ->
     (MOUNT / "etc/hostname").write_text(f"{hostname}\n")
     (MOUNT / "etc/fstab").write_text(run(["genfstab", "-U", str(MOUNT)], capture=True))
 
+    stage_kernel()
     in_target("mkinitcpio", "-P")
     in_target("systemctl", "enable", "NetworkManager")
     in_target("systemctl", "enable", "bluetooth", check=False)

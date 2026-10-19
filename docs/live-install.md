@@ -50,7 +50,10 @@ The tool then:
    legacy firmware.
 2. Formats the ESP as FAT32 and the root as ext4 labelled `tessarchy`.
 3. Copies the running live root with `rsync` (excluding `/proc`, `/sys`, `/dev`,
-   `/run`, `/tmp` and the live mount).
+   `/run`, `/tmp` and the live mount), then drops the live medium's kernel into
+   the target's `/boot` — archiso keeps its boot files outside the live root, so
+   the installed system would otherwise have no kernel to build an initramfs
+   around.
 4. Generates `fstab`, writes the hostname, drops the live image's archiso
    initramfs hook and rebuilds a normal initramfs.
 5. Installs the bootloader: systemd-boot with a `Tessarchy` entry on UEFI,

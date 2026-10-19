@@ -113,7 +113,7 @@ jobs:
           [[ $RELEASE_TAG =~ ^v[0-9][0-9A-Za-z.-]*$ ]]
           gh release create "$RELEASE_TAG" --draft --prerelease --target "$GITHUB_SHA" \
             --title "Tessarchy $RELEASE_TAG — tester ISO" \
-            --notes "Tester ISO draft. Review the attached BIOS/UEFI boot captures before publishing. No installer or persistence; physical keyboard required." \
+            --notes "Tester ISO draft. Review the attached BIOS/UEFI boot captures before publishing. Carries tessarchy-install, which copies the live system to an internal disk (see docs/live-install.md); no persistence; physical keyboard required." \
             dist/tessarchy-*.iso dist/SHA256SUMS dist/build-info.txt dist/packages.txt \
             dist/build.log dist/boot-bios.png dist/boot-uefi.png dist/launcher-bios.png dist/launcher-uefi.png dist/boot-evidence.tar.gz dist/BOOT-TESTING.md
       - uses: actions/upload-artifact@v4

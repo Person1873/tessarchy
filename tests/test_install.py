@@ -1,6 +1,7 @@
 import importlib.machinery
 import importlib.util
 from pathlib import Path
+import tempfile
 import unittest
 from unittest import mock
 
@@ -112,6 +113,64 @@ class Safety(unittest.TestCase):
         with mock.patch.object(self.installer.os, 'geteuid', return_value=1000):
             with self.assertRaises(self.installer.InstallerError):
                 self.installer.require_root()
+
+
+class KernelStaging(unittest.TestCase):
+    """The target gets its kernel from the live medium, not from /.
+
+    archiso strips the boot files out of the airootfs, so the running live
+    root's /boot is empty; without this step mkinitcpio has nothing to build an
+    initramfs around and the install dies before the bootloader is written.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.installer = load_installer()
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.target = Path(self.tmp.name)
+
+    def test_the_kernel_is_copied_into_the_target_boot(self):
+        source = self.target / 'medium-vmlinuz'
+        source.write_bytes(b'kernel-image')
+        with mock.patch.object(self.installer, 'medium_kernel', return_value=source):
+            staged = self.installer.stage_kernel(self.target)
+        self.assertEqual(staged, self.target / 'boot' / self.installer.KERNEL_NAME)
+        self.assertEqual(staged.read_bytes(), b'kernel-image')
+
+    def test_a_medium_without_a_kernel_fails_loudly(self):
+        missing = self.target / 'nowhere'
+        with mock.patch.object(self.installer, 'MEDIUM_KERNEL_PATHS', (missing,)):
+            with self.assertRaises(self.installer.InstallerError):
+                self.installer.medium_kernel()
+
+    def test_the_medium_kernel_paths_live_outside_the_airootfs(self):
+        for path in self.installer.MEDIUM_KERNEL_PATHS:
+            self.assertTrue(str(path).startswith(str(self.installer.LIVE_MOUNT)))
+
+
+class InstallOrder(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.installer = load_installer()
+
+    def test_the_kernel_is_staged_before_the_initramfs_is_built(self):
+        installer = self.installer
+        calls = []
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / 'etc').mkdir()
+            with mock.patch.object(installer, 'MOUNT', Path(tmp)), \
+                    mock.patch.object(installer, 'run', return_value=''), \
+                    mock.patch.object(installer, 'stage_kernel',
+                                      side_effect=lambda: calls.append('kernel')), \
+                    mock.patch.object(installer, 'in_target',
+                                      side_effect=lambda *a, **k: calls.append(a[0])):
+                installer.configure_target('bios', '/dev/vda', 'UUID', 'tessarchy')
+        self.assertIn('kernel', calls)
+        self.assertIn('mkinitcpio', calls)
+        self.assertLess(calls.index('kernel'), calls.index('mkinitcpio'))
 
 
 if __name__ == '__main__':
