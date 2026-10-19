@@ -122,7 +122,7 @@ def main():
                     columns = count if capacity >= count else min(3, capacity)
                     button = (dock - padding * 2 - (columns - 1) * 4) / columns
                     column = (count - 2) % columns
-                    x = width / 2 - dock / 2 + padding + column * (button + 4) + button / 2
+                    x = 34 if desktop else width / 2 - dock / 2 + padding + column * (button + 4) + button / 2
                     events = [{'type': 'abs', 'data': {'axis': 'x', 'value': round(x * 32767 / width)}},
                               {'type': 'abs', 'data': {'axis': 'y', 'value': round((height - 42) * 32767 / height)}},
                               {'type': 'btn', 'data': {'button': 'left', 'down': True}}]

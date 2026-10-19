@@ -1942,3 +1942,34 @@ separate branch. Physical scanning, password authentication, DHCP/reconnect and
 firmware compatibility must be tested with the intended adapter before calling
 Wi-Fi ready out of the box on a device. No host radio or network configuration
 was changed.
+
+## T76 — Full showcase and publication refresh (2026-10-19)
+
+Integrated the tested phone branch and the existing installer/update development
+history with main at source checkpoint 8dc694c, preserving contributor commits.
+The combined `./scripts/check.sh` passed 198 Python tests, 63 Qt Quick checks and
+four website tests, plus available syntax/API checks. Fish and ShellCheck were
+unavailable; the existing QML lint warnings remain. GitHub Ubuntu and Arch source
+checks passed for that checkpoint.
+
+Deployed the exact combined shell/session sources into the development guest.
+Refreshed every image in the 21-image website pack: automatic Phone at 390x844,
+Tablet at 800x1280 and Desktop at 1280x800, all at scale 1. Real app previews show
+Calculator, Files and Foot. Communications captures use the existing synthetic
+contact and no outgoing calls/SMS. Audio captures show the actual USB/HDA outputs.
+Returned through greetd/PAM at 390x844, captured wrong-PIN rejection, authenticated
+home and return to greeter. The authenticated session had no configerrors.
+Per-image source checkpoints and SHA-256 digests are in the capture manifest.
+
+The live picker uses a fresh diskless, non-Secure-Boot UEFI/KVM boot of the
+existing Alpha 15 mirror development ISO (source 1a46da4), not the published
+Alpha 4 download. Its SHA-256 is recorded in the manifest. The initial 90-second
+probe reached a black compositor before the shell was ready; a longer boot was
+required. Fixed the boot capture helper to click the desktop taskbar's Start
+button, since the previous centered touch-dock coordinate left the picker shut.
+No ISO was built on the host. The published release remains Alpha 4.
+
+The website labels the current phone dimensions and immediate Recents dismissal,
+and distinguishes development installer/update tooling from the tester release.
+Browser UI verification was unavailable because this session exposes no browser;
+website behavior is covered by the existing Node tests and asset/ZIP checks.

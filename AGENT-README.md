@@ -170,8 +170,8 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | --- | --- | --- | --- | --- |
 | T73 | Done | Codex | review/audit-2026-10-19 | PR #52 merged; small PRs integrated, shell/site defects fixed, CI and live Pages verified |
 | T74 | Done | Codex | PR #53 | Installer preflight safeguards merged into the feature branch; full installer integration and installed-disk acceptance remain open |
-| T76 | In progress | Codex | publish/phone-refresh-2026-10-19 | Refresh all showcase captures and publish current source/site with provenance and verified deployment |
-| T75 | Review | Codex | feat/phone-recents-stack | Real phone previews and touch/close/empty-state checks passed at 390×844, 400×800 and 360×800; audio signal/UI checks passed, physical Wi-Fi untested |
+| T76 | Review | Codex | PR #55 | Refresh all showcase captures and publish current source/site with provenance and verified deployment |
+| T75 | Done | Codex | PR #55 | Real phone previews and touch/close/empty-state checks passed at 390×844, 400×800 and 360×800; audio signal/UI checks passed, physical Wi-Fi untested |
 | T05 | In progress | Codex | feat/vm-touch-refinement | VM touch drawer, scrolling, output switching and compact/wide layouts tested |
 | T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |
 | T09 | Done | Codex | PR #18 | Guarded battery/power-profile integration; unavailable VM state verified |

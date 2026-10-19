@@ -42,7 +42,7 @@ The package creates /var/lib/tessarchy-greeter with private greeter ownership
 and uses it as HOME, including on systems where greetd's account home is /.
 For a fixed kiosk display, set TESSARCHY_GREETER_OUTPUT and TESSARCHY_GREETER_MODE
 in the greetd command environment. Their default is the preferred native mode;
-only the development VM explicitly selects Virtual-1 at 400x800@60.
+only the development VM explicitly selects Virtual-1 at 390x844@60.
 
 The existing ISO continues to use its locked live account and autologin. This
 experimental greeter is not enabled in ISO staging: enabling it without a
