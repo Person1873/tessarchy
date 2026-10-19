@@ -6,7 +6,7 @@ measured, and where.
 
 ## Landscape keyboard leaves apps 248 px of 600
 
-Found 2026-10-17 (Hermes, for person1873), from #11's keyboard fit and the VM.
+Found 2026-10-17, from #11's keyboard fit and the VM.
 Updated after upstream #30 superseded #11; landscape has not been guest-tested
 on the rebased branch.
 
