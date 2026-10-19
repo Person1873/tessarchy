@@ -96,6 +96,9 @@ local function split_layout(workspace, on)
     end
     split_rules[key]:set_enabled(on)
 end
+-- A reload (tessera-rotate does one per rotation) re-runs this file and drops
+-- the rules above, but window tags survive; re-apply them for live pairs.
+for _, window in ipairs(split_windows()) do split_layout(window.workspace.id, true) end
 local function untag(window)
     hl.dispatch(hl.dsp.window.tag({ window = "address:" .. window.address, tag = "-split" }))
     if window.workspace then split_layout(window.workspace.id, false) end

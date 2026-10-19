@@ -256,6 +256,7 @@ class Workflows(unittest.TestCase):
             self.skipTest('Lua interpreter unavailable')
         script = r'''local callbacks, commands = {}, {}
 hl = {
+    get_windows = function() return {} end,
     layer_rule = function() end,
     monitor = function() end, config = function() end, bind = function() end,
     on = function(name, callback) callbacks[name] = callback end,
@@ -624,6 +625,7 @@ assert(#commands == 4, "unexpected extra autostart commands")
         folder.mkdir(parents=True)
         script = r'''local callbacks, actions, binds = {}, {}, {}
 hl = {
+    get_windows = function() return {} end,
     monitor = function() end, config = function() end,
     bind = function(keys, dispatcher, flags) binds[keys] = { dispatcher = dispatcher, flags = flags } end,
     layer_rule = function() end,
@@ -693,6 +695,7 @@ check("phone", 400, 800, 1, 0, false, 2, 0)
         script = r'''local callbacks, actions = {}, {}
 local function action(kind) return function(a) a = a or {}; a.kind = kind; return a end end
 hl = {
+    get_windows = function() return {} end,
     layer_rule = function() end,
     monitor = function() end, config = function() end, bind = function() end,
     on = function(name, callback) callbacks[name] = callback end,
@@ -851,6 +854,7 @@ assert(#a.tags == 0 and #c.tags == 0 and c.fullscreen == 1 and a.fullscreen == 0
         script = r'''local callbacks, actions = {}, {}
 local function action(kind) return function(a) a = a or {}; a.kind = kind; return a end end
 hl = {
+    get_windows = function() return {} end,
     layer_rule = function() end,
     monitor = function() end, config = function() end, bind = function() end,
     on = function(name, callback) callbacks[name] = callback end,
