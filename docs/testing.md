@@ -1662,4 +1662,13 @@ Rebased `feat/tablet-split` on current upstream main; deployed the shell and ses
 - **Pass, root cause identified:** At physical 1200×600, scale 1, output `transform = 1`, resetting split gave logical stacked clients `[600,534]` each, boundary logical y=582 / screenshot physical x≈582. With `input:touchdevice:transform = 0`, a screenshot-coordinate touchscreen drag `(582,430)` → `(780,430)` left both client positions/sizes unchanged (`rebase-split-rotated-unmapped-after.png`). Setting `hl.config({ input = { touchdevice = { transform = 1 } } })` corrected the touch mapping: the identical drag moved the boundary from physical x≈582 to x≈779 and changed the clients to `[600,731]` / `[600,337]`, a 197 px motion for 198 px of finger travel (`rebase-split-rotated-divider.png`, `rebase-split-rotated-drag.png`, `hyprctl clients -j`). Therefore the prior no-move is an input-touchdevice transform mismatch, **not** a broken divider drag. This VM-only touch config must track monitor rotation; not committed as an app change.
 - **Pass:** End-session touch from Settings → Session exposed side-by-side Cancel / End session actions; touching Cancel dismissed the confirmation and left `qs` running (`rebase-split-session-result.png`, `rebase-split-session-cancel.png`). Close confirmation also had side-by-side Cancel / Close actions (`rebase-split-fixed-settled.png`).
 
+- **Fixed after review of the screenshots:** the split divider (Top layer)
+  drew over the End-session drawer, and both confirmations' Cancel used the
+  `return` (→) glyph. The divider now hides while a shell page is open and
+  Cancel uses `back` (←). Executed by an agent in the QEMU VM, 1280×800,
+  layoutMode=tablet, split pair on the active workspace: `tessera-split` was
+  mapped before `qs ipc call actions endSession` and absent after it; the
+  screenshot shows no divider over the dialog and a left arrow
+  (`vm/split-confirm-fix.png`). Close-window confirmation not re-captured.
+
 `python3 -m unittest discover -s tests -p test_workflows.py -k tablet_split -v` passed. `/usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml shell/components/{AppSwitcher,SplitDivider}.qml` exited 0; no transform warning remains, but standalone lint cannot resolve Quickshell `PanelWindow`/`margins` and still prints those three warnings. `git diff --check` clean.

@@ -182,7 +182,9 @@ ShellRoot {
             }
             SplitDivider {
                 screen: surface.modelData
-                allowed: surface.mode === "tablet"
+                // Hidden under open pages: both are Top-layer surfaces, so it
+                // could otherwise draw over a confirmation.
+                allowed: surface.mode === "tablet" && !panel.expanded
                 accentColor: root.accentColor
             }
             PanelWindow {
@@ -481,7 +483,7 @@ ShellRoot {
                                         spacing: 12
                                         TouchButton {
                                             text: "Cancel"
-                                            symbol: "return"
+                                            symbol: "back"
                                             Layout.fillWidth: true
                                             onClicked: {
                                                 panel.closeTarget = null;
@@ -517,7 +519,7 @@ ShellRoot {
                                         spacing: 12
                                         TouchButton {
                                             text: "Cancel"
-                                            symbol: "return"
+                                            symbol: "back"
                                             Layout.fillWidth: true
                                             onClicked: panel.page = ""
                                         }
