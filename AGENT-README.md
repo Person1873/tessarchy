@@ -170,6 +170,8 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | --- | --- | --- | --- | --- |
 | T73 | Done | Codex | review/audit-2026-10-19 | PR #52 merged; small PRs integrated, shell/site defects fixed, CI and live Pages verified |
 | T74 | Done | Codex | PR #53 | Installer preflight safeguards merged into the feature branch; full installer integration and installed-disk acceptance remain open |
+| T76 | Review | Codex | PR #55 | Refresh all showcase captures and publish current source/site with provenance and verified deployment |
+| T75 | Done | Codex | PR #55 | Real phone previews and touch/close/empty-state checks passed at 390×844, 400×800 and 360×800; audio signal/UI checks passed, physical Wi-Fi untested |
 | T05 | In progress | Codex | feat/vm-touch-refinement | VM touch drawer, scrolling, output switching and compact/wide layouts tested |
 | T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |
 | T09 | Done | Codex | PR #18 | Guarded battery/power-profile integration; unavailable VM state verified |
@@ -186,6 +188,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T68 | Done | Codex | feat/desktop-tray-indicators | The status strip's indicator cluster moves into the Desktop taskbar tray, beside the clock |
 | T70 | Done | Codex | feat/desktop-taskbar-polish | Centered Start, floating menu icons, consistent tray glyphs, task overflow and dismissal; 1280×800 VM / 104 Python / 53 Qt checks |
 | T71 | Done | Codex | feat/desktop-quick-switcher | Logo Start, weather by Start, pulldown-only top, uniform compact tray, icon-only Alt+Tab; VM keyboard and visual checks |
+| T72 | Done | Codex | feat/desktop-window-controls | Title-bar minimize with taskbar/Alt+Tab restore, maximized/reload recovery, touch hit-testing patch; VM / 107 Python / 57 Qt checks |
 | T69 | Done | Codex | feat/weather-status | Keyless current-conditions chip in the status strip, with an offline cache |
 | T59 | Done | Codex / contributor | PR #28 | Offline BIOS/UEFI live boots passed; contributor history preserved |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |

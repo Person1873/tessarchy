@@ -16,7 +16,9 @@ and 48px height for the owner-requested compact spacing (2026-10-18).
 On-screen keyboard keys may be narrower
 but must remain >=48 logical pixels tall (owner decision 2026-10-17). Preserve
 keyboard focus in navigation,
-and confirm close and exit. No secure locking claims. Record actual validation
+and confirm close and exit, except app dismissal in Recents, which closes
+immediately by swipe-up, mouse double-click or its close button (owner decision
+2026-10-19). No secure locking claims. Record actual validation
 separately from planned/manual checks in docs/testing.md. Do not claim an ISO
 boots until it has booted in a VM. Never run image builds with host privileges
 without the user's explicit build command. Keep scripts argument-safe and fail

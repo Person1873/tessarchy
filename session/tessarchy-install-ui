@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Launcher wrapper for the live session: run the installer, then hold the
+# terminal open so the disk list, the confirmation prompt and any error stay
+# readable instead of flashing past.
+set -u
+sudo -n tessarchy-install "$@"
+status=$?
+printf '\n'
+if (( status == 0 )); then
+    printf 'Done. Press Enter to close this window.\n'
+else
+    printf 'Exited with status %d. Press Enter to close this window.\n' "$status"
+fi
+read -r _

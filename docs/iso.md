@@ -10,7 +10,9 @@ using the local packages in a signed repository is a later milestone.
 The profile appends Tessarchy metadata, uses x86_64, and selects a relatively
 light zstd squashfs compression. Upstream Arch boot menu branding is retained
 for now. The image includes both the boot methods of the installed releng
-profile; BIOS and UEFI must both be tested. It does not install onto a disk.
+profile; BIOS and UEFI must both be tested. It also carries `tessarchy-install`,
+which copies the running live system onto an internal disk — see
+[live-install.md](live-install.md).
 
 The live user `tess` is created through systemd-sysusers with a locked password,
 no sudo grant, tty1 autologin, and fish as the login shell (`fish` is added to
@@ -43,7 +45,8 @@ The supplied power-on video is converted to Plymouth frames during staging.
 The profile keeps early KMS and adds Plymouth after it in the initramfs hooks.
 
 Use [tablet-install.md](tablet-install.md) to install the packages on an existing
-Arch tablet. The live image does not partition or install onto internal storage.
+Arch tablet, or [live-install.md](live-install.md) to install from this image
+onto a blank disk.
 Alpha 4 contains this live profile; earlier alphas remain available as historical
 releases.
 
@@ -81,7 +84,8 @@ Physical tablet and installed-disk acceptance remain pending.
 The release includes build metadata, package list, checksums and boot evidence.
 Its separate `Tessarchy-Tablet-Pilot-Packages.tar.gz` is for an existing Arch
 x86_64 installation and records its own later source revision in `SOURCE.json`.
-Follow [tablet-install.md](tablet-install.md); the live ISO has no disk installer.
+Follow [tablet-install.md](tablet-install.md), or boot the live image and run
+`tessarchy-install --check` to see whether the machine is a good fit.
 
 ## Build explicitly on Arch
 

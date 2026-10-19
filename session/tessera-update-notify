@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Tell the person using this machine, on their own desktop, that a newer
+# Tessarchy has been published.
+#
+# Runs as the session user from a systemd user timer: checking needs no
+# privileges, so nothing has to prompt for a password just to learn that an
+# update exists. Installing stays an explicit `sudo tessarchy-update --apply`.
+set -uo pipefail
+
+command -v tessarchy-update >/dev/null || exit 0
+command -v notify-send >/dev/null || exit 0
+
+output=$(tessarchy-update --check 2>&1)
+status=$?
+(( status == 10 )) || exit 0
+
+# "updates available:" is followed by "  name  old -> new" rows.
+summary=$(printf '%s\n' "$output" | sed -n '/^updates available:/,$p' | tail -n +2 \
+    | sed 's/^ *//; s/  */ /g' | paste -sd, - | sed 's/,/, /g')
+[[ -n $summary ]] || summary="a newer shell is published"
+
+if ! notify-send --app-name=Tessarchy --urgency=low \
+    "Tessarchy update available" \
+    "$summary
+Run: sudo tessarchy-update --apply" 2>/dev/null; then
+    # No notification service on this session: leave a line in the journal
+    # rather than telling nobody at all.
+    printf 'tessera-update-notify: %s\n' "$summary" >&2
+fi
+exit 0

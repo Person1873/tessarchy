@@ -1,0 +1,7 @@
+Generated with the built-in image_gen tool.
+
+Edit the supplied portrait into a finished Tessarchy advertisement by adding exactly these two lines of ad copy, with exact capitalization and punctuation:
+"Want something Hot?"
+"Get Tessarchy"
+
+Keep the existing adult woman, face, hair, opaque mint blouse, navy blazer, pose, hand, phone, Tessarchy glacier UI and logo, lighting and photo quality unchanged. Preserve the portrait aspect ratio. Add the headline and CTA in the lower third across her torso, below the phone and below her face. Use an elegant dark navy translucent gradient behind the lower typography for excellent legibility. Headline large bold white modern sans-serif, it may break into two lines if needed while keeping exact words. "Get Tessarchy" directly below in a prominent mint rounded CTA panel with dark navy lettering. Maintain generous side and bottom margins. Premium polished navy/mint brand styling. Do not obscure face, hand or phone screen. No other added text, no celebrity name or quotes, no watermark.

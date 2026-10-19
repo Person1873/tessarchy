@@ -1782,3 +1782,194 @@ the merge. The resulting feature-branch source checks were still running at
 this checkpoint. No installer, newer ISO boot or physical-device acceptance is
 inferred from these build results. The closing documentation update changes no
 runtime or website behavior.
+
+
+
+## Desktop minimize and title-bar controls, 2026-10-18
+
+`./scripts/check.sh` passed: 107 Python tests and 57 Qt Quick results. The new
+Lua lifecycle tests cover independent minimized windows, reload recovery,
+maximized/fullscreen state, named Unicode workspaces, closed targets and
+unrelated special workspaces. Hyprland verification and QML lint passed with
+the existing metadata warnings; local Fish and ShellCheck remain unavailable.
+
+Compiled the official Hyprbars 0.56.2 pin with the touch patch and existing
+toolchain. No dependencies or host session configuration were changed. Deployed
+the library into the guest's Tessarchy plugins directory; the session now loads
+it from there, replacing the earlier temporary runtime experiment. Reload
+produced no configuration errors. A new session boot was not performed.
+
+Actual 1280×800 VM checks with a temporary Foot window:
+
+- Clicking Minimize hid the window while keeping its taskbar entry. Clicking
+  that taskbar entry restored the exact 960×560 size and position.
+- Maximize, minimize while maximized, reload configuration, restore, then
+  unmaximize preserved the maximized state and original floating geometry.
+- Alt+Tab selected and restored a minimized window, confirmed by compositor
+  active-window and workspace state.
+- Genuine virtual multitouch minimized two separate overlapping windows,
+  including Files, and both restored independently. The upstream touch bug
+  required the included contact-position/nonzero-ID patch.
+- Title-bar Close opened confirmation; confirming closed only the temporary
+  target. Fixed the existing IPC action to retain the Wayland handle instead of
+  a compositor record without a close method. Desktop confirmation returns to
+  the app view rather than opening Recents. Existing review windows stayed open.
+- A newly launched temporary window's title bar and content fit between the
+  top reserved area and taskbar. Both new test windows were closed afterwards.
+
+Local ignored evidence: `build/desktop-session/minimized.png`,
+`minimized-alt-tab.png`, `window-close-confirmation.png` and the review scripts.
+Physical touchscreen acceptance and a newly booted ISO were not tested.
+
+
+## Live-installer destructive preflight audit — 2026-10-19 (T74)
+
+Reviewed the installer at the c2dd99d checkpoint in an isolated worktree. Tests
+first reproduced whole-disk/mapper source misidentification, acceptance without
+an identified live medium, acceptance of mounted targets/active swap and reaching
+a destructive command before checking the live kernel. The original implementation
+failed eight assertions/subcases in the new preflight tests; all disk commands
+were mocked and no block device was modified.
+
+The helper now walks inverse lsblk ancestry to identify the backing disk, with
+explicit optical-media handling. Unknown or ambiguous sources stop installation.
+Target validation rejects mounted descendants, active swap and unknown mount
+state. Kernel presence, bootloader/mount tooling and an already-mounted install
+directory are checked before erasing partitions, including with --yes.
+
+Actual validation: ./scripts/check.sh passed 147 Python tests and 58 Qt Quick
+results, plus available Lua, Hyprland, desktop-entry and QML checks. Fish and
+ShellCheck are unavailable locally. This branch predates the separate T73 lint
+cleanup and retains those earlier QML metadata warnings. The focused installer
+suite covers 28 cases, including empty mount lists, mapped children and ambiguous
+backing devices. No actual installation, privileged image build, ISO boot or
+physical-device acceptance was performed. The original checkout's concurrent
+installer/update changes were not modified.
+
+
+## Phone Recents reference layout — 2026-10-19 (T75)
+
+Phone Recents now uses overlapping rounded live previews, app icon/name headers
+and a blurred wallpaper backdrop. The selected app stays stable during layout
+and window-model changes. The shell passes the compositor's active window because
+Wayland activation flags may be false while the shell is being used. Per the
+owner's follow-up, upward swipes and mouse double-clicks close the app immediately
+and keep Recents open. A touch tap activates immediately; a single mouse click
+waits for the system double-click interval before activating. Pending mouse
+activation is cancelled when the card hides or a swipe begins. Each delegate
+and the list content span the full preview so the final card accepts clicks
+across its width. The navigation dock uses its own render layer in Recents so
+rounded preview clipping does not suppress its icons. Closing the final app
+shows the empty state. Tablet retains its spaced carousel and
+Desktop retains its icon switcher.
+
+Ordinary phone windows use independent full-size floating surfaces, tagged for
+refitting after display, dock and keyboard changes. This prevents background
+windows shrinking into tiled previews. Floating dialogs and application fullscreen
+are preserved. Layer changes receive a deferred refit after exclusive areas settle.
+
+Actual validation: `./scripts/check.sh` passed 197 Python tests and 58 Qt Quick
+results, plus available Lua, Hyprland, desktop-entry and QML checks. Fish and
+ShellCheck are unavailable locally; existing unrelated metadata warnings remain.
+The Quickshell component test checks explicit active selection, portrait bounds,
+stacking, model replacement and the empty state. Lua policy tests cover phone
+bounds, keyboard dismissal, scaling, rotation, monitor offsets and dialog/desktop
+behavior. The final visual refinement also passed the focused runtime test and
+QML lint.
+
+Actual development VM: QEMU/KVM, 2 GiB RAM, two vCPUs, software virtio VGA,
+virtio multitouch, HDA and USB audio, and user-mode Ethernet. Installed the
+working development shell and compositor policy into the guest after backing up
+the previous shell. Checked matching source hashes and empty compositor config
+errors. No ISO was built or booted for this change.
+
+- Inspected real Calculator, Files and Foot previews at 400×800 and 360×800,
+  scale 1. At 360 pixels the dock uses two rows and the app area refits to
+  360×620. Restoring 400×800 restores the 400×676 app area.
+- The final saved guest geometry is 390×844, scale 1, matching the supplied
+  portrait reference's aspect ratio. Apps fill 390×720 between the status bar
+  and dock. Real touch swipes and card activation were checked at this size.
+- Genuine QMP touch swipes navigated the stack and a card tap activated the
+  selected app. The initial confirmation flow was superseded by the owner's
+  immediate-close request. Actual mouse double-click closed Calculator and
+  upward touch swipe closed Files without a dialog or leaving Recents. Single
+  mouse click and touch tap still activated apps. Double-clicking the last Foot
+  card reached the empty state directly. Reopened three apps for the final
+  preview and left the VM running. Direct-close evidence is in the local
+  `direct-close-results.txt` and `direct-close-empty.png`.
+- Removed the temporary diagnostic IPC before the final capture. Screenshots
+  under `build/phone-session/` show the real guest. The final 390×844 capture
+  uses guest Grim; QEMU's PPM dump showed row-stride corruption at that width.
+  Source hashes, versions, settled window bounds and results are recorded in
+  the local ignored `provenance.json` beside the captures.
+
+### Audio
+
+Played a generated four-second 440 Hz stereo tone in the guest and recorded
+QEMU's actual PipeWire playback ports on the host. Each recording contains
+288,000 stereo frames at 48 kHz, signed 16-bit samples, including surrounding
+silence. Both outputs produced nonzero samples; guest mute produced exact silence.
+This validates the guest-to-host signal path, without claiming an audible
+speaker assessment or microphone input.
+
+| Guest output | Peak | RMS |
+| --- | ---: | ---: |
+| QEMU USB Audio | 195 | 100.93 |
+| HDA built-in output | 2818 | 1444.79 |
+| HDA muted | 0 | 0.00 |
+
+Actual phone touch controls changed volume from 40% to 65%, toggled mute and
+selected each output. Restored the guest's USB default, both outputs at 40%,
+unmuted. Host speaker/microphone preferences were unchanged. Local WAV files and
+`audio-results.json` retain the measurements.
+
+### Wi-Fi readiness
+
+The guest boots with NetworkManager enabled and active. Verified installed
+NetworkManager, wpa_supplicant, linux-firmware, wireless-regdb, the connection
+editor, nm-applet and an active polkit agent. The active graphical session is
+allowed Wi-Fi power, scanning, network control and its own connection profiles;
+SSH-session permission results differ. Wired DHCP/DNS/HTTPS worked, including an
+HTTP 200 from archlinux.org.
+
+The guest exposes only Ethernet and loopback. There is no Wi-Fi adapter, access
+point inventory or RF signal to test. The networking helper from the separate
+9aa85fd candidate was queried against the real guest bus: it reported internet
+access, no error and Wi-Fi unavailable with unknown signal. This query did not
+merge or deploy the pending native networking interface from PR #54. The current
+phone drawer only provides radio power; native network selection remains on that
+separate branch. Physical scanning, password authentication, DHCP/reconnect and
+firmware compatibility must be tested with the intended adapter before calling
+Wi-Fi ready out of the box on a device. No host radio or network configuration
+was changed.
+
+## T76 — Full showcase and publication refresh (2026-10-19)
+
+Integrated the tested phone branch and the existing installer/update development
+history with main at source checkpoint 8dc694c, preserving contributor commits.
+The combined `./scripts/check.sh` passed 198 Python tests, 63 Qt Quick checks and
+four website tests, plus available syntax/API checks. Fish and ShellCheck were
+unavailable; the existing QML lint warnings remain. GitHub Ubuntu and Arch source
+checks passed for that checkpoint.
+
+Deployed the exact combined shell/session sources into the development guest.
+Refreshed every image in the 21-image website pack: automatic Phone at 390x844,
+Tablet at 800x1280 and Desktop at 1280x800, all at scale 1. Real app previews show
+Calculator, Files and Foot. Communications captures use the existing synthetic
+contact and no outgoing calls/SMS. Audio captures show the actual USB/HDA outputs.
+Returned through greetd/PAM at 390x844, captured wrong-PIN rejection, authenticated
+home and return to greeter. The authenticated session had no configerrors.
+Per-image source checkpoints and SHA-256 digests are in the capture manifest.
+
+The live picker uses a fresh diskless, non-Secure-Boot UEFI/KVM boot of the
+existing Alpha 15 mirror development ISO (source 1a46da4), not the published
+Alpha 4 download. Its SHA-256 is recorded in the manifest. The initial 90-second
+probe reached a black compositor before the shell was ready; a longer boot was
+required. Fixed the boot capture helper to click the desktop taskbar's Start
+button, since the previous centered touch-dock coordinate left the picker shut.
+No ISO was built on the host. The published release remains Alpha 4.
+
+The website labels the current phone dimensions and immediate Recents dismissal,
+and distinguishes development installer/update tooling from the tester release.
+Browser UI verification was unavailable because this session exposes no browser;
+website behavior is covered by the existing Node tests and asset/ZIP checks.

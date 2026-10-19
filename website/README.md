@@ -33,8 +33,10 @@ The website's model tabs support arrow keys, Home/End, visible keyboard focus,
 image enlargement, original downloads, and a screenshot ZIP. Reduced motion is
 respected. There are no accounts, analytics, paid services, or remote fonts.
 
-The current showcase includes twenty-one real VM screenshots, the device roadmap,
-new-session PIN login evidence, and a share panel. Open Graph/Twitter metadata
+The 2026-10-19 showcase includes twenty-one refreshed real VM screenshots, the device roadmap,
+390x844 phone captures, new-session PIN login evidence, and a share panel.
+The live-launcher capture identifies its development ISO separately from the
+published Alpha 4 download. Open Graph/Twitter metadata
 uses an actual desktop capture. Sharing uses the system share sheet when
 available, otherwise copies the public URL, with a visible fallback address.
 Branding downloads are hosted on the separate `brand-kit-20261017` asset release;

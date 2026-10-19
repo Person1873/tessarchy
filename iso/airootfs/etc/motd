@@ -1,11 +1,34 @@
 
-  Tessarchy live prototype — no installer, no persistence, no secure locking.
+[1;36m
+              ▄▄▄▄▄▄▄▄
+            ▄█▀▀▀▀▀▀▀▀█▄
+           █▀▀▀▀▀▀▀▀▀▀▀▀█▄
+           █            ▀█▄
+           █  ▄▄▄▄▄▄▄▄  █ ▀▄
+           █▄█▀▀▀▀▀▀▀▀█▄█   █
+            █          █    █
+            █          █   █
+             █▄▄▄▄▄▄▄▄█  █
+               ▀▀▀▀▀▀▀▀▀▀
+[0m[1;36m      T E S S A R C H Y[0m   [2;36mquiet edge · live image[0m
 
-  A graphical session starts automatically on tty1 (live user "tess",
-  password login disabled). Exit Tessera to return to this console and run
-  start-tessarchy to launch it again. Root rescue login remains available
-  on this console after the session exits.
+  Tessarchy live image. Nothing is written to the medium: this system runs
+  from RAM and every change is gone at reboot.
 
-  The virtual machine keyboard is required for text input; the virtual
-  tablet is a single-pointer touchscreen. Documentation lives in
+  The Tessera session starts automatically on tty1 as the live user "tess"
+  (password login disabled). Exit the session to come back to this console
+  and run start-tessarchy to launch it again. Root rescue login is available
+  here once the session has exited.
+
+  To copy this running system onto an internal disk:
+
+      sudo tessarchy-install --check             will this machine run it?
+      sudo tessarchy-install --list              candidate disks
+      sudo tessarchy-install --disk /dev/nvme0n1
+
+  Everything on the chosen disk is erased. See
+  /usr/share/tessarchy/docs/live-install.md.
+
+  On a virtual machine the virtual keyboard is required for text input; the
+  virtual tablet is a single-pointer touchscreen. Documentation lives in
   /usr/share/tessarchy/docs.

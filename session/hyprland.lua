@@ -1,5 +1,8 @@
 -- Tessarchy defaults: Hyprland 0.56.x Lua API.
 -- This is loaded explicitly, never over the user's Hyprland config.
+local session = debug.getinfo(1, "S").source:sub(2):match("^(.*)/[^/]+$")
+local data = os.getenv("TESSARCHY_DATA_DIR") or session:match("^(.*)/session$")
+TessarchyWindows = dofile(session .. "/window-controls.lua")
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
 hl.config({
     general = { gaps_in = 0, gaps_out = 0, border_size = 0, layout = "dwindle",
@@ -37,6 +40,25 @@ local function shell_mode(monitor)
     if width >= 1100 and height >= 650 then return "desktop" end
     return "tablet"
 end
+-- Title bars are desktop chrome. Phone and tablet apps fill the screen with no
+-- decorations, so the plugin is loaded only for the desktop layout.
+local function desktop_layout(monitor)
+    return monitor ~= nil and shell_mode(monitor) == "desktop"
+end
+local startMonitor = hl.get_active_monitor and hl.get_active_monitor() or nil
+if not startMonitor and hl.get_monitors then
+    local monitors = hl.get_monitors()
+    startMonitor = monitors and monitors[1] or nil
+end
+local bars = data .. "/plugins/hyprbars.so"
+local barsFile = io.open(bars, "r")
+if barsFile and desktop_layout(startMonitor) then
+    barsFile:close()
+    hl.plugin.load(bars)
+    TessarchyWindows.configure_bars()
+elseif barsFile then
+    barsFile:close()
+end
 -- Desktop window style, chosen in Settings: "windowed" floats ordinary windows
 -- at a conventional size, anything else leaves the dwindle tiling in place.
 local function desktop_windowed()
@@ -54,10 +76,31 @@ local function desktop_windowed()
     end
     return value == "windowed"
 end
--- Re-maximize ordinary mobile windows when they become active.
+-- Phone windows retain full preview dimensions when another app becomes active.
+local function phone_window(window)
+    for _, tag in ipairs(type(window.tags) == "table" and window.tags or {}) do
+        if tag == "tessarchy-phone" then return true end
+    end
+    return false
+end
 local function maximize_if_mobile(window)
-    if not window or window.floating or window.fullscreen ~= 0 or not window.monitor then return end
-    if shell_mode(window.monitor) ~= "desktop" then
+    if not window or window.fullscreen ~= 0 or not window.monitor then return end
+    if window.floating and not phone_window(window) then return end
+    if shell_mode(window.monitor) == "phone" then
+        local monitor = window.monitor
+        local width, height = monitor.width / monitor.scale, monitor.height / monitor.scale
+        if monitor.transform % 2 == 1 then width, height = height, width end
+        local reserved = type(monitor.reserved) == "table" and monitor.reserved or {}
+        local left, top = reserved.left or 0, reserved.top or 0
+        width = math.max(1, math.floor(width - left - (reserved.right or 0)))
+        height = math.max(1, math.floor(height - top - (reserved.bottom or 0)))
+        if not window.floating then
+            hl.dispatch(hl.dsp.window.tag({ window = window, tag = "+tessarchy-phone" }))
+            hl.dispatch(hl.dsp.window.float({ window = window, action = "set" }))
+        end
+        hl.dispatch(hl.dsp.window.resize({ window = window, x = width, y = height }))
+        hl.dispatch(hl.dsp.window.move({ window = window, x = (monitor.x or 0) + left, y = (monitor.y or 0) + top }))
+    elseif not window.floating and shell_mode(window.monitor) == "tablet" then
         hl.dispatch(hl.dsp.window.fullscreen({ window = window, mode = "maximized", action = "set" }))
     end
 end
@@ -86,15 +129,45 @@ hl.on("window.open", function(window)
             hl.dispatch(hl.dsp.window.float({ window = window, action = "set" }))
             local monitor = window.monitor
             local width = math.max(360, math.floor(math.min(960, monitor.width / monitor.scale - 96)))
-            local height = math.max(280, math.floor(math.min(640, monitor.height / monitor.scale - 140)))
+            local titleHeight = hl.plugin and hl.plugin.hyprbars and 48 or 0
+            local height = math.max(280, math.floor(math.min(640, monitor.height / monitor.scale - 140 - titleHeight)))
             hl.dispatch(hl.dsp.window.resize({ window = window, x = width, y = height }))
             hl.dispatch(hl.dsp.window.center({ window = window }))
+            if titleHeight > 0 then
+                hl.dispatch(hl.dsp.window.move({ window = window, x = 0, y = titleHeight / 2, relative = true }))
+            end
         end
         return
     end
     maximize_if_mobile(window)
     fit_dialog(window)
 end)
+-- Re-fit existing windows when the display size changes (rotation, dock, or a
+-- manual mode switch). Windows opened at a larger resolution keep that
+-- geometry otherwise: a 960px-wide window stays 960px on a 400px phone and
+-- hangs off-screen.
+local function refit_windows(monitor)
+    for _, window in ipairs(hl.get_windows()) do
+        if not monitor or window.monitor == monitor then
+            if phone_window(window) then
+                maximize_if_mobile(window)
+            elseif window.floating then
+                fit_dialog(window)
+            else
+                maximize_if_mobile(window)
+            end
+        end
+    end
+end
+local function refit_after_layers()
+    if hl.timer then hl.timer(function() refit_windows(nil) end, { timeout = 150, type = "oneshot" }) end
+end
+hl.on("monitor.layout_changed", function(monitor)
+    refit_windows(monitor)
+    refit_after_layers()
+end)
+hl.on("layer.opened", refit_after_layers)
+hl.on("layer.closed", refit_after_layers)
 hl.on("window.active", maximize_if_mobile)
 hl.on("hyprland.start", function ()
     hl.exec_cmd("tessarchy-session-services")

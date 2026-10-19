@@ -1,0 +1,68 @@
+diff --git i/hyprbars/barDeco.cpp w/hyprbars/barDeco.cpp
+index c27653d..3759249 100644
+--- i/hyprbars/barDeco.cpp
++++ w/hyprbars/barDeco.cpp
+@@ -83,14 +83,14 @@ std::string CHyprBar::getDisplayName() {
+     return "Hyprbar";
+ }
+ 
+-bool CHyprBar::inputIsValid() {
++bool CHyprBar::inputIsValid(std::optional<Vector2D> position) {
+     if (m_hidden)
+         return false;
+ 
+     if (g_pSeatManager->m_seatGrab && !g_pSeatManager->m_seatGrab->accepts(m_pWindow->wlSurface()->resource()))
+         return false;
+ 
+-    const auto MOUSE    = g_pInputManager->getMouseCoordsInternal();
++    const auto MOUSE    = position.value_or(g_pInputManager->getMouseCoordsInternal());
+     auto       PMONITOR = Desktop::focusState()->monitor();
+ 
+     if (!PMONITOR)
+@@ -103,7 +103,7 @@ bool CHyprBar::inputIsValid() {
+     auto                    focusState = Desktop::focusState();
+     auto                    window     = focusState->window();
+ 
+-    if (WINDOWATCURSOR != m_pWindow && m_pWindow != window)
++    if (WINDOWATCURSOR != m_pWindow && (position.has_value() || m_pWindow != window))
+         return false;
+ 
+     PHLLS    foundSurface = nullptr;
+@@ -135,8 +135,22 @@ void CHyprBar::onMouseButton(Event::SCallbackInfo& info, IPointer::SButtonEvent
+ }
+ 
+ void CHyprBar::onTouchDown(Event::SCallbackInfo& info, ITouch::SDownEvent e) {
+-    // Don't do anything if you're already grabbed a window with another finger
+-    if (!inputIsValid() || e.touchID != 0)
++    if (info.cancelled || m_bDragPending || m_bDraggingThis)
++        return;
++
++    PHLMONITOR monitor = nullptr;
++    for (auto& candidate : State::monitorState()->monitors()) {
++        if (candidate->m_name == e.device->m_boundOutput) {
++            monitor = candidate;
++            break;
++        }
++    }
++    monitor = monitor ? monitor : Desktop::focusState()->monitor();
++    if (!monitor)
++        return;
++    const auto position = Vector2D(monitor->m_position.x + e.pos.x * monitor->m_size.x,
++                                  monitor->m_position.y + e.pos.y * monitor->m_size.y);
++    if (!inputIsValid(position))
+         return;
+ 
+     handleDownEvent(info, e);
+diff --git i/hyprbars/barDeco.hpp w/hyprbars/barDeco.hpp
+index a3b4e2d..7113eed 100644
+--- i/hyprbars/barDeco.hpp
++++ w/hyprbars/barDeco.hpp
+@@ -83,7 +83,7 @@ class CHyprBar : public IHyprWindowDecoration {
+     void renderBarButtonsText(CBox* barBox, const float scale, const float a);
+     void damageOnButtonHover();
+ 
+-    bool inputIsValid();
++    bool inputIsValid(std::optional<Vector2D> position = std::nullopt);
+     void onMouseButton(Event::SCallbackInfo& info, IPointer::SButtonEvent e);
+     void onTouchDown(Event::SCallbackInfo& info, ITouch::SDownEvent e);
+     void onTouchUp(Event::SCallbackInfo& info, ITouch::SUpEvent e);

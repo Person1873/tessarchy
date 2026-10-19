@@ -225,3 +225,11 @@ the selected icon is larger and brighter. Tab/Shift+Tab cycle, Alt release or
 Enter activates after the keyboard grab is released, and Escape cancels. The
 icon row scrolls to keep selection visible when many windows are open. The
 touch Recents action continues to use `AppSwitcher.qml` and its preview cards.
+
+Optional desktop title bars use the pinned Hyprbars plugin when its library is
+present in the Tessarchy data directory. `session/window-controls.lua` owns the
+minimize/restore lifecycle. Private special-workspace names encode the return
+workspace and fullscreen state, preserving restoration through config reloads.
+The shell normalizes and validates compositor window addresses before invoking
+the restore function; application titles never become Lua or shell input. See
+[window-controls.md](window-controls.md) for the optional build and deployment.

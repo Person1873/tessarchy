@@ -3,11 +3,24 @@ set -euo pipefail
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 [[ $EUID != 0 ]] || { echo "makepkg must run as a normal user" >&2; exit 1; }
 mkdir -p "$root/dist"
-tar --exclude=__pycache__ --exclude='*.pyc' --exclude='*.pyo' -czf "$root/dist/tessarchy-0.1.0.tar.gz" -C "$root" shell session docs LICENSE scripts/export-brand-assets.py scripts/export-boot-assets.py
-for package in tessera-shell tessarchy-session tessarchy-greeter tessarchy-bootsplash tessarchy-tablet; do
+version=${TESSARCHY_VERSION:-0.1.0}
+source_archive="$root/dist/tessarchy-$version.tar.gz"
+# The source archive is what every PKGBUILD unpacks, so it carries the whole
+# product: the shell, the session, the docs and the medium's own configuration
+# (packaging/tessarchy-update installs files out of iso/airootfs).
+tar --exclude=__pycache__ --exclude='*.pyc' --exclude='*.pyo' --exclude='*.ppm' \
+    -czf "$source_archive" -C "$root" \
+    shell session docs iso LICENSE packaging \
+    scripts/export-brand-assets.py scripts/export-boot-assets.py
+# Every directory under packaging/ that has a PKGBUILD is part of the release;
+# adding a package means adding a directory, not editing this list.
+mapfile -t packages < <(find "$root/packaging" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+for package in "${packages[@]}"; do
     work=$root/build/packages/$package
+    rm -rf "$work"
     mkdir -p "$work"
-    cp "$root/packaging/$package/PKGBUILD" "$root/dist/tessarchy-0.1.0.tar.gz" "$work/"
+    cp "$root/packaging/$package/PKGBUILD" "$source_archive" "$work/"
     (cd "$work"; PKGDEST="$root/dist" makepkg --force --cleanbuild --nodeps)
 done
+echo "packages built from tessarchy-$version.tar.gz: ${#packages[@]}"
 # This script neither installs packages nor resolves dependencies with sudo.

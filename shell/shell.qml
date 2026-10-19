@@ -32,6 +32,19 @@ ShellRoot {
         function sounds(): void { root.openAppRequested("sounds"); }
     }
     signal replayBrand
+    function activateWindow(window) {
+        if (!window || !window.wayland) return;
+        const workspace = window.workspace || (window.lastIpcObject && window.lastIpcObject.workspace);
+        const address = String(window.address).replace(/^0x/i, "");
+        if (Hyprland.usingLua && workspace && workspace.name.startsWith("special:tessarchy-minimized-")
+                && /^[0-9a-f]+$/i.test(address)) {
+            Quickshell.execDetached(["hyprctl", "eval", "TessarchyWindows.activate(\"address:0x" + address + "\")"]);
+        } else window.wayland.activate();
+    }
+    function activateHandle(target) {
+        const window = Hyprland.toplevels.values.find(window => window.wayland === target);
+        if (window) activateWindow(window);
+    }
     readonly property var activeWindow: Hyprland.activeToplevel || Hyprland.toplevels.values.find(window => window.wayland && window.wayland.activated) || null
     property var windowHistory: []
     readonly property var switcherWindows: windowHistory.filter(window => Hyprland.toplevels.values.indexOf(window) >= 0)
@@ -64,7 +77,7 @@ ShellRoot {
         property bool reducedMotion: false
         property bool showLabels: false
         property bool use24Hour: true
-        property real barOpacity: 0.22
+        property real barOpacity: 0.44
         property real wallpaperDim: 0.12
         property bool doNotDisturb: false
         // "windowed" opens desktop windows floating and sized; "tiled" restores
@@ -216,7 +229,7 @@ ShellRoot {
                     right: surface.mode === "desktop"
                 }
                 implicitWidth: expanded ? Policy.panelWidth(surface.mode, surface.modelData.width) : surface.dock.width
-                implicitHeight: expanded ? Math.min(page === "windows" ? surface.modelData.height - 60 : page === "apps" ? surface.launcherRows * 124 + 156 : surface.mode === "tablet" ? 740 : 640, surface.modelData.height - 64) : surface.navHeight
+                implicitHeight: expanded && surface.isPhone && page === "windows" ? surface.modelData.height - 48 : expanded ? Math.min(page === "windows" ? surface.modelData.height - 60 : page === "apps" ? surface.launcherRows * 124 + 156 : surface.mode === "tablet" ? 740 : 640, surface.modelData.height - 64) : surface.navHeight
                 exclusiveZone: surface.navHeight
                 color: "transparent"
                 Rectangle {
@@ -224,11 +237,16 @@ ShellRoot {
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottomMargin: panel.expanded ? 0 : surface.bar.gap
-                    width: panel.expanded ? expandedContent.width : parent.width
-                    radius: panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
-                    color: panel.expanded ? (panel.page === "windows" ? "#b3101b30" : "#c2101b30") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
-                    border.width: 1
+                    width: surface.isPhone && panel.page === "windows" ? parent.width : panel.expanded ? expandedContent.width : parent.width
+                    radius: panel.expanded && panel.page === "windows" ? 0 : panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
+                    color: panel.expanded ? (panel.page === "windows" ? "#8c070d16" : "#e20f1c2e") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
+                    border.width: surface.isPhone && panel.page === "windows" ? 0 : 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
+                    Loader {
+                        anchors.fill: parent
+                        active: surface.isPhone && panel.page === "windows"
+                        sourceComponent: RecentsBackdrop {}
+                    }
                 }
                 WlrLayershell.namespace: "tessera"
                 WlrLayershell.layer: WlrLayer.Top
@@ -251,26 +269,16 @@ ShellRoot {
                     target: root
                     function onSwitcherCommand(action) {
                         if (!Hyprland.focusedMonitor || Hyprland.focusedMonitor.name !== surface.modelData.name) return;
-                        if (action === "accept") {
-                            if (quickSwitcher.visible) quickIcons.activateCurrent();
-                        } else if (action === "cancel") {
-                            quickSwitcher.open = false;
-                        } else if (Hyprland.toplevels.values.length) {
-                            if (!quickSwitcher.open) quickIcons.selectActive();
-                            panel.page = "";
-                            panel.startMenuOpen = false;
-                            statusBar.drawerOpen = false;
-                            quickSwitcher.open = true;
-                            quickIcons.step(action === "previous" ? -1 : 1);
-                            Qt.callLater(() => quickIcons.forceActiveFocus());
-                        }
+                        if (action === "cancel") quickSwitcher.cancel();
+                        else if (action === "accept") quickSwitcher.commit();
+                        else if (Hyprland.toplevels.values.length) quickSwitcher.show(action === "previous" ? -1 : 1);
                     }
                 }
                 Connections {
                     target: root
                     function onActionRequested(action) {
                         if (!Hyprland.focusedMonitor || Hyprland.focusedMonitor.name !== surface.modelData.name) return;
-                        panel.closeTarget = action === "close" ? root.activeWindow : null;
+                        panel.closeTarget = action === "close" && root.activeWindow ? root.activeWindow.wayland : null;
                         panel.page = action === "exit" ? "session" : panel.closeTarget ? "close" : "";
                     }
                 }
@@ -293,7 +301,7 @@ ShellRoot {
                     target: panel.closeTarget
                     function onClosed() {
                         panel.closeTarget = null;
-                        panel.page = "windows";
+                        panel.page = surface.mode === "desktop" ? "" : "windows";
                     }
                 }
                 ColumnLayout {
@@ -330,16 +338,29 @@ ShellRoot {
                             visible: panel.page === "windows"
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            windows: Hyprland.toplevels.values
+                            windows: surface.isPhone ? root.switcherWindows.slice().reverse() : Hyprland.toplevels.values
+                            phoneMode: surface.isPhone
+                            activeWindow: root.activeWindow
+                            iconForWindow: window => {
+                                const entry = window.wayland ? DesktopEntries.heuristicLookup(window.wayland.appId) : null;
+                                return entry && entry.icon ? Quickshell.iconPath(entry.icon, true) : "";
+                            }
+                            nameForWindow: window => {
+                                const entry = window.wayland ? DesktopEntries.heuristicLookup(window.wayland.appId) : null;
+                                return entry ? entry.name : (window.wayland && window.wayland.appId) || window.title || "Application";
+                            }
+                            // Phone previews match the app area between the status bar and dock.
+                            screenSize: Qt.size(surface.modelData.width, Math.max(1, surface.modelData.height - surface.navHeight - 48))
                             fillApp: surface.mode !== "desktop"
+                            emptyHint: surface.mode === "desktop"
+                                ? "Your open apps will appear here.\nOpen one from the Start menu."
+                                : "Your open apps will appear here.\nTap Home to launch your first."
                             accentColor: root.accentColor
                             reducedMotion: shellPreferences.reducedMotion
+                            activateTarget: target => root.activateHandle(target)
                             onActivated: panel.page = ""
                             onDismissed: panel.page = ""
-                            onCloseRequested: target => {
-                                panel.closeTarget = target;
-                                panel.page = "close";
-                            }
+                            onCloseRequested: target => { if (target) target.close(); }
                         }
                         ScrollView {
                             visible: panel.page !== "windows"
@@ -475,7 +496,7 @@ ShellRoot {
                                         Layout.fillWidth: true
                                         onClicked: {
                                             panel.closeTarget = null;
-                                            panel.page = "windows";
+                                            panel.page = surface.mode === "desktop" ? "" : "windows";
                                         }
                                     }
                                     TouchButton {
@@ -486,7 +507,7 @@ ShellRoot {
                                         onClicked: {
                                             const target = panel.closeTarget;
                                             panel.closeTarget = null;
-                                            panel.page = "windows";
+                                            panel.page = surface.mode === "desktop" ? "" : "windows";
                                             if (target)
                                                 target.close();
                                         }
@@ -517,6 +538,7 @@ ShellRoot {
                         }
                     }
                     GridLayout {
+                        layer.enabled: panel.page === "windows"
                         visible: surface.mode !== "desktop"
                         Layout.fillWidth: true
                         Layout.fillHeight: false
@@ -609,8 +631,8 @@ ShellRoot {
                             text: "Windows"; symbol: "recents"; showLabel: false
                             iconSize: 18
                             accentColor: root.accentColor
-                            selected: panel.page === "windows"
-                            onClicked: panel.showPage("windows")
+                            selected: quickSwitcher.open
+                            onClicked: quickSwitcher.toggle()
                         }
                         NavButton {
                             Layout.fillWidth: false
@@ -641,7 +663,7 @@ ShellRoot {
                             onWindowRequested: window => {
                                 panel.startMenuOpen = false;
                                 panel.page = "";
-                                Qt.callLater(() => { if (window && window.wayland) window.wayland.activate(); });
+                                Qt.callLater(() => root.activateWindow(window));
                             }
                         }
                         // Sunken tray, as on the XP taskbar: indicators and clock.
@@ -713,19 +735,89 @@ ShellRoot {
                 id: quickSwitcher
                 property bool open: false
                 property var pendingTarget: null
+                // Timestamp of an Alt release that arrived before the switcher
+                // opened. A fast Alt+Tab spawns two shell commands whose order
+                // is not guaranteed, so the release can land first; remembering
+                // it makes the tap switch immediately instead of leaving the
+                // overlay stuck open with the keyboard grabbed. An early cancel
+                // (Escape) is remembered the same way and skips the open.
+                property double releasedAt: 0
+                property double cancelledAt: 0
+                readonly property int tapWindow: 300
                 screen: surface.modelData
                 visible: open && Hyprland.toplevels.values.length > 0
-                implicitWidth: Math.max(80, Math.min(surface.modelData.width - 32, quickIcons.implicitWidth))
-                implicitHeight: 96
+                anchors.top: true
+                anchors.bottom: true
+                anchors.left: true
+                anchors.right: true
                 exclusiveZone: 0
                 color: "transparent"
                 WlrLayershell.namespace: "tessera-quick-switcher"
                 WlrLayershell.layer: WlrLayer.Overlay
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
+                // Alt release: commit when the switcher is up, otherwise note
+                // that the tap is already over.
+                function commit() {
+                    if (open) quickIcons.activateCurrent();
+                    else releasedAt = Date.now();
+                }
+                // Escape: close when up, otherwise note the cancel.
+                function cancel() {
+                    if (open) open = false;
+                    else cancelledAt = Date.now();
+                }
+                function show(direction) {
+                    const tapped = !open && releasedAt > 0 && Date.now() - releasedAt < tapWindow;
+                    const cancelled = !open && cancelledAt > 0 && Date.now() - cancelledAt < tapWindow;
+                    releasedAt = 0;
+                    cancelledAt = 0;
+                    if (cancelled) return;
+                    if (!open) {
+                        quickIcons.reset();
+                        quickIcons.selectActive();
+                    }
+                    panel.page = "";
+                    panel.startMenuOpen = false;
+                    statusBar.drawerOpen = false;
+                    open = true;
+                    quickIcons.step(direction);
+                    Qt.callLater(() => quickIcons.forceActiveFocus());
+                    if (tapped) quickIcons.activateCurrent();
+                }
+                // The desktop taskbar's Windows button. Opens the bare icon
+                // row over the desktop with the current window already
+                // selected; pressing it again walks forward through the open
+                // windows, so it cycles without a keyboard.
+                function toggle() {
+                    panel.page = "";
+                    panel.startMenuOpen = false;
+                    statusBar.drawerOpen = false;
+                    if (!open) {
+                        quickIcons.reset();
+                        quickIcons.selectActive();
+                        open = true;
+                        Qt.callLater(() => quickIcons.forceActiveFocus());
+                    } else {
+                        quickIcons.step(1);
+                    }
+                }
+
+                // Clicking anywhere but an icon dismisses. Deliberately
+                // invisible: no backdrop and no panel, so the icons read as
+                // floating in the middle of the screen.
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: quickSwitcher.open = false
+                }
                 QuickSwitcher {
                     id: quickIcons
-                    anchors.fill: parent
+                    anchors.centerIn: parent
+                    width: Math.min(quickSwitcher.width - 64, implicitWidth)
+                    height: implicitHeight
                     windows: root.switcherWindows
+                    accentColor: root.accentColor
+                    reducedMotion: shellPreferences.reducedMotion
                     iconForWindow: window => {
                         const entry = window.wayland ? DesktopEntries.heuristicLookup(window.wayland.appId) : null;
                         return entry && entry.icon ? Quickshell.iconPath(entry.icon, true) : "";
@@ -744,7 +836,7 @@ ShellRoot {
                         const target = quickSwitcher.pendingTarget;
                         quickSwitcher.pendingTarget = null;
                         if (target) {
-                            target.activate();
+                            root.activateHandle(target);
                             if (surface.mode !== "desktop") target.maximized = true;
                         }
                     }
@@ -790,7 +882,7 @@ ShellRoot {
                     anchors.fill: parent
                     radius: statusBar.drawerOpen ? 28 : 0
                     visible: surface.mode !== "desktop" || statusBar.drawerOpen
-                    color: Qt.rgba(0.063, 0.106, 0.188, statusBar.drawerOpen ? 0.76 : shellPreferences.barOpacity)
+                    color: Qt.rgba(0.063, 0.106, 0.188, statusBar.drawerOpen ? 0.92 : shellPreferences.barOpacity)
                     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.alpha(root.accentColor, 0.1) }
                 }
                 WlrLayershell.namespace: "tessera-status"
@@ -822,7 +914,7 @@ ShellRoot {
                     anchors.fill: parent
                     anchors.leftMargin: surface.mode === "desktop" ? 0 : 18
                     anchors.rightMargin: surface.mode === "desktop" ? 0 : 8
-                    spacing: surface.modelData.width < 360 ? 4 : 8
+                    spacing: surface.mode === "phone" ? 4 : surface.modelData.width < 360 ? 4 : 8
                     TouchButton {
                         id: mobileClock
                         visible: surface.mode !== "desktop"
@@ -850,12 +942,7 @@ ShellRoot {
                         Accessible.name: statusBar.drawerOpen ? "Collapse quick controls" : "Open quick controls, or swipe down"
                         padding: 0
                         background: Item {}
-                        contentItem: Column {
-                            spacing: 4
-                            topPadding: 15
-                            Rectangle { anchors.horizontalCenter: parent.horizontalCenter; width: 28; height: 3; radius: 2; color: root.accentColor }
-                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: statusBar.drawerOpen ? "⌃" : "⌄"; color: root.accentColor; font.pixelSize: 14 }
-                        }
+                        contentItem: Item { }
                         onClicked: statusBar.toggleDrawer()
                     }
                     WeatherChip {
@@ -868,6 +955,7 @@ ShellRoot {
                     // mode; the mobile strip keeps them along the top edge.
                     StatusIndicators {
                         visible: surface.mode !== "desktop"
+                        compact: surface.mode === "phone"
                         accentColor: root.accentColor
                         notificationCount: root.notificationCount
                         cellularStrength: root.cellularStrength
@@ -883,6 +971,7 @@ ShellRoot {
                         showVolume: surface.modelData.width >= 700
                         showSettings: surface.modelData.width >= 560
                         onNotificationsRequested: panel.showPage("notifications")
+                        onPanelRequested: statusBar.toggleDrawer()
                         onMuteToggled: root.audioSink.audio.muted = !root.audioSink.audio.muted
                         onSettingsRequested: { statusBar.drawerOpen = false; panel.showPage("settings"); }
                     }

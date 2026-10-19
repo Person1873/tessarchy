@@ -1,31 +1,25 @@
 # Quiet Edge development captures
 
-Actual QEMU/KVM development-VM screenshots. The 2026-10-18 VM/touch checkpoint
-uses the owner-accepted software display profile, with KVM CPU acceleration,
-two audio outputs and virtio multitouch. The current captures use guest grim.
-Dimensions, exact source commit and SHA-256 hashes are in capture-manifest.json.
+Fresh 2026-10-19 screenshots from actual QEMU/KVM guests. The development guest
+uses software display rendering, KVM CPU acceleration, two audio outputs and
+virtio multitouch. Captures use guest grim; the live-image capture uses QMP.
+Dimensions, source commits and SHA-256 hashes are in capture-manifest.json.
 
-Current captures:
+- Phone home, launcher, stacked Recents, settings, contacts, dialer, messages,
+  sounds, cellular settings, Bluetooth and controls: 390x844, automatic Phone.
+- Real greetd/PAM entry, wrong-PIN rejection and authenticated home: 390x844.
+- Tablet home and controls: 800x1280, automatic Tablet.
+- Desktop home, controls, audio outputs and Messages: 1280x800, automatic Desktop.
 
-- Phone home, launcher, switcher, settings, contacts, dialer, messages, sounds,
-  cellular settings, Bluetooth and pull-down controls: 400x800.
-- Tablet home and controls: 800x1280, automatic Tablet selection.
-- Desktop home, controls, audio outputs and two-column Messages: 1280x800,
-  automatic Desktop selection.
+The contact is synthetic: Tessarchy Demo, reserved 202-555-0123, with the official
+logo as its photo. Recents shows real Calculator, Files and Foot windows with
+synthetic terminal text. No calls or SMS were sent. Audio controls show detected
+USB and HDA outputs; absent radio, modem and battery hardware remains visible.
+The Messages composer is empty. Recents apps close immediately by upward swipe,
+mouse double-click or the close button.
 
-The example contact is synthetic: Tessarchy Demo, reserved 202-555-0123 number,
-with the official logo as its imported photo. The switcher contains a real Foot
-window with a synthetic touch-test note. No real calls or SMS were sent. Audio
-controls show actual detected outputs; cellular, radio and battery controls show
-the guest's unavailable hardware. The Messages composer is empty.
-
-The three PIN-login captures retain their earlier greetd/PAM validation context:
-entry, rejection and authenticated home. Earlier preview-labelled login PNGs are
-separate assets and are not included in the website's screenshot ZIP.
-
-The website ZIP contains twenty-one captures. These development captures are separate
-from the published Alpha 2 ISO and its boot evidence.
-
-`live-launcher.png` is the curated picker from the diskless Alpha 3 UEFI boot
-on CI (1280x800, source566a438). The earlier development-VM captures retain
-their original source checkpoints; that VM was not changed for the tablet pilot.
+The screenshot ZIP contains twenty-one fresh captures. `live-launcher.png`
+comes from a diskless UEFI boot of the Alpha 15 mirror development ISO, source
+1a46da4. It is separate from the published Alpha 4 tester download and the newer
+phone-session source. Earlier preview-labelled login PNGs are historical assets
+outside the website screenshot ZIP. No images are visual mockups.

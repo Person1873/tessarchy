@@ -1,0 +1,3 @@
+# The live medium is a throwaway system: let the live user run only the
+# installer, and only without a password, so the desktop entry can launch it.
+tess ALL=(root) NOPASSWD: /usr/bin/tessarchy-install

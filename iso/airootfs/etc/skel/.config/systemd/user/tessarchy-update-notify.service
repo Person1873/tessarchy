@@ -1,0 +1,7 @@
+[Unit]
+Description=Tell the user when a newer Tessarchy is published
+Documentation=man:tessarchy-update(1)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/tessera-update-notify

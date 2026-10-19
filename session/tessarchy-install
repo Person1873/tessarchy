@@ -1,0 +1,553 @@
+#!/usr/bin/env python3
+"""Install Tessarchy from the live image onto a disk.
+
+The live session is already the product: boot it, use it, and judge whether the
+hardware works. This tool copies that running system onto an internal disk and
+makes it bootable, so nothing has to be downloaded and the installed machine
+behaves like the one that was just tested.
+
+    tessarchy-install --check               # will this machine run it?
+    tessarchy-install --list                # candidate disks
+    tessarchy-install --disk /dev/nvme0n1   # install (erases that disk)
+
+Only whole disks are accepted. Everything on the chosen disk is destroyed.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shlex
+import shutil
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
+
+ESP_MIB = 512
+BIOS_BOOT_MIB = 1
+# mkfs.fat rejects labels longer than 11 characters.
+ESP_LABEL = "TESSARCHY"
+ROOT_LABEL = "tessarchy"
+MOUNT = Path("/mnt")
+LIVE_MOUNT = Path("/run/archiso/bootmnt")
+
+# Never copied into the target: kernel filesystems, the live medium, and this
+# installer's own mountpoint.
+EXCLUDES = [
+    "/dev/*", "/proc/*", "/sys/*", "/run/*", "/tmp/*", "/mnt/*",
+    "/media/*", "/lost+found", "/swapfile", "/var/tmp/*", "/etc/machine-id",
+    # archiso strips the boot files out of the airootfs, so the live root has
+    # no kernel of its own; the target's kernel comes from the medium
+    # (see stage_kernel) and mkinitcpio rebuilds the initramfs into the ESP.
+    "/boot/initramfs-linux*.img",
+    "/boot/vmlinuz-linux",
+]
+
+# The kernel the live medium booted. archiso keeps it outside the airootfs —
+# the live root's /boot is empty — and an installed system cannot build an
+# initramfs without a kernel image in its own /boot.
+KERNEL_NAME = "vmlinuz-linux"
+MEDIUM_KERNEL_PATHS = (
+    LIVE_MOUNT / "arch/boot/x86_64" / KERNEL_NAME,
+    LIVE_MOUNT / "boot" / KERNEL_NAME,
+)
+
+
+class InstallerError(RuntimeError):
+    """A precondition or step failed; the message is shown to the user."""
+
+
+# ---------------------------------------------------------------- shell glue
+
+def run(cmd, *, check=True, capture=False):
+    result = subprocess.run(list(cmd), text=True, capture_output=capture, check=False)
+    if check and result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip()
+        raise InstallerError(f"{' '.join(map(str, cmd))} failed: {detail[:400]}")
+    return (result.stdout or "") if capture else ""
+
+
+def in_target(*cmd, check=True, capture=False):
+    """Run inside the new root; arch-chroot binds /dev, /proc and /sys."""
+    return run(["arch-chroot", str(MOUNT)] + list(cmd), check=check, capture=capture)
+
+
+def in_target_status(*cmd):
+    """Run inside the new root and keep the exit code instead of raising."""
+    return subprocess.run(["arch-chroot", str(MOUNT)] + list(cmd), text=True,
+                          capture_output=True, check=False)
+
+
+SYSTEMD_UNIT_DIRS = ("etc/systemd/system", "usr/lib/systemd/system", "lib/systemd/system")
+UNIT_SUFFIXES = (".service", ".socket", ".target")
+
+
+def unit_exists(unit: str) -> bool:
+    """Is this systemd unit present in the target at all?
+
+    The live image and the packaged install do not carry the same packages, so
+    an unconditional `systemctl enable` can be a silent no-op. Say what
+    happened instead of claiming a service was enabled.
+    """
+    for directory in SYSTEMD_UNIT_DIRS:
+        for suffix in UNIT_SUFFIXES:
+            if (MOUNT / directory / f"{unit}{suffix}").is_file():
+                return True
+    return False
+
+
+def require_root() -> None:
+    if os.geteuid() != 0:
+        raise InstallerError("Run as root: sudo tessarchy-install")
+
+
+def require_tools(*tools) -> None:
+    missing = [t for t in tools if not shutil.which(t)]
+    if missing:
+        raise InstallerError("Missing tools: " + ", ".join(missing))
+
+
+# ------------------------------------------------------------- device probes
+
+def block_devices(nodes):
+    for node in nodes:
+        yield node
+        yield from block_devices(node.get("children") or [])
+
+
+def live_medium_device() -> str | None:
+    """Resolve a live partition, whole disk or mapper source to its backing disk."""
+    try:
+        source = run(["findmnt", "-n", "-o", "SOURCE", str(LIVE_MOUNT)],
+                     check=False, capture=True).strip().split("[", 1)[0]
+        if not source.startswith("/dev/"):
+            return None
+        data = json.loads(run(["lsblk", "-J", "-s", "-p", "-o", "NAME,TYPE", source], capture=True))
+        nodes = list(block_devices(data.get("blockdevices", [])))
+        disks = {Path(node["name"]).name for node in nodes if node.get("type") == "disk"}
+        if len(disks) == 1:
+            return disks.pop()
+        optical = {Path(node["name"]).name for node in nodes if node.get("type") == "rom"}
+        if not disks and len(optical) == 1:
+            return optical.pop()
+    except (InstallerError, OSError, ValueError, TypeError, KeyError):
+        return None
+    return None
+
+
+def list_disks() -> list[dict]:
+    data = json.loads(run(["lsblk", "-J", "-d", "-o", "NAME,SIZE,MODEL,TRAN,TYPE"],
+                          capture=True) or "{}")
+    live = live_medium_device()
+    disks = []
+    for dev in data.get("blockdevices", []):
+        name = dev.get("name", "")
+        # Whole disks only: no loops, zram, optical or ram devices.
+        if dev.get("type") != "disk" or dev.get("tran") == "loop":
+            continue
+        if name.startswith(("loop", "zram", "ram", "sr", "dm-")):
+            continue
+        disks.append({
+            "path": f"/dev/{name}",
+            "size": dev.get("size") or "?",
+            "model": (dev.get("model") or "disk").strip(),
+            "transport": dev.get("tran") or "",
+            "live": bool(live and name == live),
+        })
+    return disks
+
+
+def firmware_mode() -> str:
+    return "uefi" if Path("/sys/firmware/efi").is_dir() else "bios"
+
+
+# ---------------------------------------------------------- readiness report
+
+def check_report() -> int:
+    firmware = firmware_mode()
+    gpu = run(["sh", "-c", "lspci -nn 2>/dev/null | grep -Ei 'vga|3d|display' | cut -d: -f3- | head -3"],
+              check=False, capture=True).strip()
+    session = os.environ.get("XDG_SESSION_TYPE") or "unknown"
+    mem = run(["sh", "-c", "awk '/MemTotal/{printf \"%.1f\", $2/1048576}' /proc/meminfo"],
+              check=False, capture=True).strip()
+    touch = run(["sh", "-c", "grep -l -i -E 'touch|tablet|pen' /sys/class/input/input*/name 2>/dev/null | wc -l"],
+                check=False, capture=True).strip()
+    disks = [d for d in list_disks() if not d["live"]]
+    try:
+        memory_ok = float(mem or 0) >= 3.5
+    except ValueError:
+        memory_ok = False
+
+    rows = [
+        ("Firmware", f"{firmware.upper()} boot", True),
+        ("Display", gpu or "no GPU reported", bool(gpu)),
+        ("Session", f"running live in {session}", session == "wayland"),
+        ("Memory", f"{mem} GiB", memory_ok),
+        ("Touch input", f"{touch or 0} device(s)", int(touch or 0) > 0),
+        ("Install target", f"{len(disks)} candidate disk(s)", bool(disks)),
+    ]
+    print("Tessarchy readiness check\n")
+    for label, value, ok in rows:
+        print(f"  {'ok  ' if ok else 'note'}  {label:<14} {value}")
+    print("\nWhat you are using now is what gets installed: the installer copies")
+    print("this running system rather than downloading a second one.")
+    return 0
+
+
+# -------------------------------------------------------------------- layout
+
+def plan_partitions(firmware: str) -> list[dict]:
+    """Fresh GPT layout with explicit offsets, in MiB from the start of disk."""
+    if firmware == "uefi":
+        esp_end = 1 + ESP_MIB
+        return [
+            {"number": 1, "role": "esp", "start": 1, "end": esp_end, "fs": "fat32"},
+            {"number": 2, "role": "root", "start": esp_end, "end": "-1", "fs": "ext4"},
+        ]
+    bios_end = 1 + BIOS_BOOT_MIB
+    esp_end = bios_end + ESP_MIB
+    return [
+        {"number": 1, "role": "bios", "start": 1, "end": bios_end, "fs": None},
+        {"number": 2, "role": "esp", "start": bios_end, "end": esp_end, "fs": "fat32"},
+        {"number": 3, "role": "root", "start": esp_end, "end": "-1", "fs": "ext4"},
+    ]
+
+
+def part_path(disk: str, number: int) -> str:
+    # nvme0n1p1, mmcblk0p1, sda1
+    return f"{disk}{'p' if disk[-1].isdigit() else ''}{number}"
+
+
+def validate_target(disk: str) -> dict:
+    live = live_medium_device()
+    if not live:
+        raise InstallerError("Cannot identify the live medium; boot a supported Tessarchy ISO before installing")
+    disks = {d["path"]: d for d in list_disks()}
+    if disk not in disks:
+        raise InstallerError(f"{disk} is not a whole disk on this machine")
+    if disks[disk]["live"] or Path(disk).name == live:
+        raise InstallerError("That is the live medium — pick the disk you want to overwrite")
+    try:
+        data = json.loads(run(["lsblk", "-J", "-p", "-o", "NAME,TYPE,MOUNTPOINTS", disk], capture=True))
+        nodes = list(block_devices(data.get("blockdevices", [])))
+        if not any(node.get("name") == disk and node.get("type") == "disk" for node in nodes):
+            raise InstallerError("Cannot verify the target disk's mount state")
+        if not all(isinstance(node.get("mountpoints"), list) for node in nodes):
+            raise InstallerError("Cannot verify the target disk's mount state")
+        if any(any(node["mountpoints"]) for node in nodes):
+            raise InstallerError("The target disk has mounted filesystems or active swap; unmount them first")
+    except (ValueError, TypeError, KeyError) as exc:
+        raise InstallerError("Cannot verify the target disk's mount state") from exc
+    return disks[disk]
+
+
+# ---------------------------------------------------------------- the install
+
+def copy_system() -> None:
+    args = ["rsync", "-aHAX", "--numeric-ids", "--one-file-system"]
+    for pattern in EXCLUDES:
+        args += ["--exclude", pattern]
+    run(args + ["/", f"{MOUNT}/"])
+    for d in ("dev", "proc", "sys", "run", "tmp", "boot"):
+        (MOUNT / d).mkdir(exist_ok=True)
+
+
+def medium_kernel() -> Path:
+    """The kernel image sitting on the live medium."""
+    for path in MEDIUM_KERNEL_PATHS:
+        if path.is_file():
+            return path
+    raise InstallerError(
+        "no kernel to install: the live medium has no "
+        + " or ".join(str(p) for p in MEDIUM_KERNEL_PATHS))
+
+
+def stage_kernel(target: Path = MOUNT) -> Path:
+    """Copy the medium's kernel into the target's /boot.
+
+    Nothing in the running live root can serve as the installed system's
+    kernel: archiso keeps its boot files on the ISO, so rsync copies an empty
+    /boot and `mkinitcpio -P` fails with "must be readable" before any
+    initramfs exists. The kernel that booted the medium is the same build as
+    the /usr/lib/modules tree being copied, so it belongs in the target.
+    """
+    source = medium_kernel()
+    destination = Path(target) / "boot" / KERNEL_NAME
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, destination)
+    print(f"Kernel  : {source} -> {destination}")
+    return destination
+
+
+def write_boot_loader(firmware: str, disk: str, root_uuid: str) -> None:
+    if firmware == "uefi":
+        in_target("bootctl", "--esp-path=/boot", "install")
+        entry = MOUNT / "boot/loader/entries/tessarchy.conf"
+        entry.parent.mkdir(parents=True, exist_ok=True)
+        entry.write_text(textwrap.dedent(f"""\
+            title   Tessarchy
+            linux   /vmlinuz-linux
+            initrd  /initramfs-linux.img
+            options root=UUID={root_uuid} rw quiet splash loglevel=3
+            """))
+        (MOUNT / "boot/loader/loader.conf").write_text(
+            "default tessarchy.conf\ntimeout 3\nconsole-mode max\n")
+        return
+    in_target("grub-install", "--target=i386-pc", f"--boot-directory=/boot", disk)
+    in_target("grub-mkconfig", "-o", "/boot/grub/grub.cfg")
+
+
+def drop_live_only_files() -> None:
+    """Remove text and hooks that only make sense on the live medium.
+
+    The installed copy inherits the airootfs verbatim, including the archiso
+    mkinitcpio hook and a motd that describes a throwaway system. Both are
+    wrong once the same tree lives on a disk.
+    """
+    for stray in (MOUNT / "etc/mkinitcpio.conf.d").glob("archiso*.conf"):
+        stray.unlink()
+    motd = MOUNT / "etc/motd"
+    if motd.is_file() and "live image" in motd.read_text(errors="replace"):
+        motd.unlink()
+
+
+PACKAGE_DIR = Path("/usr/share/tessarchy/pkgs")
+
+
+def read_archive_listing(package: Path) -> str:
+    """The entries a package archive carries, or "" when nothing can read it."""
+    try:
+        listing = subprocess.run(["bsdtar", "-tf", str(package)],
+                                 capture_output=True, text=True, check=False)
+        if listing.returncode == 0 and listing.stdout.strip():
+            return listing.stdout
+    except OSError:
+        pass
+    try:
+        listing = subprocess.run(
+            f"zstd -dc {shlex.quote(str(package))} | tar -tf -",
+            shell=True, capture_output=True, text=True, check=False)
+        if listing.returncode == 0:
+            return listing.stdout
+    except OSError:
+        pass
+    return ""
+
+
+def package_name(package: Path) -> str:
+    """The package's own name, from its file name.
+
+    A package file is name-version-release-arch.pkg.tar.zst, and while a package
+    name may contain hyphens, none of the last three fields can.
+    """
+    return "-".join(package.name.split(".pkg")[0].split("-")[:-3])
+
+
+def archive_paths(package: Path) -> list[str]:
+    """The absolute paths a package archive installs.
+
+    Read from the archive itself so the permission stays narrow. bsdtar reads a
+    zstd package directly; when it is absent, zstd already on the medium feeds
+    tar. An unreadable archive yields no paths, and the caller falls back.
+    """
+    paths = []
+    for line in read_archive_listing(package).splitlines():
+        entry = line.strip()
+        # Metadata entries (".PKGINFO", ".MTREE", ".BUILDINFO") and directory
+        # entries are not files pacman can be told to overwrite.
+        if not entry or entry.startswith(".") or entry.endswith("/"):
+            continue
+        if entry not in paths:
+            paths.append("/" + entry)
+    return paths
+
+
+def adopt_medium_packages() -> None:
+    """Install the medium's own packages into the target.
+
+    The installer copies the running system, so the shell and the session arrive
+    as loose files with no owner. Installing the packages this medium carries on
+    top of that copy leaves an installed machine that pacman manages: `pacman -Q`
+    can say what is installed, and tessarchy-update can ask the repository what
+    is newer instead of guessing at file contents. That is what turns the next
+    version into a download rather than another install from scratch.
+
+    The copies are in the way: pacman refuses to install a package over a file
+    that exists on disk and belongs to nothing, which is precisely what the copy
+    leaves behind ("error: failed to commit transaction (conflicting files)").
+    Each package is therefore allowed to overwrite the files it carries itself.
+    """
+    directory = MOUNT / PACKAGE_DIR.relative_to("/")
+    packages = sorted(directory.glob("*.pkg.tar.zst"))
+    if not packages:
+        print("Note    : this medium carries no packages; run "
+              "`tessarchy-update --enable-repo` on first boot before updating")
+        return
+    inside = [f"{PACKAGE_DIR}/{package.name}" for package in packages]
+    overwrite = []
+    for package in packages:
+        for path in archive_paths(package):
+            if path not in overwrite:
+                overwrite.append(path)
+    if not overwrite:
+        # The archives could not be read, so the exact file list is unknown.
+        # These are this project's own packages, built from the tree this
+        # medium came from, and the target is a disk this installer just
+        # created: letting them replace their own files wholesale is the same
+        # outcome, without the list.
+        print("Note    : could not read the package file lists; "
+              "letting them replace the files they carry")
+        overwrite = ["*"]
+    command = ["pacman", "-U", "--needed", "--noconfirm"]
+    for path in overwrite:
+        command += ["--overwrite", path]
+    command += inside
+    result = in_target_status(*command)
+    if result.returncode != 0:
+        # Not fatal: the copied system still boots, it just is not tracked by
+        # pacman yet, and the user can install the packages later by hand.
+        print(f"Warning : installing the medium's packages failed "
+              f"({result.returncode}) — this install is not package-managed, so "
+              f"tessarchy-update will need `--enable-repo` first")
+        # pacman puts the reason last, after any number of warnings about
+        # databases it does not have.
+        lines = [line.strip() for line in (result.stderr or result.stdout or "").splitlines()
+                 if line.strip()]
+        for line in lines[-6:]:
+            print(f"          {line}")
+        return
+    installed = in_target("pacman", "-Q", *[package_name(p) for p in packages],
+                          check=False, capture=True)
+    count = len([line for line in installed.splitlines() if line.strip()])
+    print(f"Packages: {count} installed from the medium (pacman owns them now)")
+    # pacman keeps its own copies in /var/cache/pacman/pkg, so the medium's copy
+    # is only extra disk on a machine that will never write to the medium.
+    shutil.rmtree(directory, ignore_errors=True)
+
+
+def configure_target(firmware: str, disk: str, root_uuid: str, hostname: str) -> None:
+    # The live image boots off an ISO; an installed system needs an ordinary
+    # initramfs built from its own configuration.
+    drop_live_only_files()
+    (MOUNT / "etc/hostname").write_text(f"{hostname}\n")
+    (MOUNT / "etc/fstab").write_text(run(["genfstab", "-U", str(MOUNT)], capture=True))
+
+    stage_kernel()
+    adopt_medium_packages()
+    in_target("mkinitcpio", "-P")
+    for unit in ("NetworkManager", "bluetooth", "greetd"):
+        if not unit_exists(unit):
+            # The ISO ships no greetd, so an installed system starts its
+            # session from the same tty1 autologin the live medium uses.
+            print(f"Note    : {unit} is not in this image; nothing to enable")
+            continue
+        # check=False keeps a late failure from abandoning an otherwise
+        # complete install; the resulting state is printed either way.
+        in_target("systemctl", "enable", unit, check=False)
+        state = in_target("systemctl", "is-enabled", unit, check=False, capture=True).strip()
+        print(f"Enable  : {unit} ({state or 'no state reported'})")
+    write_boot_loader(firmware, disk, root_uuid)
+
+
+def install(disk: str, assume_yes: bool) -> int:
+    require_root()
+    require_tools("lsblk", "parted", "wipefs", "mkfs.fat", "mkfs.ext4", "rsync",
+                  "genfstab", "mkinitcpio", "arch-chroot", "blkid", "findmnt", "mount", "umount", "udevadm")
+    info = validate_target(disk)
+    firmware = firmware_mode()
+    require_tools(*(("bootctl",) if firmware == "uefi" else ("grub-install", "grub-mkconfig")))
+    medium_kernel()
+    if MOUNT.is_mount():
+        raise InstallerError(f"The installation directory {MOUNT} is already mounted; unmount it first")
+    plan = plan_partitions(firmware)
+    root_part = next(p for p in plan if p["role"] == "root")
+    esp_part = next(p for p in plan if p["role"] == "esp")
+
+    print(f"Target  : {disk}  {info['size']}  {info['model']}")
+    print(f"Firmware: {firmware.upper()}")
+    print("This erases every partition on that disk.")
+    if not assume_yes:
+        if input("Type the disk path again to confirm: ").strip() != disk:
+            print("Aborted; nothing was written.")
+            return 1
+    else:
+        print("Confirmed by --yes.")
+
+    run(["wipefs", "-a", disk], check=False)
+    run(["parted", "-s", disk, "mklabel", "gpt"])
+    for part in plan:
+        if part["role"] == "bios":
+            run(["parted", "-s", disk, "mkpart", "biosgrub",
+                 f"{part['start']}MiB", f"{part['end']}MiB"])
+            run(["parted", "-s", disk, "set", str(part["number"]), "bios_grub", "on"])
+        elif part["role"] == "esp":
+            run(["parted", "-s", disk, "mkpart", "esp", "fat32",
+                 f"{part['start']}MiB", f"{part['end']}MiB"])
+            run(["parted", "-s", disk, "set", str(part["number"]), "esp", "on"])
+        else:
+            run(["parted", "-s", disk, "mkpart", "root", "ext4",
+                 f"{part['start']}MiB", "100%"])
+    run(["udevadm", "settle"], check=False)
+
+    run(["mkfs.fat", "-F32", "-n", ESP_LABEL, part_path(disk, esp_part["number"])])
+    run(["mkfs.ext4", "-F", "-L", ROOT_LABEL, part_path(disk, root_part["number"])])
+
+    MOUNT.mkdir(exist_ok=True)
+    run(["mount", part_path(disk, root_part["number"]), str(MOUNT)])
+    (MOUNT / "boot").mkdir(exist_ok=True)
+    run(["mount", part_path(disk, esp_part["number"]), str(MOUNT / "boot")])
+
+    print("Copying the running system (the slow part)…")
+    copy_system()
+    root_uuid = run(["blkid", "-s", "UUID", "-o", "value",
+                     part_path(disk, root_part["number"])], capture=True).strip()
+    configure_target(firmware, disk, root_uuid, "tessarchy")
+    run(["umount", "-R", str(MOUNT)], check=False)
+    print("\nDone. Remove the live medium and reboot into the installed disk.")
+    return 0
+
+
+def main(argv=None) -> int:
+    # Progress is watched in a terminal as often as it is saved to a log; a
+    # redirected stdout would otherwise hold every line until the process ends,
+    # while the subprocesses it runs write theirs immediately.
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except (AttributeError, ValueError):
+        pass
+    parser = argparse.ArgumentParser(
+        prog="tessarchy-install",
+        description="Install the running Tessarchy live system onto a disk.")
+    parser.add_argument("--check", action="store_true",
+                        help="report whether this machine is a good fit")
+    parser.add_argument("--list", action="store_true", help="list candidate disks")
+    parser.add_argument("--disk", help="target whole disk, e.g. /dev/nvme0n1")
+    parser.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
+    args = parser.parse_args(argv)
+
+    try:
+        if args.check:
+            return check_report()
+        if args.list or not args.disk:
+            live = live_medium_device()
+            print("Candidate disks (the live medium is marked and refused):")
+            for d in list_disks():
+                mark = "  <- live medium, not a target" if d["live"] else ""
+                print(f"  {d['path']:<16} {d['size']:>8}  {d['model']}{mark}")
+            if live:
+                print(f"\nLive medium: /dev/{live}")
+            if not args.disk:
+                print("\nChoose one with: sudo tessarchy-install --disk /dev/<name>")
+                return 0
+        return install(args.disk, args.yes)
+    except InstallerError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    except KeyboardInterrupt:
+        print("\nAborted.", file=sys.stderr)
+        return 130
+
+
+if __name__ == "__main__":
+    sys.exit(main())
