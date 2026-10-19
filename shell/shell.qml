@@ -147,7 +147,9 @@ ShellRoot {
             readonly property string mode: Policy.effectiveMode(shellPreferences.layoutMode, modelData.width, modelData.height)
             readonly property bool isPhone: mode === "phone"
             readonly property var dock: Policy.dockLayout(mode, modelData.width, root.oskAvailable)
-            readonly property int navHeight: mode === "desktop" ? 64 : dock.rows > 1 ? dock.rows * 56 + 20 : isPhone ? 76 : 84
+            // Bar geometry comes from Policy.barGeometry; do not add literals here.
+            readonly property var bar: Policy.barGeometry(mode, dock.rows)
+            readonly property int navHeight: bar.height
             readonly property int launcherRows: Math.ceil((panel.appEntries.length + 4) / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
             readonly property bool showWorkspaces: Policy.showWorkspaces(mode, modelData.width)
             readonly property var workspaceIds: {
@@ -221,7 +223,7 @@ ShellRoot {
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottomMargin: panel.expanded || surface.mode === "desktop" ? 0 : 12
+                    anchors.bottomMargin: panel.expanded ? 0 : surface.bar.gap
                     width: panel.expanded ? expandedContent.width : parent.width
                     radius: panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
                     color: panel.expanded ? (panel.page === "windows" ? "#b3101b30" : "#c2101b30") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
@@ -296,11 +298,11 @@ ShellRoot {
                 }
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 12
-                    anchors.topMargin: surface.mode === "desktop" ? 8 : 12
-                    anchors.bottomMargin: panel.expanded ? 12 : surface.mode === "desktop" ? 8 : 16
-                    anchors.leftMargin: surface.isPhone ? 12 : surface.mode === "desktop" ? 10 : 16
-                    anchors.rightMargin: surface.isPhone ? 12 : surface.mode === "desktop" ? 10 : 16
+                    // Collapsed, the rows sit bar.inset inside the frame on both sides.
+                    anchors.topMargin: panel.expanded ? surface.bar.pageTop : surface.bar.inset
+                    anchors.bottomMargin: panel.expanded ? surface.bar.pageBottom : surface.bar.inset + surface.bar.gap
+                    anchors.leftMargin: surface.bar.padding
+                    anchors.rightMargin: surface.bar.padding
                     spacing: 8
                     ColumnLayout {
                         id: expandedContent
@@ -517,10 +519,10 @@ ShellRoot {
                     GridLayout {
                         visible: surface.mode !== "desktop"
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 48 + (surface.dock.rows - 1) * 56
+                        Layout.preferredHeight: surface.bar.rowsHeight
                         columns: surface.dock.columns
-                        columnSpacing: 4
-                        rowSpacing: 8
+                        columnSpacing: surface.bar.columnGap
+                        rowSpacing: surface.bar.rowGap
                         NavButton {
                             text: "Phone"; symbol: "call"
                             showLabel: shellPreferences.showLabels
@@ -534,15 +536,6 @@ ShellRoot {
                             accentColor: root.accentColor
                             selected: panel.page === "messages"
                             onClicked: panel.showPage("messages")
-                        }
-                        NavButton {
-                            visible: !surface.isPhone
-                            text: "Settings"
-                            symbol: "settings"
-                            showLabel: shellPreferences.showLabels
-                            accentColor: root.accentColor
-                            selected: panel.page === "settings"
-                            onClicked: panel.showPage("settings")
                         }
                         NavButton {
                             // Panel never takes keyboard focus, so the app keeps its text field.
@@ -588,7 +581,7 @@ ShellRoot {
                     RowLayout {
                         visible: surface.mode === "desktop"
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 48
+                        Layout.preferredHeight: surface.bar.row
                         spacing: 0
                         StartButton {
                             Layout.alignment: Qt.AlignVCenter
@@ -651,7 +644,7 @@ ShellRoot {
                         }
                         // Sunken tray, as on the XP taskbar: indicators and clock.
                         Rectangle {
-                            implicitHeight: 48
+                            implicitHeight: surface.bar.row
                             implicitWidth: trayRow.implicitWidth + 12
                             Layout.alignment: Qt.AlignVCenter
                             radius: 8

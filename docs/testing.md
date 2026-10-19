@@ -1674,3 +1674,49 @@ continues to use its existing cards. Captures are local ignored artifacts under
 The separate runtime-only Hyprbars title-bar experiment from the preceding
 review remains a prototype, not a packaged part of this change. No new ISO boot
 or physical touchscreen validation was performed for these changes.
+
+## Floating, centred nav bar from shared constants — 2026-10-19
+
+Defect: the collapsed bar's panel height, frame bottom margin and content
+margins were three independent per-mode literals in `shell/shell.qml`, and they
+had drifted. On `main` the Desktop taskbar row was flush with the frame bottom,
+and the touch docks sat low: Tablet and Phone stretched the dock grid into a
+content area taller than the row (Qt layouts fill by default), with 12/16 px
+margins, so the row ended 16/8 px (Tablet) and 12/4 px (Phone, and a two-row
+dock) from the frame edges.
+
+Every bar dimension now comes from `Policy.barGeometry(mode, rows)` in
+`shell/LayoutPolicy.js` (`BAR_ROW` 48, `BAR_ROW_GAP` 8, `BAR_COLUMN_GAP` 4, and
+per mode in `BAR_MODES`: inset, gap, side, padding, maxWidth; `BAR_PAGE` for
+open pages). Frame height is rows plus two insets; the panel adds the gap below
+the frame, so the row sits `inset` from the frame on both sides by construction.
+Values: Desktop inset 4, gap 8, side 0 (full width), frame 56; Tablet inset 12,
+gap 12, side 16, frame 72; Phone inset 8, gap 12, side 16, frame 64 (120 for two
+rows). `dockLayout` takes its side gap, padding and button pitch from the same
+constants. Open-page geometry is unchanged.
+
+Executed by an agent in the QEMU VM (theme tessera, bar opacity 1 for sampling,
+1280x800; the two-row dock at scale 3.2 rotated to 250x400 logical, Phone),
+deploying `main` and then this branch. Logical pixels from the frame edge to
+the 48 px row, then to the visible icon/label extent (top/bottom):
+
+| Mode | Frame | Row before | Row after | Content before | Content after |
+|---|---|---|---|---|---|
+| Desktop | 56 | 8/0 | 4/4 | 8/2 | 4/4 |
+| Tablet | 72 | 16/8 | 12/12 | 23/15 | 19/19 |
+| Phone | 64 | 12/4 | 8/8 | 19/11 | 15/15 |
+| Phone, 2 rows | 120 | 12/4 | 8/8 | 20/13 | 16/17 |
+
+The frame keeps a 12 px (Desktop 8 px) gap above the screen bottom. NavButton
+was measured and not changed: its icon and label sit 7 px from the top of the
+48 px button and 7 px (labels with descenders) or 9 px (without) from the
+bottom, so the earlier "content sits low" reading came from the row placement.
+The two-row figure is 1 px off because its lower row's labels have no
+descenders. An open Phone page rendered normally. `./scripts/check.sh` passed.
+
+The touch dock no longer carries a Settings button (owner decision: the status
+bar gear and the pull-down already open Settings); Phone and Tablet docks now
+have the same five buttons plus the optional Keyboard. Executed by an agent in
+the QEMU VM (Tablet, 1280x800, keyboard enabled): the dock shows Phone,
+Messages, Keyboard, Back, Home and Recents in one row. `./scripts/check.sh`
+passed (105 Python tests, 1 skipped; 51 Qt Quick tests).
