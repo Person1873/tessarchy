@@ -1668,7 +1668,7 @@ already present and do not block rendering. Physical hardware not checked.
 
 ## Touch file dialogs, 2026-10-17
 
-Executed by an agent (Hermes, for person1873) in the QEMU VM, Phone size
+Executed by an agent in the QEMU VM, Phone size
 (720x1440 at scale 1.8 = 400x800 logical), Firefox 158 launched with
 `tessarchy-run`, xdg-desktop-portal 1.22.1, xdg-desktop-portal-gtk 1.15.3.
 
