@@ -1616,6 +1616,27 @@ and long/empty event messages. No host settings, development
 installation or running VM were modified. Fractional-scale acceptance on a
 physical display remains pending.
 
+## PR #20 rebase VM touch verification (2026-10-19)
+
+Actually exercised the rebased branch in the Arch QEMU guest at 720×1440
+physical, scale 0.9 (800×1600 logical), with `TESSARCHY_OSK=1` and two Foot
+windows. Deployed this branch's complete `shell/` and `session/` tree (removed
+an unrelated stale guest `components/qmldir` before launch). A synthetic
+uinput **touchscreen** tapped Recents at physical (154,1410); the page opened
+and `busctl --user get-property sm.puri.OSK0 /sm/puri/OSK0 sm.puri.OSK0
+Visible` returned `b false`. Launching/focusing a second Foot from outside
+while Recents stayed open also returned `b false`; the page screenshot shows
+both previews and no keyboard (`vm/rebase-guard-focus.png`). After touch
+closed Recents, explicitly focusing the first then second Foot with Hyprland's
+`hl.dsp.focus({ window = "address:…" })` returned `b true`, with keys visible
+(`vm/rebase-guard-osk-visible.png`). The intermediate page screenshot is
+`vm/rebase-guard-page.png`. The first post-close focus attempt that left the
+same Foot focused did not cause a keyboard re-show; a *change of focus* did.
+The four focused OSK workflow tests passed; `qmllint` exited 0 with the
+existing PanelWindow/type-metadata warnings. No change to this branch's
+implementation was needed. These screenshots are ignored VM artifacts, not
+physical-device validation.
+
 ## Keyboard suppression while a shell page stays open — PR #20
 
 The shell already calls `tessarchy-osk hide` when a panel page opens and when
