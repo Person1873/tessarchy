@@ -6,6 +6,7 @@ TouchButton {
     focusPolicy: Qt.TabFocus
     required property string symbol
     property bool showLabel: true
+    property int iconSize: 21
     Layout.fillWidth: true
     Layout.preferredWidth: 1
     Layout.minimumHeight: 48
@@ -23,12 +24,13 @@ TouchButton {
             Image {
                 anchors.horizontalCenter: parent.horizontalCenter
                 source: "../icons/" + control.symbol + ".svg"
-                sourceSize.width: 21
-                sourceSize.height: 21
-                width: 21
-                height: 21
+                sourceSize.width: control.iconSize
+                sourceSize.height: control.iconSize
+                width: control.iconSize
+                height: control.iconSize
             }
             Text {
+                textFormat: Text.PlainText
                 visible: control.showLabel
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: control.text

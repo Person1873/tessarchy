@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 
 ColumnLayout {
@@ -50,6 +49,7 @@ ColumnLayout {
             required property var modelData
             Layout.fillWidth: true
             Text {
+                textFormat: Text.PlainText
                 text: app.backend.contactName(callRow.modelData.number) + " · " + (["Preparing", "Dialing", "Ringing", "Incoming call", "Connected", "Held", "Waiting"][callRow.modelData.state] || "Call")
                 color: app.accentColor; font.pixelSize: 18
                 wrapMode: Text.WrapAnywhere; Layout.fillWidth: true
@@ -177,9 +177,9 @@ ColumnLayout {
                     text: contactRow.modelData.name
                     contentItem: Column {
                         spacing: 4
-                        Text { text: contactRow.modelData.name; color: "#eef6f8"; font { pixelSize: 15; weight: Font.DemiBold }
+                        Text { textFormat: Text.PlainText; text: contactRow.modelData.name; color: "#eef6f8"; font { pixelSize: 15; weight: Font.DemiBold }
                             width: parent.width; elide: Text.ElideRight }
-                        Text { text: contactRow.modelData.number; color: "#9eb6c3"; font.pixelSize: 12; width: parent.width; elide: Text.ElideRight }
+                        Text { textFormat: Text.PlainText; text: contactRow.modelData.number; color: "#9eb6c3"; font.pixelSize: 12; width: parent.width; elide: Text.ElideRight }
                     }
                     Layout.fillWidth: true; focusPolicy: Qt.StrongFocus
                     onClicked: { app.editingId = contactRow.modelData.id; contactName.text = contactRow.modelData.name; contactNumber.text = contactRow.modelData.number; app.photo = contactRow.modelData.photo; app.editing = true; app.confirmDelete = false; }
@@ -188,7 +188,7 @@ ColumnLayout {
                 NavButton { text: "Message contact"; symbol: "messages"; showLabel: false; Layout.fillWidth: false; Layout.preferredWidth: 48; focusPolicy: Qt.StrongFocus; onClicked: app.messageRequested(contactRow.modelData.number) }
             }
         }
-        Text { visible: !app.editing && app.backend.state.contacts.length === 0; text: "Keep your people close. Add your first contact."; color: "#9eb6c3"; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+        Text { textFormat: Text.PlainText; visible: !app.editing && app.backend.state.contacts.length === 0; text: "Keep your people close. Add your first contact."; color: "#9eb6c3"; wrapMode: Text.WordWrap; Layout.fillWidth: true }
     }
     ColumnLayout {
         visible: app.tab === "recents"
@@ -202,7 +202,7 @@ ColumnLayout {
                 onClicked: { dialNumber.text = modelData.number; app.tab = "keypad"; }
             }
         }
-        Text { visible: app.backend.state.history.length === 0; text: "Your recent calls will appear here."; color: "#9eb6c3"; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+        Text { textFormat: Text.PlainText; visible: app.backend.state.history.length === 0; text: "Your recent calls will appear here."; color: "#9eb6c3"; Layout.fillWidth: true; wrapMode: Text.WordWrap }
     }
-    Text { text: app.backend.state.error || app.backend.state.notice || ""; visible: text.length > 0; color: app.backend.state.error ? "#efb6bd" : app.accentColor; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+    Text { textFormat: Text.PlainText; text: app.backend.state.error || app.backend.state.notice || ""; visible: text.length > 0; color: app.backend.state.error ? "#efb6bd" : app.accentColor; Layout.fillWidth: true; wrapMode: Text.WordWrap }
 }

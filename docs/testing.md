@@ -1615,3 +1615,149 @@ source tree, rejection of edited/missing launcher originals, legacy uninstall
 and long/empty event messages. No host settings, development
 installation or running VM were modified. Fractional-scale acceptance on a
 physical display remains pending.
+
+## Desktop taskbar and Start menu polish — 2026-10-18
+
+- The taskbar background now fills its 64px reserved area, centering the 48px
+  Start button vertically. Tray controls use consistent 18px glyphs inside 48px
+  targets. A shared TrayButton tints interactive and third-party icons to the
+  same pale mint; NetworkManager uses an outlined monitor glyph. System glyphs
+  share a 1.8px stroke and consistent spacing. Disconnected radios retain their
+  slash and accessible state label without fading the desktop glyph.
+- Start apps render as an icon and plain-text label over the menu's glass, with
+  no blue tile or icon backing. Tab focus has an outline; pointer opening leaves
+  the app grid unboxed. Escape and outside input dismiss Start, and changing
+  layouts closes it. Opening Start also closes other shell pages.
+- Task buttons occupy a clipped horizontal strip with overflow arrows and wheel
+  scrolling. Active windows are revealed, titles stay plain text, and application
+  icons are shown when available. The tray keeps its position with many windows.
+
+Actual validation: `./scripts/check.sh` passes 104 Python tests and 53 Qt Quick
+results, including task overflow, active-window visibility, activation requests
+and window removal. Available QML/Hyprland checks pass; fish and ShellCheck are
+absent locally and remain CI checks. Installed Quickshell 0.3.1 metadata and the
+[focus-grab API](https://quickshell.org/docs/v0.3.0/types/Quickshell.Hyprland/HyprlandFocusGrab/)
+were checked before using it.
+
+The existing development VM was booted, logged in and switched to 1280×800
+Desktop at scale 1. The deployed source was inspected in the VM: floating Start
+icons, centered Start button, consistent tray glyphs, Escape and outside-touch
+menu dismissal all worked. Six temporary Foot windows exercised overflow; tapping
+a visible task focused the matching window and the tray remained accessible.
+Only the temporary test windows were closed. The original guest shell is backed
+up in its tessarchy-backups directory. Captures are in the ignored
+`build/desktop-session/` directory. Physical input and multi-monitor acceptance
+remain pending; no ISO build or boot was performed locally.
+
+
+## Desktop status strip and quick switcher, 2026-10-18
+
+`./scripts/check.sh` passed: 104 Python tests and 57 Qt Quick results, including
+quick-switcher cycling, Alt release, Escape, and selected-window removal.
+Hyprland configuration verification and QML lint passed with the existing type
+metadata warnings. Fish and ShellCheck remain unavailable locally.
+
+Deployed the source to the running 1280×800 Basic guest, Quickshell 0.3.2 /
+Hyprland 0.56.2. Observed the desktop top edge showing only the pulldown control, with
+weather beside the narrow logo-only Start button and time in the taskbar. Tray
+icons use uniform 32px spacing and 48px height, per the owner’s compact-spacing
+request. Battery text is hidden in this tray to keep its glyph centered. The transparent switcher mapped at 160×96 for two
+windows, centered in the usable output area, showing only the Terminal and Files
+icons with the selected icon larger and brighter. QMP keyboard Alt+Tab and Alt
+release selected Files, confirmed through the active-window IPC state. Escape
+cancelled and preserved the previously active Terminal. Reverse cycling was
+exercised in the guest; the automated three-window case verifies wraparound.
+No preview captures or card backgrounds are used by Alt+Tab. Touch Recents
+continues to use its existing cards. Captures are local ignored artifacts under
+`build/desktop-session/quick-switcher.png`.
+
+The separate runtime-only Hyprbars title-bar experiment from the preceding
+review remains a prototype, not a packaged part of this change. No new ISO boot
+or physical touchscreen validation was performed for these changes.
+
+## Floating, centred nav bar from shared constants — 2026-10-19
+
+Defect: the collapsed bar's panel height, frame bottom margin and content
+margins were three independent per-mode literals in `shell/shell.qml`, and they
+had drifted. On `main` the Desktop taskbar row was flush with the frame bottom,
+and the touch docks sat low: Tablet and Phone stretched the dock grid into a
+content area taller than the row (Qt layouts fill by default), with 12/16 px
+margins, so the row ended 16/8 px (Tablet) and 12/4 px (Phone, and a two-row
+dock) from the frame edges.
+
+Every bar dimension now comes from `Policy.barGeometry(mode, rows)` in
+`shell/LayoutPolicy.js` (`BAR_ROW` 48, `BAR_ROW_GAP` 8, `BAR_COLUMN_GAP` 4, and
+per mode in `BAR_MODES`: inset, gap, side, padding, maxWidth; `BAR_PAGE` for
+open pages). Frame height is rows plus two insets; the panel adds the gap below
+the frame, so the row sits `inset` from the frame on both sides by construction.
+Values: Desktop inset 4, gap 8, side 0 (full width), frame 56; Tablet inset 12,
+gap 12, side 16, frame 72; Phone inset 8, gap 12, side 16, frame 64 (120 for two
+rows). `dockLayout` takes its side gap, padding and button pitch from the same
+constants. Open-page geometry is unchanged.
+
+Executed by an agent in the QEMU VM (theme tessera, bar opacity 1 for sampling,
+1280x800; the two-row dock at scale 3.2 rotated to 250x400 logical, Phone),
+deploying `main` and then this branch. Logical pixels from the frame edge to
+the 48 px row, then to the visible icon/label extent (top/bottom):
+
+| Mode | Frame | Row before | Row after | Content before | Content after |
+|---|---|---|---|---|---|
+| Desktop | 56 | 8/0 | 4/4 | 8/2 | 4/4 |
+| Tablet | 72 | 16/8 | 12/12 | 23/15 | 19/19 |
+| Phone | 64 | 12/4 | 8/8 | 19/11 | 15/15 |
+| Phone, 2 rows | 120 | 12/4 | 8/8 | 20/13 | 16/17 |
+
+The frame keeps a 12 px (Desktop 8 px) gap above the screen bottom. NavButton
+was measured and not changed: its icon and label sit 7 px from the top of the
+48 px button and 7 px (labels with descenders) or 9 px (without) from the
+bottom, so the earlier "content sits low" reading came from the row placement.
+The two-row figure is 1 px off because its lower row's labels have no
+descenders. An open Phone page rendered normally. `./scripts/check.sh` passed.
+
+The touch dock no longer carries a Settings button (owner decision: the status
+bar gear and the pull-down already open Settings); Phone and Tablet docks now
+have the same five buttons plus the optional Keyboard. Executed by an agent in
+the QEMU VM (Tablet, 1280x800, keyboard enabled): the dock shows Phone,
+Messages, Keyboard, Back, Home and Recents in one row. `./scripts/check.sh`
+passed (105 Python tests, 1 skipped; 51 Qt Quick tests).
+
+
+## Repository, website and small-PR integration audit — 2026-10-19 (T73)
+
+Integrated #51, #44, #45 and #48 in an isolated worktree from main, preserving
+all contributor commits. Resolved #48 against the current desktop spacing and
+retained both validation histories. The source checkout's active installation
+and update work was left untouched.
+
+Confirmed and fixed:
+
+- Notification labels/bodies used automatic rich-text detection despite the
+  plain-text contract. External contact, message, file and switcher text now
+  renders literally. A Qt regression verifies that markup-like notification
+  names, summaries and bodies expose no rendered hyperlinks.
+- Nested dock/taskbar layouts could stretch when pages expanded. Both rows now
+  explicitly decline the parent's extra vertical space while page content fills it.
+- The website described Alt+Tab as the touch card switcher, linked activity/docs
+  to an older branch, and claimed nineteen screenshots while shipping twenty-one.
+  Copy matches the integrated icon switcher; screenshot count comes from the bundle.
+- Release discovery examined only five releases and assumed metadata shapes.
+  It now examines up to 100, skips drafts/non-ISO releases, preserves fallback
+  links on malformed data and reads activity from main. Only main publishes Pages
+  automatically, preventing an older development branch from replacing the site.
+- Offscreen Qt tests inherited the host platform theme. The check script clears
+  it explicitly; it also runs the dependency-free Node website tests when available.
+
+Actual validation: ./scripts/check.sh passed 105 Python tests, 62 Qt Quick
+results and four Node website tests. Lua parsing, both Hyprland configurations,
+desktop entry validation and QML lint passed. Fish and ShellCheck are unavailable
+locally and remain CI checks. Website tests exercise release filtering beyond
+five newer non-ISO releases, invalid metadata/fallbacks, literal commit summaries,
+keyboard layout selection and matching gallery image/caption changes.
+
+Built a fresh static site with current release metadata. All 23 local resources
+and seven nonempty fragment links resolve; the ZIP contains 21 PNG captures and
+the displayed count agrees. Its bundled published release is Alpha 4; later
+release drafts remain excluded. No browser surface was available for a new visual
+inspection, and no new VM, ISO boot or physical-device acceptance was performed.
+The live page was fetched before changes and identified af042fb as its source;
+publication verification is recorded separately after deployment.

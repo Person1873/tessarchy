@@ -38,7 +38,11 @@ def main():
             commit = result.stdout.strip()
     output.mkdir(parents=True)
     for name in ("index.html", "style.css", "app.js"):
-        shutil.copyfile(ROOT / "website" / name, output / name)
+        source = ROOT / "website" / name
+        if name == "index.html":
+            (output / name).write_text(source.read_text().replace("{{SCREENSHOT_COUNT}}", str(len(SHOTS))))
+        else:
+            shutil.copyfile(source, output / name)
     assets = output / "assets"
     assets.mkdir()
     for source in sources:

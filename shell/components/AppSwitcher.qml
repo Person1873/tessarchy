@@ -111,6 +111,7 @@ FocusScope {
                             Image { anchors.centerIn: parent; width: 22; height: 22; source: card.entry && card.entry.icon ? Quickshell.iconPath(card.entry.icon) : "../artwork/tessarchy-mark.svg"; sourceSize.width: 22; sourceSize.height: 22 }
                         }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             text: card.entry ? card.entry.name : card.handle ? card.handle.appId : "Application"
                             color: "#edf5fa"; font.pixelSize: 13; elide: Text.ElideRight
@@ -140,8 +141,8 @@ FocusScope {
                                 width: parent.width - 24
                                 spacing: 14
                                 Image { anchors.horizontalCenter: parent.horizontalCenter; source: "../artwork/tessarchy-mark.svg"; width: 48; height: 48 }
-                                Text { width: parent.width; text: card.modelData.title || "Untitled window"; color: "#edf5fa"; wrapMode: Text.WrapAnywhere; horizontalAlignment: Text.AlignHCenter }
-                                Text { width: parent.width; text: "Preview unavailable"; color: "#a7bbca"; horizontalAlignment: Text.AlignHCenter; font.pixelSize: 12 }
+                                Text { textFormat: Text.PlainText; width: parent.width; text: card.modelData.title || "Untitled window"; color: "#edf5fa"; wrapMode: Text.WrapAnywhere; horizontalAlignment: Text.AlignHCenter }
+                                Text { textFormat: Text.PlainText; width: parent.width; text: "Preview unavailable"; color: "#a7bbca"; horizontalAlignment: Text.AlignHCenter; font.pixelSize: 12 }
                             }
                             // Taps select; horizontal drags are stolen by the ListView.
                             MouseArea {
@@ -153,6 +154,7 @@ FocusScope {
                         }
                     }
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: card.modelData.title || "Untitled window"
                         color: "#edf5fa"; font.pixelSize: 14; elide: Text.ElideRight
@@ -161,6 +163,7 @@ FocusScope {
                 }
             }
             Text {
+                textFormat: Text.PlainText
                 visible: cards.count === 0
                 anchors.centerIn: parent
                 width: parent.width - 32

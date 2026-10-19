@@ -7,6 +7,7 @@ Item {
     required property string label
     // Negative means no backend/device; bind a real signal value here later.
     property real strength: -1
+    property bool uniform: false
     Layout.preferredWidth: 18
     Layout.preferredHeight: 20
     Accessible.name: label + (strength < 0 ? " unavailable" : " connected")
@@ -17,7 +18,7 @@ Item {
         source: "../icons/" + indicator.symbol + ".svg"
         sourceSize.width: 18
         sourceSize.height: 18
-        opacity: indicator.strength < 0 ? 0.35 : 1
+        opacity: indicator.uniform || indicator.strength >= 0 ? 1 : 0.35
     }
     Rectangle {
         visible: indicator.strength < 0
@@ -26,6 +27,6 @@ Item {
         height: 1.5
         radius: 1
         rotation: -45
-        color: "#879caa"
+        color: indicator.uniform ? "#d0f3e9" : "#879caa"
     }
 }

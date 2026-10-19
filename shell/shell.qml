@@ -33,6 +33,13 @@ ShellRoot {
     }
     signal replayBrand
     readonly property var activeWindow: Hyprland.activeToplevel || Hyprland.toplevels.values.find(window => window.wayland && window.wayland.activated) || null
+    property var windowHistory: []
+    readonly property var switcherWindows: windowHistory.filter(window => Hyprland.toplevels.values.indexOf(window) >= 0)
+        .concat(Hyprland.toplevels.values.filter(window => windowHistory.indexOf(window) < 0))
+    onActiveWindowChanged: {
+        if (activeWindow) windowHistory = [activeWindow].concat(windowHistory.filter(window =>
+            window !== activeWindow && Hyprland.toplevels.values.indexOf(window) >= 0));
+    }
     signal actionRequested(string action)
     IpcHandler {
         target: "actions"
@@ -140,7 +147,9 @@ ShellRoot {
             readonly property string mode: Policy.effectiveMode(shellPreferences.layoutMode, modelData.width, modelData.height)
             readonly property bool isPhone: mode === "phone"
             readonly property var dock: Policy.dockLayout(mode, modelData.width, root.oskAvailable)
-            readonly property int navHeight: mode === "desktop" ? 64 : dock.rows > 1 ? dock.rows * 56 + 20 : isPhone ? 76 : 84
+            // Bar geometry comes from Policy.barGeometry; do not add literals here.
+            readonly property var bar: Policy.barGeometry(mode, dock.rows)
+            readonly property int navHeight: bar.height
             readonly property int launcherRows: Math.ceil((panel.appEntries.length + 4) / Policy.columns(mode, Policy.panelWidth(mode, modelData.width) - 32))
             readonly property bool showWorkspaces: Policy.showWorkspaces(mode, modelData.width)
             readonly property var workspaceIds: {
@@ -174,7 +183,10 @@ ShellRoot {
             // Pop-ups render once, on the first screen, not on every output.
             readonly property bool isPrimaryScreen: Quickshell.screens.length > 0 && Quickshell.screens[0] === modelData
             // Arm or disarm the keyboard whenever the layout for this output changes.
-            onModeChanged: if (isPrimaryScreen) root.applyOskMode(mode)
+            onModeChanged: {
+                if (isPrimaryScreen) root.applyOskMode(mode);
+                if (mode !== "desktop") panel.startMenuOpen = false;
+            }
             Component.onCompleted: if (isPrimaryScreen) root.applyOskMode(mode)
             SystemClock {
                 id: clock
@@ -188,7 +200,6 @@ ShellRoot {
                 // Desktop Start menu, opened by the taskbar's Start button.
                 property bool startMenuOpen: false
                 property var closeTarget: null
-                property bool keyboardSwitch: false
                 property string messageRecipient: ""
                 readonly property bool expanded: page !== ""
                 // The keyboard is a separate top-layer surface that would cover
@@ -212,7 +223,7 @@ ShellRoot {
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottomMargin: panel.expanded ? 0 : (surface.mode === "desktop" ? 8 : 12)
+                    anchors.bottomMargin: panel.expanded ? 0 : surface.bar.gap
                     width: panel.expanded ? expandedContent.width : parent.width
                     radius: panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
                     color: panel.expanded ? (panel.page === "windows" ? "#b3101b30" : "#c2101b30") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
@@ -221,11 +232,10 @@ ShellRoot {
                 }
                 WlrLayershell.namespace: "tessera"
                 WlrLayershell.layer: WlrLayer.Top
-                WlrLayershell.keyboardFocus: panel.keyboardSwitch && panel.page === "windows" ? WlrKeyboardFocus.Exclusive : ["phone", "messages", "cellular", "settings", "sounds"].indexOf(panel.page) >= 0 ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+                WlrLayershell.keyboardFocus: ["phone", "messages", "cellular", "settings", "sounds"].indexOf(panel.page) >= 0 ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
                 function showPage(name) {
                     if (name === "windows" && page !== "windows") switcher.selectActive();
-                    keyboardSwitch = false;
                     closeTarget = null;
                     startMenuOpen = false;
                     page = page === name ? "" : name;
@@ -235,7 +245,6 @@ ShellRoot {
                     page = "";
                 }
                 onPageChanged: {
-                    if (page !== "windows") keyboardSwitch = false;
                     if (["phone", "messages", "cellular", "sounds"].indexOf(page) >= 0) communications.request("status");
                 }
                 Connections {
@@ -243,16 +252,17 @@ ShellRoot {
                     function onSwitcherCommand(action) {
                         if (!Hyprland.focusedMonitor || Hyprland.focusedMonitor.name !== surface.modelData.name) return;
                         if (action === "accept") {
-                            if (panel.keyboardSwitch && panel.page === "windows") switcher.activateCurrent();
+                            if (quickSwitcher.visible) quickIcons.activateCurrent();
                         } else if (action === "cancel") {
-                            if (panel.keyboardSwitch) panel.page = "";
-                        } else {
-                            const opening = panel.page !== "windows";
-                            if (opening) switcher.selectActive();
-                            panel.keyboardSwitch = true;
-                            panel.page = "windows";
-                            switcher.step(action === "previous" ? -1 : 1);
-                            switcher.forceActiveFocus();
+                            quickSwitcher.open = false;
+                        } else if (Hyprland.toplevels.values.length) {
+                            if (!quickSwitcher.open) quickIcons.selectActive();
+                            panel.page = "";
+                            panel.startMenuOpen = false;
+                            statusBar.drawerOpen = false;
+                            quickSwitcher.open = true;
+                            quickIcons.step(action === "previous" ? -1 : 1);
+                            Qt.callLater(() => quickIcons.forceActiveFocus());
                         }
                     }
                 }
@@ -260,7 +270,6 @@ ShellRoot {
                     target: root
                     function onActionRequested(action) {
                         if (!Hyprland.focusedMonitor || Hyprland.focusedMonitor.name !== surface.modelData.name) return;
-                        panel.keyboardSwitch = false;
                         panel.closeTarget = action === "close" ? root.activeWindow : null;
                         panel.page = action === "exit" ? "session" : panel.closeTarget ? "close" : "";
                     }
@@ -289,11 +298,11 @@ ShellRoot {
                 }
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 12
-                    anchors.topMargin: surface.mode === "desktop" ? 8 : 12
-                    anchors.bottomMargin: panel.expanded ? 12 : surface.mode === "desktop" ? 8 : 16
-                    anchors.leftMargin: surface.isPhone ? 12 : surface.mode === "desktop" ? 10 : 16
-                    anchors.rightMargin: surface.isPhone ? 12 : surface.mode === "desktop" ? 10 : 16
+                    // Collapsed, the rows sit bar.inset inside the frame on both sides.
+                    anchors.topMargin: panel.expanded ? surface.bar.pageTop : surface.bar.inset
+                    anchors.bottomMargin: panel.expanded ? surface.bar.pageBottom : surface.bar.inset + surface.bar.gap
+                    anchors.leftMargin: surface.bar.padding
+                    anchors.rightMargin: surface.bar.padding
                     spacing: 8
                     ColumnLayout {
                         id: expandedContent
@@ -510,10 +519,11 @@ ShellRoot {
                     GridLayout {
                         visible: surface.mode !== "desktop"
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 48 + (surface.dock.rows - 1) * 56
+                        Layout.fillHeight: false
+                        Layout.preferredHeight: surface.bar.rowsHeight
                         columns: surface.dock.columns
-                        columnSpacing: 4
-                        rowSpacing: 8
+                        columnSpacing: surface.bar.columnGap
+                        rowSpacing: surface.bar.rowGap
                         NavButton {
                             text: "Phone"; symbol: "call"
                             showLabel: shellPreferences.showLabels
@@ -527,15 +537,6 @@ ShellRoot {
                             accentColor: root.accentColor
                             selected: panel.page === "messages"
                             onClicked: panel.showPage("messages")
-                        }
-                        NavButton {
-                            visible: !surface.isPhone
-                            text: "Settings"
-                            symbol: "settings"
-                            showLabel: shellPreferences.showLabels
-                            accentColor: root.accentColor
-                            selected: panel.page === "settings"
-                            onClicked: panel.showPage("settings")
                         }
                         NavButton {
                             // Panel never takes keyboard focus, so the app keeps its text field.
@@ -581,26 +582,42 @@ ShellRoot {
                     RowLayout {
                         visible: surface.mode === "desktop"
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 48
-                        spacing: 6
+                        Layout.fillHeight: false
+                        Layout.preferredHeight: surface.bar.row
+                        spacing: 0
                         StartButton {
-                            text: "start"
+                            Layout.alignment: Qt.AlignVCenter
                             accentColor: root.accentColor
                             selected: panel.startMenuOpen
-                            onClicked: panel.startMenuOpen = !panel.startMenuOpen
+                            onClicked: {
+                                panel.page = "";
+                                panel.startMenuOpen = !panel.startMenuOpen;
+                            }
+                        }
+                        WeatherChip {
+                            visible: weatherBackend.available
+                            conditions: weatherBackend.state
+                            glyphSize: 18
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.leftMargin: 6
+                            Layout.rightMargin: 6
                         }
                         NavButton {
                             Layout.fillWidth: false
-                            Layout.preferredWidth: 48
+                            Layout.minimumWidth: 32
+                            Layout.preferredWidth: 32
                             text: "Windows"; symbol: "recents"; showLabel: false
+                            iconSize: 18
                             accentColor: root.accentColor
                             selected: panel.page === "windows"
                             onClicked: panel.showPage("windows")
                         }
                         NavButton {
                             Layout.fillWidth: false
-                            Layout.preferredWidth: 48
+                            Layout.minimumWidth: 32
+                            Layout.preferredWidth: 32
                             text: "Settings"; symbol: "settings"; showLabel: false
+                            iconSize: 18
                             accentColor: root.accentColor
                             selected: panel.page === "settings"
                             onClicked: panel.showPage("settings")
@@ -611,26 +628,25 @@ ShellRoot {
                             Layout.bottomMargin: 8
                             color: Qt.alpha(root.accentColor, 0.18)
                         }
-                        // One task button per open window; tapping focuses it.
-                        Repeater {
-                            model: Hyprland.toplevels
-                            delegate: TaskButton {
-                                required property var modelData
-                                readonly property var handle: modelData.wayland
-                                text: modelData.title || "Untitled window"
-                                selected: modelData.activated
-                                accentColor: root.accentColor
-                                enabled: handle !== null
-                                onClicked: {
-                                    if (handle) handle.activate();
-                                    panel.page = "";
-                                }
+                        TaskStrip {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            windows: Hyprland.toplevels.values
+                            activeWindow: root.activeWindow
+                            accentColor: root.accentColor
+                            iconForWindow: window => {
+                                const entry = window.wayland ? DesktopEntries.heuristicLookup(window.wayland.appId) : null;
+                                return entry && entry.icon ? Quickshell.iconPath(entry.icon, true) : "";
+                            }
+                            onWindowRequested: window => {
+                                panel.startMenuOpen = false;
+                                panel.page = "";
+                                Qt.callLater(() => { if (window && window.wayland) window.wayland.activate(); });
                             }
                         }
-                        Item { Layout.fillWidth: true }
                         // Sunken tray, as on the XP taskbar: indicators and clock.
                         Rectangle {
-                            implicitHeight: 48
+                            implicitHeight: surface.bar.row
                             implicitWidth: trayRow.implicitWidth + 12
                             Layout.alignment: Qt.AlignVCenter
                             radius: 8
@@ -644,6 +660,7 @@ ShellRoot {
                                 // Built-in indicators, as in a Windows tray.
                                 StatusIndicators {
                                     compact: true
+                                    showBatteryText: false
                                     accentColor: root.accentColor
                                     notificationCount: root.notificationCount
                                     cellularStrength: root.cellularStrength
@@ -661,23 +678,14 @@ ShellRoot {
                                 }
                                 Repeater {
                                     model: SystemTray.items
-                                    delegate: TouchButton {
+                                    delegate: TrayButton {
                                         id: taskTrayButton
+                                        slotWidth: 32
                                         required property var modelData
-                                        Layout.minimumHeight: 44
-                                        Layout.minimumWidth: 44
-                                        implicitHeight: 44
-                                        implicitWidth: 44
-                                        Layout.preferredWidth: 44
-                                        text: ""
-                                        background: Rectangle { color: "transparent" }
+                                        accentColor: root.accentColor
+                                        icon.source: /nm-applet|networkmanager|network manager/i.test(modelData.id + " " + modelData.title)
+                                            ? "icons/network-wired.svg" : modelData.icon
                                         Accessible.name: modelData.title || "Tray item"
-                                        contentItem: Image {
-                                            source: taskTrayButton.modelData.icon
-                                            sourceSize.width: 20
-                                            sourceSize.height: 20
-                                            fillMode: Image.Pad
-                                        }
                                         onClicked: {
                                             if (modelData.hasMenu)
                                                 modelData.display(taskTrayButton.QsWindow.window, 0, 48);
@@ -699,6 +707,51 @@ ShellRoot {
                             }
                         }
                     }
+                }
+            }
+            PanelWindow {
+                id: quickSwitcher
+                property bool open: false
+                property var pendingTarget: null
+                screen: surface.modelData
+                visible: open && Hyprland.toplevels.values.length > 0
+                implicitWidth: Math.max(80, Math.min(surface.modelData.width - 32, quickIcons.implicitWidth))
+                implicitHeight: 96
+                exclusiveZone: 0
+                color: "transparent"
+                WlrLayershell.namespace: "tessera-quick-switcher"
+                WlrLayershell.layer: WlrLayer.Overlay
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+                QuickSwitcher {
+                    id: quickIcons
+                    anchors.fill: parent
+                    windows: root.switcherWindows
+                    iconForWindow: window => {
+                        const entry = window.wayland ? DesktopEntries.heuristicLookup(window.wayland.appId) : null;
+                        return entry && entry.icon ? Quickshell.iconPath(entry.icon, true) : "";
+                    }
+                    onDismissed: quickSwitcher.open = false
+                    onWindowRequested: window => {
+                        quickSwitcher.pendingTarget = window.wayland;
+                        quickSwitcher.open = false;
+                        quickActivate.restart();
+                    }
+                }
+                Timer {
+                    id: quickActivate
+                    interval: 100
+                    onTriggered: {
+                        const target = quickSwitcher.pendingTarget;
+                        quickSwitcher.pendingTarget = null;
+                        if (target) {
+                            target.activate();
+                            if (surface.mode !== "desktop") target.maximized = true;
+                        }
+                    }
+                }
+                Connections {
+                    target: quickSwitcher.pendingTarget
+                    function onClosed() { quickSwitcher.pendingTarget = null; }
                 }
             }
             PanelWindow {
@@ -736,6 +789,7 @@ ShellRoot {
                 Rectangle {
                     anchors.fill: parent
                     radius: statusBar.drawerOpen ? 28 : 0
+                    visible: surface.mode !== "desktop" || statusBar.drawerOpen
                     color: Qt.rgba(0.063, 0.106, 0.188, statusBar.drawerOpen ? 0.76 : shellPreferences.barOpacity)
                     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.alpha(root.accentColor, 0.1) }
                 }
@@ -766,11 +820,12 @@ ShellRoot {
                     }
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 18
-                    anchors.rightMargin: 8
+                    anchors.leftMargin: surface.mode === "desktop" ? 0 : 18
+                    anchors.rightMargin: surface.mode === "desktop" ? 0 : 8
                     spacing: surface.modelData.width < 360 ? 4 : 8
                     TouchButton {
                         id: mobileClock
+                        visible: surface.mode !== "desktop"
                         text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "h:mm" : "h:mm AP").replace(/ [AP]M$/, "")
                         Accessible.name: "Clock " + Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "h:mm" : "h:mm AP") + ", quick controls"
                         Layout.minimumHeight: 48
@@ -785,31 +840,6 @@ ShellRoot {
                             font { pixelSize: 16; weight: Font.DemiBold; letterSpacing: 0.2 }
                         }
                         onClicked: statusBar.toggleDrawer()
-                    }
-                    RowLayout {
-                        visible: surface.showWorkspaces
-                        spacing: 4
-                        Repeater {
-                            model: surface.workspaceCount
-                            delegate: TouchButton {
-                                id: workspaceButton
-                                required property int index
-                                readonly property int workspaceId: index + 1
-                                readonly property var workspace: surface.workspaceFor(workspaceId)
-                                text: String(workspaceId)
-                                selected: workspace ? (workspace.focused || workspace.active) : false
-                                implicitWidth: 48
-                                implicitHeight: 48
-                                Layout.minimumWidth: 48
-                                Layout.minimumHeight: 48
-                                Layout.preferredWidth: 48
-                                padding: 0
-                                accentColor: root.accentColor
-                                Accessible.name: "Workspace " + workspaceId + (selected ? " active" : " inactive")
-                                Accessible.role: Accessible.Button
-                                onClicked: surface.switchWorkspace(workspaceId)
-                            }
-                        }
                     }
                     TouchButton {
                         Layout.fillWidth: true
@@ -828,37 +858,11 @@ ShellRoot {
                         }
                         onClicked: statusBar.toggleDrawer()
                     }
-                    // Focused window title; only meaningful in the desktop layout.
-                    Text {
-                        visible: surface.showWorkspaces && surface.mode === "desktop" && text.length > 0
-                        text: root.activeWindow ? (root.activeWindow.title || "") : ""
-                        color: "#d0dced"
-                        font.pixelSize: 13
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                        Layout.maximumWidth: 360
-                        Layout.leftMargin: 8
-                        Accessible.name: text.length > 0 ? "Focused window " + text : ""
-                    }
-                    // Current conditions, from the weather helper.
-                    RowLayout {
-                        visible: weatherBackend.available
+                    WeatherChip {
+                        visible: weatherBackend.available && surface.mode !== "desktop"
+                        conditions: weatherBackend.state
                         Layout.alignment: Qt.AlignVCenter
                         Layout.leftMargin: 4
-                        spacing: 6
-                        Image {
-                            Layout.alignment: Qt.AlignVCenter
-                            source: "icons/" + (weatherBackend.state.icon || "weather-cloud") + ".svg"
-                            sourceSize.width: 20
-                            sourceSize.height: 20
-                        }
-                        Text {
-                            Layout.alignment: Qt.AlignVCenter
-                            text: Math.round(weatherBackend.state.temperature) + (weatherBackend.state.unit || "")
-                            color: "#e2edf1"
-                            font.pixelSize: 12
-                            Accessible.name: (weatherBackend.state.description || "Weather") + ", " + text + (weatherBackend.state.stale ? ", last observation" : "")
-                        }
                     }
                     // Built-in indicators move to the taskbar tray in Desktop
                     // mode; the mobile strip keeps them along the top edge.
@@ -958,8 +962,25 @@ ShellRoot {
                 color: "transparent"
                 WlrLayershell.namespace: "tessera-start"
                 WlrLayershell.layer: WlrLayer.Top
-                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+                onVisibleChanged: {
+                    if (visible) Qt.callLater(() => {
+                        if (!startMenu.visible) return;
+                        const first = startApplications.itemAt(0);
+                        if (first) first.forceActiveFocus();
+                        else startContent.forceActiveFocus();
+                    });
+                }
+                HyprlandFocusGrab {
+                    id: startGrab
+                    windows: [startMenu, panel]
+                    active: startMenu.visible
+                    onCleared: panel.startMenuOpen = false
+                }
                 Rectangle {
+                    id: startContent
+                    focus: true
+                    Keys.onEscapePressed: panel.startMenuOpen = false
                     anchors.fill: parent
                     // Flush with the taskbar, so only the top corners round.
                     topLeftRadius: 16
@@ -1007,6 +1028,7 @@ ShellRoot {
                                 columnSpacing: 8
                                 rowSpacing: 8
                                 Repeater {
+                                    id: startApplications
                                     model: panel.appEntries
                                     delegate: StartMenuTile {
                                         required property var modelData

@@ -28,6 +28,7 @@ Button {
         }
         Text {
             Layout.fillWidth: true
+            textFormat: Text.PlainText
             text: control.text
             color: control.enabled ? "#e9f4f0" : "#8fa0a6"
             font.pixelSize: 13

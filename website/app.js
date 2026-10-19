@@ -54,12 +54,12 @@ document.querySelector('#share-project').addEventListener('click', async () => {
   }
 });
 function showRelease(release) {
-  if (!release || !release.html_url || !release.html_url.startsWith('https://github.com/thediamondsaint/tessarchy/releases/')) return;
+  if (!release || typeof release.html_url !== 'string' || !release.html_url.startsWith('https://github.com/thediamondsaint/tessarchy/releases/')) return;
   const link = document.querySelector('#release-link'); link.href = release.html_url;
   link.textContent = 'Download ' + (release.name || release.tag_name) + ' ↓';
 }
 function showCommit(commit) {
-  if (!commit || !commit.html_url || !commit.html_url.startsWith('https://github.com/thediamondsaint/tessarchy/commit/')) return;
+  if (!commit || typeof commit.commit?.message !== 'string' || typeof commit.html_url !== 'string' || !commit.html_url.startsWith('https://github.com/thediamondsaint/tessarchy/commit/')) return;
   document.querySelector('#commit-link').href = commit.html_url;
   document.querySelector('#commit-message').textContent = commit.commit.message.split('\n')[0];
 }
@@ -77,9 +77,11 @@ async function readJson(url) {
   } catch { /* The built-in links remain usable offline. */ }
   // Public metadata only. No credentials, trackers, or paid services.
   const results = await Promise.allSettled([
-    readJson('https://api.github.com/repos/thediamondsaint/tessarchy/releases?per_page=5'),
-    readJson('https://api.github.com/repos/thediamondsaint/tessarchy/commits?sha=build%2Flive-iso&per_page=1')
+    readJson('https://api.github.com/repos/thediamondsaint/tessarchy/releases?per_page=100'),
+    readJson('https://api.github.com/repos/thediamondsaint/tessarchy/commits?sha=main&per_page=1')
   ]);
-    if (results[0].status === 'fulfilled') showRelease(results[0].value.find(release => !release.draft && release.assets?.some(asset => asset.name.endsWith('.iso'))));
-  if (results[1].status === 'fulfilled') showCommit(results[1].value[0]);
+  if (results[0].status === 'fulfilled' && Array.isArray(results[0].value))
+    showRelease(results[0].value.find(release => release && !release.draft && Array.isArray(release.assets)
+      && release.assets.some(asset => typeof asset?.name === 'string' && asset.name.endsWith('.iso'))));
+  if (results[1].status === 'fulfilled' && Array.isArray(results[1].value)) showCommit(results[1].value[0]);
 })();

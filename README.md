@@ -28,7 +28,7 @@ navigation.
 | Display controls | Backlight slider and keys; persisted 4000 K night light when supported |
 | Audio and media | Optional PipeWire controls and MPRIS playback integration |
 | Keyboard and captures | Optional squeekboard; Print and pull-down screenshot actions |
-| Latest checks | 73 Python tests and 46 Qt Quick results; Ubuntu/Arch CI passed |
+| Latest checks | 105 Python tests, 62 Qt Quick results and 4 website tests in the current audit; see the validation record |
 | Next device milestone | Select and bring up one physical reference device |
 
 The [validation record](docs/testing.md) tracks runtime results for each feature.

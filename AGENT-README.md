@@ -20,10 +20,10 @@ git log -5 --oneline origin/main
 gh pr list
 ```
 
-`main` is the integration branch. `build/live-iso` is the public development
-branch and the website's activity source. Both were synchronized after the
-roadmap/site update. Fetch current refs before starting; commit IDs in handoff
-records describe checkpoints, not permanent branch positions.
+`main` is the integration branch and the website's publication/activity source.
+`build/live-iso` is a legacy development branch and does not deploy automatically.
+Fetch current refs before starting; commit IDs in handoff records describe
+checkpoints, not permanent branch positions.
 
 ## Product and design
 
@@ -37,7 +37,7 @@ The selected design is **Quiet Edge**:
 - Midnight navy, mint accents and the original glacier wallpaper.
 - Shallow glass top bar, mobile clock and pull-down component controls.
 - Floating translucent bottom navigation with icon actions.
-- Horizontal app cards with window previews and the same switcher for Alt+Tab.
+- Touch Recents cards with previews; Alt+Tab uses centered app icons without a background.
 - Automatic Phone/Tablet/Desktop layouts and a saved manual mode in the pull-down.
 - Original geometric Tessarchy mark, finite assembly/rotation and reduced motion.
 
@@ -59,10 +59,10 @@ product UI unless they help the user act.
 | Audio/media | Optional PipeWire output/application controls and MPRIS controls integrated | Automated checks pass; real audio signal/output/touch acceptance passed; real player acceptance is next |
 | Screenshots | Print and pull-down camera action; unique private PNGs | Helper tests pass; end-to-end VM action check is next |
 | Keyboard | Optional squeekboard, private settings and focus-preserving toggle | Existing VM evidence; expand the application matrix |
-| Published ISO | Alpha 3 Intel/AMD tablet pilot, x86_64 live session with autologin | BIOS and non-Secure-Boot UEFI VM boot evidence on its release |
+| Published ISO | Alpha 4 Intel/AMD tablet pilot, x86_64 live session with autologin | BIOS and non-Secure-Boot UEFI VM boot evidence on its release |
 | Physical device | Reference-device selection and bring-up are planned | [Device roadmap](docs/device-roadmap.md) |
 | Website | GitHub Pages, twenty-one real VM captures, roadmap, branding and sharing | Desktop/phone browser checks and public asset checks passed |
-| Baseline checks | 73 Python tests and 46 Qt Quick results at this checkpoint | Run current checks and record current totals |
+| Baseline checks | 105 Python tests, 62 Qt Quick results and 4 website tests in the T73 audit | Run current checks and record current totals |
 
 Alpha 3 adds the tablet package set, curated launcher and supplied boot video.
 Its live account autologins; installed tablets retain their existing login.
@@ -103,7 +103,8 @@ close/exit and protected image-build operations. Keep private credentials out of
 documentation, command arguments and captures. Use project-relative paths and
 generic account labels in public files; keep personal identifiers in local state.
 
-Touch targets are at least 48 logical pixels in both dimensions. The approved
+Touch targets are at least 48 logical pixels in both dimensions, except the
+owner-requested 32px-wide desktop quick-launch and tray controls (48px tall). The other approved
 exception is on-screen keyboard width: narrower letter keys are allowed, with
 height still at least 48 pixels. Navigation preserves application keyboard focus.
 
@@ -167,6 +168,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 
 | Task ID | Status | Owner | Branch / PR | Next action or evidence |
 | --- | --- | --- | --- | --- |
+| T73 | Review | Codex | review/audit-2026-10-19 | Audit site and current PRs; integrate smallest compatible changes, fix confirmed defects, run checks and record remaining blockers |
 | T05 | In progress | Codex | feat/vm-touch-refinement | VM touch drawer, scrolling, output switching and compact/wide layouts tested |
 | T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |
 | T09 | Done | Codex | PR #18 | Guarded battery/power-profile integration; unavailable VM state verified |
@@ -181,6 +183,8 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T66 | Done | Codex | fix/repository-audit | Fractional OSK scales, source-independent dev uninstall and bounded Tessy payloads; 97 Python / 49 Qt checks |
 | T67 | Done | Codex | fix/desktop-window-resize | Desktop windows can be resized by dragging an edge (resize_on_border, wider grab area) |
 | T68 | Done | Codex | feat/desktop-tray-indicators | The status strip's indicator cluster moves into the Desktop taskbar tray, beside the clock |
+| T70 | Done | Codex | feat/desktop-taskbar-polish | Centered Start, floating menu icons, consistent tray glyphs, task overflow and dismissal; 1280×800 VM / 104 Python / 53 Qt checks |
+| T71 | Done | Codex | feat/desktop-quick-switcher | Logo Start, weather by Start, pulldown-only top, uniform compact tray, icon-only Alt+Tab; VM keyboard and visual checks |
 | T69 | Done | Codex | feat/weather-status | Keyless current-conditions chip in the status strip, with an offline cache |
 | T59 | Done | Codex / contributor | PR #28 | Offline BIOS/UEFI live boots passed; contributor history preserved |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |
