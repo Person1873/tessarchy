@@ -6,7 +6,11 @@ then copies that exact running system onto an internal disk, so what you tested
 is what you get — no second download, no different package set.
 
 Nothing is written until the confirmation prompt is answered, and the live
-medium itself is detected and refused as a target.
+medium itself is detected and refused as a target. Installation stops when its
+backing device cannot be identified, when the target has mounted filesystems or
+active swap, when the installation directory is already mounted, or when the
+live kernel or required tools are missing. Unmount the target locally before
+retrying; the installer does not unmount existing filesystems for you.
 
 ## 1. Try it
 

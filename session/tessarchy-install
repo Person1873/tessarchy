@@ -109,16 +109,30 @@ def require_tools(*tools) -> None:
 
 # ------------------------------------------------------------- device probes
 
+def block_devices(nodes):
+    for node in nodes:
+        yield node
+        yield from block_devices(node.get("children") or [])
+
+
 def live_medium_device() -> str | None:
-    """Device backing the running live image, so it can never be the target."""
+    """Resolve a live partition, whole disk or mapper source to its backing disk."""
     try:
         source = run(["findmnt", "-n", "-o", "SOURCE", str(LIVE_MOUNT)],
-                     check=False, capture=True).strip()
-    except Exception:
+                     check=False, capture=True).strip().split("[", 1)[0]
+        if not source.startswith("/dev/"):
+            return None
+        data = json.loads(run(["lsblk", "-J", "-s", "-p", "-o", "NAME,TYPE", source], capture=True))
+        nodes = list(block_devices(data.get("blockdevices", [])))
+        disks = {Path(node["name"]).name for node in nodes if node.get("type") == "disk"}
+        if len(disks) == 1:
+            return disks.pop()
+        optical = {Path(node["name"]).name for node in nodes if node.get("type") == "rom"}
+        if not disks and len(optical) == 1:
+            return optical.pop()
+    except (InstallerError, OSError, ValueError, TypeError, KeyError):
         return None
-    if not source:
-        return None
-    return run(["lsblk", "-no", "PKNAME", source], check=False, capture=True).strip() or None
+    return None
 
 
 def list_disks() -> list[dict]:
@@ -205,11 +219,25 @@ def part_path(disk: str, number: int) -> str:
 
 
 def validate_target(disk: str) -> dict:
+    live = live_medium_device()
+    if not live:
+        raise InstallerError("Cannot identify the live medium; boot a supported Tessarchy ISO before installing")
     disks = {d["path"]: d for d in list_disks()}
     if disk not in disks:
         raise InstallerError(f"{disk} is not a whole disk on this machine")
-    if disks[disk]["live"]:
+    if disks[disk]["live"] or Path(disk).name == live:
         raise InstallerError("That is the live medium — pick the disk you want to overwrite")
+    try:
+        data = json.loads(run(["lsblk", "-J", "-p", "-o", "NAME,TYPE,MOUNTPOINTS", disk], capture=True))
+        nodes = list(block_devices(data.get("blockdevices", [])))
+        if not any(node.get("name") == disk and node.get("type") == "disk" for node in nodes):
+            raise InstallerError("Cannot verify the target disk's mount state")
+        if not all(isinstance(node.get("mountpoints"), list) for node in nodes):
+            raise InstallerError("Cannot verify the target disk's mount state")
+        if any(any(node["mountpoints"]) for node in nodes):
+            raise InstallerError("The target disk has mounted filesystems or active swap; unmount them first")
+    except (ValueError, TypeError, KeyError) as exc:
+        raise InstallerError("Cannot verify the target disk's mount state") from exc
     return disks[disk]
 
 
@@ -347,9 +375,13 @@ def configure_target(firmware: str, disk: str, root_uuid: str, hostname: str) ->
 def install(disk: str, assume_yes: bool) -> int:
     require_root()
     require_tools("lsblk", "parted", "wipefs", "mkfs.fat", "mkfs.ext4", "rsync",
-                  "genfstab", "mkinitcpio", "arch-chroot", "blkid")
+                  "genfstab", "mkinitcpio", "arch-chroot", "blkid", "findmnt", "mount", "umount", "udevadm")
     info = validate_target(disk)
     firmware = firmware_mode()
+    require_tools(*(("bootctl",) if firmware == "uefi" else ("grub-install", "grub-mkconfig")))
+    medium_kernel()
+    if MOUNT.is_mount():
+        raise InstallerError(f"The installation directory {MOUNT} is already mounted; unmount it first")
     plan = plan_partitions(firmware)
     root_part = next(p for p in plan if p["role"] == "root")
     esp_part = next(p for p in plan if p["role"] == "esp")
