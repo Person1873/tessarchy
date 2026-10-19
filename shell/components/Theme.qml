@@ -55,6 +55,26 @@ QtObject {
     readonly property color panelText: token("panel_text", textSecondary)
     readonly property color panelMutedText: token("panel_muted_text", textMuted)
     readonly property color tileText: token("tile_text", text)
+    // Mobile pages, notifications and the sign-in screen.
+    readonly property color itemText: token("item_text", text)
+    readonly property color detailText: token("detail_text", textSecondary)
+    readonly property color subtitleText: token("subtitle_text", textMuted)
+    readonly property color hintText: token("hint_text", textMuted)
+    readonly property color captionText: token("caption_text", textMuted)
+    readonly property color errorText: token("error_text", danger)
+    readonly property color messageIncoming: token("message_incoming", Qt.alpha(selection, 0.50))
+    readonly property color notificationCard: token("notification_card", surface)
+    readonly property color notificationCardPressed: token("notification_card_pressed", selection)
+    readonly property color urgentText: token("urgent_text", danger)
+    readonly property color urgentBorder: token("urgent_border", Qt.alpha(danger, 0.75))
+    // The sign-in screen draws over fixed dark artwork; the scrim carries contrast.
+    readonly property color lockScrim: token("lock_scrim", Qt.alpha(background, 0.78))
+    readonly property color lockMutedText: token("lock_muted_text", textSecondary)
+    readonly property color pinDot: token("pin_dot", text)
+    readonly property color pinDotBorder: token("pin_dot_border", textSecondary)
+    readonly property color pinKey: token("pin_key", Qt.alpha(surface, 0.41))
+    readonly property color pinKeyPressed: token("pin_key_pressed", Qt.alpha(accent, 0.31))
+    readonly property color pinKeyBorder: token("pin_key_border", Qt.alpha(textMuted, 0.35))
     // Existing user setting still controls only the bar and Start menu opacity.
     function bar(opacity) { return Qt.alpha(barTint, opacity); }
     function selected(accentColor) { return Qt.alpha(accentColor, 0.18); }
@@ -74,7 +94,10 @@ QtObject {
             "tile_border", "tile_icon_glass", "tile_icon_border", "switcher_card", "switcher_button", "switcher_button_border",
             "tray_glass", "tray_border", "task_idle", "task_border", "task_bevel", "task_pressed_bevel",
             "start_button_text", "start_button_border", "start_button_selected_border", "input_text", "input_placeholder",
-            "input_selection", "input_border", "panel_text", "panel_muted_text", "tile_text"];
+            "input_selection", "input_border", "panel_text", "panel_muted_text", "tile_text",
+            "item_text", "detail_text", "subtitle_text", "hint_text", "caption_text", "error_text", "message_incoming",
+            "notification_card", "notification_card_pressed", "urgent_text", "urgent_border", "lock_scrim",
+            "lock_muted_text", "pin_dot", "pin_dot_border", "pin_key", "pin_key_pressed", "pin_key_border"];
         const lines = String(raw || "").split("\n");
         let shellLayer = false;
         for (let i = 0; i < lines.length; i++) {

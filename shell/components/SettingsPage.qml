@@ -125,7 +125,7 @@ ColumnLayout {
     }
     Text {
         text: "Super + 1…5 · switch workspace\nSuper + Shift + 1…5 · move window to workspace\nSuper + Q · confirm window close\nSuper + Tab · next window\nSuper + F · maximize · Super + Shift + F · fullscreen\nSuper + Return · terminal · Super + Shift + E · confirm session exit"
-        color: "#aabccb"
+        color: Theme.subtitleText
         font.pixelSize: 13
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
@@ -302,7 +302,7 @@ ColumnLayout {
     }
     Text {
         text: "Muted notifications still collect in the alert center until dismissed. Nothing persists across sessions."
-        color: "#8da7b9"
+        color: Theme.textMuted
         font.pixelSize: 12
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
@@ -331,7 +331,7 @@ ColumnLayout {
     }
     Text {
         text: "Desktop mode only. Floating windows keep their own size and position; tiled windows share the screen in a row."
-        color: "#8da7b9"
+        color: Theme.textMuted
         font.pixelSize: 12
         Layout.fillWidth: true
         wrapMode: Text.WordWrap

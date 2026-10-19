@@ -1665,3 +1665,39 @@ made about app-owned title bar theming. It remained dark after changing theme
 because it was opened directly (not through the themed Foot launcher).
 Guest lacks tessera-brightness/nightlight and UPower; those warnings were
 already present and do not block rendering. Physical hardware not checked.
+
+## Mobile subpage theme tokens, 2026-10-19
+
+Moved the last 85 literal-colour lines (sign-in, Messages, Phone, SIM & cellular,
+Sounds, notifications, audio/display/power/rotation controls, Settings, file
+picker, greeter) to Theme tokens. Values equal to the palette use it directly
+(`accent`, `text`, `textMuted`, `textSecondary`, `glass`, `input_*`); 18 new
+semantic tokens carry the rest, and Tessera's `shell.toml` pins their previous
+values. Near-identical literals in the same role now share one token, so a few
+Tessera colours moved by at most 7/255 per channel (e.g. Sounds row titles,
+display-control errors, Messages compose text/placeholder). The sign-in
+backspace glyph is now tinted with the theme text colour instead of fixed white.
+
+Actually performed in the development QEMU guest (1280×800, Phone layout,
+Hyprland 0.56.2, Quickshell 0.3.2), deploying `shell/` and `themes/` only;
+`hyprctl reload` after each deploy, `hyprctl -j configerrors` empty, no banner
+in any capture. Opened each page over shell IPC (Settings and Alerts through a
+guest-only IPC hook), the Power panel by scrolling Quick Settings with the
+guest touch helper, and the sign-in screen through `login-preview.qml`; sent one
+normal and one critical notification first. Captured pre-change and changed
+builds under `tessera` and `tessera-light`; comparison in ignored
+`vm/theme-subpages.png` (columns: pre-change light, changed Tessera, changed
+light).
+
+- Tessera: every page matched the pre-change capture to within 7/255 per
+  channel, apart from the clock and text anti-aliasing. Subpixel versus
+  greyscale anti-aliasing varied between shell sessions in both directions
+  (Phone had fewer colour-fringed pixels after, Power more) on untouched
+  components too; glyph colours were identical.
+- Light, pre-change: pale help/empty-state text on pale panels, dark-blue
+  notification cards and popups, a dark sign-in screen and a white backspace.
+- Light, changed: all page text readable, notification cards and popups light
+  with a red urgent edge, sign-in screen light over the artwork.
+- Greeter: launched `greeter.qml` while the user theme was `tessera-light`; it
+  rendered the dark bundled Tessera, and the scrim pixels matched the
+  pre-change sign-in screen. Not run under greetd.

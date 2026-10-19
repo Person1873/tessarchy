@@ -11,19 +11,6 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class Workflows(unittest.TestCase):
     def test_shell_colors_live_in_theme_tokens(self):
-        # Temporary migration exceptions: mobile login/communications, the
-        # notification/audio/settings subpages and greeter are not in the
-        # desktop-glass pass. Caps keep this debt from silently increasing.
-        legacy = {
-            'PinScreen.qml': 12, 'MessagesApp.qml': 10, 'CellularSettings.qml': 10,
-            'PowerPanel.qml': 7, 'PhoneApp.qml': 6, 'NotificationCard.qml': 6,
-            'SoundSettings.qml': 5, 'AudioControls.qml': 5,
-            'NotificationCenter.qml': 4,
-            'SettingsPage.qml': 3, 'MediaPanel.qml': 3,
-            'BrightnessControl.qml': 3, 'BluetoothPanel.qml': 3,
-            'RotationControl.qml': 2, 'NightLightToggle.qml': 2,
-            'LocalFilePicker.qml': 2, 'greeter.qml': 1, 'ContactAvatar.qml': 1,
-        }
         pattern = re.compile(r'#[0-9a-fA-F]{6,8}\b|Qt\.rgba\s*\(')
         paths = list((ROOT / 'shell').glob('*.qml')) + list((ROOT / 'shell/components').glob('*.qml'))
         for path in paths:
@@ -31,9 +18,17 @@ class Workflows(unittest.TestCase):
                 continue  # Only the theme engine may hold colour literals.
             offenders = [number for number, line in enumerate(path.read_text().splitlines(), 1)
                          if pattern.search(line)]
-            self.assertLessEqual(len(offenders), legacy.get(path.name, 0),
-                                 f'{path.name}: colour literals at {offenders}')
-        self.assertEqual(sum(legacy.values()), 85)
+            self.assertEqual(offenders, [], f'{path.name}: colour literals')
+        # Every semantic token is loadable from shell.toml and pinned by Tessera.
+        theme = (ROOT / 'shell/components/Theme.qml').read_text()
+        tokens = re.findall(r'token\("([a-z_]+)"', theme)
+        allowed = re.search(r'const allowed = \[(.*?)\];', theme, re.S).group(1)
+        tessera = (ROOT / 'themes/tessera/shell.toml').read_text()
+        for name in tokens:
+            self.assertIn(f'"{name}"', allowed)
+            self.assertRegex(tessera, rf'(?m)^{name} = "#[0-9a-f]{{6,8}}"$')
+        for name in ('greeter.qml', 'login-preview.qml'):
+            self.assertIn('ThemeLoader {', (ROOT / 'shell' / name).read_text())
 
     def run_quickshell_harness(self, name, marker):
         import shutil

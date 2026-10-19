@@ -36,6 +36,7 @@ StartMenuTile StartMenuTile.qml
 StatusIcon StatusIcon.qml
 StatusIndicators StatusIndicators.qml
 TaskButton TaskButton.qml
+ThemeLoader ThemeLoader.qml
 TouchButton TouchButton.qml
 WeatherBackend WeatherBackend.qml
 singleton Theme Theme.qml
