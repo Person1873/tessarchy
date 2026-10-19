@@ -36,6 +36,11 @@ class PartitionPlan(unittest.TestCase):
         self.assertEqual(plan[0]['end'], 1 + self.installer.BIOS_BOOT_MIB)
         self.assertEqual(plan[1]['start'], plan[0]['end'])
 
+    def test_filesystem_labels_fit_their_limits(self):
+        # mkfs.fat fails outright above 11 characters: the live run hit this.
+        self.assertLessEqual(len(self.installer.ESP_LABEL), 11)
+        self.assertLessEqual(len(self.installer.ROOT_LABEL), 16)
+
     def test_partitions_are_contiguous_and_ordered(self):
         for firmware in ('uefi', 'bios'):
             plan = self.installer.plan_partitions(firmware)

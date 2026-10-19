@@ -25,6 +25,9 @@ from pathlib import Path
 
 ESP_MIB = 512
 BIOS_BOOT_MIB = 1
+# mkfs.fat rejects labels longer than 11 characters.
+ESP_LABEL = "TESSARCHY"
+ROOT_LABEL = "tessarchy"
 MOUNT = Path("/mnt")
 LIVE_MOUNT = Path("/run/archiso/bootmnt")
 
@@ -33,6 +36,9 @@ LIVE_MOUNT = Path("/run/archiso/bootmnt")
 EXCLUDES = [
     "/dev/*", "/proc/*", "/sys/*", "/run/*", "/tmp/*", "/mnt/*",
     "/media/*", "/lost+found", "/swapfile", "/var/tmp/*", "/etc/machine-id",
+    # The live image's archiso initramfs is large and useless once installed;
+    # mkinitcpio rebuilds both images into the 512 MiB ESP.
+    "/boot/initramfs-linux*.img",
 ]
 
 
@@ -252,8 +258,8 @@ def install(disk: str, assume_yes: bool) -> int:
                  f"{part['start']}MiB", "100%"])
     run(["udevadm", "settle"], check=False)
 
-    run(["mkfs.fat", "-F32", "-n", "TESSARCHY_EFI", part_path(disk, esp_part["number"])])
-    run(["mkfs.ext4", "-F", "-L", "tessarchy", part_path(disk, root_part["number"])])
+    run(["mkfs.fat", "-F32", "-n", ESP_LABEL, part_path(disk, esp_part["number"])])
+    run(["mkfs.ext4", "-F", "-L", ROOT_LABEL, part_path(disk, root_part["number"])])
 
     MOUNT.mkdir(exist_ok=True)
     run(["mount", part_path(disk, root_part["number"]), str(MOUNT)])
