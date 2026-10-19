@@ -12,8 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class Workflows(unittest.TestCase):
     def test_shell_shape_literals_live_in_theme_tokens(self):
         # Tiny decorative marks and circular avatars retain fixed geometry.
-        legacy = {'StatusIcon.qml': 1, 'ContactAvatar.qml': 1,
-                  'SettingsPage.qml': 1, 'shell.qml': 2}
+        legacy = {'StatusIcon.qml': 1, 'ContactAvatar.qml': 1, 'shell.qml': 2}
         pattern = re.compile(r'\bradius:\s*(?:\d+|width\s*/\s*2)\b')
         paths = list((ROOT / 'shell').glob('*.qml')) + list((ROOT / 'shell/components').glob('*.qml'))
         for path in paths:
@@ -23,7 +22,7 @@ class Workflows(unittest.TestCase):
                          if pattern.search(line)]
             self.assertLessEqual(len(offenders), legacy.get(path.name, 0),
                                  f'{path.name}: raw radius at {offenders}')
-        self.assertEqual(sum(legacy.values()), 5)
+        self.assertEqual(sum(legacy.values()), 4)
 
     def test_shell_shape_overrides_clamp_and_reset(self):
         import shutil
@@ -505,7 +504,15 @@ print(g.border_size, col.active_border, col.inactive_border, group.border_active
         self.assertEqual(rows['tessera'][5], '')
         settings = (ROOT / 'shell/components/SettingsPage.qml').read_text()
         self.assertIn('fillMode: Image.PreserveAspectCrop', settings)
-        self.assertIn('preview: field[5] || ""', (ROOT / 'shell/shell.qml').read_text())
+        # Every picker card has one size; palette themes draw a mock thumbnail.
+        self.assertIn('Layout.preferredHeight: Math.min(Math.round(width * 9 / 16), 120) + labelHeight', settings)
+        self.assertNotIn('hasPreview ? Math.min', settings)
+        self.assertIn('visible: !themeButton.hasPreview', settings)
+        shell = (ROOT / 'shell/shell.qml').read_text()
+        self.assertIn('preview: field[5] || ""', shell)
+        # Page glass covers the column margins; scroll edges are marked.
+        self.assertIn('expandedContent.width + pageColumn.anchors.leftMargin + pageColumn.anchors.rightMargin', shell)
+        self.assertIn('opacity: pageScroll.ScrollBar.vertical.position > 0 ? 1 : 0', shell)
 
     def test_run_launches_apps_in_theme_mode(self):
         stubs = self.home / 'bin'

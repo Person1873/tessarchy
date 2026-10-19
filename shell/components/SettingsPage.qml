@@ -160,16 +160,19 @@ ColumnLayout {
                 accentColor: modelData.accent
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
-                // The theme's preview.png when it ships one; otherwise its palette.
+                // Every card is the same size: a 16:9 thumbnail over a name strip.
+                readonly property int labelHeight: 32
+                readonly property int inset: 6
+                Layout.preferredHeight: Math.min(Math.round(width * 9 / 16), 120) + labelHeight
+                // The theme's preview.png when it ships one; otherwise a mock built from its palette.
                 readonly property bool hasPreview: modelData.preview !== undefined && modelData.preview.length > 0 && previewImage.status !== Image.Error
-                Layout.preferredHeight: hasPreview ? Math.min(Math.round(width * 9 / 16), 120) + 32 : 56
                 contentItem: Text {
                     text: themeButton.modelData.name
                     color: themeButton.modelData.foreground
                     font.pixelSize: 15
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: themeButton.hasPreview ? Text.AlignBottom : Text.AlignVCenter
+                    verticalAlignment: Text.AlignBottom
                     elide: Text.ElideRight
                 }
                 background: Rectangle {
@@ -177,27 +180,81 @@ ColumnLayout {
                     color: themeButton.modelData.background
                     border.width: themeButton.selected ? Theme.borderWidth(3) : Theme.borderWidth(1)
                     border.color: themeButton.selected ? themeButton.modelData.accent : Theme.selection
-                    Image {
-                        id: previewImage
+                    Item {
                         anchors.fill: parent
-                        anchors.margins: 6
-                        anchors.bottomMargin: 32
-                        visible: themeButton.hasPreview
-                        source: themeButton.modelData.preview ? "file://" + themeButton.modelData.preview : ""
-                        sourceSize.width: 480
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
+                        anchors.margins: themeButton.inset
+                        anchors.bottomMargin: themeButton.labelHeight
                         clip: true
-                    }
-                    Rectangle {
-                        visible: !themeButton.hasPreview
-                        anchors.bottom: parent.bottom
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.bottomMargin: 6
-                        width: parent.width * 0.4
-                        height: 4
-                        radius: 2
-                        color: themeButton.modelData.accent
+                        Image {
+                            id: previewImage
+                            anchors.fill: parent
+                            visible: themeButton.hasPreview
+                            source: themeButton.modelData.preview ? "file://" + themeButton.modelData.preview : ""
+                            sourceSize.width: 480
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                        }
+                        // Palette mock: status bar, a window with accent text and a dock.
+                        Item {
+                            id: mock
+                            anchors.fill: parent
+                            visible: !themeButton.hasPreview
+                            readonly property color ink: themeButton.modelData.foreground
+                            readonly property color accent: themeButton.modelData.accent
+                            Rectangle {
+                                id: mockBar
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                height: Math.max(4, Math.round(parent.height * 0.1))
+                                radius: height / 2
+                                color: Qt.alpha(mock.ink, 0.14)
+                            }
+                            Rectangle {
+                                id: mockWindow
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: mockBar.bottom
+                                anchors.bottom: mockDock.top
+                                anchors.margins: Math.round(parent.height * 0.08)
+                                radius: Theme.radius("tile", 4, height)
+                                color: Qt.alpha(mock.ink, 0.08)
+                                border.width: Theme.borderWidth(1)
+                                border.color: Qt.alpha(mock.accent, 0.6)
+                                Column {
+                                    anchors.fill: parent
+                                    anchors.margins: Math.round(parent.height * 0.14)
+                                    spacing: Math.max(2, Math.round(parent.height * 0.1))
+                                    Repeater {
+                                        model: [0.55, 0.8, 0.4]
+                                        delegate: Rectangle {
+                                            required property real modelData
+                                            required property int index
+                                            width: parent.width * modelData
+                                            height: Math.max(2, Math.round(mockWindow.height * 0.1))
+                                            radius: height / 2
+                                            color: index === 0 ? mock.accent : Qt.alpha(mock.ink, 0.45)
+                                        }
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                id: mockDock
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.bottom: parent.bottom
+                                width: parent.width * 0.5
+                                height: Math.max(4, Math.round(parent.height * 0.12))
+                                radius: height / 2
+                                color: Qt.alpha(mock.ink, 0.14)
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: parent.height * 0.6
+                                    height: width
+                                    radius: height / 2
+                                    color: mock.accent
+                                }
+                            }
+                        }
                     }
                 }
                 onClicked: page.themeRequested(modelData.name)

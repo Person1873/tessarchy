@@ -275,7 +275,9 @@ ShellRoot {
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottomMargin: panel.expanded ? 0 : (surface.mode === "desktop" ? 8 : 12)
-                    width: panel.expanded ? expandedContent.width : parent.width
+                    // Pages keep the column's side margins inside the glass, so
+                    // content never sits on its edge and no window shows beside it.
+                    width: panel.expanded ? Math.min(parent.width, expandedContent.width + pageColumn.anchors.leftMargin + pageColumn.anchors.rightMargin) : parent.width
                     radius: Theme.radius("card", panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26), height)
                     color: panel.expanded ? (panel.page === "windows" ? Theme.switcherGlass : Theme.glassStrong) : Theme.bar(shellPreferences.barOpacity)
                     border.width: Theme.borderWidth(1)
@@ -350,6 +352,7 @@ ShellRoot {
                     }
                 }
                 ColumnLayout {
+                    id: pageColumn
                     anchors.fill: parent
                     anchors.margins: 12
                     anchors.topMargin: surface.mode === "desktop" ? 8 : 12
@@ -378,6 +381,14 @@ ShellRoot {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                         }
+                        // Marks the scroll edge once content has moved under the heading.
+                        Rectangle {
+                            visible: pageScroll.visible
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 1
+                            color: Qt.alpha(root.accentColor, 0.25)
+                            opacity: pageScroll.ScrollBar.vertical.position > 0 ? 1 : 0
+                        }
                         AppSwitcher {
                             id: switcher
                             visible: panel.page === "windows"
@@ -395,6 +406,7 @@ ShellRoot {
                             }
                         }
                         ScrollView {
+                            id: pageScroll
                             visible: panel.page !== "windows"
                             Layout.fillWidth: true
                             Layout.fillHeight: true
@@ -572,6 +584,14 @@ ShellRoot {
                                     }
                                 }
                             }
+                        }
+                        // Marks the scroll edge above the dock while more content follows.
+                        Rectangle {
+                            visible: pageScroll.visible
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 1
+                            color: Qt.alpha(root.accentColor, 0.25)
+                            opacity: pageScroll.ScrollBar.vertical.size < 1 && pageScroll.ScrollBar.vertical.position + pageScroll.ScrollBar.vertical.size < 0.999 ? 1 : 0
                         }
                     }
                     GridLayout {

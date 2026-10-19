@@ -1,5 +1,34 @@
 # Validation and manual acceptance
 
+## Theme picker layout fix, 2026-10-19
+
+Branch `feat/theme-extras` on `49728ce`. Executed by an agent in the running
+QEMU guest (Virtual-1 1280×800 scale 1, and 400×640 logical at scale 2 /
+transform 1; Phone layout; `catppuccin`, `kanagawa`, `tokyo-night` copied into
+`~/.config/tessarchy/themes`). Captures in ignored `vm/`: `pf-before-*.png`
+(`49728ce`), `pf-after-*.png`; combined in `picker-fix-compare.png`.
+
+- Picker cards: `preview.png` cards were thumbnail height + 32 px, palette
+  cards 56 px, so rows were ragged (400 px: `tessera-light` centred beside
+  `tokyo-night`, `tessera` alone on the next row). After: every card is
+  `min(width × 9/16, 120) + 32`; palette themes draw a bar/window/dock mock in
+  their own colours. Selection is the 3 px accent border on both kinds.
+- Page glass: the background was exactly as wide as the content column, so
+  content sat on the glass edge and the 10–12 px column margins were
+  transparent; Foot's prompt showed there as a stray `[`. The glass now adds
+  the column margins (full width at 400 px, column + 20 px on Desktop).
+  Same code on `origin/main` (`af042fb`).
+- Heading: the `ScrollView` already clips, but its edge sat 8 px under the
+  title, so half-clipped lines read as drawn through it (same code on
+  `origin/main`; compared by source, not deployed). A 1 px accent hairline now appears under the title once the
+  page is scrolled, and another above the dock while more content follows.
+- Dock: the `ScrollView` and dock are separate rows of one column, so content
+  cannot reach under the dock; the last card ends above the hairline and dock
+  at both widths, and at the bottom the final line clears the dock.
+- After every deploy `hyprctl reload` left `hyprctl -j configerrors` empty;
+  no capture shows a config banner. Desktop layout mode was checked once: the
+  glass is padded 10 px around the column.
+
 ## Omarchy theme extras, 2026-10-19
 
 Branch `feat/theme-extras`, stacked on `feat/theme-shape` (#47, `6de4413`).

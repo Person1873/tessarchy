@@ -91,7 +91,8 @@ effect at the next launch. The shell reads the appended `[surface]` table live.
 Omarchy theme directories also ship files Tessarchy reads as data:
 
 - `preview.png`: the Settings theme picker shows it as the button thumbnail
-  above the theme name. Themes without one keep the palette swatch.
+  above the theme name. Themes without one get a same-sized thumbnail drawn
+  from their palette (bar, window with accent, dock).
 - `icons.theme`: one icon theme name (for example `Yaru-purple`). It is used
   only when it is a plain name (letters, digits, `.`, `_`, `-`, up to 64
   characters) and an `index.theme` for it exists under `$XDG_DATA_HOME/icons`,
