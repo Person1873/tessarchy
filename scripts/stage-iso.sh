@@ -29,6 +29,7 @@ file_permissions+=(
   ["/home/tess/.bash_profile"]="1000:1000:644"
   ["/home/tess/.config/fish/config.fish"]="1000:1000:644"
   ["/usr/bin/tessarchy-install"]="0:0:755"
+  ["/usr/bin/tessarchy-install-ui"]="0:0:755"
   ["/etc/sudoers.d/tessarchy-install"]="0:0:440"
   ["/usr/bin/start-tessarchy"]="0:0:755"
   ["/usr/bin/tessera-shell"]="0:0:755"
@@ -48,7 +49,7 @@ find "$airoot/usr/share/tessarchy/shell" -type f \( -name '*.pyc' -o -name '*.py
 find "$airoot/usr/share/tessarchy/shell" -depth -type d -name __pycache__ -empty -delete
 cp -R -- "$root/docs" "$airoot/usr/share/tessarchy/"
 cp -- "$root/session/hyprland.lua" "$root/session/window-controls.lua" "$root/session/hypridle.conf" "$airoot/usr/share/tessarchy/session/"
-install -m755 "$root/session/tessarchy-install" "$airoot/usr/bin/"
+install -m755 "$root/session/tessarchy-install" "$root/session/tessarchy-install-ui" "$airoot/usr/bin/"
 install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessera-screenshot" "$root/session/tessera-brightness" "$root/session/tessera-nightlight" "$root/session/tessera-rotate" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"
 install -m644 "$root/session/tessarchy.desktop" "$airoot/usr/share/wayland-sessions/"
 cp -a "$root/iso/airootfs/." "$airoot/"
