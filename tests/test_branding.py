@@ -64,12 +64,15 @@ class BootMenus(unittest.TestCase):
                 self.assertIn('%ARCHISO_UUID%', text, path)
             self.assertNotIn('/arch/boot/', text, path)
 
-    def test_the_menu_background_is_a_vesa_sized_png(self):
-        background = BOOT / 'syslinux/tessarchy-menu.png'
+    def test_the_menu_background_is_a_vesa_sized_png_named_splash(self):
+        # mkarchiso copies exactly one image from syslinux/ and only under this
+        # name; any other filename reaches the built ISO as nothing at all.
+        background = BOOT / 'syslinux/splash.png'
         self.assertEqual(png_size(background), (640, 480))
         head = (BOOT / 'syslinux/archiso_head.cfg').read_text()
-        self.assertIn('MENU BACKGROUND tessarchy-menu.png', head)
+        self.assertIn('MENU BACKGROUND splash.png', head)
         self.assertIn('Tessarchy', head)
+        self.assertEqual([p.name for p in (BOOT / 'syslinux').glob('*.png')], ['splash.png'])
 
     def test_the_isolinux_labels_are_unique_and_tessarchy_led(self):
         labels = []
