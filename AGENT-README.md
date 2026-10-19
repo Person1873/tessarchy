@@ -182,6 +182,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 | T66 | Done | Codex | fix/repository-audit | Fractional OSK scales, source-independent dev uninstall and bounded Tessy payloads; 97 Python / 49 Qt checks |
 | T67 | Done | Codex | fix/desktop-window-resize | Desktop windows can be resized by dragging an edge (resize_on_border, wider grab area) |
 | T68 | Done | Codex | feat/desktop-tray-indicators | The status strip's indicator cluster moves into the Desktop taskbar tray, beside the clock |
+| T70 | Done | Codex | feat/desktop-taskbar-polish | Centered Start, floating menu icons, consistent tray glyphs, task overflow and dismissal; 1280×800 VM / 104 Python / 53 Qt checks |
 | T69 | Done | Codex | feat/weather-status | Keyless current-conditions chip in the status strip, with an offline cache |
 | T59 | Done | Codex / contributor | PR #28 | Offline BIOS/UEFI live boots passed; contributor history preserved |
 | T57 | Done | Codex | feat/vm-touch-refinement | QEMU audio/touch test profile and host QMP gesture driver |

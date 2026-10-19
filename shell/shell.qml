@@ -174,7 +174,10 @@ ShellRoot {
             // Pop-ups render once, on the first screen, not on every output.
             readonly property bool isPrimaryScreen: Quickshell.screens.length > 0 && Quickshell.screens[0] === modelData
             // Arm or disarm the keyboard whenever the layout for this output changes.
-            onModeChanged: if (isPrimaryScreen) root.applyOskMode(mode)
+            onModeChanged: {
+                if (isPrimaryScreen) root.applyOskMode(mode);
+                if (mode !== "desktop") panel.startMenuOpen = false;
+            }
             Component.onCompleted: if (isPrimaryScreen) root.applyOskMode(mode)
             SystemClock {
                 id: clock
@@ -212,7 +215,7 @@ ShellRoot {
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottomMargin: panel.expanded ? 0 : (surface.mode === "desktop" ? 8 : 12)
+                    anchors.bottomMargin: panel.expanded || surface.mode === "desktop" ? 0 : 12
                     width: panel.expanded ? expandedContent.width : parent.width
                     radius: panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
                     color: panel.expanded ? (panel.page === "windows" ? "#b3101b30" : "#c2101b30") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
@@ -585,14 +588,20 @@ ShellRoot {
                         spacing: 6
                         StartButton {
                             text: "start"
+                            Layout.alignment: Qt.AlignVCenter
                             accentColor: root.accentColor
                             selected: panel.startMenuOpen
-                            onClicked: panel.startMenuOpen = !panel.startMenuOpen
+                            onClicked: {
+                                panel.page = "";
+                                panel.keyboardSwitch = false;
+                                panel.startMenuOpen = !panel.startMenuOpen;
+                            }
                         }
                         NavButton {
                             Layout.fillWidth: false
                             Layout.preferredWidth: 48
                             text: "Windows"; symbol: "recents"; showLabel: false
+                            iconSize: 18
                             accentColor: root.accentColor
                             selected: panel.page === "windows"
                             onClicked: panel.showPage("windows")
@@ -601,6 +610,7 @@ ShellRoot {
                             Layout.fillWidth: false
                             Layout.preferredWidth: 48
                             text: "Settings"; symbol: "settings"; showLabel: false
+                            iconSize: 18
                             accentColor: root.accentColor
                             selected: panel.page === "settings"
                             onClicked: panel.showPage("settings")
@@ -611,23 +621,22 @@ ShellRoot {
                             Layout.bottomMargin: 8
                             color: Qt.alpha(root.accentColor, 0.18)
                         }
-                        // One task button per open window; tapping focuses it.
-                        Repeater {
-                            model: Hyprland.toplevels
-                            delegate: TaskButton {
-                                required property var modelData
-                                readonly property var handle: modelData.wayland
-                                text: modelData.title || "Untitled window"
-                                selected: modelData.activated
-                                accentColor: root.accentColor
-                                enabled: handle !== null
-                                onClicked: {
-                                    if (handle) handle.activate();
-                                    panel.page = "";
-                                }
+                        TaskStrip {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            windows: Hyprland.toplevels.values
+                            activeWindow: root.activeWindow
+                            accentColor: root.accentColor
+                            iconForWindow: window => {
+                                const entry = window.wayland ? DesktopEntries.heuristicLookup(window.wayland.appId) : null;
+                                return entry && entry.icon ? Quickshell.iconPath(entry.icon, true) : "";
+                            }
+                            onWindowRequested: window => {
+                                panel.startMenuOpen = false;
+                                panel.page = "";
+                                Qt.callLater(() => { if (window && window.wayland) window.wayland.activate(); });
                             }
                         }
-                        Item { Layout.fillWidth: true }
                         // Sunken tray, as on the XP taskbar: indicators and clock.
                         Rectangle {
                             implicitHeight: 48
@@ -661,23 +670,13 @@ ShellRoot {
                                 }
                                 Repeater {
                                     model: SystemTray.items
-                                    delegate: TouchButton {
+                                    delegate: TrayButton {
                                         id: taskTrayButton
                                         required property var modelData
-                                        Layout.minimumHeight: 44
-                                        Layout.minimumWidth: 44
-                                        implicitHeight: 44
-                                        implicitWidth: 44
-                                        Layout.preferredWidth: 44
-                                        text: ""
-                                        background: Rectangle { color: "transparent" }
+                                        accentColor: root.accentColor
+                                        icon.source: /nm-applet|networkmanager|network manager/i.test(modelData.id + " " + modelData.title)
+                                            ? "icons/network-wired.svg" : modelData.icon
                                         Accessible.name: modelData.title || "Tray item"
-                                        contentItem: Image {
-                                            source: taskTrayButton.modelData.icon
-                                            sourceSize.width: 20
-                                            sourceSize.height: 20
-                                            fillMode: Image.Pad
-                                        }
                                         onClicked: {
                                             if (modelData.hasMenu)
                                                 modelData.display(taskTrayButton.QsWindow.window, 0, 48);
@@ -958,8 +957,25 @@ ShellRoot {
                 color: "transparent"
                 WlrLayershell.namespace: "tessera-start"
                 WlrLayershell.layer: WlrLayer.Top
-                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+                onVisibleChanged: {
+                    if (visible) Qt.callLater(() => {
+                        if (!startMenu.visible) return;
+                        const first = startApplications.itemAt(0);
+                        if (first) first.forceActiveFocus();
+                        else startContent.forceActiveFocus();
+                    });
+                }
+                HyprlandFocusGrab {
+                    id: startGrab
+                    windows: [startMenu, panel]
+                    active: startMenu.visible
+                    onCleared: panel.startMenuOpen = false
+                }
                 Rectangle {
+                    id: startContent
+                    focus: true
+                    Keys.onEscapePressed: panel.startMenuOpen = false
                     anchors.fill: parent
                     // Flush with the taskbar, so only the top corners round.
                     topLeftRadius: 16
@@ -1007,6 +1023,7 @@ ShellRoot {
                                 columnSpacing: 8
                                 rowSpacing: 8
                                 Repeater {
+                                    id: startApplications
                                     model: panel.appEntries
                                     delegate: StartMenuTile {
                                         required property var modelData

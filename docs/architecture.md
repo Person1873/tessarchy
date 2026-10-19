@@ -11,18 +11,22 @@ full-width taskbar instead of the floating dock, laid out like Windows XP's but
 rendered in the same glass: a raised accent Start pill with the project mark,
 quick-launch buttons, wide bevelled task buttons (the focused window reads as
 pressed), and a sunken tray holding the built-in status indicators (moved off the
-status strip in this mode), the application tray icons and the clock. It
-stays full width while a page is open so the page reads as a centered sheet. The
+status strip in this mode), the application tray icons and the clock. The task
+strip scrolls within available space and reveals the active window. Tray glyphs
+share a pale-mint palette, 18px size and 48px slots; NetworkManager uses the
+matching outlined network glyph. The taskbar stays full width while a page is open so the page reads as a centered sheet. The
 Start pill toggles a Windows-XP-style Start menu: a blue-tinted panel with a
-compact app grid that sits flush on the taskbar's top edge and is frosted by the
+compact grid of floating app icons and labels, without tile backgrounds. It sits
+flush on the taskbar's top edge and is frosted by the
 same compositor blur rule as the bar and status strip. Desktop
 ordinary windows open floating at a conventional size and centred ("windowed"), or
 join the dwindle tile layout ("tiled"), per the Desktop setting in Settings; the
 Hyprland config reads the same value. Launcher
 columns and panel height follow available space, including manual modes on small
-screens. Settings is loaded only when opened. Panels never acquire application
-keyboard focus; buttons and sliders use NoFocus. No keyboard search or outside
-click dismissal is implemented.
+screens. Settings is loaded only when opened. Navigation preserves application
+focus. While Start is open, its menu takes keyboard focus for Tab, Enter and
+Escape; clicking outside also dismisses it through a Hyprland focus grab.
+Keyboard application search is not implemented.
 
 `LayoutPolicy.js` classifies logical screen geometry: a shortest edge below 600
 is Phone; otherwise a landscape width >=1100 and height >=650 is Desktop;
