@@ -1761,3 +1761,24 @@ release drafts remain excluded. No browser surface was available for a new visua
 inspection, and no new VM, ISO boot or physical-device acceptance was performed.
 The live page was fetched before changes and identified af042fb as its source;
 publication verification is recorded separately after deployment.
+
+
+### T73/T74 publication and CI result — 2026-10-19
+
+PR #52 merged as ac1f549 after Ubuntu, Arch and the ISO-build job passed.
+Verified the deployed Pages metadata identified ac1f549, served the corrected
+switcher copy and 21-capture count, and returned HTTP 200 for all 23 local
+resources. Alpha 4 remains the published tester release; drafts were excluded.
+#44/#48/#51 were marked merged by GitHub. #45's head was verified as an ancestor
+of main; GitHub refused retargeting because it had no new commits, so that
+superseded stacked PR was closed. #46 now targets main and requires conflict
+resolution and its separate installer/update review.
+
+PR #53 passed Ubuntu, Arch and the ISO-build job, then merged the installer
+preflight safeguards into the feature branch as 3ef3d02. Its tested head d744af0
+passed 147 Python tests and 58 Qt Quick results locally; 28 installer cases use
+mocked disk operations. Concurrent feature-branch update work was preserved by
+the merge. The resulting feature-branch source checks were still running at
+this checkpoint. No installer, newer ISO boot or physical-device acceptance is
+inferred from these build results. The closing documentation update changes no
+runtime or website behavior.

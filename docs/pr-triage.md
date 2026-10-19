@@ -1,20 +1,20 @@
 # Pull request review — 2026-10-19
 
-Review order prioritizes bounded changes and preserves contributor commits. The
-T73 audit branch integrates the first four entries in order; its combined checks
-and follow-up fixes are recorded in docs/testing.md. GitHub mergeability and CI
+Review order prioritizes bounded changes and preserves contributor commits. PR #52
+integrated the first four entries into main; its combined checks and follow-up
+fixes are recorded in docs/testing.md. GitHub mergeability and CI
 status are snapshots, so refresh them before the next integration.
 
 | Order | PR | Review result / next action |
 | --- | --- | --- |
-| 1 | #51 QML lint | Integrated for review: unused imports, night-light process name and typed audio loader. Combined source checks passed. |
-| 2 | #44 Desktop taskbar polish | Integrated for review: task overflow, Start menu and consistent indicators. Preserved its commits and tests. |
-| 3 | #45 Icon-only Alt+Tab | Integrated after #44. Kept compact desktop spacing and the separate touch Recents switcher. |
+| 1 | #51 QML lint | Integrated into main: unused imports, night-light process name and typed audio loader. Combined source checks passed. |
+| 2 | #44 Desktop taskbar polish | Integrated into main: task overflow, Start menu and consistent indicators. Preserved its commits and tests. |
+| 3 | #45 Icon-only Alt+Tab | Integrated after #44 through #52; the original stacked PR was closed after verifying its head is an ancestor of main. Kept compact desktop spacing and the separate touch Recents switcher. |
 | 4 | #48 Shared navigation geometry | Integrated after #45. Resolved shell geometry against current desktop spacing; retained both testing records. Added explicit non-stretching dock/taskbar rows. |
-| 5 | #46 Window controls and live installer | Separate review. Its scope now includes disk installation and boot branding. The T74 branch adds fail-closed live-medium/mounted-target/kernel checks with mocked destructive operations; installed-disk and fresh-image acceptance remain separate. Reconcile with the integrated main before merging. |
+| 5 | #46 Window controls and live installer | Separate review. Its scope now includes disk installation and boot branding. PR #53 merged T74 fail-closed live-medium/mounted-target/kernel checks into its feature branch, with mocked destructive operations; installed-disk and fresh-image acceptance remain separate. Reconcile with the integrated main before merging. |
 | 6 | #38 ARM development VM | Conflicts with main. Reconcile VM scripts in isolation, validate downloads and source sharing, then boot the ARM guest. An emulated guest is not phone hardware acceptance. |
 | 7 | #23 Wi-Fi association | Conflicts with main. Rework against current controls and NetworkManager setup; accept scanner ownership, credentials/cancellation, device/service replacement and keyboard entry before integration. |
-| 8 | #9 System themes | Broad foundation for #47/#50 and part of the portal stack. Current CI fails: Ubuntu cannot compile MediaPanel/PinScreen; Arch also exits unsuccessfully. Fix its portable QML imports and inspect the Arch log before reviewing runtime theme behavior. |
+| 8 | #9 System themes | Broad foundation for #47/#50 and part of the portal stack. Current CI fails: Ubuntu lacks QtQuick.Effects for MediaPanel/PinScreen, and Arch ShellCheck rejects terminal-escape printf strings (SC1003). Fix the declared Qt dependency and shell formatting before reviewing runtime theme behavior. |
 | 9 | #47 Theme shapes | Depends on #9 and inherits failing checks. Review the data parser, limits, generated compositor values and reset behavior after the theme foundation works. |
 | 10 | #50 Theme extras | Draft, stacked on #47/#9, checks failing. Keep icon/theme changes and default-off borders isolated until dependencies pass. |
 | 11 | #49 Navigation gestures | Draft, stacked on #48. Reconcile against the combined shell, preserve the buttons fallback, then test edge interception, cancellation, scaling and real touch. |

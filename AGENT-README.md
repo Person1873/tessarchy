@@ -168,7 +168,8 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 
 | Task ID | Status | Owner | Branch / PR | Next action or evidence |
 | --- | --- | --- | --- | --- |
-| T73 | Review | Codex | review/audit-2026-10-19 | Audit site and current PRs; integrate smallest compatible changes, fix confirmed defects, run checks and record remaining blockers |
+| T73 | Done | Codex | review/audit-2026-10-19 | PR #52 merged; small PRs integrated, shell/site defects fixed, CI and live Pages verified |
+| T74 | Done | Codex | PR #53 | Installer preflight safeguards merged into the feature branch; full installer integration and installed-disk acceptance remain open |
 | T05 | In progress | Codex | feat/vm-touch-refinement | VM touch drawer, scrolling, output switching and compact/wide layouts tested |
 | T25 | In progress | Codex | feat/vm-touch-refinement | Virgl verified; reduced absent-service polling; 30s CPU samples recorded |
 | T09 | Done | Codex | PR #18 | Guarded battery/power-profile integration; unavailable VM state verified |
