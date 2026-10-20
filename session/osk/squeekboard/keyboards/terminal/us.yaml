@@ -87,7 +87,7 @@ buttons:
         outline: "special"
     show_functions:
         action: { set_view: "functions" }
-        label: "F…"
+        label: "F"
         outline: "special"
     Shift:
         modifier: "Shift"
@@ -101,17 +101,19 @@ buttons:
         outline: "nav"
     Home:
         keysym: "Home"
+        label: "↖"
         outline: "nav"
     End:
         keysym: "End"
+        label: "↘"
         outline: "nav"
     PageUp:
         keysym: "Page_Up"
-        label: "Pg↑"
+        label: "⇞"
         outline: "nav"
     PageDown:
         keysym: "Page_Down"
-        label: "Pg↓"
+        label: "⇟"
         outline: "nav"
     Up:
         keysym: "Up"
@@ -138,12 +140,15 @@ buttons:
         outline: "nav"
     Pause:
         keysym: "Pause"
+        label: "Ⅱ"
         outline: "nav"
     Menu:
         keysym: "Menu"
+        label: "☰"
         outline: "nav"
     Break:
         keysym: "Break"
+        label: "Brk"
         outline: "nav"
     Ctrl:
         modifier: "Control"
