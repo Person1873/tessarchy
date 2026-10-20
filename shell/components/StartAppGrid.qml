@@ -1,4 +1,3 @@
-pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import "../AppPolicy.js" as Apps
