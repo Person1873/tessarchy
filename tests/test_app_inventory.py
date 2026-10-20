@@ -21,6 +21,12 @@ class InstalledApplications(unittest.TestCase):
             runtime = home / 'runtime'
             runtime.mkdir(mode=0o700)
             log = home / 'output.log'
+            harness = home / 'harness'
+            harness.mkdir()
+            shutil.copy2(ROOT / 'shell/AppPolicy.js', harness / 'AppPolicy.js')
+            (harness / 'shell.qml').write_text(
+                (ROOT / 'tests/quickshell/installed-apps.qml').read_text()
+                .replace('../../shell/AppPolicy.js', 'AppPolicy.js'))
 
             def write_entry(app_id, name, category='Utility', icon='test-icon', hidden=False):
                 temporary = apps / (app_id + '.tmp')
@@ -37,7 +43,7 @@ class InstalledApplications(unittest.TestCase):
                                QT_QPA_PLATFORM='offscreen', QT_QPA_PLATFORMTHEME='')
             with log.open('w') as output:
                 process = subprocess.Popen(
-                    [shutil.which('qs'), '--no-color', '-p', str(ROOT / 'tests/quickshell/installed-apps.qml')],
+                    [shutil.which('qs'), '--no-color', '-p', str(harness / 'shell.qml')],
                     env=environment, stdout=output, stderr=subprocess.STDOUT)
                 offset = 0
 
