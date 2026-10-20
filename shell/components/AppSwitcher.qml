@@ -9,7 +9,7 @@ FocusScope {
     id: control
     property var windows: []
     property var activeWindow: null
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     property bool reducedMotion: false
     property bool fillApp: false
     property bool phoneMode: false

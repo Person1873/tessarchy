@@ -5,7 +5,7 @@ import QtQuick.Layouts
 // Compact mark with a shallow background and a full-size touch target.
 Button {
     id: control
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     // True while the Start menu is open.
     property bool selected: false
     Layout.minimumHeight: 48

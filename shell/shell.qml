@@ -67,7 +67,7 @@ ShellRoot {
         function accept(): void { root.switcherCommand("accept"); }
         function cancel(): void { root.switcherCommand("cancel"); }
     }
-    readonly property color accentColor: shellPreferences.accent === "iris" ? "#c6b7ff" : shellPreferences.accent === "ice" ? "#99d7ff" : "#a9e8d5"
+    readonly property color accentColor: shellPreferences.accent === "iris" ? "#c6b7ff" : shellPreferences.accent === "ice" ? "#99d7ff" : Theme.accent
     Settings {
         id: shellPreferences
         location: "file://" + (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/tessarchy/shell.ini"
@@ -433,7 +433,7 @@ ShellRoot {
                                     }
                                     Text {
                                         text: root.oskAvailable ? "Prototype · The keyboard opens for text fields; Keyboard shows or hides it." : "Prototype · Physical keyboard needed for text input."
-                                        color: "#b7c7cc"
+                                        color: Theme.textSecondary
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
                                     }
@@ -505,7 +505,7 @@ ShellRoot {
                                     Layout.fillWidth: true
                                     Text {
                                         text: panel.closeTarget ? panel.closeTarget.title : "Window is no longer available."
-                                        color: "#f0f5f5"
+                                        color: Theme.text
                                         wrapMode: Text.WrapAnywhere
                                         Layout.fillWidth: true
                                     }
@@ -536,7 +536,7 @@ ShellRoot {
                                     Layout.fillWidth: true
                                     Text {
                                         text: "Save your work before ending Tessarchy. This closes the desktop session."
-                                        color: "#f0f5f5"
+                                        color: Theme.text
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
                                     }
@@ -690,9 +690,9 @@ ShellRoot {
                             implicitWidth: trayRow.implicitWidth + 12
                             Layout.alignment: Qt.AlignVCenter
                             radius: 8
-                            color: Qt.alpha("#000000", 0.20)
+                            color: Qt.alpha(Theme.trayGlass, 0.20)
                             border.width: 1
-                            border.color: Qt.alpha("#ffffff", 0.12)
+                            border.color: Qt.alpha(Theme.trayBorder, 0.12)
                             RowLayout {
                                 id: trayRow
                                 anchors.centerIn: parent
@@ -736,7 +736,7 @@ ShellRoot {
                                 }
                                 Text {
                                     text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "h:mm" : "h:mm AP")
-                                    color: "#e2edf1"
+                                    color: Theme.panelText
                                     font.pixelSize: 12
                                     leftPadding: 6
                                     rightPadding: 10
@@ -1008,7 +1008,7 @@ ShellRoot {
                         background: Item {}
                         contentItem: Text {
                             text: mobileClock.text
-                            color: "#f0f5ff"
+                            color: Theme.text
                             verticalAlignment: Text.AlignVCenter
                             font { pixelSize: 16; weight: Font.DemiBold; letterSpacing: 0.2 }
                         }
@@ -1179,7 +1179,7 @@ ShellRoot {
                         spacing: 10
                         Text {
                             text: "ALL APPS"
-                            color: "#dbe8ff"
+                            color: Theme.startHeaderText
                             Layout.leftMargin: 2
                             font {
                                 pixelSize: 11
@@ -1272,7 +1272,7 @@ ShellRoot {
                     right: true
                 }
                 exclusionMode: ExclusionMode.Ignore
-                color: "#101b30"
+                color: Theme.background
                 WlrLayershell.namespace: "tessera-home"
                 WlrLayershell.layer: WlrLayer.Background
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -1306,7 +1306,7 @@ ShellRoot {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "hh:mm" : "h:mm AP")
-                        color: "#f0f5ff"
+                        color: Theme.text
                         font {
                             pixelSize: surface.isPhone ? 58 : 72
                             weight: Font.Light
@@ -1315,7 +1315,7 @@ ShellRoot {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDateTime(clock.date, "dddd, MMMM d")
-                        color: "#a9e8d5"
+                        color: Theme.accent
                         font.pixelSize: 18
                     }
                     Text {

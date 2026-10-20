@@ -1,5 +1,6 @@
 """Observable install safety and profile assembly; no GUI or privileged tests."""
 import os
+import re
 from pathlib import Path
 import re
 import subprocess
@@ -10,6 +11,26 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Workflows(unittest.TestCase):
+    def test_shell_colors_live_in_theme_tokens(self):
+        pattern = re.compile(r'#[0-9a-fA-F]{6,8}\b|Qt\.rgba\s*\(')
+        paths = list((ROOT / 'shell').glob('*.qml')) + list((ROOT / 'shell/components').glob('*.qml'))
+        for path in paths:
+            if path.name == 'Theme.qml':
+                continue  # Only the theme engine may hold colour literals.
+            offenders = [number for number, line in enumerate(path.read_text().splitlines(), 1)
+                         if pattern.search(line)]
+            self.assertEqual(offenders, [], f'{path.name}: colour literals')
+        # Every semantic token is loadable from shell.toml and pinned by Tessera.
+        theme = (ROOT / 'shell/components/Theme.qml').read_text()
+        tokens = re.findall(r'token\("([a-z_]+)"', theme)
+        allowed = re.search(r'const allowed = \[(.*?)\];', theme, re.S).group(1)
+        tessera = (ROOT / 'themes/tessera/shell.toml').read_text()
+        for name in tokens:
+            self.assertIn(f'"{name}"', allowed)
+            self.assertRegex(tessera, rf'(?m)^{name} = "#[0-9a-f]{{6,8}}"$')
+        for name in ('greeter.qml', 'login-preview.qml'):
+            self.assertIn('ThemeLoader {', (ROOT / 'shell' / name).read_text())
+
     def run_quickshell_harness(self, name, marker):
         import shutil
         quickshell = shutil.which('qs')
@@ -66,6 +87,12 @@ class Workflows(unittest.TestCase):
         self.assertIn('visible: surface.gestures', shell)
         self.assertIn('value: "buttons"', settings)
         self.assertIn('page.preferences.navigation = modelData.value', settings)
+
+    def test_components_qmldir_lists_every_component(self):
+        # An explicit qmldir hides any component it omits ("X is not a type").
+        components = ROOT / 'shell/components'
+        listed = {line.split()[-1] for line in (components / 'qmldir').read_text().splitlines() if line.strip()}
+        self.assertEqual(listed, {path.name for path in components.glob('*.qml')})
 
     def test_display_controls_restore_failed_brightness_and_apply_night_preference(self):
         stubs = self.home / 'display-bin'
@@ -292,6 +319,65 @@ class Workflows(unittest.TestCase):
                                     env=dict(env, XDG_RUNTIME_DIR=str(runtime)),
                                     capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
+    def theme(self, *args, env=None):
+        run_env = dict(env or self.env, TESSARCHY_DATA_DIR=str(ROOT),
+                       XDG_STATE_HOME=str(self.home / 'state'))
+        return subprocess.run([str(ROOT / 'session/tessarchy-theme'), *args], env=run_env,
+                              capture_output=True, text=True)
+
+    def test_theme_renders_shell_keyboard_and_terminal_from_one_palette(self):
+        state = self.home / 'state/tessarchy'
+        self.assertEqual(self.theme('current').stdout.strip(), 'tessera')
+        self.assertEqual(self.theme('apply').returncode, 0)
+        self.assertEqual((state / 'theme/name').read_text().strip(), 'tessera')
+        self.assertIn('accent = "#a9e8d5"', (state / 'theme/colors.toml').read_text())
+        self.assertIn('glass = "#501c2c43"', (state / 'theme/colors.toml').read_text())
+        result = self.theme('set', 'tessera-light')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((state / 'theme/mode').read_text().strip(), 'light')
+        self.assertNotIn('[tessera]', (state / 'theme/colors.toml').read_text())
+        css = (state / 'osk/gtk-3.0/gtk.css').read_text()
+        self.assertIn('#Return { background: #1f8a72', css)
+        self.assertIn('sq_view { background-color: #cfd9e4', css)
+        self.assertIn('background=eef3f8', (state / 'theme/foot.ini').read_text())
+        for bad in ('../tessera', 'missing', '.hidden'):
+            self.assertEqual(self.theme('set', bad).returncode, 1, bad)
+        self.assertEqual(self.theme('current').stdout.strip(), 'tessera-light')
+        self.assertEqual(self.theme().returncode, 2)
+        # An Omarchy theme directory works as-is: palette, luminance-derived
+        # mode, wallpaper, and the user's own foot config kept underneath.
+        mine = self.home / 'config/tessarchy/themes/paper'
+        (mine / 'backgrounds').mkdir(parents=True)
+        (mine / 'colors.toml').write_text('background = "#FAFAFA"\nforeground = "#202020"\nblue = "#3366cc"\n')
+        (mine / 'backgrounds/1.png').write_bytes(b'png')
+        user_foot = self.home / 'config/foot/foot.ini'
+        user_foot.parent.mkdir(parents=True)
+        user_foot.write_text('font=monospace:size=14\n')
+        self.assertIn('paper\tlight\t#fafafa\t#202020\t#3366cc', self.theme('list').stdout)
+        self.assertEqual(self.theme('set', 'paper').returncode, 0)
+        self.assertNotIn('[tessera]', (state / 'theme/colors.toml').read_text())
+        self.assertEqual((state / 'theme/mode').read_text().strip(), 'light')
+        self.assertEqual((state / 'theme/wallpaper').read_text().strip(), str(mine / 'backgrounds/1.png'))
+        foot = (state / 'theme/foot.ini').read_text()
+        self.assertTrue(foot.startswith(f'include={user_foot}\n'), foot)
+        self.assertEqual(user_foot.read_text(), 'font=monospace:size=14\n')
+        self.theme('set', 'tessera')
+        self.assertEqual((state / 'theme/wallpaper').read_text().strip(), '')
+
+    def test_run_launches_apps_in_theme_mode(self):
+        stubs = self.home / 'bin'
+        stubs.mkdir()
+        for name in ('foot', 'firefox'):
+            (stubs / name).write_text('#!/bin/bash\necho "$GTK_THEME|$*"\n')
+            (stubs / name).chmod(0o755)
+        env = dict(self.env, PATH=f'{stubs}:{os.environ["PATH"]}', XDG_STATE_HOME=str(self.home / 'state'))
+        run = lambda *a: subprocess.run([str(ROOT / 'session/tessarchy-run'), *a], env=env,
+                                        capture_output=True, text=True).stdout.strip()
+        self.assertEqual(run('firefox', 'about:blank'), 'Adwaita:dark|about:blank')
+        self.theme('set', 'tessera-light')
+        config = self.home / 'state/tessarchy/theme/foot.ini'
+        self.assertEqual(run('foot', '-e', 'ls'), f'Adwaita|--config={config} -e ls')
+        self.assertEqual(run('firefox'), 'Adwaita|')
 
     def test_session_start_launches_shell_and_optional_keyboard(self):
         import shutil
@@ -1119,7 +1205,7 @@ esac
         repo = self.home / 'source'
         (repo / 'scripts').mkdir(parents=True)
         import shutil
-        for directory in ('shell', 'session', 'iso', 'docs'):
+        for directory in ('shell', 'session', 'iso', 'docs', 'themes'):
             shutil.copytree(ROOT / directory, repo / directory)
         shutil.copy2(ROOT / 'scripts/stage-iso.sh', repo / 'scripts')
         shutil.copy2(ROOT / 'scripts/export-boot-assets.py', repo / 'scripts')
@@ -1225,6 +1311,9 @@ esac
         self.assertIn('fish', (profile / 'packages.x86_64').read_text().splitlines())
         self.assertTrue((profile / 'airootfs/home/tess/.config/fish/config.fish').is_file())
         self.assertIn('/home/tess/.config/fish/config.fish', (profile / 'profiledef.sh').read_text())
+        self.assertTrue((profile / 'airootfs/usr/bin/tessarchy-theme').stat().st_mode & 0o111)
+        self.assertTrue((profile / 'airootfs/usr/share/tessarchy/themes/tessera/colors.toml').is_file())
+        self.assertIn('u tess 1000', (profile / 'airootfs/etc/sysusers.d/tessarchy.conf').read_text())
         result = subprocess.run(command, env=env, capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
 

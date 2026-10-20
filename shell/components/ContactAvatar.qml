@@ -4,7 +4,7 @@ Rectangle {
     id: avatar
     property string name: ""
     property string photo: ""
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     implicitWidth: 48
     implicitHeight: 48
     radius: width / 2

@@ -34,7 +34,7 @@ TouchButton {
                 visible: control.showLabel
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: control.text
-                color: control.selected ? control.accentColor : "#d0dced"
+                color: control.selected ? control.accentColor : Theme.textSecondary
                 font.pixelSize: 10
             }
         }

@@ -7,7 +7,7 @@ import QtQuick.Layouts
 // a translucent accent fill carry that state over the glass bar.
 Button {
     id: control
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     property bool selected: false
     property string iconSource: ""
     Layout.minimumHeight: 48
@@ -30,7 +30,7 @@ Button {
             Layout.fillWidth: true
             textFormat: Text.PlainText
             text: control.text
-            color: control.enabled ? "#e9f4f0" : "#8fa0a6"
+            color: control.enabled ? Theme.text : Theme.muted
             font.pixelSize: 13
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
@@ -38,11 +38,11 @@ Button {
     }
     background: Rectangle {
         radius: 8
-        color: control.selected ? Qt.alpha(control.accentColor, 0.26)
-                                : control.down ? Qt.alpha(control.accentColor, 0.20)
-                                               : Qt.rgba(1, 1, 1, 0.06)
+        color: control.selected ? Theme.taskSelected(control.accentColor)
+                                : control.down ? Theme.taskDown(control.accentColor)
+                                               : Theme.taskIdle
         border.width: 1
-        border.color: control.selected ? Qt.alpha(control.accentColor, 0.85) : Qt.alpha("#ffffff", 0.16)
+        border.color: control.selected ? Theme.taskSelectedBorder(control.accentColor) : Theme.taskBorder
         // Inner bevel: light on top for a raised look, dark when the window has
         // focus so the button reads as pressed.
         Rectangle {
@@ -51,7 +51,7 @@ Button {
             radius: 7
             color: "transparent"
             border.width: 1
-            border.color: control.selected ? Qt.alpha("#000000", 0.30) : Qt.alpha("#ffffff", 0.12)
+            border.color: control.selected ? Theme.taskPressedBevel : Theme.taskBevel
         }
     }
     Accessible.name: text

@@ -2040,3 +2040,89 @@ and Mesa 26.2.4.
 
 Touch input, the launcher, quick controls, audio and Virgl were not exercised
 on aarch64. This guest does not establish support for any physical ARM device.
+
+
+## System theme, 2026-10-17
+
+Actually performed by an agent in the development QEMU
+guest (720x1440, Hyprland 0.56.2, Quickshell 0.3.2, squeekboard, foot 1.28.0):
+
+- `tessarchy-theme apply` staged Tessera; shell icons and colours rendered as before.
+- Copied Omarchy's stock `catppuccin` directory unchanged into
+  `~/.config/tessarchy/themes`; `tessarchy-theme set catppuccin` recoloured the
+  running shell live, used its Totoro wallpaper, restarted squeekboard with
+  Catppuccin keys (blue Return), and `tessarchy-run foot` opened in its palette.
+- `tessera-light` switched the shell, Settings theme picker, keyboard and Foot
+  to light.
+- Found and fixed: date/label text was unreadable over a bright theme wallpaper;
+  a translucent theme-coloured card now sits behind the clock.
+- A Foot opened under Catppuccin turned light in place after
+  `tessarchy-theme set tessera-light` (OSC 4/10/11/12 written to its pty).
+- Firefox follows dark/light only under `GTK_THEME`; it does not get the palette.
+- Window borders are not themed: this branch sets `border_size = 0`.
+- Not checked: real hardware.
+
+## Desktop glass theme follow-up, 2026-10-19
+
+Actually performed in the development QEMU guest (1280×800 Desktop, Foot
+window open), against `origin/main` af042fb, pre-fix PR #9 3d415d3, and the
+fixed branch. Captured Start, taskbar, switcher and quick drawer with the
+VM framebuffer; switched tessera -> tessera-light **without restarting** the
+shell and inspected each image directly. Side-by-side captures in ignored
+`vm/glass-{start,taskbar,quick,switcher}-comparison.png` (left-to-right:
+main, pre-fix PR, fixed dark, fixed light; switcher uses PR, dark, light).
+
+Pre-fix: the dark Start/taskbar looked close to main, but the Start header,
+tiles, app switcher preview and buttons, tray bevel, quick-settings text and
+input fields retained hard-coded blue/white from upstream. Light mode kept
+those blues and white glyphs on a pale panel. The rebased TouchButton's
+destructive fill additionally re-alpha'd an already-translucent danger tint.
+Fixed: desktop surface colours now resolve through Theme semantic tokens;
+Tessera's optional `shell.toml` reproduces the upstream dark glass, while
+unlayered light/Omarchy palettes derive translucent colours. The Start header
+gradient, taskbar bevel and compositor blur rules are unchanged. Quick radio
+glyphs and tray indicators tint to the foreground on light backgrounds.
+
+The focused window title is displayed in the **status strip**, not in a
+shell-drawn app title bar; that label and taskbar text now follow Theme. The
+VM's existing Foot opened tiled and covered most of the desktop; no claim is
+made about app-owned title bar theming. It remained dark after changing theme
+because it was opened directly (not through the themed Foot launcher).
+Guest lacks tessera-brightness/nightlight and UPower; those warnings were
+already present and do not block rendering. Physical hardware not checked.
+
+## Mobile subpage theme tokens, 2026-10-19
+
+Moved the last 85 literal-colour lines (sign-in, Messages, Phone, SIM & cellular,
+Sounds, notifications, audio/display/power/rotation controls, Settings, file
+picker, greeter) to Theme tokens. Values equal to the palette use it directly
+(`accent`, `text`, `textMuted`, `textSecondary`, `glass`, `input_*`); 18 new
+semantic tokens carry the rest, and Tessera's `shell.toml` pins their previous
+values. Near-identical literals in the same role now share one token, so a few
+Tessera colours moved by at most 7/255 per channel (e.g. Sounds row titles,
+display-control errors, Messages compose text/placeholder). The sign-in
+backspace glyph is now tinted with the theme text colour instead of fixed white.
+
+Actually performed in the development QEMU guest (1280×800, Phone layout,
+Hyprland 0.56.2, Quickshell 0.3.2), deploying `shell/` and `themes/` only;
+`hyprctl reload` after each deploy, `hyprctl -j configerrors` empty, no banner
+in any capture. Opened each page over shell IPC (Settings and Alerts through a
+guest-only IPC hook), the Power panel by scrolling Quick Settings with the
+guest touch helper, and the sign-in screen through `login-preview.qml`; sent one
+normal and one critical notification first. Captured pre-change and changed
+builds under `tessera` and `tessera-light`; comparison in ignored
+`vm/theme-subpages.png` (columns: pre-change light, changed Tessera, changed
+light).
+
+- Tessera: every page matched the pre-change capture to within 7/255 per
+  channel, apart from the clock and text anti-aliasing. Subpixel versus
+  greyscale anti-aliasing varied between shell sessions in both directions
+  (Phone had fewer colour-fringed pixels after, Power more) on untouched
+  components too; glyph colours were identical.
+- Light, pre-change: pale help/empty-state text on pale panels, dark-blue
+  notification cards and popups, a dark sign-in screen and a white backspace.
+- Light, changed: all page text readable, notification cards and popups light
+  with a red urgent edge, sign-in screen light over the artwork.
+- Greeter: launched `greeter.qml` while the user theme was `tessera-light`; it
+  rendered the dark bundled Tessera, and the scrim pixels matched the
+  pre-change sign-in screen. Not run under greetd.

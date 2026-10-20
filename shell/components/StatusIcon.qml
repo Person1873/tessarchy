@@ -37,7 +37,7 @@ Item {
         height: 1.5
         radius: 1
         rotation: -45
-        color: indicator.uniform ? "#d0f3e9" : "#879caa"
+        color: indicator.uniform ? "#d0f3e9" : Theme.muted
     }
     MouseArea {
         anchors.fill: parent

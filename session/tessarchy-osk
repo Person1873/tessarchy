@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Use a private settings backend for the optional on-screen keyboard.
 set -euo pipefail
-usage() { echo "Usage: $0 start | show | hide | toggle | enable | disable" >&2; exit 2; }
+# Its colours come from the gtk.css tessarchy-theme renders into that same
+# private config home; `restart` reloads them after a theme change.
+usage() { echo "Usage: $0 start | restart | show | hide | toggle | enable | disable" >&2; exit 2; }
 [[ $# == 1 ]] || usage
 bus=sm.puri.OSK0
 object=/sm/puri/OSK0
@@ -53,7 +55,21 @@ start)
             gsettings set sm.puri.Squeekboard scale-in-vertical-screen-orientation "$value" || true
         fi
     fi
+    # Base built-in style on the theme's mode; gtk.css overrides the colours.
+    if [[ $(cat -- "${state%/osk}/theme/mode" 2>/dev/null) == light ]]; then
+        export GTK_THEME=Adwaita
+    else
+        export GTK_THEME=Adwaita:dark
+    fi
     exec squeekboard
+    ;;
+restart)
+    pkill -u "$UID" -x squeekboard || true
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        pgrep -u "$UID" -x squeekboard >/dev/null || break
+        sleep 0.1
+    done
+    "$0" start </dev/null >/dev/null 2>&1 &
     ;;
 show) set_visible true ;;
 hide) set_visible false ;;

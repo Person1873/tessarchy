@@ -34,7 +34,7 @@ TouchButton {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                color: "#f0f5ff"
+                color: Theme.text
                 font.pixelSize: 13
             }
         }

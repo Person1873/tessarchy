@@ -34,7 +34,7 @@ TouchButton {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             maximumLineCount: 1
-            color: "#e8f0ff"
+            color: Theme.tileText
             font.pixelSize: 12
         }
     }
