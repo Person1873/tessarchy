@@ -1989,3 +1989,33 @@ current AppSwitcher.qml and hyprland.lua. The development guest's read-only
 expected; no system upgrade was applied. The 38 updater tests passed. Arch CI
 caught the tablet bundle's old, pinned package filenames after the revision bump;
 updated the bundle list and tablet installation examples to the new revisions.
+
+
+## Start installed-application inventory, 2026-10-20
+
+PR #58 replaces the primary-role filter with Quickshell's complete eligible
+application inventory, alphabetical sorting and categorized Start rows. Existing
+Start tiles, ScrollView, icon lookup and desktop-entry execution are reused.
+Native model/metadata notifications drive updates; no polling or scanner added.
+
+Actually performed in an isolated source worktree:
+
+- Node policy tests: 6 passed. Unknown IDs, multiple browsers, nonlaunchable/
+  NoDisplay entries, equal names with distinct IDs, category ordering/fallback,
+  additions/removals/renames/regrouping, stable row identity, no-op refreshes and
+  a 500-application inventory are covered.
+- Existing website tests: 4 passed. git diff --check passed.
+- ./scripts/check.sh: 198 Python tests attempted; 11 failures, 2 errors and 21
+  skips. Ten failures are install tests refusing root; two errors are Unix socket
+  operations denied by the environment. One updater pending-status test fails
+  independently of these launcher changes. Non-root execution via runuser was
+  also denied by the environment. The script stops before Qt checks.
+- Qt Quick and Quickshell are unavailable locally. Added Qt policy/component
+  checks cover launch signals, focus retention/removal recovery, metadata
+  updates and minimum target dimensions; their execution remains pending in CI.
+
+Not performed: visual VM review, actual package installation/removal in a running
+Quickshell session, Flatpak/Snap export discovery, directory-watcher edge cases,
+physical input or multi-output acceptance. Source changes do not establish those
+results. OnlyShowIn/NotShowIn/TryExec and terminal Exec compatibility remain the
+upstream limitations documented in docs/start-menu-installed-apps.md.

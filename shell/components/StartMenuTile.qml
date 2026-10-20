@@ -4,6 +4,8 @@ import QtQuick.Layouts
 TouchButton {
     id: control
     property string iconSource: ""
+    property bool iconFailed: false
+    onIconSourceChanged: iconFailed = false
     required property string symbol
     Layout.fillWidth: true
     Layout.preferredWidth: 1
@@ -21,10 +23,11 @@ TouchButton {
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: 30
             Layout.preferredHeight: 30
-            source: control.iconSource || "../icons/" + control.symbol + ".svg"
+            source: control.iconSource && !control.iconFailed ? control.iconSource : "../icons/" + control.symbol + ".svg"
             sourceSize.width: 30
             sourceSize.height: 30
             fillMode: Image.PreserveAspectFit
+            onStatusChanged: if (status === Image.Error) control.iconFailed = true
             opacity: control.down ? 0.65 : 1
         }
         Text {

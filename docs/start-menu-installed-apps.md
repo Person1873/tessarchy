@@ -112,13 +112,26 @@ updates and focus/scroll behavior. Add a compatibility workaround only for a
 reproduced gap required by this scope. Do not reimplement the desktop-entry parser,
 watcher, scanner, ID precedence, or process-launching backend.
 
-## Scope and status
+## Implementation status
 
-This PR records the issue, requested behavior and acceptance plan. It does not
-implement a runtime fix or claim successful installation/refresh testing.
-Implementation should use an isolated branch based on current main and preserve
-existing Start styling and unrelated work. Hermes's unmerged theme work is
-outside this change.
+The PR now removes the role whitelist, uses the full Quickshell inventory and
+sorts names alphabetically. Start uses category headings and the existing
+StartMenuTile controls inside its existing scroll area. A stable-ID ListModel
+changes only affected rows, preserves unaffected tiles, and restores focused
+application identity after changes. Activation looks up the current desktop ID
+before executing so removed/hidden entries are not launched from a stale object.
+The shared Phone/Tablet app inventory also shows all eligible apps alphabetically.
+Missing/broken Start icons fall back to the bundled glyph.
+
+Native application-change notifications invalidate the derived inventory even
+when only metadata changes. There is no polling timer, duplicate scanner or
+custom Exec parser. Unrelated unmerged theme work is outside this change.
+
+Local policy and website tests pass. Required full-suite checks hit environment
+restrictions and an existing updater test failure; Qt/Quickshell runtime checks
+are pending in CI, and visual VM/install/remove acceptance remains pending.
+The checklist above remains the acceptance target, not a claim that all runtime
+behavior has been verified.
 
 Validation for this tracking document: checked the current AppPolicy.js through
 GitHub, reviewed its Start-menu use and the existing merged PR #2, and confirmed
