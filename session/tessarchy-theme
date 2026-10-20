@@ -220,11 +220,11 @@ refresh_running() {
     fi
     # Retint only terminals started with the themed config (tessarchy-run foot).
     local osc pid child tty i
-    osc=$(printf '\e]10;#%s\e\\\e]11;#%s\e\\\e]12;#%s\e\\' "$(get foreground)" "$(get background)" "$(get bright_foreground foreground)")
+    osc=$(printf '\033]10;#%s\033\134\033]11;#%s\033\134\033]12;#%s\033\134' "$(get foreground)" "$(get background)" "$(get bright_foreground foreground)")
     local slots=(darker_background red green yellow blue magenta cyan light_foreground
                  muted bright_red bright_green bright_yellow bright_blue bright_magenta bright_cyan bright_foreground)
     for i in "${!slots[@]}"; do
-        osc+=$(printf '\e]4;%d;#%s\e\\' "$i" "$(get "${slots[$i]}" "${slots[$i]#bright_}" foreground)")
+        osc+=$(printf '\033]4;%d;#%s\033\134' "$i" "$(get "${slots[$i]}" "${slots[$i]#bright_}" foreground)")
     done
     for pid in $(pgrep -u "$UID" -x foot || true); do
         tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -qF -- "$current/foot.ini" || continue

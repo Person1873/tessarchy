@@ -1,12 +1,12 @@
 # Language: English (US)
 ---
 outlines:
-    nav: { width: 100, height: 42 }
+    nav: { width: 80, height: 42 }
     default:       { width: 53.76,  height: 42 }
     change-view:   { width: 80.64,  height: 42 }
     change-view-2: { width: 94.08,  height: 42 }
     large:         { width: 53.76,  height: 42 }
-    spaceline:     { width: 134.40, height: 42 }
+    spaceline:     { width: 81.92, height: 42 }
     special:       { width: 53.76,  height: 42 }
     special-2:     { width: 80.64,  height: 42 }
     special-3:     { width: 94.08,  height: 42 }
@@ -156,7 +156,7 @@ buttons:
     Super:
         modifier: "Mod4"
         icon: "tessarchy-super-symbolic"
-        outline: "nav"
+        outline: "special"
     show_upper:
         action:
             locking:
