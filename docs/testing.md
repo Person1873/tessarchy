@@ -2015,3 +2015,28 @@ both Back swipes behaved the same. Rotation, multiple outputs and a hardware
 touchscreen were not tested. `./scripts/check.sh` passed (106 Python tests,
 1 skipped; 64 Qt Quick tests, including press/move/release sequences on the
 gesture strip).
+
+## aarch64 VM bring-up, 2026-10-18 UTC
+
+Emulated aarch64 guest on an x86_64 host: QEMU 10.0.13 `virt` machine, TCG,
+4 vCPUs, 4 GiB, virtio-gpu with software rendering. Arch Linux ARM root
+filesystem from 2026-08-05 (signature verified against key
+`68B3537F39A313B3E574D06777193F152BDBE6A6`), upgraded to kernel
+7.2.10-1-aarch64, Hyprland 0.56.2-4, Quickshell 0.3.2-1, Aquamarine 0.15.1-1
+and Mesa 26.2.4.
+
+- `fetch-alarm.sh`, `build-aarch64-disk.sh` and `vm-aarch64.sh run` produced a
+  disk that reached the serial login prompt about 35 seconds after start.
+- `setup-guest.sh --autostart` ran inside the guest after accepting
+  `ID=archarm`: 89 Python tests passed (one skipped for missing disk tools),
+  49 Qt Quick results passed, and both Hyprland config checks passed.
+- With tty1 autologin, the guest started Tessera through the login hook.
+  QMP screenshots at 3 and 10 minutes showed the 1280x800 status bar,
+  workspaces 1-5, pull-down handle, status icons, clock, Tessarchy mark,
+  wallpaper and dock; the clock advanced between them.
+- The first guest run failed both site-builder tests because the VM source
+  snapshot omitted `website/`. `export-vm-source.sh` and `run-basic-vm.sh` now
+  include it; this also affected the x86_64 guest.
+
+Touch input, the launcher, quick controls, audio and Virgl were not exercised
+on aarch64. This guest does not establish support for any physical ARM device.
