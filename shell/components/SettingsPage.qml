@@ -171,9 +171,9 @@ ColumnLayout {
                     elide: Text.ElideRight
                 }
                 background: Rectangle {
-                    radius: 12
+                    radius: Theme.radius("tile", 12, height)
                     color: themeButton.modelData.background
-                    border.width: themeButton.selected ? 3 : 1
+                    border.width: themeButton.selected ? Theme.borderWidth(3) : Theme.borderWidth(1)
                     border.color: themeButton.selected ? themeButton.modelData.accent : Theme.selection
                     Rectangle {
                         anchors.bottom: parent.bottom

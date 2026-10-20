@@ -13,7 +13,7 @@ TouchButton {
     implicitHeight: 48
     padding: 4
     background: Rectangle {
-        radius: 16
+        radius: Theme.radius("button", 16, height)
         color: control.down ? Qt.alpha(control.accentColor, 0.3) : control.selected ? Qt.alpha(control.accentColor, 0.15) : "transparent"
     }
     contentItem: Item {

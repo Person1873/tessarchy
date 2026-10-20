@@ -1,5 +1,49 @@
 # Validation and manual acceptance
 
+## Surface shape theme, 2026-10-19
+
+Branch `feat/theme-shape`, implementation commit `e6e7fee`, draft PR #47:
+https://github.com/thediamondsaint/tessarchy/pull/47 (stacked on #9).
+
+Executed in the running QEMU guest using source based on PR #9 (`a6b357a`)
+and the shape worktree, with the VM's Virtual-1 at 1280×800, scale 1.
+The guest ran Hyprland 0.56.2 and Quickshell 0.3.2. Captures in ignored `vm/`:
+`shape-baseline-1280.png` (complete `a6b357a` shell),
+`shape-default-complete.png`, `shape-custom-complete.png`, and
+`shape-reverted-complete.png`. The first two have the same rounded glass
+shapes and layout on visual inspection; clock, weather and app focus can
+change between captures. A scratch user theme with radius 4, border 2,
+window rounding 4, and blur disabled made Start/task buttons squarer and
+the wallpaper sharp behind the bars without restarting the shell. Reverting
+to `tessera` restored rounded/blurred glass in the screenshot. Actual
+`hyprctl getoption` reported rounding 4/blur false, then 18/true.
+
+`./scripts/check.sh`: 111 Python tests passed, one skipped for unavailable
+GObject metadata; available QML, Lua and syntax checks passed. Fish and
+shellcheck unavailable (skipped). The shape-specific Quickshell harness passed
+numeric overrides, radius and border caps, invalid values and reset. Guest
+`Hyprland --verify-config -c .../session/hyprland.lua` returned `config ok`.
+No physical-device or touch-interaction acceptance was performed; screenshot
+inspection covers visual change and restoration, not input hit testing.
+
+Border width follow-up (commit `b777f8c` deployed; executed by an agent in
+the QEMU guest, 1280×800, scale 1). Scratch user themes in
+`~/.config/tessarchy/themes` copied `tessera` and appended only
+`[surface] border_width = 4` or `= 0`; no colour token changed. Each was
+applied with `tessarchy-theme set` while the shell ran, then captured in
+Tablet layout, Tablet with quick controls open (`qs ipc call controls
+toggle`), and Desktop layout. Captures in ignored `vm/`:
+`border-{base,bw4,bw0}-{tablet,controls,desktop}.png`,
+`border-{bw4,bw0}-live.png`, `border-reverted.png`; side-by-side zoomed crops
+in `border-compare.png`. Result on visual inspection: border 4 gives a
+visibly thick outline and border 0 removes it on the Start button, task
+buttons, tray, workspace buttons, the nav/quick-controls panel frame and the
+quick-controls tiles and buttons. The live-applied captures were
+pixel-identical (ImageMagick AE 0) to captures after a shell restart, so
+the token applies without restart. Reverting to `tessera` restored the
+baseline (AE 0 on the workspace-button region). `./scripts/check.sh`: 111
+tests, OK (one skipped); fish and shellcheck unavailable.
+
 ## Actually performed, 2026-10-16
 
 Environment: Omarchy/Arch, Hyprland 0.56.2-2, Quickshell 0.3.1-1,

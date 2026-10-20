@@ -245,9 +245,9 @@ ShellRoot {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottomMargin: panel.expanded ? 0 : surface.bar.gap
                     width: surface.isPhone && panel.page === "windows" ? parent.width : panel.expanded ? expandedContent.width : parent.width
-                    radius: panel.expanded && panel.page === "windows" ? 0 : panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
-                    color: panel.expanded ? (panel.page === "windows" ? "#8c070d16" : "#e20f1c2e") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
-                    border.width: surface.isPhone && panel.page === "windows" ? 0 : 1
+                    radius: panel.expanded && panel.page === "windows" ? 0 : Theme.radius("card", panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26), height)
+                    color: panel.expanded ? (panel.page === "windows" ? Theme.switcherGlass : Theme.glassStrong) : Theme.bar(shellPreferences.barOpacity)
+                    border.width: surface.isPhone && panel.page === "windows" ? 0 : Theme.borderWidth(1)
                     border.color: Qt.alpha(root.accentColor, 0.15)
                     Loader {
                         anchors.fill: parent
@@ -689,7 +689,7 @@ ShellRoot {
                             implicitHeight: surface.bar.row
                             implicitWidth: trayRow.implicitWidth + 12
                             Layout.alignment: Qt.AlignVCenter
-                            radius: 8
+                            radius: Theme.radius("tile", 8, height)
                             color: Qt.alpha(Theme.trayGlass, 0.20)
                             border.width: 1
                             border.color: Qt.alpha(Theme.trayBorder, 0.12)
@@ -961,9 +961,9 @@ ShellRoot {
                 color: "transparent"
                 Rectangle {
                     anchors.fill: parent
-                    radius: statusBar.drawerOpen ? 28 : 0
+                    radius: Theme.radius("card", statusBar.drawerOpen ? 28 : 0, height)
                     visible: surface.mode !== "desktop" || statusBar.drawerOpen
-                    color: Qt.rgba(0.063, 0.106, 0.188, statusBar.drawerOpen ? 0.92 : shellPreferences.barOpacity)
+                    color: statusBar.drawerOpen ? Theme.glassStrong : Theme.bar(shellPreferences.barOpacity)
                     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.alpha(root.accentColor, 0.1) }
                 }
                 WlrLayershell.namespace: "tessera-status"
@@ -1157,7 +1157,7 @@ ShellRoot {
                     topRightRadius: 16
                     // Same frosted glass as the taskbar: a translucent accent
                     // fill the compositor blurs behind (namespace tessera-start).
-                    color: Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
+                    color: Theme.bar(shellPreferences.barOpacity)
                     border.width: 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
                     // Blue header band, the Start menu's signature.

@@ -14,12 +14,12 @@ Slider {
         y: control.topPadding + control.availableHeight / 2 - height / 2
         width: control.availableWidth
         height: 4
-        radius: 2
+        radius: Theme.radius("field", 2, height)
         color: Theme.selection
         Rectangle {
             width: control.visualPosition * parent.width
             height: parent.height
-            radius: 2
+            radius: Theme.radius("field", 2, height)
             color: control.accentColor
         }
     }
@@ -28,9 +28,9 @@ Slider {
         y: control.topPadding + control.availableHeight / 2 - height / 2
         implicitWidth: 24
         implicitHeight: 24
-        radius: 12
+        radius: Theme.radius("button", 12, height)
         color: control.pressed ? Theme.text : control.accentColor
-        border.width: 3
+        border.width: Theme.borderWidth(3)
         border.color: Theme.darkBackground
     }
 }

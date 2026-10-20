@@ -42,7 +42,7 @@ RowLayout {
             anchors.topMargin: control.compact ? 1 : 8
             width: 14
             height: 14
-            radius: 7
+            radius: Theme.radius("tile", 7, height)
             color: Theme.danger
             Text {
                 anchors.centerIn: parent

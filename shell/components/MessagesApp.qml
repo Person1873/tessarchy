@@ -66,8 +66,9 @@ ColumnLayout {
                     required property var modelData
                     Layout.fillWidth: true
                     implicitHeight: bubble.implicitHeight + 24
-                    radius: 18
+                    radius: Theme.radius("card", 18, height)
                     color: messageCard.modelData.incoming ? Theme.messageIncoming : Qt.alpha(app.accentColor, 0.15)
+                    border.width: Theme.borderWidth(1)
                     border.color: Qt.alpha(app.accentColor, 0.12)
                     Column {
                         id: bubble
@@ -86,7 +87,7 @@ ColumnLayout {
                 wrapMode: TextEdit.Wrap
                 Layout.fillWidth: true; Layout.minimumHeight: 104
                 padding: 14; selectByMouse: true
-                background: Rectangle { radius: 18; color: Theme.glass; border.color: compose.activeFocus ? app.accentColor : Theme.inputBorder }
+                background: Rectangle { radius: Theme.radius("field", 18, height); color: Theme.glass; border.width: Theme.borderWidth(1); border.color: compose.activeFocus ? app.accentColor : Theme.inputBorder }
                 Accessible.name: "Message text"
             }
             NavButton {

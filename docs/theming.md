@@ -40,9 +40,43 @@ Changing themes resets absent overrides; no old theme's tint leaks into the next
 Accent-dependent selected/pressed variants live in the Theme singleton and
 follow the active `accent`. `themes/tessera/shell.toml` captures upstream's
 existing blue/mint glass values; the unlayered light theme uses palette-derived
-tints rather than retaining dark blue. Radius and spacing remain component
-geometry, not colour tokens; decide whether they should become theme parameters
-before exposing them in configuration.
+tints rather than retaining dark blue. Spacing remains component geometry.
+
+## Surface shape
+
+Add an optional `[surface]` table in the same `shell.toml`; this keeps both
+Tessera-only colour and shape data out of Omarchy's `colors.toml`. Values are
+passive data, never QML or theme-supplied Lua. For example:
+
+```toml
+[surface]
+radius_card = 4
+radius_tile = 4
+radius_field = 4
+radius_button = 4
+border_width = 2
+window_rounding = 4
+blur_enabled = false
+blur_size = 4
+blur_passes = 2
+```
+
+| Key | Scope | Default when absent |
+|---|---|---|
+| `radius_card`, `radius_tile`, `radius_field`, `radius_button` | Existing cards/panels, tiles/chips, fields, buttons | Each component's original radius (not a shared number) |
+| `border_width` | Shell surface borders | Each component's original width (usually 1 px, slider handle 3 px) |
+| `window_rounding` | Hyprland decoration | 18 |
+| `blur_enabled`, `blur_size`, `blur_passes` | Hyprland window blur and Tessera layer blur | `true`, 4, 2 |
+
+Radii and widths are numeric, nonnegative pixels. An overridden radius is capped
+at half that surface's height; border width is capped at 4 px. Compositor values
+are strictly checked: rounding 0–32, size 1–16, passes 1–4, and an unquoted
+boolean for blur. Invalid values fall back to the defaults. Missing keys retain
+exactly the original appearance; changing themes clears old overrides. The
+renderer writes a generated, allowlisted `theme/surface.lua` fragment under
+`$XDG_STATE_HOME/tessarchy/`, and `tessarchy-theme set` reloads the running
+Hyprland session to apply compositor changes. Without a session, changes take
+effect at the next launch. The shell reads the appended `[surface]` table live.
 
 Shell QML holds no colour literals outside `Theme.qml`;
 `test_shell_colors_live_in_theme_tokens` enforces this and requires every token to

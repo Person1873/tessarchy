@@ -24,9 +24,10 @@ Button {
         elide: Text.ElideRight
     }
     background: Rectangle {
-        radius: 12
+        radius: Theme.radius("button", 12, height)
         color: control.down ? Theme.pressed(control.accentColor) : control.destructive ? Theme.dangerSurface : control.selected ? Theme.selected(control.accentColor) : Theme.glass
         border.color: control.destructive ? Theme.danger : control.selected ? control.accentColor : Theme.glassBorder
+        border.width: Theme.borderWidth(1)
     }
     Accessible.name: text
 }

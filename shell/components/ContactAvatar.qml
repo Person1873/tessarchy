@@ -10,6 +10,7 @@ Rectangle {
     radius: width / 2
     color: Qt.alpha(accentColor, 0.14)
     border.color: Qt.alpha(accentColor, 0.35)
+    border.width: Theme.borderWidth(1)
     clip: true
     Image {
         id: picture

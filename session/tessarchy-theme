@@ -53,6 +53,30 @@ write_atomic() {
     mv -f -- "$tmp" "$1"
 }
 
+# Read only the allowlisted surface table; never execute theme-provided text.
+render_surface() {
+    local file=$1 key value section='' rounding=18 enabled=true size=4 passes=2
+    if [[ -f $file ]]; then
+        while IFS= read -r line || [[ -n $line ]]; do
+            if [[ $line =~ ^[[:space:]]*\[([A-Za-z0-9_]+)\][[:space:]]*$ ]]; then
+                section=${BASH_REMATCH[1]}
+                continue
+            fi
+            [[ $section == surface ]] || continue
+            [[ $line =~ ^[[:space:]]*([a-z_]+)[[:space:]]*=[[:space:]]*([^[:space:]#]+)[[:space:]]*(#.*)?$ ]] || continue
+            key=${BASH_REMATCH[1]} value=${BASH_REMATCH[2]}
+            case $key in
+                window_rounding) { [[ $value =~ ^(0|[1-9][0-9]?)$ ]] && (( value <= 32 )) && rounding=$value; } || true ;;
+                blur_enabled) { [[ $value == true || $value == false ]] && enabled=$value; } || true ;;
+                blur_size) { [[ $value =~ ^[1-9][0-9]?$ ]] && (( value <= 16 )) && size=$value; } || true ;;
+                blur_passes) { [[ $value =~ ^[1-9]$ ]] && (( value <= 4 )) && passes=$value; } || true ;;
+            esac
+        done < "$file"
+    fi
+    printf 'return { window_rounding = %s, blur_enabled = %s, blur_size = %s, blur_passes = %s }\n' \
+        "$rounding" "$enabled" "$size" "$passes" | write_atomic "$current/surface.lua"
+}
+
 render() {
     local name=$1 dir=$2
     load_palette "$dir"
@@ -73,6 +97,7 @@ render() {
     for key in red green yellow blue magenta cyan; do bright+=("$(get "bright_$key" "$key" foreground)"); done
 
     mkdir -p -- "$current" "$state/osk/gtk-3.0"
+    render_surface "$dir/shell.toml"
     printf '%s\n' "$mode" | write_atomic "$current/mode"
 
     # foot: the user's own config first, then the palette on top of it.
@@ -144,6 +169,9 @@ EOF
 # Inside a running session, carry the new palette to what is already open.
 refresh_running() {
     [[ -n ${WAYLAND_DISPLAY:-} ]] || return 0
+    if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]] && command -v hyprctl >/dev/null; then
+        hyprctl reload >/dev/null || true
+    fi
     if pgrep -u "$UID" -x squeekboard >/dev/null && command -v tessarchy-osk >/dev/null; then
         tessarchy-osk restart || true
     fi
