@@ -127,9 +127,10 @@ Native application-change notifications invalidate the derived inventory even
 when only metadata changes. There is no polling timer, duplicate scanner or
 custom Exec parser. Unrelated unmerged theme work is outside this change.
 
-Local policy and website tests pass. Required full-suite checks hit environment
-restrictions and an existing updater test failure; Qt/Quickshell runtime checks
-are pending in CI, and visual VM/install/remove acceptance remains pending.
+Source commit 7303182 passed Ubuntu and Arch source checks, including 67 Qt
+results and the native Quickshell desktop-entry create/change/hide/remove test.
+Package generation passed. Visual VM review, actual package installation/removal,
+Flatpak/Snap session acceptance and physical-device checks remain pending.
 The checklist above remains the acceptance target, not a claim that all runtime
 behavior has been verified.
 

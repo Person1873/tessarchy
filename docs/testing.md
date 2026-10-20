@@ -1993,38 +1993,43 @@ updated the bundle list and tablet installation examples to the new revisions.
 
 ## Start installed-application inventory, 2026-10-20
 
-PR #58 replaces the primary-role filter with Quickshell's complete eligible
-application inventory, alphabetical sorting and categorized Start rows. Existing
-Start tiles, ScrollView, icon lookup and desktop-entry execution are reused.
-Native model/metadata notifications drive updates; no polling or scanner added.
+PR #58 removes the primary-role whitelist, uses Quickshell's eligible inventory,
+sorts names and groups Desktop Start by category with Other fallback. Existing
+Start tiles, ScrollView, icon lookup and execution are reused. Native model and
+metadata notifications drive updates; no polling or scanner added. Stable desktop
+IDs retain unaffected tile objects and focused selections during row changes.
+Enter/Return activation, missing/broken icon fallback and empty-menu focus are
+covered by the implementation. Shared Phone/Tablet inventories become complete
+and alphabetical.
 
-Actually performed in an isolated source worktree:
+Verified source commit: 73031822db8116a88a9a085ab29e7a5a0d8ffca0.
+[Source checks run](https://github.com/thediamondsaint/tessarchy/actions/runs/39425133957):
 
-- Node policy tests: 6 passed. Unknown IDs, multiple browsers, nonlaunchable/
-  NoDisplay entries, equal names with distinct IDs, category ordering/fallback,
-  additions/removals/renames/regrouping, stable row identity, no-op refreshes and
-  a 500-application inventory are covered.
-- Existing website tests: 4 passed. git diff --check passed.
-- ./scripts/check.sh: 198 Python tests attempted; 11 failures, 2 errors and 21
-  skips. Ten failures are install tests refusing root; two errors are Unix socket
-  operations denied by the environment. One updater pending-status test fails
-  independently of these launcher changes. Non-root execution via runuser was
-  also denied by the environment. The script stops before Qt checks.
-- Qt Quick and Quickshell are unavailable locally. Added Qt policy/component
-  checks cover launch signals, focus retention/removal recovery, metadata
-  updates and minimum target dimensions; their execution remains pending in CI.
+- Ubuntu and Arch source-check jobs passed ./scripts/check.sh.
+- Arch: 199 Python tests completed, one GObject metadata test skipped; 67 Qt
+  Quick results passed; available QML lint, Hyprland config, Lua, fish and
+  ShellCheck checks passed. Tablet package generation and artifact upload passed.
+- Native Quickshell integration passed on Arch: isolated existing XDG application
+  directory, initial discovery, new desktop entry outside the old whitelist,
+  atomic rename/icon/category changes, NoDisplay masking and removal. This uses
+  real filesystem notifications and application-model updates, without a timer
+  or mocked inventory. The harness imports copied source inside its isolated
+  configuration root, following Quickshell's import boundary.
+- Ubuntu: 199 Python tests completed with unavailable-service/runtime skips;
+  67 Qt Quick results and all 10 Node policy/website tests passed.
+- Policy regressions cover unknown IDs, multiple browsers, nonlaunchable entries,
+  distinct IDs with equal names, category ordering/fallback, additions/removals,
+  metadata changes, stable row identity, no-op refreshes and 500 applications.
+- Qt component coverage includes focused app retention, removal recovery, metadata
+  updates, Enter launch signals and minimum target dimensions.
+- Local git diff --check and the same 10 Node tests passed. Local full Python
+  execution is restricted by root/socket permissions; an updater-status test
+  failure also reproduces on unchanged main here. CI's isolated environment
+  passed, so the local limitations are not reported as launcher regressions.
 
 Not performed: visual VM review, actual package installation/removal in a running
-Quickshell session, Flatpak/Snap export discovery, directory-watcher edge cases,
-physical input or multi-output acceptance. Source changes do not establish those
-results. OnlyShowIn/NotShowIn/TryExec and terminal Exec compatibility remain the
-upstream limitations documented in docs/start-menu-installed-apps.md.
-
-
-CI follow-up: commit 6313514 fixes Enter/Return activation and the Qt 6.4
-Loader context issue caught by the first run. Ubuntu source checks passed on
-that commit. Arch source checks passed on the preceding Enter-fix commit; current
-Arch results should be checked on the final PR head. The native inventory test
-added next creates, atomically replaces, hides and removes real desktop entries
-under isolated XDG paths; it is skipped locally because Quickshell is absent.
-This test verifies filesystem/model propagation rather than installing packages.
+interactive session, Flatpak/Snap export discovery, directory-watcher edge cases,
+physical input or multi-output acceptance. Source checks and package generation
+do not establish those results or ISO boot acceptance. OnlyShowIn/NotShowIn/
+TryExec and terminal Exec compatibility remain the upstream limitations recorded
+in docs/start-menu-installed-apps.md.

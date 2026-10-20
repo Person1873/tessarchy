@@ -168,7 +168,7 @@ after the last assigned ID; preserve existing IDs when reorganizing sections.
 
 | Task ID | Status | Owner | Branch / PR | Next action or evidence |
 | --- | --- | --- | --- | --- |
-| T77 | In progress | Codex | PR #58 | Complete installed-app inventory and categorized Start implemented; native update integration and Qt/VM acceptance pending |
+| T77 | Review | Codex | PR #58 | Full app inventory and categorized Start; Ubuntu/Arch checks, native desktop-entry updates, 67 Qt results and packages passed; visual VM acceptance pending |
 | T73 | Done | Codex | review/audit-2026-10-19 | PR #52 merged; small PRs integrated, shell/site defects fixed, CI and live Pages verified |
 | T74 | Done | Codex | PR #53 | Installer preflight safeguards merged into the feature branch; full installer integration and installed-disk acceptance remain open |
 | T76 | Done | Codex | PR #55 | All 21 captures refreshed; public image/ZIP hashes and deployed package repository verified; shell/session revisions raised for installed updates |
