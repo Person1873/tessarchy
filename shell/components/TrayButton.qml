@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 Button {
     id: control
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     property bool selected: false
     property int slotWidth: 48
     Layout.minimumWidth: slotWidth
@@ -17,9 +17,9 @@ Button {
     display: AbstractButton.IconOnly
     icon.width: 18
     icon.height: 18
-    icon.color: "#d0f3e9"
+    icon.color: Theme.textSecondary
     background: Rectangle {
-        radius: 10
+        radius: Theme.radius("card", 10, height)
         color: control.down ? Qt.alpha(control.accentColor, 0.3)
                            : control.selected ? Qt.alpha(control.accentColor, 0.15) : "transparent"
     }

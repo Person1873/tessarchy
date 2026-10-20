@@ -328,7 +328,7 @@ ShellRoot {
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottomMargin: panel.expanded ? 0 : surface.bar.gap
-                    width: surface.isPhone && panel.page === "windows" ? parent.width : panel.expanded ? expandedContent.width : parent.width
+                    width: surface.isPhone && panel.page === "windows" ? parent.width : panel.expanded ? Math.min(parent.width, expandedContent.width + pageColumn.anchors.leftMargin + pageColumn.anchors.rightMargin) : parent.width
                     radius: panel.expanded && panel.page === "windows" ? 0 : Theme.radius("card", panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26), height)
                     color: panel.expanded ? (panel.page === "windows" ? Theme.switcherGlass : Theme.glassStrong) : Theme.bar(shellPreferences.barOpacity)
                     border.width: surface.isPhone && panel.page === "windows" ? 0 : Theme.borderWidth(1)
@@ -1207,7 +1207,7 @@ ShellRoot {
                     height: 48
                     text: "Collapse quick controls"
                     background: Item {}
-                    contentItem: Item { Rectangle { anchors.centerIn: parent; width: 40; height: 4; radius: 2; color: root.accentColor } }
+                    contentItem: Item { Rectangle { anchors.centerIn: parent; width: 40; height: 4; radius: Theme.radius("card", 2, height); color: root.accentColor } }
                     onClicked: statusBar.drawerOpen = false
                     DragHandler {
                         target: null
@@ -1281,8 +1281,8 @@ ShellRoot {
                         topLeftRadius: parent.topLeftRadius
                         topRightRadius: parent.topRightRadius
                         gradient: Gradient {
-                            GradientStop { position: 0.0; color: Qt.rgba(0.16, 0.30, 0.62, 0.55) }
-                            GradientStop { position: 1.0; color: Qt.rgba(0.10, 0.18, 0.40, 0.12) }
+                            GradientStop { position: 0.0; color: Theme.startHeaderTop }
+                            GradientStop { position: 1.0; color: Theme.startHeaderBottom }
                         }
                     }
                     ColumnLayout {
@@ -1395,7 +1395,7 @@ ShellRoot {
                 }
                 Rectangle {
                     anchors.fill: parent
-                    color: Qt.rgba(0.016, 0.05, 0.1, shellPreferences.wallpaperDim)
+                    color: Qt.alpha(Theme.darkerBackground, shellPreferences.wallpaperDim)
                 }
                 Column {
                     visible: !panel.expanded

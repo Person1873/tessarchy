@@ -1585,7 +1585,7 @@ esac
         repo = self.home / 'source'
         (repo / 'scripts').mkdir(parents=True)
         import shutil
-        for directory in ('shell', 'session', 'iso', 'docs'):
+        for directory in ('shell', 'session', 'iso', 'docs', 'themes', 'portal'):
             shutil.copytree(ROOT / directory, repo / directory)
         shutil.copy2(ROOT / 'scripts/stage-iso.sh', repo / 'scripts')
         shutil.copy2(ROOT / 'scripts/export-boot-assets.py', repo / 'scripts')

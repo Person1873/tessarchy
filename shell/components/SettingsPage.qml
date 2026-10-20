@@ -332,7 +332,7 @@ ColumnLayout {
     }
     Text {
         text: "Phone and Tablet. Gestures: swipe up from the bottom edge for Home, swipe up and hold for Recents, swipe in from the left or right edge for Back. Buttons puts Back, Home and Recents in the dock."
-        color: "#8da7b9"
+        color: Theme.textMuted
         font.pixelSize: 12
         Layout.fillWidth: true
         wrapMode: Text.WordWrap

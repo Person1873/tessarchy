@@ -74,6 +74,7 @@ find "$airoot/usr/share/tessarchy/shell" -type f \( -name '*.pyc' -o -name '*.py
 find "$airoot/usr/share/tessarchy/shell" -depth -type d -name __pycache__ -empty -delete
 cp -R -- "$root/docs" "$airoot/usr/share/tessarchy/"
 cp -- "$root/session/hyprland.lua" "$root/session/window-controls.lua" "$root/session/hypridle.conf" "$airoot/usr/share/tessarchy/session/"
+cp -R -- "$root/session/osk" "$airoot/usr/share/tessarchy/session/"
 install -m755 "$root/session/tessarchy-install" "$root/session/tessarchy-install-ui" "$airoot/usr/bin/"
 install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessarchy-theme" "$root/session/tessarchy-run" "$root/session/tessera-screenshot" "$root/session/tessera-brightness" "$root/session/tessera-nightlight" "$root/session/tessera-rotate" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"
 install -m755 "$root/session/tessarchy-update" "$root/session/tessera-update-notify" "$airoot/usr/bin/"
@@ -170,6 +171,6 @@ ln -sf ../tessarchy-update-notify.timer \
     "$airoot/home/tess/.config/systemd/user/timers.target.wants/tessarchy-update-notify.timer"
 # Keep iso_version in the profile and /etc/tessarchy/version identical.
 sed -i "s|^iso_version=.*|iso_version=\"$release_version\"|" "$profile/profiledef.sh"
-printf '\n  \033[1;36mTESSARCHY\033[0m live image — nothing is saved, and the Tessera session starts on tty1 as "tess".\n  Copy it onto a disk with \033[1;36mtessarchy-install\033[0m. Root rescue login stays on this console.\n\n' > "$airoot/etc/issue"
+printf '%b' '\n  \033[1;36mTESSARCHY\033[0m live image — nothing is saved, and the Tessera session starts on tty1 as "tess".\n  Copy it onto a disk with \033[1;36mtessarchy-install\033[0m. Root rescue login stays on this console.\n\n' > "$airoot/etc/issue"
 echo "Profile staged: $profile"
 echo "Review it, then run ./scripts/build-iso.sh"

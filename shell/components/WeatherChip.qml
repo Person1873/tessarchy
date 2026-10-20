@@ -15,7 +15,7 @@ RowLayout {
     Text {
         Layout.alignment: Qt.AlignVCenter
         text: Math.round(chip.conditions.temperature || 0) + (chip.conditions.unit || "")
-        color: "#e2edf1"
+        color: Theme.textSecondary
         font.pixelSize: 12
         Accessible.name: (chip.conditions.description || "Weather") + ", " + text
             + (chip.conditions.stale ? ", last observation" : "")

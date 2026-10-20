@@ -101,7 +101,7 @@ RowLayout {
             Text {
                 visible: control.showBatteryText
                 text: control.batteryPresent ? Math.round(control.batteryPercent * 100) + "%" : "—"
-                color: control.compact ? "#d0f3e9" : Theme.accent
+                color: control.compact ? Theme.textSecondary : Theme.accent
                 font.pixelSize: control.compact ? 10 : 11
                 Accessible.name: control.batteryPresent ? "Battery " + text : "Battery status unavailable"
             }

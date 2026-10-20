@@ -159,7 +159,7 @@ PanelWindow {
             placeholderText: "File name"
             placeholderTextColor: Theme.textMuted
             background: Rectangle {
-                radius: 12
+                radius: Theme.radius("card", 12, height)
                 color: Theme.surface
                 border.color: nameField.activeFocus ? Theme.accent : Theme.selection
             }
@@ -208,7 +208,7 @@ PanelWindow {
                 focusPolicy: Qt.NoFocus
                 background: Rectangle {
                     color: row.down ? Qt.alpha(Theme.accent, 0.28) : row.chosen ? Qt.alpha(Theme.accent, 0.18) : "transparent"
-                    radius: 10
+                    radius: Theme.radius("card", 10, height)
                 }
                 contentItem: RowLayout {
                     spacing: 12

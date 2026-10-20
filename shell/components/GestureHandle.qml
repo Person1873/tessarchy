@@ -5,7 +5,7 @@ import QtQuick
 Rectangle {
     id: handle
     property bool shown: true
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     property bool reducedMotion: false
     // 0-1 swipe progress; the pill rises with the finger, then settles.
     property real progress: 0

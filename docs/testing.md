@@ -2289,3 +2289,16 @@ photo/audio selection. This PR's `FilePicker.qml` is a portal-backed app dialog
 with save, folder and multi-file handling. Keep both integrations for now;
 decide whether to share their navigation/list UI in a follow-up after aligning
 their backend interfaces. Do not replace either picker merely by renaming it.
+
+## T-cube Super key (2026-10-20)
+
+Added a real Mod4 modifier to US standard/terminal layouts in both keyboard
+shapes. The key uses the existing Tessarchy T-cube SVG through a private GTK
+icon theme. Terminal layouts keep Control and Alt in four full-height rows.
+The private XDG data directory leaves host and other session keyboards unchanged.
+All four layouts passed the installed Squeekboard layout parser in the guest.
+At 390×844 scale 1, actual QMP touches on the T-cube and Enter opened one new
+Foot window through Hyprland's Super+Return binding. Inspected the rendered
+keyboard screenshot; its four rows retain the established minimum key height.
+Local evidence: `build/vm-test-20261020/osk-super-latched.png` and
+`osk-super-proof.png` in the development workspace.
