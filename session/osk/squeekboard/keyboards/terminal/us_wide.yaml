@@ -15,24 +15,86 @@ views:
         - "q w e r t y u i o p"
         - "a s d f g h j k l"
         - "show_upper z x c v b n m BackSpace"
-        - "show_numbers Ctrl Alt Super space . Return"
+        - "show_numbers Ctrl Alt Super space show_controls Return"
     upper:
         - "Q W E R T Y U I O P"
         - "A S D F G H J K L"
         - "show_upper Z X C V B N M BackSpace"
-        - "show_numbers Ctrl Alt Super space . Return"
+        - "show_numbers Ctrl Alt Super space show_controls Return"
     numbers:
         - "1 2 3 4 5 6 7 8 9 0"
         - "@ # $ % & - _ + ( )"
         - "show_symbols , \" ' : ; ! ? BackSpace"
-        - "show_letters Ctrl Alt Super space . Return"
+        - "show_letters Ctrl Alt Super space show_controls Return"
     symbols:
         - "~ ` | · √ π τ ÷ × ¶"
         - "© ® £ € ¥ ^ ° * { }"
         - "show_numbers_from_symbols \\ / < > = [ ] BackSpace"
-        - "show_letters Ctrl Alt Super space . Return"
+        - "show_letters Ctrl Alt Super space show_controls Return"
+
+    controls:
+        - "Esc Tab Ctrl Alt Super Shift"
+        - "Home Up End PageUp"
+        - "Left Down Right PageDown"
+        - "show_letters show_functions Insert Del"
+    functions:
+        - "F1 F2 F3 F4 F5 F6"
+        - "F7 F8 F9 F10 F11 F12"
+        - "Pause Menu Break Ctrl Alt Super"
+        - "show_letters show_controls space Return"
 
 buttons:
+    show_controls:
+        action: { set_view: "controls" }
+        label: "Fn"
+        outline: "special"
+    show_functions:
+        action: { set_view: "functions" }
+        label: "F…"
+        outline: "special"
+    Shift:
+        modifier: "Shift"
+        label: "⇧"
+        outline: "special"
+    Esc:
+        keysym: "Escape"
+        outline: "special"
+    Tab:
+        keysym: "Tab"
+        outline: "special"
+    Home:
+        keysym: "Home"
+    End:
+        keysym: "End"
+    PageUp:
+        keysym: "Page_Up"
+        label: "Pg↑"
+    PageDown:
+        keysym: "Page_Down"
+        label: "Pg↓"
+    Up:
+        keysym: "Up"
+        label: "↑"
+    Down:
+        keysym: "Down"
+        label: "↓"
+    Left:
+        keysym: "Left"
+        label: "←"
+    Right:
+        keysym: "Right"
+        label: "→"
+    Insert:
+        keysym: "Insert"
+        label: "Ins"
+    Del:
+        keysym: "Delete"
+    Pause:
+        keysym: "Pause"
+    Menu:
+        keysym: "Menu"
+    Break:
+        keysym: "Break"
     Ctrl:
         modifier: "Control"
         label: "Ctrl"

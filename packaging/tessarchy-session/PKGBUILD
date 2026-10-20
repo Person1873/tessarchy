@@ -3,7 +3,7 @@ pkgver=0.1.0
 pkgrel=4
 pkgdesc='Tessarchy prototype Hyprland session'
 arch=('any')
-license=('MIT')
+license=('MIT' 'GPL-3.0-or-later')
 depends=('tessera-shell=0.1.0' 'hyprland>=0.56' 'hypridle' 'dbus' 'firefox' 'foot' 'ttf-dejavu' 'grim' 'libnotify')
 optdepends=('squeekboard: on-screen keyboard for touch text input'
             'brightnessctl: screen backlight control' 'hyprsunset: night light'

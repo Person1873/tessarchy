@@ -971,7 +971,7 @@ assert(#commands == 4, "unexpected extra autostart commands")
     def test_export_vm_source_keeps_existing_snapshot_idempotent(self):
         repo = self.home / 'source'
         self.copy_repo(repo, ('shell', 'session', 'scripts', 'packaging', 'iso',
-                              'docs', 'tests', 'assets', 'website'))
+                              'docs', 'tests', 'assets', 'website', 'themes', 'portal'))
         share = repo / 'build/vm-share/tessarchy'
         def run():
             return subprocess.run([str(repo / 'scripts/export-vm-source.sh')], env=self.env,
