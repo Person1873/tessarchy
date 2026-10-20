@@ -67,7 +67,7 @@ ShellRoot {
         function accept(): void { root.switcherCommand("accept"); }
         function cancel(): void { root.switcherCommand("cancel"); }
     }
-    readonly property color accentColor: shellPreferences.accent === "iris" ? "#c6b7ff" : shellPreferences.accent === "ice" ? "#99d7ff" : Theme.accent
+    readonly property color accentColor: Theme.accent
     Settings {
         id: shellPreferences
         location: "file://" + (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/tessarchy/shell.ini"
@@ -95,6 +95,68 @@ ShellRoot {
     WeatherBackend { id: weatherBackend }
     readonly property var bluetoothAdapter: Bluetooth.defaultAdapter
     // Signal strength remains unavailable until a real connection backend is added.
+    // System theme: tessarchy-theme stages an Omarchy-format colors.toml (and
+    // optional wallpaper) here; the keyboard and apps render from the same file.
+    readonly property string themeDir: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/tessarchy/theme"
+    property string themeName: ""
+    property string themeBackground: ""
+    property var themes: []
+    function setTheme(name) {
+        themeSetter.command = ["tessarchy-theme", "set", name];
+        themeSetter.running = true;
+    }
+    FileView {
+        id: themeColors
+        path: root.themeDir + "/colors.toml"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            Theme.load(text());
+            themeNameFile.reload();
+        }
+    }
+    FileView {
+        id: themeNameFile
+        path: root.themeDir + "/name"
+        printErrors: false
+        onLoaded: {
+            root.themeName = text().trim();
+            themeWallpaperFile.reload();
+        }
+    }
+    FileView {
+        id: themeWallpaperFile
+        path: root.themeDir + "/wallpaper"
+        printErrors: false
+        onLoaded: {
+            const path = text().trim();
+            root.themeBackground = path.length > 0 ? "file://" + path : "";
+        }
+    }
+    Process {
+        id: themeSetter
+        onRunningChanged: if (!running)
+            themeColors.reload()
+    }
+    Process {
+        id: themeList
+        command: ["tessarchy-theme", "list"]
+        stdout: StdioCollector {
+            onStreamFinished: root.themes = text.split("\n").filter(line => line.length > 0).map(line => {
+                const field = line.split("\t");
+                return {
+                    name: field[0],
+                    mode: field[1],
+                    background: field[2],
+                    foreground: field[3],
+                    accent: field[4],
+                    preview: field[5] || ""
+                };
+            })
+        }
+    }
+    // Bind these when wireless/modem integrations land. Never invent a signal.
     property real wifiStrength: -1
     readonly property real cellularStrength: communications.state.cellular.signal === undefined ? -1 : communications.state.cellular.signal / 100
     // squeekboard via tessarchy-osk; it also appears by itself for text fields.
@@ -323,6 +385,7 @@ ShellRoot {
                     }
                 }
                 ColumnLayout {
+                    id: pageColumn
                     anchors.fill: parent
                     // Collapsed, the rows sit bar.inset inside the frame on both sides.
                     anchors.topMargin: panel.expanded ? surface.bar.pageTop : surface.bar.inset
@@ -350,6 +413,14 @@ ShellRoot {
                             font.bold: true
                             Layout.fillWidth: true
                             elide: Text.ElideRight
+                        }
+                        // Marks the scroll edge once content has moved under the heading.
+                        Rectangle {
+                            visible: pageScroll.visible
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 1
+                            color: Qt.alpha(root.accentColor, 0.25)
+                            opacity: pageScroll.ScrollBar.vertical.position > 0 ? 1 : 0
                         }
                         AppSwitcher {
                             id: switcher
@@ -381,6 +452,7 @@ ShellRoot {
                             onCloseRequested: target => { if (target) target.close(); }
                         }
                         ScrollView {
+                            id: pageScroll
                             visible: panel.page !== "windows"
                             Layout.fillWidth: true
                             Layout.fillHeight: true
@@ -474,12 +546,16 @@ ShellRoot {
                                 Loader {
                                     visible: active
                                     active: panel.page === "settings"
+                                    onActiveChanged: if (active) themeList.running = true
                                     Layout.fillWidth: true
                                     sourceComponent: SettingsPage {
                                         backend: communications
                                         onCellularRequested: panel.page = "cellular"
                                         onSoundsRequested: panel.page = "sounds"
                                         preferences: shellPreferences
+                                        themes: root.themes
+                                        currentTheme: root.themeName
+                                        onThemeRequested: name => root.setTheme(name)
                                         activeMode: Policy.title(surface.mode)
                                         displayWidth: surface.modelData.width
                                         displayHeight: surface.modelData.height
@@ -496,6 +572,9 @@ ShellRoot {
                                     sourceComponent: NotificationCenter {
                                         server: notificationServer
                                         preferences: shellPreferences
+                                        themes: root.themes
+                                        currentTheme: root.themeName
+                                        onThemeRequested: name => root.setTheme(name)
                                         accentColor: root.accentColor
                                         onClearAllRequested: root.dismissAllNotifications()
                                     }
@@ -553,6 +632,14 @@ ShellRoot {
                                     }
                                 }
                             }
+                        }
+                        // Marks the scroll edge above the dock while more content follows.
+                        Rectangle {
+                            visible: pageScroll.visible
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 1
+                            color: Qt.alpha(root.accentColor, 0.25)
+                            opacity: pageScroll.ScrollBar.vertical.size < 1 && pageScroll.ScrollBar.vertical.position + pageScroll.ScrollBar.vertical.size < 0.999 ? 1 : 0
                         }
                     }
                     GridLayout {
@@ -1071,6 +1158,9 @@ ShellRoot {
                         width: parent.width
                         radios: radioBackend
                         preferences: shellPreferences
+                                        themes: root.themes
+                                        currentTheme: root.themeName
+                                        onThemeRequested: name => root.setTheme(name)
                         activeMode: Policy.title(surface.mode)
                         date: clock.date
                         use24Hour: shellPreferences.use24Hour
@@ -1278,7 +1368,7 @@ ShellRoot {
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                 Image {
                     anchors.fill: parent
-                    source: "artwork/aurora-fold.png"
+                    source: root.themeBackground || "artwork/aurora-fold.png"
                     fillMode: Image.PreserveAspectCrop
                 }
                 Rectangle {

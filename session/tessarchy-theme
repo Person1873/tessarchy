@@ -2,7 +2,8 @@
 # Tessarchy system theme. A theme is a directory holding an Omarchy-format
 # colors.toml (optionally backgrounds/), so Omarchy themes work unchanged.
 # `set` stages one under $XDG_STATE_HOME/tessarchy/theme and renders what the
-# shell, the on-screen keyboard, foot and GTK apps read from it.
+# shell, the on-screen keyboard, foot and GTK apps read from it. Theme files
+# are only read as data; a theme's hyprland.lua or chromium.theme is ignored.
 set -euo pipefail
 usage() { echo "Usage: $0 list | current | set <name> | apply" >&2; exit 2; }
 [[ $# -ge 1 ]] || usage
@@ -54,8 +55,12 @@ write_atomic() {
 }
 
 # Read only the allowlisted surface table; never execute theme-provided text.
+# Window borders stay off (width 0) unless the theme asks for them.
 render_surface() {
-    local file=$1 key value section='' rounding=18 enabled=true size=4 passes=2
+    local file=$1 key value section='' rounding=18 enabled=true size=4 passes=2 border=0
+    local active inactive
+    active=$(get accent blue foreground)
+    inactive=$(get selection lighter_background muted background)
     if [[ -f $file ]]; then
         while IFS= read -r line || [[ -n $line ]]; do
             if [[ $line =~ ^[[:space:]]*\[([A-Za-z0-9_]+)\][[:space:]]*$ ]]; then
@@ -63,6 +68,11 @@ render_surface() {
                 continue
             fi
             [[ $section == surface ]] || continue
+            if [[ $line =~ ^[[:space:]]*(window_border_active|window_border_inactive)[[:space:]]*=[[:space:]]*\"#([0-9A-Fa-f]{6})\"[[:space:]]*(#.*)?$ ]]; then
+                value=${BASH_REMATCH[2],,}
+                if [[ ${BASH_REMATCH[1]} == window_border_active ]]; then active=$value; else inactive=$value; fi
+                continue
+            fi
             [[ $line =~ ^[[:space:]]*([a-z_]+)[[:space:]]*=[[:space:]]*([^[:space:]#]+)[[:space:]]*(#.*)?$ ]] || continue
             key=${BASH_REMATCH[1]} value=${BASH_REMATCH[2]}
             case $key in
@@ -70,11 +80,43 @@ render_surface() {
                 blur_enabled) { [[ $value == true || $value == false ]] && enabled=$value; } || true ;;
                 blur_size) { [[ $value =~ ^[1-9][0-9]?$ ]] && (( value <= 16 )) && size=$value; } || true ;;
                 blur_passes) { [[ $value =~ ^[1-9]$ ]] && (( value <= 4 )) && passes=$value; } || true ;;
+                # Whole pixels; larger widths clamp to 4.
+                window_border) { [[ $value =~ ^(0|[1-9][0-9]?)$ ]] && border=$(( value > 4 ? 4 : value )); } || true ;;
             esac
         done < "$file"
     fi
-    printf 'return { window_rounding = %s, blur_enabled = %s, blur_size = %s, blur_passes = %s }\n' \
-        "$rounding" "$enabled" "$size" "$passes" | write_atomic "$current/surface.lua"
+    printf 'return { window_rounding = %s, blur_enabled = %s, blur_size = %s, blur_passes = %s, window_border = %s, window_border_active = "rgb(%s)", window_border_inactive = "rgb(%s)" }\n' \
+        "$rounding" "$enabled" "$size" "$passes" "$border" "$active" "$inactive" | write_atomic "$current/surface.lua"
+}
+
+# Icon theme named by the theme's icons.theme (Omarchy format): one name, used
+# only when it is a plain directory name installed in an XDG icons directory.
+icon_theme() {
+    local file=$1/icons.theme name dir
+    [[ -f $file ]] || return 1
+    IFS= read -r name < "$file" || [[ -n $name ]] || return 1
+    [[ $name =~ ^[[:space:]]*([A-Za-z0-9][A-Za-z0-9._-]{0,63})[[:space:]]*$ ]] || return 1
+    name=${BASH_REMATCH[1]}
+    local dirs=("${XDG_DATA_HOME:-$HOME/.local/share}/icons" "$HOME/.icons")
+    local data
+    IFS=: read -ra data <<< "${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+    for dir in "${data[@]}"; do
+        if [[ -n $dir ]]; then dirs+=("$dir/icons"); fi
+    done
+    for dir in "${dirs[@]}"; do
+        if [[ -f $dir/$name/index.theme ]]; then echo "$name"; return 0; fi
+    done
+    return 1
+}
+
+# GTK 3/4 on Wayland read the icon theme from GSettings; without a valid,
+# installed icons.theme the current icon theme is left as it is.
+apply_icons() {
+    local name
+    name=$(icon_theme "$1") || { rm -f -- "$current/icons"; return 0; }
+    printf '%s\n' "$name" | write_atomic "$current/icons"
+    [[ -n ${DBUS_SESSION_BUS_ADDRESS:-} ]] && command -v gsettings >/dev/null || return 0
+    gsettings set org.gnome.desktop.interface icon-theme "$name" || true
 }
 
 render() {
@@ -98,6 +140,7 @@ render() {
 
     mkdir -p -- "$current" "$state/osk/gtk-3.0"
     render_surface "$dir/shell.toml"
+    apply_icons "$dir"
     printf '%s\n' "$mode" | write_atomic "$current/mode"
 
     # foot: the user's own config first, then the palette on top of it.
@@ -203,7 +246,9 @@ list)
             [[ -z ${seen[$name]:-} ]] || continue
             seen[$name]=1
             load_palette "$theme" 2>/dev/null || continue
-            printf '%s\t%s\t#%s\t#%s\t#%s\n' "$name" "$mode" "$(get background)" "$(get foreground)" "$(get accent blue foreground)"
+            preview=""
+            if [[ -f $theme/preview.png ]]; then preview=$theme/preview.png; fi
+            printf '%s\t%s\t#%s\t#%s\t#%s\t%s\n' "$name" "$mode" "$(get background)" "$(get foreground)" "$(get accent blue foreground)" "$preview"
         done
     done
     ;;
