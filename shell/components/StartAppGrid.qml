@@ -40,7 +40,7 @@ GridLayout {
         if (first) {
             first.forceActiveFocus();
             grid.tileFocused(first);
-        }
+        } else grid.forceActiveFocus();
     }
     onApplicationsChanged: if (ready) refresh()
     Component.onCompleted: { ready = true; refresh(); }

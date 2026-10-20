@@ -6,6 +6,7 @@ TestCase {
     id: testCase
     name: "StartApplications"
     when: windowShown
+    visible: true
     width: 440
     height: 500
     Component { id: factory; StartAppGrid { width: 424 } }

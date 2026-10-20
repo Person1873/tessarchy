@@ -11,6 +11,12 @@ TouchButton {
     Layout.preferredWidth: 1
     implicitHeight: 84
     focusPolicy: Qt.StrongFocus
+    function activateFromKeyboard(event) {
+        if (enabled && !event.isAutoRepeat) clicked();
+        event.accepted = true;
+    }
+    Keys.onReturnPressed: event => control.activateFromKeyboard(event)
+    Keys.onEnterPressed: event => control.activateFromKeyboard(event)
     background: Rectangle {
         radius: 12
         color: "transparent"
