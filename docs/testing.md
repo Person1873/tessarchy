@@ -2019,3 +2019,12 @@ Quickshell session, Flatpak/Snap export discovery, directory-watcher edge cases,
 physical input or multi-output acceptance. Source changes do not establish those
 results. OnlyShowIn/NotShowIn/TryExec and terminal Exec compatibility remain the
 upstream limitations documented in docs/start-menu-installed-apps.md.
+
+
+CI follow-up: commit 6313514 fixes Enter/Return activation and the Qt 6.4
+Loader context issue caught by the first run. Ubuntu source checks passed on
+that commit. Arch source checks passed on the preceding Enter-fix commit; current
+Arch results should be checked on the final PR head. The native inventory test
+added next creates, atomically replaces, hides and removes real desktop entries
+under isolated XDG paths; it is skipped locally because Quickshell is absent.
+This test verifies filesystem/model propagation rather than installing packages.
