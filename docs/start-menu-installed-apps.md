@@ -69,6 +69,49 @@ The code-level exclusion above is confirmed by inspection of current main.
    additions/removals and refresh lifecycle; record actual VM/device results in
    `docs/testing.md`.
 
+## Quickshell reuse audit
+
+Source inspected: Quickshell tags v0.3.1 and v0.3.2,
+[src/core/desktopentry.cpp](https://github.com/quickshell-mirror/quickshell/blob/v0.3.2/src/core/desktopentry.cpp),
+[desktopentry.hpp](https://github.com/quickshell-mirror/quickshell/blob/v0.3.1/src/core/desktopentry.hpp),
+and [desktopentrymonitor.cpp](https://github.com/quickshell-mirror/quickshell/blob/v0.3.2/src/core/desktopentrymonitor.cpp).
+This is source inspection, not runtime acceptance.
+
+| Requirement | Existing support | Tessarchy work |
+| --- | --- | --- |
+| Complete installed-app inventory | DesktopEntries.applications supplies discovered application entries | Remove the role whitelist/one-per-role restriction; keep a nonempty-command guard |
+| Curated versus All Apps | Inventory is not role-limited | Use the full inventory in All Apps; no need to add a separate curated section |
+| Automatic updates | Directory watcher, 100 ms debounce, background rescan and applicationsChanged | Bind the organized menu to model and metadata changes; no extra scanner or polling |
+| Install/remove/name/icon changes | Updates existing entry properties and diffs additions/removals | Verify menu propagation, re-sorting/regrouping, and stale activation handling |
+| Categories and alphabetical order | Provides localized names, category lists and keywords | Choose category mapping/order, sort by name with stable ID tie-break, provide Other |
+| Reachability and presentation | QML controls exist; current Start already uses ScrollView, grid and focusable tiles | Reuse current controls; adapt category layout and verify overflow, focus and target sizes |
+| Visibility and duplicate IDs | Hidden masking, NoDisplay filtering, ID precedence across XDG directories | Preserve upstream inventory; do not deduplicate by display name. OnlyShowIn, NotShowIn and TryExec are not enforced or exposed as dedicated properties in these versions; defer that extra compliance work from the core fix |
+| System/user/Flatpak/Snap locations | Reads XDG_DATA_HOME and XDG_DATA_DIRS, with standard defaults | Verify session export directories; correct session configuration only if missing, without a parallel discovery backend |
+| Launching and icons | Parsed command, working directory, execute(), icon metadata and icon lookup | Keep existing execute() path and tile styling; verify missing/broken icon fallback and stale selection |
+| Efficient updates | Rescans run in a thread pool; overlapping requests are queued and the model is diffed | Avoid unnecessary derived-menu rebuilds; preserve focus and scroll where practical |
+
+Important limits to test rather than duplicate preemptively:
+
+- The watcher tracks existing application directories and their immediate
+  subdirectories plus parents at startup. A missing directory at startup is
+  skipped; later-created directories and deeper nesting need explicit tests.
+- It observes directory changes, not individual file content changes. Installation
+  through new/replaced files and in-place metadata edits are distinct tests.
+- XDG search paths are cached for the process. Newly introduced export paths may
+  require session environment setup and a restart; existing configured paths do
+  not need a custom Flatpak/Snap scanner.
+- execute() ignores Terminal=true handling and Exec field-code expansion in these
+  versions. Do not implement a replacement command parser as part of this
+  missing-graphical-app fix; record any affected application separately.
+- Metadata updates can occur without model membership changing. Derived category
+  and sort views must react to name/category changes, not just list length.
+
+Implementation order: remove the restrictive filter and sort the full inventory;
+add category headings using existing tiles; verify native install/remove/metadata
+updates and focus/scroll behavior. Add a compatibility workaround only for a
+reproduced gap required by this scope. Do not reimplement the desktop-entry parser,
+watcher, scanner, ID precedence, or process-launching backend.
+
 ## Scope and status
 
 This PR records the issue, requested behavior and acceptance plan. It does not
