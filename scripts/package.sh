@@ -10,7 +10,7 @@ source_archive="$root/dist/tessarchy-$version.tar.gz"
 # (packaging/tessarchy-update installs files out of iso/airootfs).
 tar --exclude=__pycache__ --exclude='*.pyc' --exclude='*.pyo' --exclude='*.ppm' \
     -czf "$source_archive" -C "$root" \
-    shell session docs iso LICENSE packaging \
+    shell session themes portal docs iso LICENSE packaging \
     scripts/export-brand-assets.py scripts/export-boot-assets.py
 # Every directory under packaging/ that has a PKGBUILD is part of the release;
 # adding a package means adding a directory, not editing this list.

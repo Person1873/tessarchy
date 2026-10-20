@@ -35,6 +35,34 @@ The [validation record](docs/testing.md) tracks runtime results for each feature
 Bluetooth pairing currently uses an external manager. The [agent task
 board](AGENT-README.md#claiming-and-extending-tasks) lists the next contributions.
 
+- A top status bar with clock, registered tray icons, battery status when available,
+  and session controls.
+- Automatic Phone/Tablet/Desktop shell layouts with a saved manual override.
+- A persistent navigation bar with 56px touch targets and a compact desktop dock.
+- An original mint-and-navy wallpaper, animated tessellated logo, and responsive
+  tile launcher.
+- Settings for layout mode, system theme, opacity, wallpaper shade, clock, navigation
+  labels, and reduced motion.
+- Translucent bars, Wi-Fi/cellular indicator slots, and optional PipeWire volume
+  controls. Wireless and modem backends remain to be connected.
+- An expandable launcher for Firefox and Foot.
+- One system theme, Omarchy-style: a theme is a directory with an Omarchy
+  `colors.toml` (and optional `backgrounds/`), so Omarchy themes work unchanged.
+  `tessarchy-theme set <name>` (or Settings) restyles the shell, the keyboard,
+  Foot, and GTK dark/light for apps launched through `tessarchy-run`.
+- Optional squeekboard on-screen keyboard: it appears for focused text fields, and
+  a Keyboard navigation button shows or hides it in Phone/Tablet modes.
+- Touch file dialogs (optional `tessarchy-portal` package): on Phone/Tablet, apps'
+  Open/Save dialogs are drawn by Tessera full-screen instead of GTK's dialog,
+  which can't shrink below ~726 px. Portal-aware apps get it directly; GTK3 apps
+  launched through `tessarchy-run` are routed there by a GTK module. Desktop
+  keeps GTK's own dialog.
+- A scrollable window overview with application switching and maximize/restore.
+- Confirmation before closing a window or ending the session.
+- A dedicated Hyprland session, user installation, and reversible tty1 startup.
+- A QEMU development workflow, local Arch package recipes, and an initial
+  archiso staging/build pipeline.
+
 ## Tester download
 
 [Alpha 4 — tablet pilot with today's fixes](https://github.com/thediamondsaint/tessarchy/releases/tag/v0.1.0-alpha.4)

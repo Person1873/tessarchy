@@ -134,6 +134,42 @@ read-only in the guest, but not a security boundary for untrusted guests. Stop
 the VM and remove `build/vm-share` to refresh it; then export again. Changes made
 in the guest copy do not propagate back automatically.
 
+## aarch64 development VM
+
+Phone candidates are ARM, so an emulated aarch64 guest checks the shell and
+packages on that architecture before a device is available. Arch Linux ARM ships
+the same Hyprland 0.56 and Quickshell 0.3 versions as Arch x86_64. On an x86_64
+host QEMU emulates the CPU, so startup and rendering are slow.
+
+Host tools: `qemu-system-aarch64`, `fakeroot`, `bsdtar`, `mke2fs`/`debugfs`
+(e2fsprogs), `curl`, `gpg` and `gpgv`. They can also run in a container that
+mounts the repository at the same path. No root access is required.
+
+```bash
+./scripts/fetch-alarm.sh          # download and verify the Arch Linux ARM root filesystem
+./scripts/build-aarch64-disk.sh   # build vm/aarch64/rootfs.img (16 GiB, sparse)
+./scripts/vm-aarch64.sh run       # boot it; plan prints the command only
+```
+
+`fetch-alarm.sh` fetches the Arch Linux ARM build key by its full fingerprint
+and checks the archive's detached signature. The disk boots QEMU's `virt`
+machine with direct kernel boot; before each run the script copies the kernel
+and initramfs from the disk's `/boot` so guest kernel upgrades take effect.
+The default users are `alarm`/`alarm` and `root`/`root`.
+
+Inside the guest, initialize the keyring and install the same dependencies as
+the x86_64 guest:
+
+```bash
+pacman-key --init && pacman-key --populate archlinuxarm
+pacman -Syu --needed hyprland quickshell firefox foot mesa qt6-declarative qt6-wayland ttf-dejavu python python-gobject ffmpeg sudo
+```
+
+Then mount the source share and run `./scripts/setup-guest.sh` as `alarm`, as for
+the x86_64 guest. `VM_SHARE=1`, `VM_QMP`, `VM_SSH_PORT`, `VM_TOUCH=0`, `VM_RAM`
+(default 4096) and `VM_CPUS` (default 4) work as in `vm.sh`. `VM_DISPLAY`
+accepts `gtk`, `sdl`, `none` or `vnc=ADDRESS:DISPLAY`.
+
 ## Exit and recovery
 
 Tap Session → End session (confirmation). The prototype returns to the local

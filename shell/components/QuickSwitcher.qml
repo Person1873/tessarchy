@@ -12,7 +12,7 @@ FocusScope {
     property var selection: null
     property var iconForWindow: window => ""
     property var titleForWindow: window => (window && window.title) || "Untitled window"
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     property bool reducedMotion: false
     // A commit only happens once per open session, so a duplicate accept from
     // the compositor key binding and the QML key release cannot switch twice.

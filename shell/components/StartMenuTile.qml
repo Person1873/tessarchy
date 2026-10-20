@@ -10,7 +10,7 @@ TouchButton {
     implicitHeight: 84
     focusPolicy: Qt.StrongFocus
     background: Rectangle {
-        radius: 12
+        radius: Theme.radius("tile", 12, height)
         color: "transparent"
         border.width: control.visualFocus ? 1 : 0
         border.color: control.accentColor
@@ -34,7 +34,7 @@ TouchButton {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             maximumLineCount: 1
-            color: "#e8f0ff"
+            color: Theme.tileText
             font.pixelSize: 12
         }
     }

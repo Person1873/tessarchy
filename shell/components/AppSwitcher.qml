@@ -9,7 +9,7 @@ FocusScope {
     id: control
     property var windows: []
     property var activeWindow: null
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     property bool reducedMotion: false
     property bool fillApp: false
     property bool phoneMode: false
@@ -193,7 +193,7 @@ FocusScope {
                     anchors.verticalCenter: parent.verticalCenter
                     text: control.nameForWindow(card.modelData)
                     textFormat: Text.PlainText
-                    color: "#ffffff"
+                    color: Theme.text
                     font.pixelSize: 20
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight
@@ -207,7 +207,7 @@ FocusScope {
                 anchors.verticalCenter: parent.verticalCenter
                 x: control.phoneMode ? 0 : (card.width - width) / 2
                 radius: control.phoneMode ? 36 : 24
-                color: "#0d1622"
+                color: Theme.darkerBackground
                 ScreencopyView {
                     id: preview
                     anchors.fill: parent
@@ -232,7 +232,7 @@ FocusScope {
                         width: parent.width
                         text: card.modelData.title || "Untitled window"
                         textFormat: Text.PlainText
-                        color: "#f2f8ff"
+                        color: Theme.text
                         wrapMode: Text.WrapAnywhere
                         horizontalAlignment: Text.AlignHCenter
                         font.pixelSize: 13
@@ -246,20 +246,20 @@ FocusScope {
                 id: closeButton
                 width: 48
                 height: 48
-                radius: 24
+                radius: Theme.radius("card", 24, height)
                 visible: !control.phoneMode
                 z: 2
                 anchors.top: screen.top
                 anchors.right: screen.right
                 anchors.topMargin: 8
                 anchors.rightMargin: 8
-                color: closeArea.pressed ? "#e6dfe9f6" : closeArea.containsMouse ? "#c2162334" : "#8c0d1622"
+                color: closeArea.pressed ? Qt.alpha(Theme.text, 0.90) : closeArea.containsMouse ? Qt.alpha(Theme.surface, 0.76) : Qt.alpha(Theme.background, 0.55)
                 border.width: 1
-                border.color: closeArea.containsMouse ? "#9fd8ff" : "#4d6b86"
+                border.color: closeArea.containsMouse ? Theme.accent : Theme.muted
                 Text {
                     anchors.centerIn: parent
                     text: "\u00d7"
-                    color: closeArea.containsMouse ? "#0d1622" : "#eaf4ff"
+                    color: closeArea.containsMouse ? Theme.darkerBackground : Theme.text
                     font.pixelSize: 16
                     font.bold: true
                 }
@@ -325,7 +325,7 @@ FocusScope {
             anchors.centerIn: parent
             width: parent.width - 48
             text: control.emptyHint
-            color: "#dfeaf4"
+            color: Theme.textSecondary
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
         }

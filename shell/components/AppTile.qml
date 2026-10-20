@@ -17,7 +17,7 @@ TouchButton {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: 52
                 height: 52
-                radius: 16
+                radius: Theme.radius("card", 16, height)
                 rotation: 0
                 color: Qt.alpha(control.accentColor, control.selected ? 0.4 : 0.18)
                 Image {
@@ -34,7 +34,7 @@ TouchButton {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                color: "#f0f5ff"
+                color: Theme.text
                 font.pixelSize: 13
             }
         }

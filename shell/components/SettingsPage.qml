@@ -12,7 +12,11 @@ ColumnLayout {
     required property string activeMode
     required property int displayWidth
     required property int displayHeight
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
+    // tessarchy-theme list rows: { name, mode, background, foreground, accent, preview }.
+    property var themes: []
+    property string currentTheme: ""
+    signal themeRequested(string name)
     signal endSessionRequested
     signal controlsRequested
     signal replayRequested
@@ -31,7 +35,7 @@ ColumnLayout {
             Layout.fillWidth: true
             Text {
                 text: "TESSARCHY"
-                color: "#f0f5ff"
+                color: Theme.text
                 font {
                     pixelSize: 20
                     bold: true
@@ -40,7 +44,7 @@ ColumnLayout {
             }
             Text {
                 text: "One shell. Every screen."
-                color: "#8da7b9"
+                color: Theme.textMuted
                 font.pixelSize: 13
             }
         }
@@ -56,7 +60,7 @@ ColumnLayout {
     }
     Text {
         text: page.displayWidth + " × " + page.displayHeight + " logical pixels · " + page.activeMode
-        color: "#aabccb"
+        color: Theme.textMuted
         font.pixelSize: 13
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
@@ -105,7 +109,7 @@ ColumnLayout {
     }
     Text {
         text: "Automatic follows the usable display size, including rotation. Override it to keep a layout. New apps fill Phone/Tablet layouts; Desktop starts apps tiled. Existing windows stay in place. Desktop and wide tablets show a workspace strip in the status bar."
-        color: "#8da7b9"
+        color: Theme.textMuted
         font.pixelSize: 13
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
@@ -121,7 +125,7 @@ ColumnLayout {
     }
     Text {
         text: "Super + 1…5 · switch workspace\nSuper + Shift + 1…5 · move window to workspace\nSuper + Q · confirm window close\nSuper + Tab · next window\nSuper + F · maximize · Super + Shift + F · fullscreen\nSuper + Return · terminal · Super + Shift + E · confirm session exit"
-        color: "#aabccb"
+        color: Theme.subtitleText
         font.pixelSize: 13
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
@@ -135,43 +139,131 @@ ColumnLayout {
             letterSpacing: 2
         }
     }
-    RowLayout {
+    Text {
+        text: "Theme · shell, keyboard and apps"
+        color: Theme.textSecondary
+        font.pixelSize: 14
+    }
+    GridLayout {
+        columns: width >= 560 ? 3 : 2
+        columnSpacing: 10
+        rowSpacing: 10
         Layout.fillWidth: true
         Repeater {
-            model: [
-                {
-                    label: "Mint",
-                    value: "mint",
-                    color: "#a9e8d5"
-                },
-                {
-                    label: "Iris",
-                    value: "iris",
-                    color: "#c6b7ff"
-                },
-                {
-                    label: "Ice",
-                    value: "ice",
-                    color: "#99d7ff"
-                }
-            ]
+            model: page.themes
             delegate: TouchButton {
+                id: themeButton
                 required property var modelData
-                text: modelData.label
-                selected: page.preferences.accent === modelData.value
-                accentColor: modelData.color
+                text: modelData.name
+                Accessible.name: "Theme " + modelData.name
+                selected: page.currentTheme === modelData.name
+                accentColor: modelData.accent
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
-                onClicked: {
-                    page.preferences.accent = modelData.value;
-                    page.preferences.sync();
+                // Every card is the same size: a 16:9 thumbnail over a name strip.
+                readonly property int labelHeight: 32
+                readonly property int inset: 6
+                Layout.preferredHeight: Math.min(Math.round(width * 9 / 16), 120) + labelHeight
+                // The theme's preview.png when it ships one; otherwise a mock built from its palette.
+                readonly property bool hasPreview: modelData.preview !== undefined && modelData.preview.length > 0 && previewImage.status !== Image.Error
+                contentItem: Text {
+                    text: themeButton.modelData.name
+                    color: themeButton.modelData.foreground
+                    font.pixelSize: 15
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignBottom
+                    elide: Text.ElideRight
                 }
+                background: Rectangle {
+                    radius: Theme.radius("tile", 12, height)
+                    color: themeButton.modelData.background
+                    border.width: themeButton.selected ? Theme.borderWidth(3) : Theme.borderWidth(1)
+                    border.color: themeButton.selected ? themeButton.modelData.accent : Theme.selection
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: themeButton.inset
+                        anchors.bottomMargin: themeButton.labelHeight
+                        clip: true
+                        Image {
+                            id: previewImage
+                            anchors.fill: parent
+                            visible: themeButton.hasPreview
+                            source: themeButton.modelData.preview ? "file://" + themeButton.modelData.preview : ""
+                            sourceSize.width: 480
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                        }
+                        // Palette mock: status bar, a window with accent text and a dock.
+                        Item {
+                            id: mock
+                            anchors.fill: parent
+                            visible: !themeButton.hasPreview
+                            readonly property color ink: themeButton.modelData.foreground
+                            readonly property color accent: themeButton.modelData.accent
+                            Rectangle {
+                                id: mockBar
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                height: Math.max(4, Math.round(parent.height * 0.1))
+                                radius: height / 2
+                                color: Qt.alpha(mock.ink, 0.14)
+                            }
+                            Rectangle {
+                                id: mockWindow
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: mockBar.bottom
+                                anchors.bottom: mockDock.top
+                                anchors.margins: Math.round(parent.height * 0.08)
+                                radius: Theme.radius("tile", 4, height)
+                                color: Qt.alpha(mock.ink, 0.08)
+                                border.width: Theme.borderWidth(1)
+                                border.color: Qt.alpha(mock.accent, 0.6)
+                                Column {
+                                    anchors.fill: parent
+                                    anchors.margins: Math.round(parent.height * 0.14)
+                                    spacing: Math.max(2, Math.round(parent.height * 0.1))
+                                    Repeater {
+                                        model: [0.55, 0.8, 0.4]
+                                        delegate: Rectangle {
+                                            required property real modelData
+                                            required property int index
+                                            width: parent.width * modelData
+                                            height: Math.max(2, Math.round(mockWindow.height * 0.1))
+                                            radius: height / 2
+                                            color: index === 0 ? mock.accent : Qt.alpha(mock.ink, 0.45)
+                                        }
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                id: mockDock
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.bottom: parent.bottom
+                                width: parent.width * 0.5
+                                height: Math.max(4, Math.round(parent.height * 0.12))
+                                radius: height / 2
+                                color: Qt.alpha(mock.ink, 0.14)
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: parent.height * 0.6
+                                    height: width
+                                    radius: height / 2
+                                    color: mock.accent
+                                }
+                            }
+                        }
+                    }
+                }
+                onClicked: page.themeRequested(modelData.name)
             }
         }
     }
     Text {
         text: "Bar opacity · " + Math.round(page.preferences.barOpacity * 100) + "%"
-        color: "#d0dced"
+        color: Theme.textSecondary
         font.pixelSize: 14
     }
     LevelSlider {
@@ -187,7 +279,7 @@ ColumnLayout {
     }
     Text {
         text: "Wallpaper shade · " + Math.round(page.preferences.wallpaperDim * 100) + "%"
-        color: "#d0dced"
+        color: Theme.textSecondary
         font.pixelSize: 14
     }
     LevelSlider {
@@ -200,6 +292,50 @@ ColumnLayout {
         accentColor: page.accentColor
         Accessible.name: "Wallpaper shade"
         onMoved: page.preferences.wallpaperDim = value
+    }
+    Text {
+        text: "NAVIGATION"
+        color: page.accentColor
+        font {
+            pixelSize: 11
+            bold: true
+            letterSpacing: 2
+        }
+    }
+    RowLayout {
+        Layout.fillWidth: true
+        Repeater {
+            model: [
+                {
+                    label: "Gestures",
+                    value: "gestures"
+                },
+                {
+                    label: "Buttons",
+                    value: "buttons"
+                }
+            ]
+            delegate: TouchButton {
+                required property var modelData
+                text: modelData.label
+                selected: (page.preferences.navigation === "buttons" ? "buttons" : "gestures") === modelData.value
+                accentColor: page.accentColor
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                Accessible.name: "Navigation " + modelData.label + (selected ? ", selected" : "")
+                onClicked: {
+                    page.preferences.navigation = modelData.value;
+                    page.preferences.sync();
+                }
+            }
+        }
+    }
+    Text {
+        text: "Phone and Tablet. Gestures: swipe up from the bottom edge for Home, swipe up and hold for Recents, swipe in from the left or right edge for Back. Buttons puts Back, Home and Recents in the dock."
+        color: Theme.textMuted
+        font.pixelSize: 12
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
     }
     TouchButton {
         text: page.preferences.showLabels ? "Navigation labels · On" : "Navigation labels · Off"
@@ -282,7 +418,7 @@ ColumnLayout {
     }
     Text {
         text: "Muted notifications still collect in the alert center until dismissed. Nothing persists across sessions."
-        color: "#8da7b9"
+        color: Theme.textMuted
         font.pixelSize: 12
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
@@ -311,7 +447,7 @@ ColumnLayout {
     }
     Text {
         text: "Desktop mode only. Floating windows keep their own size and position; tiled windows share the screen in a row."
-        color: "#8da7b9"
+        color: Theme.textMuted
         font.pixelSize: 12
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
@@ -349,8 +485,8 @@ ColumnLayout {
         onClicked: page.endSessionRequested()
     }
     Text {
-        text: "Tessera 0.1 · Experimental Arch session\nInitial text entry requires a physical keyboard."
-        color: "#8da7b9"
+        text: "Tessera 0.1 · Experimental Arch session"
+        color: Theme.textMuted
         font.pixelSize: 12
         Layout.fillWidth: true
         wrapMode: Text.WordWrap

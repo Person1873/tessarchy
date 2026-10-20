@@ -67,7 +67,7 @@ ShellRoot {
         function accept(): void { root.switcherCommand("accept"); }
         function cancel(): void { root.switcherCommand("cancel"); }
     }
-    readonly property color accentColor: shellPreferences.accent === "iris" ? "#c6b7ff" : shellPreferences.accent === "ice" ? "#99d7ff" : "#a9e8d5"
+    readonly property color accentColor: Theme.accent
     Settings {
         id: shellPreferences
         location: "file://" + (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/tessarchy/shell.ini"
@@ -76,6 +76,11 @@ ShellRoot {
         property string accent: "mint"
         property bool reducedMotion: false
         property bool showLabels: false
+        // "gestures" swipes for Back/Home/Recents on Phone and Tablet;
+        // "buttons" keeps them in the dock.
+        property string navigation: "gestures"
+        // The gesture handle pill above the bottom edge.
+        property bool showGestureHandle: true
         property bool use24Hour: true
         property real barOpacity: 0.44
         property real wallpaperDim: 0.12
@@ -90,6 +95,68 @@ ShellRoot {
     WeatherBackend { id: weatherBackend }
     readonly property var bluetoothAdapter: Bluetooth.defaultAdapter
     // Signal strength remains unavailable until a real connection backend is added.
+    // System theme: tessarchy-theme stages an Omarchy-format colors.toml (and
+    // optional wallpaper) here; the keyboard and apps render from the same file.
+    readonly property string themeDir: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/tessarchy/theme"
+    property string themeName: ""
+    property string themeBackground: ""
+    property var themes: []
+    function setTheme(name) {
+        themeSetter.command = ["tessarchy-theme", "set", name];
+        themeSetter.running = true;
+    }
+    FileView {
+        id: themeColors
+        path: root.themeDir + "/colors.toml"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            Theme.load(text());
+            themeNameFile.reload();
+        }
+    }
+    FileView {
+        id: themeNameFile
+        path: root.themeDir + "/name"
+        printErrors: false
+        onLoaded: {
+            root.themeName = text().trim();
+            themeWallpaperFile.reload();
+        }
+    }
+    FileView {
+        id: themeWallpaperFile
+        path: root.themeDir + "/wallpaper"
+        printErrors: false
+        onLoaded: {
+            const path = text().trim();
+            root.themeBackground = path.length > 0 ? "file://" + path : "";
+        }
+    }
+    Process {
+        id: themeSetter
+        onRunningChanged: if (!running)
+            themeColors.reload()
+    }
+    Process {
+        id: themeList
+        command: ["tessarchy-theme", "list"]
+        stdout: StdioCollector {
+            onStreamFinished: root.themes = text.split("\n").filter(line => line.length > 0).map(line => {
+                const field = line.split("\t");
+                return {
+                    name: field[0],
+                    mode: field[1],
+                    background: field[2],
+                    foreground: field[3],
+                    accent: field[4],
+                    preview: field[5] || ""
+                };
+            })
+        }
+    }
+    // Bind these when wireless/modem integrations land. Never invent a signal.
     property real wifiStrength: -1
     readonly property real cellularStrength: communications.state.cellular.signal === undefined ? -1 : communications.state.cellular.signal / 100
     // squeekboard via tessarchy-osk; it also appears by itself for text fields.
@@ -152,6 +219,28 @@ ShellRoot {
             root.queuePopup(notification);
         }
     }
+    // App file dialogs on Phone/Tablet (tessarchy-portal asks; see FilePicker).
+    readonly property var focusedScreen: Quickshell.screens.find(s => Hyprland.focusedMonitor && s.name === Hyprland.focusedMonitor.name) ?? Quickshell.screens[0]
+    FilePicker {
+        id: filePicker
+        screen: root.focusedScreen
+    }
+    IpcHandler {
+        target: "picker"
+        // "ok": the picker will answer on fifo; anything else: use GTK's dialog.
+        function pick(fifo: string, mode: string, multiple: string, folder: string, name: string, title: string, globs: string): string {
+            const screen = root.focusedScreen;
+            if (!screen || Policy.effectiveMode(shellPreferences.layoutMode, screen.width, screen.height) === "desktop")
+                return "desktop";
+            if (["open", "folder", "save"].indexOf(mode) < 0 || fifo.length === 0)
+                return "invalid";
+            filePicker.open({ fifo: fifo, mode: mode, multiple: multiple === "1", folder: folder, name: name, title: title, globs: globs });
+            return "ok";
+        }
+        function dismiss(fifo: string): void {
+            filePicker.dismiss(fifo);
+        }
+    }
     Variants {
         model: Quickshell.screens
         Scope {
@@ -159,7 +248,9 @@ ShellRoot {
             required property var modelData
             readonly property string mode: Policy.effectiveMode(shellPreferences.layoutMode, modelData.width, modelData.height)
             readonly property bool isPhone: mode === "phone"
-            readonly property var dock: Policy.dockLayout(mode, modelData.width, root.oskAvailable)
+            readonly property bool gestures: Policy.gestureNavigation(mode, shellPreferences.navigation)
+            readonly property var dock: Policy.dockLayout(mode, modelData.width, root.oskAvailable, gestures)
+            readonly property var gestureEdge: Policy.gestureEdgeSize(mode, panel.expanded)
             // Bar geometry comes from Policy.barGeometry; do not add literals here.
             readonly property var bar: Policy.barGeometry(mode, dock.rows)
             readonly property int navHeight: bar.height
@@ -237,10 +328,10 @@ ShellRoot {
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottomMargin: panel.expanded ? 0 : surface.bar.gap
-                    width: surface.isPhone && panel.page === "windows" ? parent.width : panel.expanded ? expandedContent.width : parent.width
-                    radius: panel.expanded && panel.page === "windows" ? 0 : panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26)
-                    color: panel.expanded ? (panel.page === "windows" ? "#8c070d16" : "#e20f1c2e") : Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
-                    border.width: surface.isPhone && panel.page === "windows" ? 0 : 1
+                    width: surface.isPhone && panel.page === "windows" ? parent.width : panel.expanded ? Math.min(parent.width, expandedContent.width + pageColumn.anchors.leftMargin + pageColumn.anchors.rightMargin) : parent.width
+                    radius: panel.expanded && panel.page === "windows" ? 0 : Theme.radius("card", panel.expanded ? 26 : (surface.mode === "desktop" ? 14 : 26), height)
+                    color: panel.expanded ? (panel.page === "windows" ? Theme.switcherGlass : Theme.glassStrong) : Theme.bar(shellPreferences.barOpacity)
+                    border.width: surface.isPhone && panel.page === "windows" ? 0 : Theme.borderWidth(1)
                     border.color: Qt.alpha(root.accentColor, 0.15)
                     Loader {
                         anchors.fill: parent
@@ -261,6 +352,17 @@ ShellRoot {
                 function launch(command) {
                     Quickshell.execDetached(command);
                     page = "";
+                }
+                // Navigation actions shared by the dock buttons and edge gestures.
+                function goBack() {
+                    statusBar.drawerOpen = false;
+                    closeTarget = null;
+                    page = "";
+                }
+                function navigate(action) {
+                    if (action === "back") goBack();
+                    else if (action === "home") showPage("apps");
+                    else if (action === "recents") showPage("windows");
                 }
                 onPageChanged: {
                     if (["phone", "messages", "cellular", "sounds"].indexOf(page) >= 0) communications.request("status");
@@ -305,6 +407,7 @@ ShellRoot {
                     }
                 }
                 ColumnLayout {
+                    id: pageColumn
                     anchors.fill: parent
                     // Collapsed, the rows sit bar.inset inside the frame on both sides.
                     anchors.topMargin: panel.expanded ? surface.bar.pageTop : surface.bar.inset
@@ -332,6 +435,14 @@ ShellRoot {
                             font.bold: true
                             Layout.fillWidth: true
                             elide: Text.ElideRight
+                        }
+                        // Marks the scroll edge once content has moved under the heading.
+                        Rectangle {
+                            visible: pageScroll.visible
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 1
+                            color: Qt.alpha(root.accentColor, 0.25)
+                            opacity: pageScroll.ScrollBar.vertical.position > 0 ? 1 : 0
                         }
                         AppSwitcher {
                             id: switcher
@@ -363,6 +474,7 @@ ShellRoot {
                             onCloseRequested: target => { if (target) target.close(); }
                         }
                         ScrollView {
+                            id: pageScroll
                             visible: panel.page !== "windows"
                             Layout.fillWidth: true
                             Layout.fillHeight: true
@@ -415,7 +527,7 @@ ShellRoot {
                                     }
                                     Text {
                                         text: root.oskAvailable ? "Prototype · The keyboard opens for text fields; Keyboard shows or hides it." : "Prototype · Physical keyboard needed for text input."
-                                        color: "#b7c7cc"
+                                        color: Theme.textSecondary
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
                                     }
@@ -456,12 +568,16 @@ ShellRoot {
                                 Loader {
                                     visible: active
                                     active: panel.page === "settings"
+                                    onActiveChanged: if (active) themeList.running = true
                                     Layout.fillWidth: true
                                     sourceComponent: SettingsPage {
                                         backend: communications
                                         onCellularRequested: panel.page = "cellular"
                                         onSoundsRequested: panel.page = "sounds"
                                         preferences: shellPreferences
+                                        themes: root.themes
+                                        currentTheme: root.themeName
+                                        onThemeRequested: name => root.setTheme(name)
                                         activeMode: Policy.title(surface.mode)
                                         displayWidth: surface.modelData.width
                                         displayHeight: surface.modelData.height
@@ -487,7 +603,7 @@ ShellRoot {
                                     Layout.fillWidth: true
                                     Text {
                                         text: panel.closeTarget ? panel.closeTarget.title : "Window is no longer available."
-                                        color: "#f0f5f5"
+                                        color: Theme.text
                                         wrapMode: Text.WrapAnywhere
                                         Layout.fillWidth: true
                                     }
@@ -518,7 +634,7 @@ ShellRoot {
                                     Layout.fillWidth: true
                                     Text {
                                         text: "Save your work before ending Tessarchy. This closes the desktop session."
-                                        color: "#f0f5f5"
+                                        color: Theme.text
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
                                     }
@@ -535,6 +651,14 @@ ShellRoot {
                                     }
                                 }
                             }
+                        }
+                        // Marks the scroll edge above the dock while more content follows.
+                        Rectangle {
+                            visible: pageScroll.visible
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 1
+                            color: Qt.alpha(root.accentColor, 0.25)
+                            opacity: pageScroll.ScrollBar.vertical.size < 1 && pageScroll.ScrollBar.vertical.position + pageScroll.ScrollBar.vertical.size < 0.999 ? 1 : 0
                         }
                     }
                     GridLayout {
@@ -570,32 +694,32 @@ ShellRoot {
                             onClicked: Quickshell.execDetached(["tessarchy-osk", "toggle"])
                         }
                         NavButton {
+                            // Gesture navigation replaces Back, Home and Recents.
+                            visible: !surface.gestures
                             text: "Back"
                             symbol: "back"
                             showLabel: shellPreferences.showLabels
                             accentColor: root.accentColor
                             enabled: panel.expanded || statusBar.drawerOpen
-                            onClicked: {
-                                statusBar.drawerOpen = false;
-                                panel.closeTarget = null;
-                                panel.page = "";
-                            }
+                            onClicked: panel.navigate("back")
                         }
                         NavButton {
+                            visible: !surface.gestures
                             text: surface.mode === "desktop" ? "Apps" : "Home"
                             symbol: "home"
                             showLabel: shellPreferences.showLabels
                             accentColor: root.accentColor
                             selected: panel.page === "apps"
-                            onClicked: panel.showPage("apps")
+                            onClicked: panel.navigate("home")
                         }
                         NavButton {
+                            visible: !surface.gestures
                             text: surface.mode === "desktop" ? "Windows" : "Recents"
                             symbol: "recents"
                             showLabel: shellPreferences.showLabels
                             accentColor: root.accentColor
                             selected: panel.page === "windows"
-                            onClicked: panel.showPage("windows")
+                            onClicked: panel.navigate("recents")
                         }
                     }
                     // Desktop taskbar in the spirit of Windows XP, rendered as
@@ -671,10 +795,10 @@ ShellRoot {
                             implicitHeight: surface.bar.row
                             implicitWidth: trayRow.implicitWidth + 12
                             Layout.alignment: Qt.AlignVCenter
-                            radius: 8
-                            color: Qt.alpha("#000000", 0.20)
+                            radius: Theme.radius("tile", 8, height)
+                            color: Qt.alpha(Theme.trayGlass, 0.20)
                             border.width: 1
-                            border.color: Qt.alpha("#ffffff", 0.12)
+                            border.color: Qt.alpha(Theme.trayBorder, 0.12)
                             RowLayout {
                                 id: trayRow
                                 anchors.centerIn: parent
@@ -718,7 +842,7 @@ ShellRoot {
                                 }
                                 Text {
                                     text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "h:mm" : "h:mm AP")
-                                    color: "#e2edf1"
+                                    color: Theme.panelText
                                     font.pixelSize: 12
                                     leftPadding: 6
                                     rightPadding: 10
@@ -728,6 +852,69 @@ ShellRoot {
                                 }
                             }
                         }
+                    }
+                }
+            }
+            // Gesture navigation: thin edge strips catch swipes that start at
+            // the screen edge. Touches inside a strip do not reach the app below,
+            // so the strips stay a few pixels wide. The bottom strip covers the
+            // gap under the dock row and spans the screen.
+            PanelWindow {
+                id: bottomGesture
+                screen: surface.modelData
+                visible: surface.gestures
+                anchors {
+                    bottom: true
+                    left: true
+                    right: true
+                }
+                implicitHeight: surface.gestureEdge.bottom
+                exclusionMode: ExclusionMode.Ignore
+                color: "transparent"
+                WlrLayershell.namespace: "tessera-gesture"
+                WlrLayershell.layer: WlrLayer.Top
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                EdgeSwipeArea {
+                    id: bottomSwipe
+                    anchors.fill: parent
+                    edge: "bottom"
+                    onGesture: action => panel.navigate(action)
+                }
+                GestureHandle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.bottom
+                    anchors.verticalCenterOffset: -surface.gestureEdge.handle
+                    shown: shellPreferences.showGestureHandle
+                    accentColor: root.accentColor
+                    reducedMotion: shellPreferences.reducedMotion
+                    progress: bottomSwipe.progress
+                }
+            }
+            // Side strips keep exclusiveZone 0, so they sit between the status
+            // bar and the dock (and the on-screen keyboard), above open pages.
+            Variants {
+                model: ["left", "right"]
+                PanelWindow {
+                    id: sideGesture
+                    required property string modelData
+                    screen: surface.modelData
+                    visible: surface.gestures
+                    anchors {
+                        top: true
+                        bottom: true
+                        left: modelData === "left"
+                        right: modelData === "right"
+                    }
+                    implicitWidth: surface.gestureEdge.side
+                    exclusiveZone: 0
+                    color: "transparent"
+                    WlrLayershell.namespace: "tessera-gesture"
+                    WlrLayershell.layer: WlrLayer.Overlay
+                    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                    EdgeSwipeArea {
+                        anchors.fill: parent
+                        edge: sideGesture.modelData
+                        onGesture: action => panel.navigate(action)
                     }
                 }
             }
@@ -880,9 +1067,9 @@ ShellRoot {
                 color: "transparent"
                 Rectangle {
                     anchors.fill: parent
-                    radius: statusBar.drawerOpen ? 28 : 0
+                    radius: Theme.radius("card", statusBar.drawerOpen ? 28 : 0, height)
                     visible: surface.mode !== "desktop" || statusBar.drawerOpen
-                    color: Qt.rgba(0.063, 0.106, 0.188, statusBar.drawerOpen ? 0.92 : shellPreferences.barOpacity)
+                    color: statusBar.drawerOpen ? Theme.glassStrong : Theme.bar(shellPreferences.barOpacity)
                     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.alpha(root.accentColor, 0.1) }
                 }
                 WlrLayershell.namespace: "tessera-status"
@@ -927,7 +1114,7 @@ ShellRoot {
                         background: Item {}
                         contentItem: Text {
                             text: mobileClock.text
-                            color: "#f0f5ff"
+                            color: Theme.text
                             verticalAlignment: Text.AlignVCenter
                             font { pixelSize: 16; weight: Font.DemiBold; letterSpacing: 0.2 }
                         }
@@ -1014,7 +1201,7 @@ ShellRoot {
                     height: 48
                     text: "Collapse quick controls"
                     background: Item {}
-                    contentItem: Item { Rectangle { anchors.centerIn: parent; width: 40; height: 4; radius: 2; color: root.accentColor } }
+                    contentItem: Item { Rectangle { anchors.centerIn: parent; width: 40; height: 4; radius: Theme.radius("card", 2, height); color: root.accentColor } }
                     onClicked: statusBar.drawerOpen = false
                     DragHandler {
                         target: null
@@ -1076,7 +1263,7 @@ ShellRoot {
                     topRightRadius: 16
                     // Same frosted glass as the taskbar: a translucent accent
                     // fill the compositor blurs behind (namespace tessera-start).
-                    color: Qt.rgba(0.063, 0.106, 0.188, shellPreferences.barOpacity)
+                    color: Theme.bar(shellPreferences.barOpacity)
                     border.width: 1
                     border.color: Qt.alpha(root.accentColor, 0.15)
                     // Blue header band, the Start menu's signature.
@@ -1088,8 +1275,8 @@ ShellRoot {
                         topLeftRadius: parent.topLeftRadius
                         topRightRadius: parent.topRightRadius
                         gradient: Gradient {
-                            GradientStop { position: 0.0; color: Qt.rgba(0.16, 0.30, 0.62, 0.55) }
-                            GradientStop { position: 1.0; color: Qt.rgba(0.10, 0.18, 0.40, 0.12) }
+                            GradientStop { position: 0.0; color: Theme.startHeaderTop }
+                            GradientStop { position: 1.0; color: Theme.startHeaderBottom }
                         }
                     }
                     ColumnLayout {
@@ -1098,7 +1285,7 @@ ShellRoot {
                         spacing: 10
                         Text {
                             text: "ALL APPS"
-                            color: "#dbe8ff"
+                            color: Theme.startHeaderText
                             Layout.leftMargin: 2
                             font {
                                 pixelSize: 11
@@ -1191,18 +1378,18 @@ ShellRoot {
                     right: true
                 }
                 exclusionMode: ExclusionMode.Ignore
-                color: "#101b30"
+                color: Theme.background
                 WlrLayershell.namespace: "tessera-home"
                 WlrLayershell.layer: WlrLayer.Background
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                 Image {
                     anchors.fill: parent
-                    source: "artwork/aurora-fold.png"
+                    source: root.themeBackground || "artwork/aurora-fold.png"
                     fillMode: Image.PreserveAspectCrop
                 }
                 Rectangle {
                     anchors.fill: parent
-                    color: Qt.rgba(0.016, 0.05, 0.1, shellPreferences.wallpaperDim)
+                    color: Qt.alpha(Theme.darkerBackground, shellPreferences.wallpaperDim)
                 }
                 Column {
                     visible: !panel.expanded
@@ -1225,7 +1412,7 @@ ShellRoot {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDateTime(clock.date, shellPreferences.use24Hour ? "hh:mm" : "h:mm AP")
-                        color: "#f0f5ff"
+                        color: Theme.text
                         font {
                             pixelSize: surface.isPhone ? 58 : 72
                             weight: Font.Light
@@ -1234,7 +1421,7 @@ ShellRoot {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDateTime(clock.date, "dddd, MMMM d")
-                        color: "#a9e8d5"
+                        color: Theme.accent
                         font.pixelSize: 18
                     }
                     Text {

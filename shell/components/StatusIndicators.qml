@@ -3,7 +3,7 @@ import QtQuick.Layouts
 
 RowLayout {
     id: control
-    property color accentColor: "#a9e8d5"
+    property color accentColor: Theme.accent
     property bool compact: false
     property int notificationCount: 0
     property int cellularStrength: -1
@@ -42,12 +42,12 @@ RowLayout {
             anchors.topMargin: control.compact ? 1 : 8
             width: 14
             height: 14
-            radius: 7
-            color: "#e2796d"
+            radius: Theme.radius("tile", 7, height)
+            color: Theme.danger
             Text {
                 anchors.centerIn: parent
                 text: control.notificationCount
-                color: "#21151a"
+                color: Theme.darkerBackground
                 font.pixelSize: 9
                 font.bold: true
             }
@@ -101,7 +101,7 @@ RowLayout {
             Text {
                 visible: control.showBatteryText
                 text: control.batteryPresent ? Math.round(control.batteryPercent * 100) + "%" : "—"
-                color: control.compact ? "#d0f3e9" : "#a9e8d5"
+                color: control.compact ? Theme.textSecondary : Theme.accent
                 font.pixelSize: control.compact ? 10 : 11
                 Accessible.name: control.batteryPresent ? "Battery " + text : "Battery status unavailable"
             }

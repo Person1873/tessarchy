@@ -7,7 +7,7 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 # Reject the Omarchy host even when the host itself is virtualized.
 # shellcheck source=/dev/null
 source /etc/os-release
-[[ ${ID:-} == arch ]] || { echo "This setup is for the Arch guest, not the host" >&2; exit 1; }
+[[ ${ID:-} == arch || ${ID:-} == archarm ]] || { echo "This setup is for the Arch guest, not the host" >&2; exit 1; }
 virt=$(systemd-detect-virt --vm || true)
 case "$virt" in qemu|kvm) ;; *) echo "Expected a QEMU/KVM guest; detected: ${virt:-none}" >&2; exit 1;; esac
 missing=()
