@@ -9,7 +9,7 @@ and selects one installed application per role. An application outside that
 list is excluded; a second browser or terminal can also be excluded.
 
 PR #2 introduced desktop-entry discovery and is already merged. It does not
-resolve the current role-filtering limitation or define periodic refresh.
+resolve the current role-filtering limitation or cover the requested live-update acceptance checks.
 The missing-app report has not been reproduced on a physical device here.
 The code-level exclusion above is confirmed by inspection of current main.
 
@@ -20,10 +20,9 @@ The code-level exclusion above is confirmed by inspection of current main.
   role list and multiple applications in the same role.
 - [ ] Keep any curated primary-app selection separate from the complete All Apps
   inventory. Do not label a curated subset "ALL APPS".
-- [ ] Automatically check for installed application changes periodically while
-  the shell runs. Use a proposed 60-second fallback interval, refresh when Start
-  opens, and consume application-change notifications where supported. Validate
-  the supported Quickshell refresh API before implementation.
+- [ ] Use Quickshell's built-in desktop-entry monitoring and application model
+  updates to keep Start current. No periodic polling timer or custom rescan on
+  opening Start is required. Verify change propagation on the supported version.
 - [ ] Add newly installed applications without requiring logout or a shell
   restart; remove uninstalled applications and update changed names/icons.
 - [ ] Present applications in a clean, consistent layout: clear category
@@ -49,8 +48,8 @@ The code-level exclusion above is confirmed by inspection of current main.
 ## Acceptance checks
 
 1. Open Start, install a graphical application outside the current role list,
-   and confirm it appears within the refresh interval without restarting the
-   shell. Repeat with Start closed, then reopen it.
+   and confirm it appears after Quickshell reports the desktop-entry change,
+   without restarting the shell. Repeat with Start closed, then reopen it.
 2. Install two browsers or terminals and verify both appear in All Apps.
 3. Uninstall an application while Start is open; verify its tile disappears and
    attempting to launch a stale selection fails gracefully.
@@ -63,7 +62,7 @@ The code-level exclusion above is confirmed by inspection of current main.
 7. Verify categories, alphabetical ordering, missing-category/icon fallback and
    a large inventory. Check keyboard and touch navigation, long labels, scrolling
    and narrow layouts wherever the shared app inventory is used.
-8. Confirm repeated checks do not duplicate entries, move focus unnecessarily,
+8. Confirm repeated application-change events do not duplicate entries, move focus unnecessarily,
    block interaction, or noticeably increase idle resource use.
 9. Run `./scripts/check.sh` for the implementation. Add regression coverage for
    unrestricted eligible-app discovery, filtering/precedence, ordering,
