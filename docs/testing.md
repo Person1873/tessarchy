@@ -2302,3 +2302,26 @@ Foot window through Hyprland's Super+Return binding. Inspected the rendered
 keyboard screenshot; its four rows retain the established minimum key height.
 Local evidence: `build/vm-test-20261020/osk-super-latched.png` and
 `osk-super-proof.png` in the development workspace.
+
+## Combined VM-accepted PR integration (2026-10-20)
+
+Reconciled #9, #10, #38, #47, #49 and #50 with main, preserving their commit
+history and the current stacked-phone Recents, immediate dismissal, desktop
+taskbar spacing and plain-text rendering. Added the T-cube Super key. The
+previous unfinished theme-integration worktree was left intact.
+
+The combined x86_64 guest loaded the shell and reported empty configerrors at
+390×844 and 1280×800. Real QMP touch passed bottom-edge Home, left/right-edge
+Back, swipe-and-hold Recents and immediate swipe dismissal of a disposable Foot
+window. Inspected Phone Recents, Desktop Start and light/dark theme captures.
+The real compiled portal backend, running on an isolated D-Bus connected to
+the live shell, opened the Phone file picker; tapping Cancel returned response
+1 with an empty result. Desktop picker IPC delegated with `desktop`.
+The prior ARM boot evidence belongs to #38's documented guest; no new ARM boot
+or physical-device/ISO acceptance is claimed for this integration.
+
+Expanded VM snapshots to carry themes and portal sources, declared GTK/GLib
+build dependencies in all package-building CI jobs and added QtQuick.Effects
+to Ubuntu checks. Shell and session package revisions are 0.1.0-4 so installed
+systems detect these changes. Local VM captures/results are retained under
+`build/vm-test-20261020/` in the development workspace.

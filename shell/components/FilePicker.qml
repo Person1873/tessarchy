@@ -121,7 +121,7 @@ PanelWindow {
                 implicitWidth: 96
                 onClicked: picker.reply([])
             }
-            Text {
+            Text { textFormat: Text.PlainText;
                 Layout.fillWidth: true
                 text: picker.request !== null && picker.request.title.length > 0 ? picker.request.title : picker.saving ? "Save" : "Open"
                 color: Theme.text
@@ -140,7 +140,7 @@ PanelWindow {
             }
         }
 
-        Text {
+        Text { textFormat: Text.PlainText;
             Layout.fillWidth: true
             visible: picker.confirmReplace.length > 0
             text: "Replace the existing file? Tap Replace again to confirm."
@@ -181,7 +181,7 @@ PanelWindow {
                 implicitWidth: 88
                 onClicked: picker.tapped(Quickshell.env("HOME"), true)
             }
-            Text {
+            Text { textFormat: Text.PlainText;
                 Layout.fillWidth: true
                 text: picker.folder
                 color: Theme.textSecondary
@@ -212,14 +212,14 @@ PanelWindow {
                 }
                 contentItem: RowLayout {
                     spacing: 12
-                    Text {
+                    Text { textFormat: Text.PlainText;
                         text: row.fileIsDir ? "▸" : row.chosen ? "✓" : "·"
                         color: row.fileIsDir || row.chosen ? Theme.accent : Theme.textMuted
                         font.pixelSize: 20
                         Layout.preferredWidth: 20
                         horizontalAlignment: Text.AlignHCenter
                     }
-                    Text {
+                    Text { textFormat: Text.PlainText;
                         Layout.fillWidth: true
                         text: row.fileName
                         color: Theme.text
@@ -229,7 +229,7 @@ PanelWindow {
                 }
                 onClicked: picker.tapped(row.filePath, row.fileIsDir)
             }
-            Text {
+            Text { textFormat: Text.PlainText;
                 anchors.centerIn: parent
                 visible: list.count === 0
                 text: entries.status === FolderListModel.Loading ? "" : picker.choosingFolder ? "No folders" : "Empty"

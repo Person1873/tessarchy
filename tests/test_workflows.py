@@ -1049,7 +1049,7 @@ assert(#commands == 4, "unexpected extra autostart commands")
         fakeqemu.chmod(0o755)
         import shutil
         source = self.home / 'source'
-        for directory in ('scripts', 'shell', 'session', 'packaging', 'iso', 'docs', 'tests', 'assets', 'website'):
+        for directory in ('scripts', 'shell', 'session', 'packaging', 'iso', 'docs', 'tests', 'assets', 'website', 'themes', 'portal'):
             shutil.copytree(ROOT / directory, source / directory)
         for name in ('README.md', 'AGENTS.md', 'LICENSE'):
             shutil.copy2(ROOT / name, source / name)

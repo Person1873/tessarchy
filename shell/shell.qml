@@ -594,9 +594,6 @@ ShellRoot {
                                     sourceComponent: NotificationCenter {
                                         server: notificationServer
                                         preferences: shellPreferences
-                                        themes: root.themes
-                                        currentTheme: root.themeName
-                                        onThemeRequested: name => root.setTheme(name)
                                         accentColor: root.accentColor
                                         onClearAllRequested: root.dismissAllNotifications()
                                     }
@@ -1180,9 +1177,6 @@ ShellRoot {
                         width: parent.width
                         radios: radioBackend
                         preferences: shellPreferences
-                                        themes: root.themes
-                                        currentTheme: root.themeName
-                                        onThemeRequested: name => root.setTheme(name)
                         activeMode: Policy.title(surface.mode)
                         date: clock.date
                         use24Hour: shellPreferences.use24Hour
