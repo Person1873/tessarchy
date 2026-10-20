@@ -1,6 +1,7 @@
 # Language: English (US)
 ---
 outlines:
+    nav: { width: 100, height: 52 }
     default:       { width: 35.657, height: 52 }
     change-view:   { width: 53.485, height: 52 }
     change-view-2: { width: 62.399, height: 52 }
@@ -44,6 +45,42 @@ views:
         - "show_letters show_controls space Return"
 
 buttons:
+    F1:
+        keysym: "F1"
+        outline: "nav"
+    F2:
+        keysym: "F2"
+        outline: "nav"
+    F3:
+        keysym: "F3"
+        outline: "nav"
+    F4:
+        keysym: "F4"
+        outline: "nav"
+    F5:
+        keysym: "F5"
+        outline: "nav"
+    F6:
+        keysym: "F6"
+        outline: "nav"
+    F7:
+        keysym: "F7"
+        outline: "nav"
+    F8:
+        keysym: "F8"
+        outline: "nav"
+    F9:
+        keysym: "F9"
+        outline: "nav"
+    F10:
+        keysym: "F10"
+        outline: "nav"
+    F11:
+        keysym: "F11"
+        outline: "nav"
+    F12:
+        keysym: "F12"
+        outline: "nav"
     show_controls:
         action: { set_view: "controls" }
         label: "Fn"
@@ -55,58 +92,71 @@ buttons:
     Shift:
         modifier: "Shift"
         label: "⇧"
-        outline: "special"
+        outline: "nav"
     Esc:
         keysym: "Escape"
-        outline: "special"
+        outline: "nav"
     Tab:
         keysym: "Tab"
-        outline: "special"
+        outline: "nav"
     Home:
         keysym: "Home"
+        outline: "nav"
     End:
         keysym: "End"
+        outline: "nav"
     PageUp:
         keysym: "Page_Up"
         label: "Pg↑"
+        outline: "nav"
     PageDown:
         keysym: "Page_Down"
         label: "Pg↓"
+        outline: "nav"
     Up:
         keysym: "Up"
         label: "↑"
+        outline: "nav"
     Down:
         keysym: "Down"
         label: "↓"
+        outline: "nav"
     Left:
         keysym: "Left"
         label: "←"
+        outline: "nav"
     Right:
         keysym: "Right"
         label: "→"
+        outline: "nav"
     Insert:
         keysym: "Insert"
         label: "Ins"
+        outline: "nav"
     Del:
         keysym: "Delete"
+        outline: "nav"
     Pause:
         keysym: "Pause"
+        outline: "nav"
     Menu:
         keysym: "Menu"
+        outline: "nav"
     Break:
         keysym: "Break"
+        outline: "nav"
     Ctrl:
         modifier: "Control"
         label: "Ctrl"
-        outline: "special"
+        outline: "nav"
     Alt:
         modifier: "Alt"
         label: "Alt"
-        outline: "special"
+        outline: "nav"
     Super:
         modifier: "Mod4"
         icon: "tessarchy-super-symbolic"
-        outline: "special"
+        outline: "nav"
     show_upper:
         action:
             locking:

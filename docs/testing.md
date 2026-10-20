@@ -2325,3 +2325,12 @@ build dependencies in all package-building CI jobs and added QtQuick.Effects
 to Ubuntu checks. Shell and session package revisions are 0.1.0-4 so installed
 systems detect these changes. Local VM captures/results are retained under
 `build/vm-test-20261020/` in the development workspace.
+
+Final local combined checks passed: 214 Python tests, 76 Qt Quick results and
+four website tests, plus available syntax/Hyprland/QML checks; fish and
+ShellCheck were unavailable locally. Seven packages built without installation.
+Actual guest theme controls changed rounding/blur/border to 4/false/2 and
+restored 18/true/0, with empty configerrors. Ubuntu source CI now uses the
+supported 26.04 runner for QtQuick.Effects; every source/build job declares the
+portal's GTK/GLib build dependencies. Terminal Fn exposes navigation/F1–F12
+without adding short key rows.

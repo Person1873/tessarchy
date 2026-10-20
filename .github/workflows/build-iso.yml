@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Prepare video conversion tools
-        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ffmpeg libgtk-3-dev libglib2.0-dev pkg-config
       - name: Check source workflows
         run: ./scripts/check.sh
       - name: Build Arch live image in disposable container
