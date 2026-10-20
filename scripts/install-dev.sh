@@ -13,6 +13,7 @@ for path in "$data" "$bin/start-tessarchy" "$bin/tessera-shell" "$bin/tessarchy-
 done
 mkdir -p -- "$data/session" "$data/.tessarchy-dev-launchers" "$bin"
 cp -R -- "$root/shell" "$data/"
+cp -R -- "$root/session/osk" "$data/session/"
 find "$data/shell" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
 find "$data/shell" -depth -type d -name __pycache__ -empty -delete
 cp -- "$root/session/hyprland.lua" "$root/session/window-controls.lua" "$root/session/hypridle.conf" "$data/session/"
