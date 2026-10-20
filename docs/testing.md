@@ -2240,3 +2240,52 @@ light).
 - Greeter: launched `greeter.qml` while the user theme was `tessera-light`; it
   rendered the dark bundled Tessera, and the scrim pixels matched the
   pre-change sign-in screen. Not run under greetd.
+
+## Touch file dialogs, 2026-10-17
+
+Executed by an agent in the QEMU VM, Phone size
+(720x1440 at scale 1.8 = 400x800 logical), Firefox 158 launched with
+`tessarchy-run`, xdg-desktop-portal 1.22.1, xdg-desktop-portal-gtk 1.15.3.
+
+Mechanism (adapted from omalauncher's portal and GTK3 module, MIT):
+`libtessarchy-filechooser.so` (GTK_MODULES) sends plain GtkFileChooserDialogs
+through the file chooser portal; `tessarchy-portals.conf` routes FileChooser to
+`tessarchy-portal`, which asks the shell (`tessera-shell ipc call picker pick`).
+In Desktop mode the shell answers `desktop` and the request goes to
+xdg-desktop-portal-gtk unchanged.
+
+Validated:
+- Ctrl+S in Firefox: the Tessera picker opened with Firefox's suggested name
+  (Untitled.html) and folder (~/Downloads); no GTK dialog appeared. Save wrote
+  ~/Downloads/Untitled.html.
+- Cancel: the picker closed, Firefox kept no dialog, nothing was written.
+- Ctrl+O: the picker listed Untitled.html; tapping it opened
+  file:///home/arch/Downloads/Untitled.html. The keyboard is hidden for
+  Open/folder pickers, since only Save types.
+- layoutMode=desktop: Ctrl+S gave GTK's own floating Save As (746x394).
+- `tests/test_workflows.py`: the real portal over a private D-Bus with a stub
+  shell (pick, cancel, Desktop fallback, filter globs, FIFO cleanup).
+
+- Follow-up, same VM: a plain GTK3 GtkFileChooserDialog (PyGObject script via
+  `tessarchy-run`) with select_multiple: two of three files ticked, Open (2)
+  returned both and the folder. SELECT_FOLDER: entered a subfolder, Select
+  returned it. Both started in the folder the app set; before a fix they
+  opened in $HOME, because GTK3 applies set_current_folder asynchronously and
+  the module asked the portal first (omalauncher's module has the same gap).
+- GTK4 (zenity 4.2.2): open and save went through the portal with no GTK
+  window; open returned the tapped file, save returned the suggested name in
+  the requested folder.
+
+Not checked: wxWidgets apps, hardware.
+
+Rebase verification (2026-10-19, isolated worktree, no VM changes):
+`./scripts/check.sh` passed (108 Python tests, one skipped; Qt 49 passed,
+0 failed, 0 skipped, 0 blacklisted); `make -s -C portal O=/tmp/pb-rb`
+built the portal. This does not revalidate the earlier live guest results above.
+
+Review decision: upstream's `LocalFilePicker.qml` is an in-shell browser for
+PhoneApp/SoundSettings, backed by their private file browser and limited to
+photo/audio selection. This PR's `FilePicker.qml` is a portal-backed app dialog
+with save, folder and multi-file handling. Keep both integrations for now;
+decide whether to share their navigation/list UI in a follow-up after aligning
+their backend interfaces. Do not replace either picker merely by renaming it.

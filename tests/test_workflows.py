@@ -572,6 +572,58 @@ print(g.border_size, col.active_border, col.inactive_border, group.border_active
         self.assertEqual(run('foot', '-e', 'ls'), f'Adwaita|--config={config} -e ls')
         self.assertEqual(run('firefox'), 'Adwaita|')
 
+    def test_portal_asks_shell_and_falls_back_to_gtk_in_desktop(self):
+        import shutil
+        need = ('cc', 'make', 'pkg-config', 'gdbus', 'dbus-run-session')
+        if not all(shutil.which(tool) for tool in need):
+            self.skipTest('portal build/D-Bus tools unavailable')
+        out = self.home / 'portal-build'
+        build = subprocess.run(['make', '-s', '-C', str(ROOT / 'portal'), f'O={out}'],
+                               capture_output=True, text=True)
+        self.assertEqual(build.returncode, 0, build.stderr)
+        stubs = self.home / 'bin'
+        stubs.mkdir()
+        log = self.home / 'asked'
+        # Stand-in shell: logs the request, answers per $SHELL_ANSWER.
+        (stubs / 'tessera-shell').write_text(f'''#!/bin/bash
+printf '%s\\n' "$*" >> {log}
+[[ $3 == picker && $4 == pick ]] || exit 0
+case $SHELL_ANSWER in
+  pick) printf '%s\\n' "$8/$9" "" > "$5"; echo ok ;;
+  cancel) echo > "$5"; echo ok ;;
+  *) echo desktop ;;
+esac
+''')
+        (stubs / 'tessera-shell').chmod(0o755)
+        env = dict(self.env, PATH=f'{stubs}:{os.environ["PATH"]}', XDG_RUNTIME_DIR=str(self.home))
+
+        def call(answer, method, options):
+            # One private bus per case: the stub reads SHELL_ANSWER from the portal's environment.
+            script = (f'{out}/tessarchy-portal & sleep 0.5; gdbus call --session '
+                      '--dest org.freedesktop.impl.portal.desktop.tessarchy '
+                      '--object-path /org/freedesktop/portal/desktop '
+                      f'--method org.freedesktop.impl.portal.FileChooser.{method} '
+                      '/org/freedesktop/portal/desktop/request/1_1/t1 app "" Title "$0"')
+            result = subprocess.run(['dbus-run-session', '--', 'bash', '-c', script, options],
+                                    env=dict(env, SHELL_ANSWER=answer), capture_output=True, text=True, timeout=30)
+            return result.stdout.strip()
+
+        # NUL-terminated, as xdg-desktop-portal sends it (gdbus's b'' text form is not).
+        folder = '<@ay [' + ', '.join(f'0x{c:02x}' for c in b'/srv/x\0') + ']>'
+        self.assertEqual(call('pick', 'SaveFile', "{'current_name': <'a b.txt'>, 'current_folder': " + folder + "}"),
+                         "(uint32 0, {'uris': <['file:///srv/x/a%20b.txt']>})")
+        self.assertEqual(call('cancel', 'OpenFile', "{'filters': <[('Images', [(uint32 0, '*.png'), (uint32 0, '*.jpg')])]>}"),
+                         '(uint32 1, @a{sv} {})')
+        # Desktop mode: forwarded to xdg-desktop-portal-gtk, absent on this bus.
+        self.assertEqual(call('desktop', 'OpenFile', "{'directory': <true>}"), '(uint32 2, @a{sv} {})')
+        asked = log.read_text()
+        self.assertIn('ipc call picker pick ', asked)
+        self.assertIn(' save 0 /srv/x a b.txt Title \n', asked)
+        self.assertIn(' open 0 ' + str(self.home), asked)
+        self.assertIn(' *.png;*.jpg\n', asked)
+        self.assertIn(' folder 0 ', asked)
+        self.assertEqual(list((self.home / 'tessarchy-portal').iterdir()), [])  # FIFOs removed
+
     def test_session_start_launches_shell_and_optional_keyboard(self):
         import shutil
         if not shutil.which('lua'):
@@ -1398,7 +1450,7 @@ esac
         repo = self.home / 'source'
         (repo / 'scripts').mkdir(parents=True)
         import shutil
-        for directory in ('shell', 'session', 'iso', 'docs', 'themes'):
+        for directory in ('shell', 'session', 'iso', 'docs', 'themes', 'portal'):
             shutil.copytree(ROOT / directory, repo / directory)
         shutil.copy2(ROOT / 'scripts/stage-iso.sh', repo / 'scripts')
         shutil.copy2(ROOT / 'scripts/export-boot-assets.py', repo / 'scripts')

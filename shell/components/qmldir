@@ -10,6 +10,7 @@ CellularSettings 1.0 CellularSettings.qml
 CommunicationBackend 1.0 CommunicationBackend.qml
 ContactAvatar 1.0 ContactAvatar.qml
 EdgeSwipeArea 1.0 EdgeSwipeArea.qml
+FilePicker 1.0 FilePicker.qml
 GestureHandle 1.0 GestureHandle.qml
 GlassCombo 1.0 GlassCombo.qml
 GlassField 1.0 GlassField.qml
