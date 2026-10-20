@@ -76,6 +76,11 @@ ShellRoot {
         property string accent: "mint"
         property bool reducedMotion: false
         property bool showLabels: false
+        // "gestures" swipes for Back/Home/Recents on Phone and Tablet;
+        // "buttons" keeps them in the dock.
+        property string navigation: "gestures"
+        // The gesture handle pill above the bottom edge.
+        property bool showGestureHandle: true
         property bool use24Hour: true
         property real barOpacity: 0.44
         property real wallpaperDim: 0.12
@@ -159,7 +164,9 @@ ShellRoot {
             required property var modelData
             readonly property string mode: Policy.effectiveMode(shellPreferences.layoutMode, modelData.width, modelData.height)
             readonly property bool isPhone: mode === "phone"
-            readonly property var dock: Policy.dockLayout(mode, modelData.width, root.oskAvailable)
+            readonly property bool gestures: Policy.gestureNavigation(mode, shellPreferences.navigation)
+            readonly property var dock: Policy.dockLayout(mode, modelData.width, root.oskAvailable, gestures)
+            readonly property var gestureEdge: Policy.gestureEdgeSize(mode, panel.expanded)
             // Bar geometry comes from Policy.barGeometry; do not add literals here.
             readonly property var bar: Policy.barGeometry(mode, dock.rows)
             readonly property int navHeight: bar.height
@@ -261,6 +268,17 @@ ShellRoot {
                 function launch(command) {
                     Quickshell.execDetached(command);
                     page = "";
+                }
+                // Navigation actions shared by the dock buttons and edge gestures.
+                function goBack() {
+                    statusBar.drawerOpen = false;
+                    closeTarget = null;
+                    page = "";
+                }
+                function navigate(action) {
+                    if (action === "back") goBack();
+                    else if (action === "home") showPage("apps");
+                    else if (action === "recents") showPage("windows");
                 }
                 onPageChanged: {
                     if (["phone", "messages", "cellular", "sounds"].indexOf(page) >= 0) communications.request("status");
@@ -570,32 +588,32 @@ ShellRoot {
                             onClicked: Quickshell.execDetached(["tessarchy-osk", "toggle"])
                         }
                         NavButton {
+                            // Gesture navigation replaces Back, Home and Recents.
+                            visible: !surface.gestures
                             text: "Back"
                             symbol: "back"
                             showLabel: shellPreferences.showLabels
                             accentColor: root.accentColor
                             enabled: panel.expanded || statusBar.drawerOpen
-                            onClicked: {
-                                statusBar.drawerOpen = false;
-                                panel.closeTarget = null;
-                                panel.page = "";
-                            }
+                            onClicked: panel.navigate("back")
                         }
                         NavButton {
+                            visible: !surface.gestures
                             text: surface.mode === "desktop" ? "Apps" : "Home"
                             symbol: "home"
                             showLabel: shellPreferences.showLabels
                             accentColor: root.accentColor
                             selected: panel.page === "apps"
-                            onClicked: panel.showPage("apps")
+                            onClicked: panel.navigate("home")
                         }
                         NavButton {
+                            visible: !surface.gestures
                             text: surface.mode === "desktop" ? "Windows" : "Recents"
                             symbol: "recents"
                             showLabel: shellPreferences.showLabels
                             accentColor: root.accentColor
                             selected: panel.page === "windows"
-                            onClicked: panel.showPage("windows")
+                            onClicked: panel.navigate("recents")
                         }
                     }
                     // Desktop taskbar in the spirit of Windows XP, rendered as
@@ -728,6 +746,69 @@ ShellRoot {
                                 }
                             }
                         }
+                    }
+                }
+            }
+            // Gesture navigation: thin edge strips catch swipes that start at
+            // the screen edge. Touches inside a strip do not reach the app below,
+            // so the strips stay a few pixels wide. The bottom strip covers the
+            // gap under the dock row and spans the screen.
+            PanelWindow {
+                id: bottomGesture
+                screen: surface.modelData
+                visible: surface.gestures
+                anchors {
+                    bottom: true
+                    left: true
+                    right: true
+                }
+                implicitHeight: surface.gestureEdge.bottom
+                exclusionMode: ExclusionMode.Ignore
+                color: "transparent"
+                WlrLayershell.namespace: "tessera-gesture"
+                WlrLayershell.layer: WlrLayer.Top
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                EdgeSwipeArea {
+                    id: bottomSwipe
+                    anchors.fill: parent
+                    edge: "bottom"
+                    onGesture: action => panel.navigate(action)
+                }
+                GestureHandle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.bottom
+                    anchors.verticalCenterOffset: -surface.gestureEdge.handle
+                    shown: shellPreferences.showGestureHandle
+                    accentColor: root.accentColor
+                    reducedMotion: shellPreferences.reducedMotion
+                    progress: bottomSwipe.progress
+                }
+            }
+            // Side strips keep exclusiveZone 0, so they sit between the status
+            // bar and the dock (and the on-screen keyboard), above open pages.
+            Variants {
+                model: ["left", "right"]
+                PanelWindow {
+                    id: sideGesture
+                    required property string modelData
+                    screen: surface.modelData
+                    visible: surface.gestures
+                    anchors {
+                        top: true
+                        bottom: true
+                        left: modelData === "left"
+                        right: modelData === "right"
+                    }
+                    implicitWidth: surface.gestureEdge.side
+                    exclusiveZone: 0
+                    color: "transparent"
+                    WlrLayershell.namespace: "tessera-gesture"
+                    WlrLayershell.layer: WlrLayer.Overlay
+                    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                    EdgeSwipeArea {
+                        anchors.fill: parent
+                        edge: sideGesture.modelData
+                        onGesture: action => panel.navigate(action)
                     }
                 }
             }

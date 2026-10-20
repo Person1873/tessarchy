@@ -50,6 +50,23 @@ class Workflows(unittest.TestCase):
         taskbar = panel[panel.index('visible: surface.mode === "desktop"\n'):]
         self.assertIn('Layout.preferredHeight: surface.bar.row\n', taskbar[:200])
 
+    def test_navigation_gestures_reuse_dock_actions_and_keep_a_button_fallback(self):
+        shell = (ROOT / 'shell/shell.qml').read_text()
+        settings = (ROOT / 'shell/components/SettingsPage.qml').read_text()
+        self.assertIn('property string navigation: "gestures"', shell)
+        self.assertIn('property bool showGestureHandle: true', shell)
+        self.assertIn('Policy.gestureNavigation(mode, shellPreferences.navigation)', shell)
+        self.assertIn('Policy.dockLayout(mode, modelData.width, root.oskAvailable, gestures)', shell)
+        # Buttons and gestures call the same panel action; no copied logic.
+        for action in ('back', 'home', 'recents'):
+            self.assertIn(f'onClicked: panel.navigate("{action}")', shell)
+        self.assertEqual(shell.count('onGesture: action => panel.navigate(action)'), 2)
+        self.assertEqual(shell.count('visible: !surface.gestures'), 3)
+        self.assertIn('shown: shellPreferences.showGestureHandle', shell)
+        self.assertIn('visible: surface.gestures', shell)
+        self.assertIn('value: "buttons"', settings)
+        self.assertIn('page.preferences.navigation = modelData.value', settings)
+
     def test_display_controls_restore_failed_brightness_and_apply_night_preference(self):
         stubs = self.home / 'display-bin'
         stubs.mkdir()

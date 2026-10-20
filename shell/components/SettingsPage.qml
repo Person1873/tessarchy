@@ -201,6 +201,50 @@ ColumnLayout {
         Accessible.name: "Wallpaper shade"
         onMoved: page.preferences.wallpaperDim = value
     }
+    Text {
+        text: "NAVIGATION"
+        color: page.accentColor
+        font {
+            pixelSize: 11
+            bold: true
+            letterSpacing: 2
+        }
+    }
+    RowLayout {
+        Layout.fillWidth: true
+        Repeater {
+            model: [
+                {
+                    label: "Gestures",
+                    value: "gestures"
+                },
+                {
+                    label: "Buttons",
+                    value: "buttons"
+                }
+            ]
+            delegate: TouchButton {
+                required property var modelData
+                text: modelData.label
+                selected: (page.preferences.navigation === "buttons" ? "buttons" : "gestures") === modelData.value
+                accentColor: page.accentColor
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                Accessible.name: "Navigation " + modelData.label + (selected ? ", selected" : "")
+                onClicked: {
+                    page.preferences.navigation = modelData.value;
+                    page.preferences.sync();
+                }
+            }
+        }
+    }
+    Text {
+        text: "Phone and Tablet. Gestures: swipe up from the bottom edge for Home, swipe up and hold for Recents, swipe in from the left or right edge for Back. Buttons puts Back, Home and Recents in the dock."
+        color: "#8da7b9"
+        font.pixelSize: 12
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+    }
     TouchButton {
         text: page.preferences.showLabels ? "Navigation labels · On" : "Navigation labels · Off"
         selected: page.preferences.showLabels
