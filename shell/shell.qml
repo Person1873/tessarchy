@@ -869,6 +869,7 @@ ShellRoot {
                                     notificationsSelected: panel.page === "notifications"
                                     settingsSelected: panel.page === "settings"
                                     onNotificationsRequested: panel.showPage("notifications")
+                                    onPanelRequested: statusBar.toggleDrawer()
                                     onMuteToggled: root.audioSink.audio.muted = !root.audioSink.audio.muted
                                     onSettingsRequested: panel.showPage("settings")
                                 }
