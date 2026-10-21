@@ -23,9 +23,9 @@ Sources:
 
 Investigate an opt-in, ABI-checked Hyprland extension that presents an oversized native surface at an aspect-preserving fit scale and applies the inverse transform to input. Preserve the host compositor's native protocol handling rather than interposing an incomplete desktop compositor.
 
-This mechanism is not yet proven hookable or complete. Reuse existing compositor geometry and input facilities where available. Do not implement a rendering-only patch or set the X11 scale member on a native window: native pointer and touch paths do not generally use that member.
+Exact-version private render/UV and pointer-picking hooks have now passed a controlled native-client proof. This is not a general supported API or a complete input/surface-tree implementation. The touch hook compiles but is not runtime-verified. Reuse compositor geometry and input facilities; do not set the X11 scale member on a native window, whose input paths do not generally use that member.
 
-An explicit selected-window opt-in is the initial prototype boundary. Ordinary windows and Desktop behavior remain unchanged by default. Do not silently enable a global rule, patch Discord, write profile data, alter app zoom, or change display scaling.
+The private probe selects its fixture with an explicit caller-supplied app-id filter, not a built-in app-specific sizing rule. Production per-window selection and policy are not implemented. Ordinary windows and Desktop behavior remain unchanged by default. Do not silently enable a global rule, patch Discord, write profile data, alter app zoom, or change display scaling.
 
 ## Alternative research
 
@@ -53,4 +53,16 @@ Independent of #82 automatic density-based output scaling. Fit operates on the w
 
 ## Validation and takeover
 
-Scope only. No prototype has been built, run or deployed at this checkpoint. Next: establish hook feasibility, add the controlled native client and isolated verification harness, then implement only the paths that can be exercised. Keep this section and the draft PR current with actual commands, results and remaining gates.
+The isolated native-client proof now builds and executes against Hyprland 0.56.2 / `efb50993780079460b0cbed1363e2166a2de1d9f`. See [reproduction, safety boundaries and diagnosed pitfalls](../tests/native-fit/README.md).
+
+Actual [execution receipt](native-window-fit-fixture-proof.json):
+
+- Native committed layout **832×800**, compositor allocation **410×800**; proportional fit factor **0.49278846153846156**.
+- Baseline right-edge red marker: **0 pixels** visible. Fitted: **6177 red pixels**, with both lateral and both vertical edge markers visible.
+- Real screen click `(400,200)` reached native client `(811.707,405.855)`; independent inverse calculation is within protocol quantization tolerance.
+- Five repeat captures, disable, unload, reload, a second fitted click and second unload passed. Disable/unload restored baseline pixels exactly, and the original client remained alive.
+- The test compositor's parent remained alive. No live ASUS compositor, personal app instance, app profile, zoom or display policy was modified.
+
+![Controlled native fixture: clipped baseline versus proportional fit](assets/native-window-fit-fixture.png)
+
+This is **not** #77 product acceptance. Touch, drag/scroll/grabs, popup/subsurface trees, nonzero geometry origins, rotation/fractional scaling, OSK/IME cursor rectangles, incremental damage/occlusion, noninteractive letterboxing, real native applications and device use remain unverified. The plugin is deliberately absent from session/image/package integration.
