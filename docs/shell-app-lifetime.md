@@ -48,5 +48,35 @@ A transient test application with PartOf=tessarchy-apps.target stopped when the
 session target was stopped, while shell and older app units were unaffected.
 Details and restore evidence are in `docs/testing.md`.
 
-Next: review PR #74 and coordinate merging #62 before testing an installed
-package and physical session exit. #66 Recents follows this repair.
+## Installed integration — live reload, no shell restart
+
+Integrated full checks passed: 227 Python tests (one hardware-dependent skip)
+and 88 Qt tests. Built and installed shell 0.1.0-9 and session 0.1.0-5 after
+checking both installed packages had zero altered files and matching transferred
+package checksums. A full installed-file and preference backup was made first.
+Dependencies and the application target were installed before the QML update.
+
+The real device's shell PID remained 5842, NRestarts=0; existing Foot PID 5945
+and Discord PID 5980 retained both their PIDs and Hyprland window addresses.
+The journal confirmed Configuration Loaded following live reload. A temporary
+headless launch through the installed helper ran in its own app.slice transient
+service and printed successfully to that service's journal; it was then stopped.
+No deliberate shell restart, shell crash or physical logout was attempted on
+the device. Real interactive restart/crash survival remains the QEMU evidence.
+
+Package replacement briefly removed watched files: Quickshell logged File not
+found before successfully reloading; Hyprland retained a missing-config banner
+after the file had returned. A config-only hyprctl reload cleared the error;
+shell PID and all original app PIDs/windows remained unchanged. The final
+screenshot was inspected and showed Discord/taskbar with no error banner.
+Raw pacman replacement is therefore not atomic watched-config deployment.
+Track its removal window separately; do not claim it is a safe atomic update.
+
+Important limitation: already-running applications remain in the old shell
+cgroup. This update does not migrate them. No device shell restart is safe to
+use as a demonstration while those applications remain there. Subsequent
+shell-launched apps use the independent service path.
+
+Next: #66 visible Recents button; review #74 and coordinate #62 before upstream
+landing. A full physical compositor logout and automatic package-deployment
+atomicity remain unverified/unfixed respectively.
