@@ -22,6 +22,8 @@ class Workflows(unittest.TestCase):
         self.assertIn('if (surface.mode !== "desktop") return;\n                    page = "";\n                    startMenuOpen = !startMenuOpen;', shell)
         self.assertIn('visible: surface.isPrimaryScreen && surface.mode === "desktop" && panel.startMenuOpen', shell)
         self.assertIn('Keys.onEscapePressed: panel.startMenuOpen = false', shell)
+        self.assertIn('startApplications.itemAt(keyboardIndex).forceActiveFocus()', shell)
+        self.assertIn('if (tile) tile.clicked();', shell)
         self.assertTrue('panel.launchEntry(modelData);' in shell or 'modelData.execute();' in shell)
 
     def test_shell_shape_literals_live_in_theme_tokens(self):
