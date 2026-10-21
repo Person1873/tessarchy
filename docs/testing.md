@@ -1,5 +1,57 @@
 # Validation and manual acceptance
 
+## Installed 2-in-1 upstream refresh, 2026-10-21
+
+Integrated upstream `e52ff9e` with the runtime and UI carry-forwards at
+`a0ea4bc`. Combined checks passed: 221 Python tests (one skipped), 76 Qt tests.
+Built packages and verified matching SHA-256 hashes after transfer to the device.
+Installed only `tessera-shell` and `tessarchy-session` 0.1.0-4; no OS or kernel
+upgrade. Temporarily disabled Hyprland auto-reload during the package transaction,
+then explicitly reloaded the complete configuration and restored auto-reload.
+The previously hand-installed service required a narrowly scoped pacman overwrite.
+
+An existing manual Quickshell process prevented the service's first launch.
+Replaced that exact process with the supervised shell. Device checks showed
+an active service, zero restarts, empty compositor config errors, one status bar,
+one dock and gesture layers. The same compositor and applications remained alive.
+The device screenshot showed a centred three-button dock without an error banner.
+Display configuration remained unchanged at scale 1.5. Preserved the previous
+bar-opacity value after settings migration changed it; other existing preferences
+were retained, with new gesture preferences added. Autorotate and its sensor reader
+were running. Physical touch, rotation movement and horizontal dock flick still
+require user/device interaction; they are not established by the screenshot.
+
+## Integrated QEMU pass (`a0ea4bc`), 2026-10-21
+
+In the existing Arch QEMU guest, backed up the development install and
+`~/.config/tessarchy` before staging `shell/` and `session/` via `scp -r` and
+atomically replacing individual files. The guest's running Hyprland reads its
+private `session/hyprland.lua`; deployed source and guest hashes matched.
+`Hyprland --config <guest session/hyprland.lua> --verify-config` returned
+`config ok`; `hyprctl reload` and `hyprctl -j configerrors` returned `ok` and
+an empty error list. Restarted Quickshell loaded the configuration without QML
+ReferenceError, TypeError or failed-load messages. Guest logs still warn that
+BlueZ/UPower, optional brightness/night-light helpers and a DRM render device
+are absent; Quickshell falls back to SHM.
+
+- Tablet, 1280×800: five available dock actions stay in one row. Two real Foot
+  windows split into adjacent 616 px tiles with a 48 px divider gap; Swap and
+  Leave split glyphs render. Opening Recents via virtual touchscreen shows live
+  previews and the Split apps action; its expanded panel hides the divider.
+  Screenshots: `vm/a0ea4bc-tablet-split.png` and
+  `vm/a0ea4bc-tablet-recents.png` (VM tooling directory).
+- Phone, rotated 1280×800 at scale 2.5 (320×512 logical), Buttons mode:
+  with `TESSARCHY_OSK=1` forced for geometry only, the six-action dock remains
+  one row; the final Recents action clips at the right edge rather than wrapping.
+  Screenshot: `vm/a0ea4bc-phone-320-six-upright.png`. The guest lacks the real
+  on-screen keyboard, so this does not prove its runtime or a working scroll
+  gesture. Virtual touch was used only for the Tablet Recents tap; no physical
+  touch, divider drag, six-action horizontal flick, or device run was done.
+- No screenshot shows a Hyprland config-error banner. Restored the backed-up
+  preferences and previous installed file contents by atomic per-file rename,
+  returned monitor to scale 1/transform 0 and restarted the original shell;
+  hashes of `shell.ini`, `hyprland.lua` and `shell.qml` matched their backups.
+
 ## Session runtime port, 2026-10-21
 
 Ported rotation/touch and sensor retry, plus shell user-service supervision,
