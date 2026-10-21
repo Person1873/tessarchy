@@ -67,6 +67,11 @@ ShellRoot {
         function accept(): void { root.switcherCommand("accept"); }
         function cancel(): void { root.switcherCommand("cancel"); }
     }
+    signal startMenuRequested
+    IpcHandler {
+        target: "startMenu"
+        function toggle(): void { root.startMenuRequested(); }
+    }
     readonly property color accentColor: Theme.accent
     Settings {
         id: shellPreferences
@@ -292,6 +297,12 @@ ShellRoot {
                 if (mode !== "desktop") panel.startMenuOpen = false;
             }
             Component.onCompleted: if (isPrimaryScreen) root.applyOskMode(mode)
+            Connections {
+                target: root
+                function onStartMenuRequested() {
+                    if (surface.isPrimaryScreen) panel.toggleStartMenu();
+                }
+            }
             SystemClock {
                 id: clock
                 precision: SystemClock.Minutes
@@ -303,6 +314,11 @@ ShellRoot {
                 property string page: ""
                 // Desktop Start menu, opened by the taskbar's Start button.
                 property bool startMenuOpen: false
+                function toggleStartMenu() {
+                    if (surface.mode !== "desktop") return;
+                    page = "";
+                    startMenuOpen = !startMenuOpen;
+                }
                 property var closeTarget: null
                 property string messageRecipient: ""
                 readonly property bool expanded: page !== ""
@@ -735,10 +751,7 @@ ShellRoot {
                             Layout.alignment: Qt.AlignVCenter
                             accentColor: root.accentColor
                             selected: panel.startMenuOpen
-                            onClicked: {
-                                panel.page = "";
-                                panel.startMenuOpen = !panel.startMenuOpen;
-                            }
+                            onClicked: panel.toggleStartMenu()
                         }
                         WeatherChip {
                             visible: weatherBackend.available
