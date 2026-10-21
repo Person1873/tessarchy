@@ -96,10 +96,30 @@ was closed; original Foot PIDs 829, 5305, 5437 survived. Restored shell loaded,
 compositor configerrors was empty. Guest test scripts and raw captures are
 untracked and not required to continue.
 
-**Remaining:** physical ASUS touchscreen interaction and device rollout have
-not been run; #65 integrated acceptance/deployment remains a coordination
-prerequisite. QEMU scale-4 narrow test did not validate a usable portrait
-320x640 switcher page. Existing #63 split drag/ratio, XWayland and multiple
-monitors are not retested here. Maintainer can review this branch independently
-or fetch `verify/visible-recents` for the tested combined shell; rerun
-`./scripts/check.sh`, then virtual touch in QEMU before physical acceptance.
+## Installed integration — atomic live reload
+
+The parent integration matches the VM-accepted shell/session source exactly.
+Combined checks passed: 227 Python tests (one skip) and 88 Qt tests. Before
+deployment, both live files matched their previous known source hashes, so no
+manual edits to those files were overwritten. All 130 shell-file backup hashes
+and copied preference bytes were verified before replacement.
+
+Installed `LayoutPolicy.js` first, then `shell.qml`, through same-directory
+atomic replacement and touched the entry point to trigger normal live reload.
+The source overlay is recorded in the device's live-source manifest on top of
+shell package 0.1.0-9; it is not a package version upgrade. No watched-file
+removal, shell restart or compositor config reload was needed. Shell PID 5842,
+Foot PID 5945 and Discord PID 5980/window addresses remained unchanged. Journal
+confirmed Configuration Loaded and compositor configerrors stayed empty. The
+real-device screenshot showed portrait Discord with OSK and the status bar,
+without an error banner; it did not exercise tapping the revealed dock.
+
+**Remaining:** physical touchscreen tapping of Recents is not yet verified;
+button/gesture acceptance is the actual VM touch evidence above. The 320px
+proof used a 320x200 logical scale-4 dock, not a usable portrait-page test.
+Existing #63 split drag/ratio, XWayland and multiple monitors were not retested.
+#65 is already integrated/deployed. Next queued report is #69 Desktop app-menu
+keyboard access. Review the independent branch or public `verify/visible-recents`
+for the VM-tested combination; public integration includes the hardware overlay
+source. Do not replace that source using a raw package refresh without preserving
+it; the package watch-removal race is tracked separately as #75.
