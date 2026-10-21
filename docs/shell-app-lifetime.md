@@ -27,8 +27,26 @@ app PIDs/windows across QML live reload, shell service restart and shell failure
 Check output lifetime and preserve safe session cleanup. Back up and restore the
 VM files/settings atomically. No ASUS mutation or restart during development.
 
-Current state: scope only. Next inspect launch paths and systemd execution docs,
-implement against current upstream architecture, then integrate with #62/#63/
-#64/#67/#68. Preserve native Wi-Fi recovery and the Desktop gap fix. #66 Recents
-button follows this regression repair. Public PR must hold actual evidence and
-remaining gaps so another contributor can take over.
+Current state: implementation on `fix/shell-app-lifetime`. `tessarchy-launch` starts
+transient user services (Type=exec, journal output) with argv and caller environment
+intact; desktop entry tiles use their parsed `command` and `workingDirectory`.
+`SUPER+Return` and eSIM Manager also route through the launcher. Application
+units are `PartOf=tessarchy-apps.target`; session services start that target and
+`start-tessarchy` stops it on compositor exit, without coupling it to shell
+service restarts. `graphical-session.target` refuses explicit manual starts on
+the VM, so a distinct target is necessary. This target is also PartOf the
+standard graphical-session target. `systemd-run` is required; failure to start
+an application is reported to the shell journal rather than silently falling
+back to unsafe `execDetached`.
+
+On the integration of #62/#63/#64/#67/#68, full `scripts/check.sh` passed 225
+Python tests; the upstream-only branch passed 218 Python tests. QEMU verified
+Foot and Firefox launched from actual shell tiles in separate service cgroups;
+PIDs and window addresses survived QML reload, deliberate shell service restart
+and SIGKILL shell crash/recovery. Output in the surviving Foot remained usable.
+A transient test application with PartOf=tessarchy-apps.target stopped when the
+session target was stopped, while shell and older app units were unaffected.
+Details and restore evidence are in `docs/testing.md`.
+
+Next: review PR #74 and coordinate merging #62 before testing an installed
+package and physical session exit. #66 Recents follows this repair.

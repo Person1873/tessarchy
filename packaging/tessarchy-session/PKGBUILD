@@ -27,6 +27,7 @@ package() {
     install -Dm755 "$srcdir/session/tessarchy-theme" "$pkgdir/usr/bin/tessarchy-theme"
     install -Dm755 "$srcdir/session/tessarchy-run" "$pkgdir/usr/bin/tessarchy-run"
     install -Dm755 "$srcdir/session/tessarchy-launch" "$pkgdir/usr/bin/tessarchy-launch"
+    install -Dm644 "$srcdir/session/tessarchy-apps.target" "$pkgdir/usr/lib/systemd/user/tessarchy-apps.target"
     cp -r "$srcdir/themes" "$pkgdir/usr/share/tessarchy/"
     install -Dm644 "$srcdir/session/tessarchy.desktop" "$pkgdir/usr/share/wayland-sessions/tessarchy.desktop"
 }

@@ -11,7 +11,7 @@ fi
 [[ $# -ge 1 && -n $1 ]] || { echo 'Usage: tessarchy-launch [--working-directory DIR] COMMAND [ARG...]' >&2; exit 2; }
 command -v systemd-run >/dev/null || { echo 'systemd-run is required to isolate applications' >&2; exit 127; }
 options=(--user --quiet --collect --service-type=exec --expand-environment=no
-    --property=PartOf=graphical-session.target)
+    --property=PartOf=tessarchy-apps.target)
 if [[ -n $directory ]]; then options+=(--working-directory="$directory"); else options+=(--same-dir); fi
 # Transient services inherit only the manager environment by default. Carry
 # the caller's session and application environment without shell parsing.

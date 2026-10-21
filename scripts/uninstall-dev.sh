@@ -7,6 +7,13 @@ data=${XDG_DATA_HOME:-$HOME/.local/share}/tessarchy
 version=$(cat "$data/.tessarchy-dev-install")
 [[ $version == tessarchy-dev-v1 || $version == tessarchy-dev-v2 || $version == tessarchy-dev-v3 ]] || exit 1
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+unit=${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/tessarchy-apps.target
+if [[ -e $unit || -L $unit ]]; then
+    [[ ! -L $unit && -f $unit && -f $data/session/tessarchy-apps.target ]] &&
+        cmp -s -- "$data/session/tessarchy-apps.target" "$unit" || {
+        echo "Modified or unsafe unit: $unit; preserve or remove it manually" >&2; exit 1;
+    }
+fi
 manifest=$data/.tessarchy-dev-files
 entries=()
 if [[ $version != tessarchy-dev-v1 ]]; then
@@ -56,6 +63,7 @@ for launcher in "${launchers[@]}"; do
 done
 
 for launcher in "${launchers[@]}"; do rm -f -- "$HOME/.local/bin/$launcher"; done
+rm -f -- "$unit"
 # Remove only files recorded by this installation.
 if [[ $version != tessarchy-dev-v1 ]]; then
     for relative in "${entries[@]}"; do rm -f -- "$data/$relative"; done

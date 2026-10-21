@@ -79,6 +79,7 @@ cp -R -- "$root/session/osk" "$airoot/usr/share/tessarchy/session/"
 install -m755 "$root/session/tessarchy-install" "$root/session/tessarchy-install-ui" "$airoot/usr/bin/"
 install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessarchy-theme" "$root/session/tessarchy-run" "$root/session/tessarchy-launch" "$root/session/tessera-screenshot" "$root/session/tessera-brightness" "$root/session/tessera-nightlight" "$root/session/tessera-rotate" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"
 install -m755 "$root/session/tessarchy-update" "$root/session/tessera-update-notify" "$airoot/usr/bin/"
+install -Dm644 "$root/session/tessarchy-apps.target" "$airoot/usr/lib/systemd/user/tessarchy-apps.target"
 install -m644 "$root/session/tessarchy.desktop" "$airoot/usr/share/wayland-sessions/"
 # File dialogs (compiled here: needs gcc, make, pkgconf and gtk3 headers).
 make -s -C "$root/portal" O="$root/build/portal" DESTDIR="$airoot" PREFIX=/usr install
