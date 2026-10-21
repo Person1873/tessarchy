@@ -85,3 +85,25 @@ starting squeekboard, so any generated scale value there cannot be claimed
 byte-for-byte restored. Physical ASUS touch and the exact owner's preferred
 black/pill aesthetic remain for visual acceptance; this QEMU input is virtual
 touch, not physical hardware.
+
+## Parent integration and hardware live deployment
+
+Integrated source matches the VM-accepted combined shell/session exactly.
+Parent check.sh passed again before integration was pushed. Deployed the
+policy, Theme component, entrypoint and theme token by same-directory atomic
+file replacement, dependencies first and shell.qml last, followed by touch
+for normal live reload. Original hashes matched the previous source; all 130
+shell files, preferences and previous theme token file were backed up and
+verified byte-for-byte before replacement. This is a recorded live source
+overlay, not a raw package upgrade.
+
+On the portrait hardware output, the black Bottom reservation and Overlay
+input both occupy y1264..1280 at width720; the OSK occupies y1084..1264.
+The rectangles no longer overlap. Screenshot inspected: spacebar entirely
+above the black pill strip, no config banner. Shell MainPID5842 and all existing
+application PIDs/window addresses were preserved. Journal confirmed successful
+Configuration Loaded; compositor configerrors empty. No shell restart or
+hardware touch injection. Actual physical typing still needs owner confirmation;
+the input test above is real virtual touch in QEMU. Portrait Discord horizontal
+content clipping remains separately tracked in #77 and is not fixed by this.
+
