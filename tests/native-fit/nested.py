@@ -94,7 +94,8 @@ def main():
         env.update(HYPRLAND_INSTANCE_SIGNATURE=child["instance"], WAYLAND_DISPLAY=child["wl_socket"])
         def ctl(*command):
             return subprocess.check_output(["hyprctl", *command], env=env, text=True, stderr=subprocess.DEVNULL, timeout=3)
-        wait_until(lambda: json.loads(ctl("-j", "monitors")), bool, compositor)
+        # A responding IPC server may have no nested Wayland output yet.
+        wait_until(lambda: json.loads(ctl("-j", "version")), lambda v: bool(v.get("commit")), compositor)
         errors = [error for error in json.loads(ctl("-j", "configerrors")) if error.strip()]
         if errors:
             raise RuntimeError(f"Nested configuration errors: {errors}")

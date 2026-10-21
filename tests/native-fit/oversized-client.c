@@ -156,10 +156,12 @@ static void capabilities(void *d, struct wl_seat *s, uint32_t caps) {
     if ((caps & WL_SEAT_CAPABILITY_TOUCH) && !seat_touch) {
         seat_touch = wl_seat_get_touch(s);
         wl_touch_add_listener(seat_touch, &touch_listener, NULL);
+        puts("TOUCH_READY");
     } else if (!(caps & WL_SEAT_CAPABILITY_TOUCH) && seat_touch) {
         if (wl_touch_get_version(seat_touch) >= 3) wl_touch_release(seat_touch);
         else wl_touch_destroy(seat_touch);
         seat_touch = NULL;
+        puts("TOUCH_REMOVED");
     }
 }
 static void seat_name(void *d, struct wl_seat *s, const char *name) { (void)d; (void)s; (void)name; }

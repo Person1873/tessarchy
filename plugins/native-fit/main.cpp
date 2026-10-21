@@ -18,6 +18,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include "touch-probe.hpp"
 
 // PRIVATE PROOF ONLY: never loaded by Tessarchy's session, image or package.
 // The harness enables this guard, disables damage tracking, and uses an isolated
@@ -124,7 +125,7 @@ void fittedTouch(CSeatManager* seat, uint32_t time, int32_t id, const Vector2D& 
     Vector2D local = upstreamLocal;
     const auto window = g_pInputManager->m_touchData.touchFocusWindow.lock();
     const auto surface = g_pInputManager->m_touchData.touchFocusSurface.lock();
-    if (fitFor(window) && surface) {
+    if (mapTouchMotion && fitFor(window) && surface) {
         // Touch.cpp normally subtracts a constant origin after touch-down. A
         // scale needs an inverse affine mapping on EVERY motion. Re-use the
         // surface-specific picker rather than dividing already-local coordinates.
@@ -185,7 +186,8 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
         localHook = install("surfaceLocalAt", "Desktop::CViewHitTester::surfaceLocalAt(", reinterpret_cast<void*>(fittedLocal));
         touchHook = install("sendTouchMotion", "CSeatManager::sendTouchMotion(", reinterpret_cast<void*>(fittedTouch));
         if (!HyprlandAPI::addLuaFunction(handle, "tessarchy_fit", "target", selectTarget) ||
-            !HyprlandAPI::addLuaFunction(handle, "tessarchy_fit", "status", status))
+            !HyprlandAPI::addLuaFunction(handle, "tessarchy_fit", "status", status) ||
+            !HyprlandAPI::addLuaFunction(handle, "tessarchy_fit", "touch", touchProbe))
             throw std::runtime_error("native-fit: failed to register probe controls");
     } catch (...) {
         for (auto it = hooks.rbegin(); it != hooks.rend(); ++it)
@@ -196,6 +198,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     return {"tessarchy-native-fit-probe", "Isolated native-window render/input feasibility probe", "Tessarchy", "0.0.1"};
 }
 APICALL EXPORT void PLUGIN_EXIT() {
+    stopProbeTouch();
     targetClass.clear();
     for (auto it = hooks.rbegin(); it != hooks.rend(); ++it)
         (*it)->unhook();

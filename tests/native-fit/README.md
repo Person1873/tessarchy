@@ -19,6 +19,7 @@ The second command stays running for the bounded session. In another terminal:
 
 ```sh
 python3 /path/to/tessarchy/tests/native-fit/verify.py
+python3 /path/to/tessarchy/tests/native-fit/verify-touch.py
 ```
 
 `--pointer-xml` must point to the inspected upstream protocol, not a fabricated protocol stub. The proof was exercised against Hyprland `efb50993780079460b0cbed1363e2166a2de1d9f` / 0.56.2. Compositor ABI hash mismatch is rejected.
@@ -42,6 +43,17 @@ The harness discovers the real parent display, but creates a private HOME, XDG d
 2. **Reload lifetime:** module globals can survive a load/unload cycle. Hyprland owns hook objects; retain no pointers to them after unload. A failed second unload exposed a vector holding ten entries, including five freed old hooks. Exit/error paths now clear the vector, and the test includes a second complete load/unload.
 3. **Isolation details:** `vfr` lives under `debug` in this compositor version; `configerrors` may return `[""]` for no errors. Long runtime paths break the event IPC socket's AF_UNIX length limit. Plugin loading reloads Lua, so headless/output-disable policy must be persisted in the private config rather than only evaluated transiently.
 
+## Single-contact touch proof
+
+`verify-touch.py` creates a compositor-local synthetic Aquamarine touch source, registers it through the normal touch-device manager and checks events received by the actual client `wl_touch` listener. It never creates a kernel/uinput device or injects into the parent compositor. This exercises the compositor input pipeline, not physical hardware or libinput calibration.
+
+- Baseline and disabled fitting preserve unscaled down/motion/up.
+- With fitting active, screen down `(300,100)` arrives at native `(608.781,202.926)` and motion `(350,150)` arrives at `(710.242,304.391)`, within 0.01 of independently calculated coordinates.
+- A deliberate motion-correction-off control produces `(658.781,252.926)` instead, demonstrating why down-only hit testing is insufficient.
+- Repeat contacts, unload during an active contact, capability removal, reload and second device removal pass. A strong wrapper reference is retained during device teardown; pointer listeners are detached before destroying the synthetic AQ source.
+- Receipt: `touch-proof.json` in the session directory, also published as [the touch execution receipt](../../docs/native-window-fit-touch-proof.json).
+- Harness startup waits for IPC readiness before creating its headless output; a nested Wayland output is not required to be present first.
+
 ## Not yet accepted
 
-Touch, grabs/drags/scrolling, nonzero window geometry origins, subsurfaces/popups, rotation, fractional output scaling, OSK/IME cursor rectangles, incremental damage/occlusion, real native applications, and real-device use remain separate gates. Letterboxing is not yet made noninteractive. Fitting also shrinks application controls; it does not guarantee 48dp targets or responsive reflow. Do not ship this prototype as the completed #77 fix.
+Physical/multicontact touch, cancellation, pointer grabs/drags/scrolling, nonzero window geometry origins, subsurfaces/popups, rotation, fractional output scaling, OSK/IME cursor rectangles, incremental damage/occlusion, real native applications, and real-device use remain separate gates. Letterboxing is not yet made noninteractive. Fitting also shrinks application controls; it does not guarantee 48dp targets or responsive reflow. Do not ship this prototype as the completed #77 fix.

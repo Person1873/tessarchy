@@ -23,7 +23,7 @@ Sources:
 
 Investigate an opt-in, ABI-checked Hyprland extension that presents an oversized native surface at an aspect-preserving fit scale and applies the inverse transform to input. Preserve the host compositor's native protocol handling rather than interposing an incomplete desktop compositor.
 
-Exact-version private render/UV and pointer-picking hooks have now passed a controlled native-client proof. This is not a general supported API or a complete input/surface-tree implementation. The touch hook compiles but is not runtime-verified. Reuse compositor geometry and input facilities; do not set the X11 scale member on a native window, whose input paths do not generally use that member.
+Exact-version private render/UV and pointer-picking hooks have now passed a controlled native-client proof. This is not a general supported API or a complete input/surface-tree implementation. Single-contact down/motion/up mapping now passes a synthetic AQ-device-to-real-wl_touch test, including a negative motion control and unload/reload. Physical touch, calibration and multiple contacts remain unverified. Reuse compositor geometry and input facilities; do not set the X11 scale member on a native window, whose input paths do not generally use that member.
 
 The private probe selects its fixture with an explicit caller-supplied app-id filter, not a built-in app-specific sizing rule. Production per-window selection and policy are not implemented. Ordinary windows and Desktop behavior remain unchanged by default. Do not silently enable a global rule, patch Discord, write profile data, alter app zoom, or change display scaling.
 
@@ -65,4 +65,6 @@ Actual [execution receipt](native-window-fit-fixture-proof.json):
 
 ![Controlled native fixture: clipped baseline versus proportional fit](assets/native-window-fit-fixture.png)
 
-This is **not** #77 product acceptance. Touch, drag/scroll/grabs, popup/subsurface trees, nonzero geometry origins, rotation/fractional scaling, OSK/IME cursor rectangles, incremental damage/occlusion, noninteractive letterboxing, real native applications and device use remain unverified. The plugin is deliberately absent from session/image/package integration.
+Additional [single-contact execution receipt](native-window-fit-touch-proof.json) verifies the normal compositor touch pipeline using a compositor-local synthetic AQ source, not a physical/kernel input device. Corrected motion, a deliberately uncorrected RED control, disabled fitting, active-contact unload and reload all pass.
+
+This is **not** #77 product acceptance. Physical/multicontact touch and cancellation, pointer drag/scroll/grabs, popup/subsurface trees, nonzero geometry origins, rotation/fractional scaling, OSK/IME cursor rectangles, incremental damage/occlusion, noninteractive letterboxing, real native applications and device use remain unverified. The plugin is deliberately absent from session/image/package integration.
