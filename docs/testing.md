@@ -2553,3 +2553,57 @@ restored 18/true/0, with empty configerrors. Ubuntu source CI now uses the
 supported 26.04 runner for QtQuick.Effects; every source/build job declares the
 portal's GTK/GLib build dependencies. Terminal Fn exposes navigation/F1–F12
 without adding short key rows.
+# Shell application lifetime — issue #72 (QEMU, integrated #62/#63/#64/#67/#68)
+
+`tessarchy-launch` sends parsed desktop-entry argv and working directory to
+`systemd-run --user --service-type=exec --collect --expand-environment=no` with
+each caller environment key passed via `--setenv`. The independent transient
+service owns application stdio (journal) and is `PartOf=tessarchy-apps.target`,
+not `tessera-shell.service`. This target is stopped when the compositor session
+exits. `graphical-session.target` refused explicit start on this VM, hence the
+dedicated target. PR #62 supplies the supervised shell service; testing staged
+its unit with a guest-local `ExecStart` and PATH override only in the VM.
+
+Executed by an agent in the QEMU VM. The installed shell/session and preferences
+were backed up before staging; components and watched Lua config were replaced
+with same-directory atomic renames. Source retained native
+`import Quickshell.Networking` and workspace split `gaps_in = 24`.
+Foot and Firefox were tapped from shell launcher tiles (not invoked over SSH).
+Observed:
+
+| Phase | shell MainPID | Foot PID/address | Firefox PID/address |
+|---|---:|---|---|
+| launched | 74265 | 74436 / `0x5602bc042dc0` | 74521 / `0x5602bddcb3e0` |
+| QML live reload | 74265 | same | same |
+| service restart | 75093 | same | same |
+| SIGKILL shell, auto-recovered | 75160 (`NRestarts=1`) | same | same |
+
+`KillMode=control-group` remained in place. `/proc/74436/cgroup` contained
+`app.slice/run-p74434-i75588.service`, `/proc/74521/cgroup` contained
+`app.slice/run-p74519-i75611.service` (not the shell service). Both transient
+units reported `StandardOutput=journal`, `StandardError=inherit` (inherits the
+unit's journal output). After crash, typing a `printf` in the surviving Foot
+displayed `T72-output-after-crash` and returned a prompt. A separate launcher's
+real journal emitted `('space $HOME 100%', ['one two', '$HOME', '100%'])` without
+expansion; nonexistent executable returned nonzero and printed an error.
+`hyprctl -j configerrors` contained only an empty string.
+
+Atomic rename of shell.qml alone **did not trigger Quickshell 0.3.2 reload** in
+this guest; `touch shell.qml` afterward did: `qs log --pid 74265` reported
+`Reloading configuration...` then `Configuration Loaded`. The shell PID,
+window addresses and app PIDs stayed fixed. This is a deployment pitfall:
+trigger the file watcher explicitly after an atomic stage. Target cleanup was
+verified separately: launching `/usr/bin/sleep 300` created
+`run-p75428-i75813.service` (PID 75430, PartOf=tessarchy-apps.target); stopping
+that target terminated the PID, leaving shell PID 75160 and the older Foot and
+Firefox units running (those two predated the updated target property).
+
+Screenshots from VM capture: `vm/t72-apps.png`, `vm/t72-after-restart.png`,
+`vm/t72-after-crash.png`, `vm/t72-output.png`. These VM output files are ignored
+and not packaged. Full upstream branch `scripts/check.sh`: 218 Python tests;
+combined branch `scripts/check.sh`: 227 Python tests (one hardware-dependent
+skip). The guest restoration compared byte-identical to the backed-up shell,
+session and settings trees; temporary launcher and service units were removed,
+and its original standalone `qs` shell was relaunched (PID 75583). No ASUS
+deployment or reboot. Physical session exit and installed package remain
+unverified.

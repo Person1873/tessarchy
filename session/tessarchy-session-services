@@ -5,6 +5,8 @@ set -euo pipefail
 if command -v dbus-update-activation-environment >/dev/null; then
     dbus-update-activation-environment --systemd WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP XDG_SESSION_TYPE TESSARCHY_DATA_DIR || true
 fi
+# App units are PartOf this target, not the restartable shell service.
+if command -v systemctl >/dev/null; then systemctl --user start tessarchy-apps.target; fi
 # Import the compositor environment before starting the supervised shell.
 # Development installs without a user unit still launch the shell directly.
 shell_service() {

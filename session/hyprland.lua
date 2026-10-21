@@ -328,7 +328,7 @@ hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("tessera-shell ipc call switcher pr
 hl.bind("code:64", hl.dsp.exec_cmd("tessera-shell ipc call switcher accept"), { release = true, ignore_mods = true, locked = true })
 hl.bind("code:108", hl.dsp.exec_cmd("tessera-shell ipc call switcher accept"), { release = true, ignore_mods = true, locked = true })
 hl.bind("Print", hl.dsp.exec_cmd("tessera-screenshot"))
-hl.bind("SUPER + Return", hl.dsp.exec_cmd("tessarchy-run foot"))
+hl.bind("SUPER + Return", hl.dsp.exec_cmd("tessarchy-launch tessarchy-run foot"))
 hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
 hl.bind("SUPER + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("systemctl --user restart tessera-shell.service || tessera-shell"))

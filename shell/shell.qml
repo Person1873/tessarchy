@@ -383,7 +383,13 @@ ShellRoot {
                     page = page === name ? "" : name;
                 }
                 function launch(command) {
-                    Quickshell.execDetached(command);
+                    Quickshell.execDetached(["tessarchy-launch"].concat(command));
+                    page = "";
+                }
+                function launchEntry(entry) {
+                    if (!entry.command || !entry.command.length) return;
+                    const options = entry.workingDirectory ? ["--working-directory", entry.workingDirectory] : [];
+                    Quickshell.execDetached(["tessarchy-launch"].concat(options, entry.command));
                     page = "";
                 }
                 // Navigation actions shared by the dock buttons and edge gestures.
@@ -539,7 +545,7 @@ ShellRoot {
                                                 accentColor: root.accentColor
                                                 onClicked: {
                                                     panel.page = "";
-                                                    modelData.execute();
+                                                    panel.launchEntry(modelData);
                                                 }
                                             }
                                         }
@@ -1373,7 +1379,7 @@ ShellRoot {
                                         accentColor: root.accentColor
                                         onClicked: {
                                             panel.startMenuOpen = false;
-                                            modelData.execute();
+                                            panel.launchEntry(modelData);
                                         }
                                     }
                                 }
