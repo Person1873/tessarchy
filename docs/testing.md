@@ -1,5 +1,18 @@
 # Validation and manual acceptance
 
+## Integrated Desktop Wi-Fi taskbar touch retest, 2026-10-21
+
+The prior `0e4a7e1` blocker was resolved by `150a75d`'s Desktop
+`onPanelRequested: statusBar.toggleDrawer()` wiring. On the real running QEMU
+guest at 1920×1200, scale 1.5, a virtual touchscreen tap on the bottom Wi-Fi
+glyph at logical (1117,763) opened a 1280×724 non-reserving quick sheet;
+Desktop reservation remained `[0,0,0,64]`. Tapping it again closed the sheet
+without restoring the blank top layer. Tablet/Phone one-pass smoke checks
+retained the 48-pixel top status layer and `[0,48,0,0]` reservation. The guest's
+missing network backend only validates the `Unavailable` fallback, not real
+Wi-Fi. Exact measurements, screenshots, and verified byte-identical VM restore:
+[desktop-top-gap.md](desktop-top-gap.md#targeted-integrated-wi-fi-taskbar-retest-2026-10-21).
+
 ## Integrated Desktop top-gap VM acceptance, 2026-10-21
 
 Integrated `0e4a7e1` (#62/#63/#64/#67/#68) tested in the QEMU guest at
