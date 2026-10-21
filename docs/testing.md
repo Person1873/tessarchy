@@ -188,6 +188,21 @@ preferences compared equal, restored screen was 1280×800 scale 1 / transform 0,
 and no test keyboard process or temporary Foot clients remained. The
 remaining unverified scenarios are XWayland clients, physical touch/hardware,
 split drag/ratio gesture, and multiple monitors.
+## Desktop unused top strip, issue #65
+
+Executed in the running QEMU guest at 1280×800, scale 1. The older installed
+shell's top status surface visibly contained controls; upstream main instead
+placed Desktop controls in the bottom taskbar but still reserved an empty
+48-pixel top strip. On upstream main, `reserved=[0,48,0,64]` and Foot began
+at y=48. After mapping the Desktop status surface only when its sheet is open
+and setting its Desktop exclusive zone to zero, `reserved=[0,0,0,64]` and Foot
+began at y=0; its bottom boundary remained y=736. Opening the quick sheet via
+`controls.toggle` mapped the overlay without shifting clients. Tablet/Phone
+retained visible status surfaces and 48-pixel top reservations. All tested
+modes had empty config errors. `./scripts/check.sh`: 215 Python tests (one
+skipped), 4 site tests, 76 QML tests and both Hyprland configs parsed. Full
+measurements, six tracked VM screenshots, source comparison, and hardware
+limits are in [desktop-top-gap.md](desktop-top-gap.md).
 
 ## Theme picker layout fix, 2026-10-19
 
