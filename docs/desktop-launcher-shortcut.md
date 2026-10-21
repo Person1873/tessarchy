@@ -28,7 +28,13 @@ Document behavior outside Desktop and preserve touch layout controls. Back up
 and restore VM state byte-for-byte. Push checkpoints and actual screenshot/
 input evidence; distinguish static wiring from actual keyboard acceptance.
 
-Current state: scope only, no feature code. #66 visible Recents is integrated
+Current state: feature implemented and published on `fix/desktop-launcher-shortcut`;
+the scratch combination is published as `verify/desktop-launcher-shortcut`,
+stacked on `sync/upstream-20261021`. Actual QEMU keyboard acceptance, test
+counts, screenshots and byte-identical VM restore are in `docs/testing.md`.
+Directional selection of the second app tile was not shown working in QEMU;
+the first tile launched successfully with Enter. Upstream review/merge and
+hardware verification remain outstanding. #66 visible Recents is integrated
 and deployed via atomic live overlay with original apps and shell PID preserved.
 Next queue after this issue: #71 taskbar selector alignment, then #73 truthful
 status indicators, then #75 atomic package/config update design. Do not land on
