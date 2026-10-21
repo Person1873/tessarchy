@@ -1255,6 +1255,7 @@ ShellRoot {
                 onVisibleChanged: {
                     if (visible) Qt.callLater(() => {
                         if (!startMenu.visible) return;
+                        startContent.keyboardIndex = 0;
                         const first = startApplications.itemAt(0);
                         if (first) first.forceActiveFocus();
                         else startContent.forceActiveFocus();
@@ -1269,7 +1270,22 @@ ShellRoot {
                 Rectangle {
                     id: startContent
                     focus: true
+                    property int keyboardIndex: 0
                     Keys.onEscapePressed: panel.startMenuOpen = false
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Right || event.key === Qt.Key_Left) {
+                            const count = startApplications.count;
+                            if (count) {
+                                keyboardIndex = (keyboardIndex + (event.key === Qt.Key_Right ? 1 : count - 1)) % count;
+                                startApplications.itemAt(keyboardIndex).forceActiveFocus();
+                            }
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            const tile = startApplications.itemAt(keyboardIndex);
+                            if (tile) tile.clicked();
+                            event.accepted = true;
+                        }
+                    }
                     anchors.fill: parent
                     // Flush with the taskbar, so only the top corners round.
                     topLeftRadius: 16
