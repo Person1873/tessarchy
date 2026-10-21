@@ -9,10 +9,49 @@ shell pages and reveal; QtTest also drives bottom-edge tap and swipe sequences.
 Hyprland config verification passed; QML lint completed with the existing
 uncreatable-PanelWindow and unresolved-type warnings. Quickshell 0.2.1 type
 documentation lists the workspace monitor and monitor active-workspace fields.
-No guest shell was replaced and no screenshots or physical touch tests were
-performed. VM runtime presence changes, exclusive-zone measurements, tap-over-app,
-keyboard overlay and split-screen interactions remain manual acceptance work.
-#63's geometry/scroll changes are deliberately not in this branch.
+The feature branch alone was not deployed during its initial test pass. A later
+QEMU acceptance run deployed integrated commit `ff271d7` (including #63) to the
+running guest by staged copies and atomic per-file replacement; it did not deploy
+to hardware. `Virtual-1` was 1280×800 at scale 1, with native Foot clients on
+workspaces 2 and 6 and an empty workspace 1. `hyprctl -j configerrors` returned
+only an empty string. Screen captures are in the VM evidence directory
+`vm/auto-hide-accept/` (ignored; not part of the PR).
+
+Actual `hyprctl -j monitors` reserved zones [left, top, right, bottom]:
+
+| Layout / navigation | Empty workspace 1 | Foot workspace 6 | Revealed over Foot |
+| --- | --- | --- | --- |
+| Phone / gestures | [0,48,0,76] | [0,48,0,0] | [0,48,0,0] |
+| Phone / buttons | [0,48,0,76] | [0,48,0,0] | [0,48,0,0] |
+| Tablet / gestures | [0,48,0,84] | [0,48,0,0] | not measured |
+| Desktop / buttons | [0,48,0,64] | [0,48,0,64] | always visible |
+
+The Phone/Tablet hidden-app Foot client reached y=800 at scale 1 (top at 48,
+height 752); desktop reached y=736 (height 688), matching its 64px bottom
+reservation. Without restarting the shell, switching Tablet from occupied
+workspace 6 to empty 1 and back changed the bottom reservation 0 → 84 → 0.
+Phone empty/workspace-6 switching also rendered the dock/hidden dock correctly.
+
+A virtual uinput touchscreen (not physical touch) tapped x=640,y=795 over the
+native Foot window. In both navigation modes the dock appeared above the Foot
+content and disappeared after the five-second timer; the revealed Phone dock
+layer occupied y=724–800 with **zero** bottom reservation in Buttons mode.
+Buttons-mode upward edge swipe also revealed the dock. Tapping Recents opened a
+full shell page, which stayed visible after the reveal timer expired. Gesture
+mode swipe-up-and-hold opened Recents; left-edge inward swipe dismissed it;
+short bottom swipe opened the app launcher. Captures inspected visually:
+`phone-app-hidden.png`, `phone-app-revealed.png`, `phone-app-rehidden.png`,
+`buttons-revealed.png`, `buttons-rehidden.png`,
+`buttons-recents-after-timer.png`, `gestures-recents.png`,
+`gestures-side-back.png`, `gestures-home.png`, `tablet-empty.png`,
+`tablet-app.png`, `desktop-app.png`. No config banner appeared. Existing tablet
+split controls were visible over the two Foot windows; split interaction was
+not exercised.
+
+Not covered: XWayland clients, physical touch/hardware, the keyboard overlay,
+#63 horizontal-scroll overflow at narrow widths, split drag/close interaction,
+and multiple monitors. The guest's installed files and shell preferences were
+backed up before the run and restored afterward.
 
 ## Theme picker layout fix, 2026-10-19
 
