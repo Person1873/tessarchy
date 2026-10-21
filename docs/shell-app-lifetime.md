@@ -39,7 +39,7 @@ standard graphical-session target. `systemd-run` is required; failure to start
 an application is reported to the shell journal rather than silently falling
 back to unsafe `execDetached`.
 
-On the integration of #62/#63/#64/#67/#68, full `scripts/check.sh` passed 225
+On the integration of #62/#63/#64/#67/#68, full `scripts/check.sh` passed 227
 Python tests; the upstream-only branch passed 218 Python tests. QEMU verified
 Foot and Firefox launched from actual shell tiles in separate service cgroups;
 PIDs and window addresses survived QML reload, deliberate shell service restart

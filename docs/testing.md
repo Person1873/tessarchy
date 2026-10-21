@@ -2382,6 +2382,9 @@ Firefox units running (those two predated the updated target property).
 Screenshots from VM capture: `vm/t72-apps.png`, `vm/t72-after-restart.png`,
 `vm/t72-after-crash.png`, `vm/t72-output.png`. These VM output files are ignored
 and not packaged. Full upstream branch `scripts/check.sh`: 218 Python tests;
-combined branch check must be rerun after the final target change. No ASUS
+combined branch `scripts/check.sh`: 227 Python tests (one hardware-dependent
+skip). The guest restoration compared byte-identical to the backed-up shell,
+session and settings trees; temporary launcher and service units were removed,
+and its original standalone `qs` shell was relaunched (PID 75583). No ASUS
 deployment or reboot. Physical session exit and installed package remain
 unverified.
