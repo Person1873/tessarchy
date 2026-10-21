@@ -268,6 +268,7 @@ ShellRoot {
             })
             property bool dockRevealed: false
             readonly property var dockState: Policy.dockState(mode, hasApp, panel.expanded, dockRevealed, navHeight)
+            readonly property int gestureStripHeight: Policy.gestureStripHeight(mode, gestures, dockState.reveal, gestureEdge)
             onHasAppChanged: {
                 dockRevealed = false;
                 dockHideTimer.stop();
@@ -916,6 +917,19 @@ ShellRoot {
             // so the strips stay a few pixels wide. The bottom strip covers the
             // gap under the dock row and spans the screen. A tap on the hidden
             // strip reveals the dock over apps in either navigation mode.
+            // A Bottom-layer surface reserves the physical strip before the
+            // Top-layer OSK maps. Overlay input stays at the screen edge.
+            PanelWindow {
+                screen: surface.modelData
+                visible: surface.gestureStripHeight > 0
+                anchors { bottom: true; left: true; right: true }
+                implicitHeight: surface.gestureStripHeight
+                exclusiveZone: surface.gestureStripHeight
+                color: Theme.gestureBackground
+                WlrLayershell.namespace: "tessera-gesture-reservation"
+                WlrLayershell.layer: WlrLayer.Bottom
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+            }
             PanelWindow {
                 id: bottomGesture
                 screen: surface.modelData
@@ -925,7 +939,7 @@ ShellRoot {
                     left: true
                     right: true
                 }
-                implicitHeight: surface.dockState.reveal ? surface.gestureEdge.side : surface.gestureEdge.bottom
+                implicitHeight: surface.gestureStripHeight
                 exclusionMode: ExclusionMode.Ignore
                 exclusiveZone: 0
                 color: "transparent"

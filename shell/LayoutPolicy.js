@@ -112,6 +112,13 @@ function gestureEdgeSize(mode, expanded) {
     return {side: GESTURE_EDGE, bottom: bottom, handle: Math.min(bar.gap, bottom) / 2};
 }
 
+// A Bottom-layer reservation precedes the Top-layer keyboard; the Overlay
+// input strip stays at the physical edge, using exactly the same height.
+function gestureStripHeight(mode, gestures, reveal, edge) {
+    if (mode === "desktop") return 0;
+    return reveal ? edge.side : gestures ? edge.bottom : 0;
+}
+
 // Touch docks never wrap: overflow scrolls with every target at least 48 px.
 // Gestures shrink the frame to the full six-button dock's slot width.
 const DOCK_FULL_BUTTONS = 6;
