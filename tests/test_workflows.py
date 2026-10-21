@@ -117,7 +117,9 @@ class Workflows(unittest.TestCase):
         self.assertIn('visible: surface.mode === "desktop"', panel)
         self.assertIn('StatusIndicators {', panel)
         self.assertIn('Time in the taskbar', panel)
-        self.assertIn('exclusiveZone: surface.navHeight', panel)
+        self.assertIn('exclusiveZone: surface.dockState.exclusiveZone', panel)
+        policy = (ROOT / 'shell/LayoutPolicy.js').read_text()
+        self.assertIn('exclusiveZone: mode === "desktop" || !hasApp ? barHeight : 0', policy)
 
     def test_navigation_gestures_reuse_dock_actions_and_keep_a_button_fallback(self):
         shell = (ROOT / 'shell/shell.qml').read_text()
