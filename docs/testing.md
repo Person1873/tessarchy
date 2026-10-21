@@ -1,5 +1,21 @@
 # Validation and manual acceptance
 
+## Installed automatic dock hiding, 2026-10-21
+
+Installed `tessera-shell` 0.1.0-5 with the integrated auto-hide code after the VM
+acceptance below; session package remains 0.1.0-4. Saved the working shell and
+settings for rollback first and verified the transferred package checksum.
+Only the shell service was restarted. Service active with zero restarts;
+compositor configuration errors empty. On the built-in display in portrait at
+scale 1.5, the running Discord workspace reported reservations `[0,48,0,0]`.
+Screenshot review confirmed the dock was hidden and the app reached the bottom.
+Physical touch reveal has not yet been confirmed on this device.
+
+The captured Discord window also displayed an uncaught JavaScript `Error: write
+EIO` dialog in Node write/console.log calls. This is an observed application
+error, not a demonstrated consequence of dock hiding. It was not dismissed and
+Discord was not restarted; its cause remains uninvestigated.
+
 ## Installed 2-in-1 upstream refresh, 2026-10-21
 
 Integrated upstream `e52ff9e` with the runtime and UI carry-forwards at
