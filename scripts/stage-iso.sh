@@ -47,6 +47,7 @@ file_permissions+=(
   ["/usr/bin/tessera-rotate"]="0:0:755"
   ["/usr/bin/tessarchy-theme"]="0:0:755"
   ["/usr/bin/tessarchy-run"]="0:0:755"
+  ["/usr/bin/tessarchy-launch"]="0:0:755"
 )
 PROFILE
 # Replace releng's Arch-branded boot menus with Tessarchy's. Anything NOT
@@ -76,7 +77,7 @@ cp -R -- "$root/docs" "$airoot/usr/share/tessarchy/"
 cp -- "$root/session/hyprland.lua" "$root/session/window-controls.lua" "$root/session/hypridle.conf" "$airoot/usr/share/tessarchy/session/"
 cp -R -- "$root/session/osk" "$airoot/usr/share/tessarchy/session/"
 install -m755 "$root/session/tessarchy-install" "$root/session/tessarchy-install-ui" "$airoot/usr/bin/"
-install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessarchy-theme" "$root/session/tessarchy-run" "$root/session/tessera-screenshot" "$root/session/tessera-brightness" "$root/session/tessera-nightlight" "$root/session/tessera-rotate" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"
+install -m755 "$root/session/start-tessarchy" "$root/session/tessera-shell" "$root/session/tessarchy-osk" "$root/session/tessarchy-theme" "$root/session/tessarchy-run" "$root/session/tessarchy-launch" "$root/session/tessera-screenshot" "$root/session/tessera-brightness" "$root/session/tessera-nightlight" "$root/session/tessera-rotate" "$root/session/tessarchy-session-services" "$root/session/tessarchy-readiness" "$airoot/usr/bin/"
 install -m755 "$root/session/tessarchy-update" "$root/session/tessera-update-notify" "$airoot/usr/bin/"
 install -m644 "$root/session/tessarchy.desktop" "$airoot/usr/share/wayland-sessions/"
 # File dialogs (compiled here: needs gcc, make, pkgconf and gtk3 headers).
