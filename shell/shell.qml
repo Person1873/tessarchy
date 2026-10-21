@@ -1035,6 +1035,8 @@ ShellRoot {
             }
             PanelWindow {
                 id: statusBar
+                // Desktop controls live in the taskbar; only map the top sheet while open.
+                visible: surface.mode !== "desktop" || drawerOpen
                 Timer {
                     id: screenshotTimer
                     interval: shellPreferences.reducedMotion ? 100 : 300
@@ -1063,7 +1065,7 @@ ShellRoot {
                     right: true
                 }
                 implicitHeight: drawerOpen ? Math.min(surface.modelData.height - surface.navHeight - 12, quickSheet.implicitHeight + 76) : 48
-                exclusiveZone: 48
+                exclusiveZone: surface.mode === "desktop" ? 0 : 48
                 color: "transparent"
                 Rectangle {
                     anchors.fill: parent
