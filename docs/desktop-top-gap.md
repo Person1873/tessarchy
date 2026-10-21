@@ -66,10 +66,50 @@ All mode captures had empty `hyprctl -j configerrors`, and the shell stayed
 running. `./scripts/check.sh`: 215 Python tests (one skipped), 4 site tests,
 76 QML tests, two Hyprland configs parsed; existing lint warnings remain.
 
-## Remaining validation
+## Integrated VM acceptance, 2026-10-21
 
-No ASUS device changes or measurements were made. Real hardware at scale 1.5,
-other monitor arrangements, and the integrated branch after merge have not been
-verified. Desktop's collapsed top-edge swipe/click target is intentionally
-removed in favor of the taskbar/Settings and IPC entry points; confirm this
-interaction choice with the owner before device rollout.
+Executed against integration `sync/upstream-20261021` at `0e4a7e1` (Wi-Fi #68,
+runtime #62, UI #63, auto-hide #64, gap #67). On Virtual-1, 1920×1200
+physical at **actual scale 1.5** (1280×800 logical), Desktop reserved
+`[0,0,0,64]`: tiled Foot windows began at logical y=0 and reached y=736,
+with no collapsed top status layer. The 1280×64 bottom taskbar stayed visible.
+Touching its Settings glyph at logical (1205,762) opened the Settings panel;
+touching Start at (35,762) opened the app menu. `controls.toggle` opened the
+1280×724 quick sheet over the apps without changing reservations. The Wi-Fi
+card showed `Unavailable`, rather than a QML failure. Screenshot evidence:
+[Desktop](images/issue65/integrated-desktop-15.png),
+[touch-opened Settings](images/issue65/integrated-settings-touch-15.png),
+[quick sheet overlay](images/issue65/integrated-drawer-overlay-15.png).
+
+**Acceptance gap:** Touching the Desktop taskbar Wi-Fi glyph at logical
+(1117,763) did **not** open quick controls. The tray's `StatusIndicators`
+instance does not connect `onPanelRequested`, although the mobile status
+instance does. Settings/IPC remain routes to the sheet, but the intended direct
+tray touch route is absent. This is not a full acceptance of issue #65.
+Moreover, the VM's NetworkManager service is inactive and `nmcli` unavailable:
+Quickshell logs `ERROR quickshell.network: Network will not work. Could not find
+an available backend.` The native import/configuration loaded with no QML
+`ReferenceError`, `TypeError`, or load failure, and the no-device fallback
+rendered, but this VM cannot validate actual network backend/Wi-Fi operation.
+
+With tiled Foot apps on the active workspace, Tablet and Phone retained the
+1280×48 top status layer and `[0,48,0,0]` reservation while auto-hidden.
+Bottom-edge touch swipes revealed their docks, measured as 238×84 at (521,716)
+for Tablet and 196×76 at (542,724) for Phone; both re-hid after the reveal
+interval. [Tablet capture](images/issue65/integrated-tablet-reveal-15.png) ·
+[Phone capture](images/issue65/integrated-phone-reveal-15.png). `hyprctl -j
+configerrors` was empty in all modes. The integrated `./scripts/check.sh` log
+reports 223 Python tests (one skipped), 88 QML tests, and two configs parsed.
+
+Before testing, backed up the complete 179-file installed Tessarchy tree and
+`shell.ini` (SHA256 `9cbae91e98fe60c9e8aee0ceee6247b5aeeafd53556c38a3cf1daa556db776b0`), plus monitor JSON;
+source was scp-staged and per-file atomically replaced, never removing the live
+session config. After testing, restored the exact 179-file manifest and
+preferences byte-for-byte, restarted the original shell, and restored
+Virtual-1 1280×800 scale 1 transform 0; original Phone reservation
+`[0,48,0,76]` and empty config errors returned. No ASUS changes.
+
+Desktop's collapsed top-edge swipe/click target was removed; the taskbar
+Settings/IPC alternative exists. Confirm the interaction choice and fix the
+missing direct taskbar quick-sheet signal before device rollout. ASUS at scale
+1.5, working Wi-Fi hardware/backend, and other monitors remain unverified.

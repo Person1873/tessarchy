@@ -1,5 +1,20 @@
 # Validation and manual acceptance
 
+## Integrated Desktop top-gap VM acceptance, 2026-10-21
+
+Integrated `0e4a7e1` (#62/#63/#64/#67/#68) tested in the QEMU guest at
+1920×1200 scale 1.5 (1280×800 logical). Desktop reserved `[0,0,0,64]` and
+tiled Foot began at y=0; taskbar Settings and Start responded to virtual touch.
+IPC quick sheet mapped as a non-reserving 1280×724 overlay. Tablet/Phone with
+apps retained 48 logical top status pixels and hid/revealed their bottom docks
+on touch swipe. The taskbar Wi-Fi glyph did *not* open quick controls because
+its `StatusIndicators` omits `onPanelRequested`; direct tray acceptance remains
+open. VM NetworkManager was inactive, so only native QML loading/no-device
+fallback was observed, not functional Wi-Fi. No QML load errors; empty
+`hyprctl -j configerrors`. Integrated `check.sh`: 223 Python tests (one
+skipped), 88 QML tests, two config parses. Complete measurements, screenshots,
+and byte-identical VM restoration: [desktop-top-gap.md](desktop-top-gap.md).
+
 ## Desktop unused top strip, issue #65
 
 Executed in the running QEMU guest at 1280×800, scale 1. The older installed
