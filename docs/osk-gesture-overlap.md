@@ -30,4 +30,14 @@ Desktop smoke check. Inspect before/after screenshots. Preserve shell PID and
 apps across normal live reload, and restore guest source/settings/monitor
 byte-for-byte. Publish actual results, limitations and takeover commands.
 
-Current state: investigation/scope only; no feature implementation yet.
+## Owner decision (after scope publication)
+
+Reserve a small, physical-bottom navigation strip so the compositor lifts the
+keyboard *above* the input surface. Keep the visible gesture pill at the
+physical bottom on an opaque black, theme-token background. Do not move the
+strip above the OSK, clip keys, or infer visibility from OSK availability.
+Use the existing gesture target dimensions as the reservation geometry and
+retain the hidden-dock reveal target in Buttons mode. Verify the reservation
+against real mapped layers and typed spaces in QEMU.
+
+Current state: VM diagnosis in progress; no accepted feature implementation yet.
