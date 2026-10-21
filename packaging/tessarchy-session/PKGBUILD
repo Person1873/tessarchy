@@ -1,6 +1,6 @@
 pkgname=tessarchy-session
 pkgver=0.1.0
-pkgrel=4
+pkgrel=5
 pkgdesc='Tessarchy prototype Hyprland session'
 arch=('any')
 license=('MIT' 'GPL-3.0-or-later')

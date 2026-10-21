@@ -1,6 +1,6 @@
 pkgname=tessera-shell
 pkgver=0.1.0
-pkgrel=8
+pkgrel=9
 pkgdesc='Tessera touch-first Quickshell prototype'
 arch=('any')
 license=('MIT')
