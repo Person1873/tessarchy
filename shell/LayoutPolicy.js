@@ -78,8 +78,8 @@ const GESTURE_BACK_DISTANCE = 48;
 const GESTURE_HOLD = 350;
 const GESTURE_STILL = 12;
 
-// Gestures replace Back/Home/Recents on Phone and Tablet unless the user
-// chose buttons. Desktop keeps its taskbar.
+// Gestures replace Back/Home on Phone and Tablet unless the user chose
+// buttons. Recents stays visible in both navigation modes.
 function gestureNavigation(mode, choice) {
     return mode !== "desktop" && choice !== "buttons";
 }
@@ -115,12 +115,14 @@ function gestureEdgeSize(mode, expanded) {
 // Touch docks never wrap: overflow scrolls with every target at least 48 px.
 // Gestures shrink the frame to the full six-button dock's slot width.
 const DOCK_FULL_BUTTONS = 6;
+// Touch docks: Phone, Messages and Recents, optional Keyboard, and Back/Home
+// when gestures are off. Settings lives in the status bar and pull-down.
 function dockLayout(mode, width, keyboard, gestures) {
     const bar = barGeometry(mode, 1);
-    const navigation = gestures && mode !== "desktop" ? 0 : 3;
+    const navigation = gestures && mode !== "desktop" ? 1 : 3;
     const count = 2 + navigation + (keyboard && mode !== "desktop" ? 1 : 0);
     let dockWidth = Math.min(Math.max(0, width - 2 * bar.side), bar.maxWidth);
-    if (navigation === 0) {
+    if (gestures && mode !== "desktop") {
         const full = (dockWidth - 2 * bar.padding - (DOCK_FULL_BUTTONS - 1) * bar.columnGap) / DOCK_FULL_BUTTONS;
         const slot = Math.max(bar.row, full);
         dockWidth = Math.min(dockWidth, Math.ceil(count * slot + (count - 1) * bar.columnGap + 2 * bar.padding));
