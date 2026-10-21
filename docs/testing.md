@@ -2334,3 +2334,47 @@ restored 18/true/0, with empty configerrors. Ubuntu source CI now uses the
 supported 26.04 runner for QtQuick.Effects; every source/build job declares the
 portal's GTK/GLib build dependencies. Terminal Fn exposes navigation/F1–F12
 without adding short key rows.
+
+
+## Native shutdown submitted-work ownership — 2026-10-22
+
+Implemented the explicit-sync renderer retirement layer in the private native
+shutdown overlay (`patches/hyprland/shutdown`). Submitted records own source
+locks independently of readable-wait closures, copy destination lock/storage,
+renderbuffer and current/main/output framebuffer references. Explicit source
+release-point and ordinary output in-fence paths remain unchanged. Failed fence
+creation/registration and negative/invalid native fence status retain owners and
+never send successful copy completion. Cancelled delivery does not retire GPU
+work. The drain uses checked sync-file status and one absolute wait deadline;
+the renderer entry checks EGL binding/current context/display/reset state.
+
+Executed without a compositor, plugin, GUI or GPU workload:
+
+- `python3 tests/native-fit/build-core.py --source "$HYPRLAND_SOURCE" --test test-submitted-work`:
+  13 C++ cases passed under ASan/UBSan, including real Wayland deferred/inline
+  callbacks, cancellation and registry destruction retaining all three resource
+  roles, exactly-once reentrant completion, native kernel rejection of eventfd
+  as sync_file, error quarantine, shared deadline, timeout retention and
+  fail-stop destruction before unresolved payload unwind. Successful fence
+  status is injected in CPU tests; no actual GPU fence is created.
+- The combined overlay applied cleanly. Configured-compiler syntax checks passed
+  EventLoopManager.cpp, ImageCopyCapture.cpp, ScreenshareFrame.cpp and
+  GLRenderer.cpp. Eight original source/header files were SHA256-unchanged.
+  Receipt includes source/header/patch/test hashes in
+  `build/native-fit/core-shutdown/verification.json`; command log:
+  `build/native-fit/submitted-work-build.log`.
+- `python3 tests/native-fit/verify-retirement-controls.py`: both deliberately
+  broken scratch variants failed at the required assertions: cancellation
+  releasing submitted owners and ioctl failure reported as native success.
+  Production headers were hash-unchanged. Receipt/logs:
+  `build/native-fit/retirement-controls/`.
+
+Remaining: call the drain after producer quiescence and before dependency
+teardown, cover unchanged unsupported-explicit-sync/full-fake paths and transient
+resource/explicit-FB release ordering, preserve child frames on parent-resource
+destruction, stop/session/timer ownership, inert lazy-manager lifetime, and
+failed cleanup propagation through main/destructor. The current early renderer
+destructor guard refuses unresolved submissions; it is not completed cleanup.
+No full compositor link, native runtime acceptance or packaged-launcher outcome
+validation was performed. Repository-wide check.sh was not run because it
+launches the prohibited Hyprland config verifier.

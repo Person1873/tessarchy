@@ -24,9 +24,29 @@ shutdown fix.
   non-destroy requests, and native ordinary-frame completion commits copied state
   and takes its callback before invoking it.
 
+- `SubmittedWork.hpp`: renderer-owned payloads independent of scoped readable
+  registrations. Cancelling delivery or closing the event registry leaves source,
+  destination and render-target ownership in the queue. Native sync-file status
+  is checked with `SYNC_IOC_FILE_INFO`; readiness alone is not success. Errors and
+  failed registration retain their payload without delivering success. Drain
+  passes one absolute deadline to every wait, retains ownership on timeout/error,
+  and refuses unresolved-owner destruction.
+- `renderer-retirement.patch`: moves explicit-sync submissions into that queue,
+  with non-release-point source locks, a separate copy-destination lock/storage,
+  renderbuffer and current/main/output framebuffer references captured before GL
+  end resets them. Existing explicit source release-point import and ordinary
+  output in-fence paths remain in place. Failed fence creation retains all source
+  locks and destination resources instead of reporting a successful copy. The
+  new renderer drain checks EGL binding, actual current display/context and reset
+  status before retiring records. An early renderer destructor guard prevents
+  member teardown with unresolved submissions.
+
 These changes do **not** yet make parent-session destruction preserve outstanding
-child-frame native state. They also do not solve GPU resource retirement or the
-screenshare-manager/compositor shutdown dependency order.
+child-frame native state. The explicit-sync queue/drain is implemented, but its
+compositor cleanup call and dependency ordering are not wired yet. Unsupported
+explicit-sync and full-fake render branches remain unchanged; the implicit
+`glFinish`/`glFlush` path is not bounded shutdown acceptance. Additional transient
+resources and explicit framebuffer releases still need lifecycle integration.
 
 ## Verify without starting a compositor
 
@@ -36,13 +56,14 @@ Hyprland source tree with `build/compile_commands.json`, then run:
 ```sh
 python3 "$CHECKOUT/tests/native-fit/build-core.py" --source "$HYPRLAND_SOURCE"
 python3 "$CHECKOUT/tests/native-fit/verify-core-controls.py"
+python3 "$CHECKOUT/tests/native-fit/verify-retirement-controls.py"
 ```
 
 The first command compiles and executes the real C++ primitives under ASan/UBSan,
 using libwayland-server event loops, eventfd and pipes. It then creates a private
 source overlay, applies the combined patch with `git apply --check`, and runs the
 actual configured compiler's syntax checks for `EventLoopManager.cpp`,
-`ImageCopyCapture.cpp` and `ScreenshareFrame.cpp`. The original five patched input
+`ImageCopyCapture.cpp`, `ScreenshareFrame.cpp` and `GLRenderer.cpp`. The eight patched input
 files are hashed before/after. This does not build/link the full compositor.
 
 Output, combined `native-shutdown.patch`, source/header/patch hashes and a success
@@ -56,18 +77,26 @@ fail the duplicate-delivery assertion. An unrelated error or compiler failure is
 not accepted as RED. Production header hashes must remain unchanged. Neither
 command launches Hyprland, a plugin, a GUI, or a GPU workload.
 
-Latest execution: 14 waiter cases and 8 terminal-delivery cases passed; both RED
-controls rejected their defect; all three actual compositor translation units
-passed syntax checks. No compositor runtime acceptance is claimed.
+Latest focused execution: 13 submitted-work cases passed under ASan/UBSan and
+both new retirement RED controls rejected their specific defects (cancellation
+releases GPU owners; ioctl failure treated as success). All four actual compositor
+translation units passed syntax checks; eight original files were hash-unchanged.
+Tests use real Wayland event loops and eventfd for scheduling with injected fence
+status, plus actual kernel rejection of eventfd/invalid FD as a sync_file. They do
+not create GPU fences or execute EGL/GL. Earlier 14 waiter and 8 terminal cases
+and their two RED controls were not rerun unchanged. Use `--test
+test-submitted-work` on build-core for the focused run. No full compositor link
+or runtime acceptance is claimed.
 
 ## Continue implementation
 
-1. Add renderer-owned submitted-work records: GPU/source locks, destination and
-   required render-target lifetimes must be independent of protocol completion.
-   Scoped waiter closures must not be the last owner of in-flight GPU resources.
-2. Settle those records against checked native fence status under one shutdown
-   deadline while the actual GL context and Wayland resources remain alive.
-   Eventfd readiness is not native-fence success, and `glFinish` is not bounded.
+1. Wire the implemented renderer drain into compositor cleanup after producer
+   quiescence, before any dependent GL/Wayland teardown; retain failed owners and
+   propagate the failure without member unwinding. Cover unsupported explicit-sync
+   submissions, full-fake/transient render resources and explicit FB release paths.
+2. Preserve one absolute shutdown deadline and checked native fence status while
+   integrating cleanup. The current checked EGL drain is syntax-checked, not
+   executed. `glFinish` is not bounded.
 3. Separate ordinary parent-resource destruction from global shutdown; keep
    submitted child frames valid across parent destruction, but revoke their
    delivery when the frame itself is destroyed.
