@@ -1,5 +1,19 @@
 # Validation and manual acceptance
 
+## Automatic touch dock hiding, 2026-10-21
+
+On `feat/auto-hide-dock`, `./scripts/check.sh` passed: 215 Python tests
+(one skipped), four Node tests and 77 Qt tests. The new Qt policy matrix checks
+Phone/Tablet/desktop, buttons/gestures, keyboard availability, app presence,
+shell pages and reveal; QtTest also drives bottom-edge tap and swipe sequences.
+Hyprland config verification passed; QML lint completed with the existing
+uncreatable-PanelWindow and unresolved-type warnings. Quickshell 0.2.1 type
+documentation lists the workspace monitor and monitor active-workspace fields.
+No guest shell was replaced and no screenshots or physical touch tests were
+performed. VM runtime presence changes, exclusive-zone measurements, tap-over-app,
+keyboard overlay and split-screen interactions remain manual acceptance work.
+#63's geometry/scroll changes are deliberately not in this branch.
+
 ## Theme picker layout fix, 2026-10-19
 
 Branch `feat/theme-extras` on `49728ce`. Executed by an agent in the running

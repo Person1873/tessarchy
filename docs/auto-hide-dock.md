@@ -28,7 +28,29 @@ Desktop; Buttons and Gestures; app/no-app and keyboard visible/hidden states.
 
 ## Current status
 
-Scope only; implementation has not started and no acceptance check has passed.
-Next step: inspect the current layer exclusive-zone and gesture routing before
-choosing the smallest compatible implementation. Public checkpoints and PR
-handoffs must identify actual tests and remaining gaps before device deployment.
+The dock policy is implemented on upstream main without importing #63: Phone
+and Tablet hide the dock on an active workspace with an app; the collapsed dock
+has zero exclusive zone, and a bottom-edge Overlay strip accepts a tap to reveal
+it for five seconds. Gesture navigation still swipes to Home/Recents; Buttons
+mode can reveal the dock by tap or upward swipe. Shell pages remain visible and
+overlay apps without claiming space. Desktop retains its taskbar and reservation.
+`showGestureHandle` only controls the pill; it never controls dock visibility.
+
+This changes visibility and the reserved zone, not geometry or button layout.
+When #63 merges, retain its single-row horizontal scrolling and frame widths;
+no #63 commits are copied here. The gesture strip is a separate layer so it
+stays touchable when the dock window is hidden. A revealed dock automatically
+hides again after five seconds unless a shell page is open.
+
+## Validation and takeover
+
+`./scripts/check.sh` passed on this branch: 215 Python tests (one skip), four
+Node tests and 77 Qt tests; Hyprland configs parsed. Qt covers policy across
+modes, navigation choices, keyboard availability, pages, and strip tap/swipe.
+Upstream Quickshell 0.2.1 type documentation lists
+`HyprlandWorkspace.monitor` and `HyprlandMonitor.activeWorkspace`.
+No QEMU screenshot/touch acceptance was performed; runtime window-model
+reactivity, keyboard overlap, multilayer ordering, split layouts and physical
+interaction remain unverified. Next: deploy safely to a controlled QEMU guest,
+exercise the matrix and preserve screenshots; then rebase after #63 lands and
+check its scrolling dock with this visibility policy. No ASUS deployment.
