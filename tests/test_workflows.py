@@ -116,6 +116,8 @@ class Workflows(unittest.TestCase):
         self.assertIn('onControlsRequested: statusBar.toggleDrawer()', panel)
         self.assertIn('visible: surface.mode === "desktop"', panel)
         self.assertIn('StatusIndicators {', panel)
+        tray = panel[panel.index('StatusIndicators {'):panel.index('Repeater {', panel.index('StatusIndicators {'))]
+        self.assertIn('onPanelRequested: statusBar.toggleDrawer()', tray)
         self.assertIn('Time in the taskbar', panel)
         self.assertIn('exclusiveZone: surface.navHeight', panel)
 
