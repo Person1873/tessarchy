@@ -38,6 +38,13 @@ def main():
     def ctl(*command):
         return run("hyprctl", *command)
 
+    def checked_plugin_image():
+        lines = Path(f"/proc/{state['compositor_pid']}/maps").read_text().splitlines()
+        mapped = [line for line in lines if str(OUT / "native-fit.so") in line]
+        inode = str((OUT / "native-fit.so").stat().st_ino)
+        assert mapped and all(line.split()[4] == inode for line in mapped), (
+            "Stale plugin image: start a fresh private compositor after rebuilding; unload may retain the old DSO")
+
     clients = json.loads(ctl("-j", "clients"))
     fixture = next(c for c in clients if c["pid"] == state["client_pid"])
     assert fixture["class"] == "tessarchy-native-fit-fixture" and not fixture["xwayland"]
@@ -77,6 +84,7 @@ def main():
     baseline, red = capture("baseline")
     assert red["red_pixels"] == 0 and red["cyan_pixels"] > 1000, red
     assert ctl("plugin", "load", str(OUT / "native-fit.so")) == "ok"
+    checked_plugin_image()
     assert any(p["name"] == "tessarchy-native-fit-probe" for p in json.loads(ctl("-j", "plugin", "list")))
     assert ctl("eval", 'hl.plugin.tessarchy_fit.target("tessarchy-native-fit-fixture")') == "ok"
     fitted, green = capture("fitted")
@@ -103,6 +111,7 @@ def main():
     # A module's globals can outlive dlclose; a second load/unload must not retain
     # old hook pointers after Hyprland has deleted the corresponding objects.
     assert ctl("plugin", "load", str(OUT / "native-fit.so")) == "ok"
+    checked_plugin_image()
     assert ctl("eval", 'hl.plugin.tessarchy_fit.target("tessarchy-native-fit-fixture")') == "ok"
     _, reload_control = capture("reloaded-fitted")
     assert reload_control["red_pixels"] > 1000

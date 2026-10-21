@@ -27,7 +27,7 @@ namespace {
 HANDLE owner = nullptr;
 std::string targetClass;
 std::vector<CFunctionHook*> hooks;
-CFunctionHook *texHook, *uvHook, *pickHook, *localHook, *touchHook;
+CFunctionHook *texHook, *uvHook, *pickHook, *localHook, *touchHook, *windowHook;
 uint64_t draws = 0, picks = 0, locals = 0, touches = 0;
 using Geo = Desktop::View::IGeometric;
 
@@ -96,6 +96,20 @@ void fittedUv(Render::IElementRenderer* renderer, PHLWINDOW window, SP<CWLSurfac
     const PHLWINDOW uvWindow = fitted ? PHLWINDOW{} : window;
     reinterpret_cast<UvFn>(uvHook->m_original)(renderer, uvWindow, surface, monitor,
         fitted ? false : main, projected, unscaled, fitted ? false : misaligned);
+}
+
+using WindowFn = PHLWINDOW (*)(const Desktop::CViewHitTester*, const Vector2D&, uint16_t, PHLWINDOW);
+PHLWINDOW fittedWindow(const Desktop::CViewHitTester* hit, const Vector2D& global, uint16_t properties,
+                       PHLWINDOW ignoreWindow) {
+    const auto window = reinterpret_cast<WindowFn>(windowHook->m_original)(hit, global, properties, ignoreWindow);
+    if (const auto fit = fitFor(window)) {
+        const auto position = fit->inverse(global) - fit->origin;
+        const auto geometry = window->m_xdgSurface->m_current.geometry;
+        // Reject letterboxing before InputManager can fall back to the root surface.
+        if (position.x < 0 || position.y < 0 || position.x >= geometry.width || position.y >= geometry.height)
+            return nullptr;
+    }
+    return window;
 }
 
 using PickFn = SP<CWLSurfaceResource> (*)(const Desktop::CViewHitTester*, const Vector2D&, PHLWINDOW, Vector2D&);
@@ -182,6 +196,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     try {
         texHook = install("getTexBox", "CSurfacePassElement::getTexBox(", reinterpret_cast<void*>(fittedTex));
         uvHook = install("calculateUVForSurface", "Render::IElementRenderer::calculateUVForSurface(", reinterpret_cast<void*>(fittedUv));
+        windowHook = install("windowAt", "Desktop::CViewHitTester::windowAt(", reinterpret_cast<void*>(fittedWindow));
         pickHook = install("windowSurfaceAt", "Desktop::CViewHitTester::windowSurfaceAt(", reinterpret_cast<void*>(fittedPick));
         localHook = install("surfaceLocalAt", "Desktop::CViewHitTester::surfaceLocalAt(", reinterpret_cast<void*>(fittedLocal));
         touchHook = install("sendTouchMotion", "CSeatManager::sendTouchMotion(", reinterpret_cast<void*>(fittedTouch));

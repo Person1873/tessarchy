@@ -203,6 +203,13 @@
       "motion_correction_disabled": false
     }
   ],
+  "letterbox": {
+    "black_area_touch_events": [],
+    "black_then_content_buttons": [
+      "BUTTON 272 1 811.707 405.855",
+      "BUTTON 272 0 811.707 405.855"
+    ]
+  },
   "disabled": {
     "contact": 6,
     "screen_down": [

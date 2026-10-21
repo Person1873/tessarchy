@@ -54,6 +54,12 @@ The harness discovers the real parent display, but creates a private HOME, XDG d
 - Receipt: `touch-proof.json` in the session directory, also published as [the touch execution receipt](../../docs/native-window-fit-touch-proof.json).
 - Harness startup waits for IPC readiness before creating its headless output; a nested Wayland output is not required to be present first.
 
+## Noninteractive letterbox gate
+
+The touch verifier also tests a new contact and pointer click in visually black padding, followed by positive contacts/clicks in displayed content as event-order barriers. Before the outer-selection fix, padding delivered a bogus touch-down at `(0,0)` and a pointer click at `(100,600)` to the app. The [actual RED observation](../../docs/native-window-fit-letterbox-red.json) records that failed gate. Rejecting a surface hit alone was insufficient: `InputManager.cpp` falls back to the selected window's root surface when `windowSurfaceAt` returns null. The outer `windowAt` hook now rejects padding first. Both input types are absent from the client log in the updated touch receipt; content remains interactive.
+
+After rebuilding a plugin, start a **fresh private compositor**. Unload/reload may retain the old DSO/code even after the file is atomically replaced. This was confirmed by `/proc/<child>/maps` retaining the deleted old inode, distinct from the rebuilt file. Both verifiers now reject a mapped plugin inode that differs from the current build.
+
 ## Not yet accepted
 
-Physical/multicontact touch, cancellation, pointer grabs/drags/scrolling, nonzero window geometry origins, subsurfaces/popups, rotation, fractional output scaling, OSK/IME cursor rectangles, incremental damage/occlusion, real native applications, and real-device use remain separate gates. Letterboxing is not yet made noninteractive. Fitting also shrinks application controls; it does not guarantee 48dp targets or responsive reflow. Do not ship this prototype as the completed #77 fix.
+Physical/multicontact touch, cancellation, pointer grabs/drags/scrolling, nonzero window geometry origins, subsurfaces/popups, rotation, fractional output scaling, OSK/IME cursor rectangles, incremental damage/occlusion, real native applications, and real-device use remain separate gates. Letterboxed padding now rejects new pointer/touch input in the fixture. This does not establish overlapping-window click-through or popup behavior. Fitting also shrinks application controls; it does not guarantee 48dp targets or responsive reflow. Do not ship this prototype as the completed #77 fix.
