@@ -63,6 +63,7 @@ if [ "$(grep -c '^sleep ' "$STUB_LOG")" -ge 2 ]; then rm -f "$XDG_RUNTIME_DIR/hy
         self.stub('dbus-update-activation-environment', 'printf "import %s\\n" "$*" >> "$STUB_LOG"')
         self.stub('systemctl', '''printf 'systemctl %s\\n' "$*" >> "$STUB_LOG"
 case "$*" in
+    '--user start tessarchy-apps.target') exit 0 ;;
     '--user cat tessera-shell.service'|'--user restart tessera-shell.service'|'--user is-active --quiet tessera-shell.service')
         [ "${STUB_UNIT_AVAILABLE:-0}" = 1 ] && {
             [ "$*" != '--user restart tessera-shell.service' ] || [ "${STUB_RESTART_FAIL:-0}" = 0 ]; }
@@ -78,6 +79,7 @@ esac''')
             self.assertEqual(result.returncode, 0, result.stderr)
             calls = self.log.read_text().splitlines()
             self.assertIn('import --systemd WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP XDG_SESSION_TYPE TESSARCHY_DATA_DIR', calls)
+            self.assertIn('systemctl --user start tessarchy-apps.target', calls)
             self.assertEqual('direct' in calls, available == '0' or restart_fail == '1')
             self.assertEqual('systemctl --user restart tessera-shell.service' in calls, available == '1')
         unit = (ROOT / 'session/tessera-shell.service').read_text()
