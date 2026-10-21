@@ -48,10 +48,55 @@ short bottom swipe opened the app launcher. Captures inspected visually:
 split controls were visible over the two Foot windows; split interaction was
 not exercised.
 
-Not covered: XWayland clients, physical touch/hardware, the keyboard overlay,
-#63 horizontal-scroll overflow at narrow widths, split drag/close interaction,
-and multiple monitors. The guest's installed files and shell preferences were
-backed up before the run and restored afterward.
+A follow-up integrated QEMU run used the same shell (`shell.qml` and
+`LayoutPolicy.js` hashes matched `ff271d7`) with a 320×640 output, Phone /
+Buttons, and a native Foot app. The hidden dock reserved [0,48,0,0]; a virtual
+uinput tap on the bottom edge revealed a **single** 76px-high row at x=16–304,
+y=564–640, still reserving zero at the bottom. Initially Recents was clipped
+at the right edge. A virtual-touch horizontal flick from the right to the left
+exposed the whole Recents target; a subsequent virtual-touch tap on that target
+opened the full Recents page. Screenshots `320-initial.png`,
+`320-revealed-before-flick.png`, `320-flick-left.png`,
+`320-clipped-recents-tap.png`, `320-rehidden.png` are in ignored `vm/`.
+
+Tablet split was tested at 1280×800 with two tagged Foot clients: with the
+dock hidden, bottom reservation was [0,48,0,0], and the separate
+`tessera-split` layer was x=616–664, y=48–800. A virtual-touch edge tap
+revealed the dock layer x=416–864, y=716–800 **alongside** the divider,
+without reserving bottom space; the dock hid again after its timer while the
+divider remained. A separate temporary two-Foot split pair was used for
+destructive checks, leaving the existing pair intact: with the dock hidden,
+tapping the divider's Unsplit glyph removed both `split` tags and the divider
+layer. Re-splitting that temporary pair and terminating one client removed the
+remaining client's tag and divider layer; the surviving client filled the
+1280×752 app area, and bottom reservation remained zero. Captures:
+`tablet-split-hidden-normalized.png`, `tablet-split-revealed.png`,
+`tablet-split-rehidden.png`, `tablet-testpair-hidden.png`,
+`tablet-unsplit-hidden.png`, `tablet-before-close.png`,
+`tablet-close-hidden.png`. The split drag/ratio gesture was not tested.
+
+The guest already had `/usr/bin/squeekboard` and `tessarchy-osk`, so the
+existing keyboard was started (no packages installed). At 400×800 in Phone /
+Buttons over a focused Foot window, the real squeekboard process exposed its
+OSK D-Bus `Visible=b true`, mapped an `osk` layer at y=534–800 and contributed
+266px to the bottom reservation [0,48,0,266]. The auto-hidden dock did not
+add a reservation. Virtual touch at the bottom edge revealed the dock at
+y=458–534, directly **above** the keyboard, preserving Foot space and access
+to both rows; after the reveal timer, with the real keyboard still visible,
+the dock hid and the reservation remained [0,48,0,266]. Captures:
+`keyboard-real-visible-hidden-dock.png`, `keyboard-edge-tap.png`,
+`keyboard-real-hidden-dock-after-timer.png`. This is real VM squeekboard
+validation, not a forced `TESSARCHY_OSK` flag alone.
+
+The follow-up copied the integrated shell into staging via `scp`, replaced
+installed files atomically, and deployed the integrated Hyprland Lua similarly
+for split controls. Config errors remained empty and screenshots had no config
+banner. The guest's initial shell tree, shell preferences, OSK state and
+monitor settings were backed up and restored; original shell/Lua hashes and
+preferences compared equal, restored screen was 1280×800 scale 1 / transform 0,
+and no test keyboard process or temporary Foot clients remained. The
+remaining unverified scenarios are XWayland clients, physical touch/hardware,
+split drag/ratio gesture, and multiple monitors.
 
 ## Theme picker layout fix, 2026-10-19
 
