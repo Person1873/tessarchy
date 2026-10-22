@@ -2334,3 +2334,15 @@ restored 18/true/0, with empty configerrors. Ubuntu source CI now uses the
 supported 26.04 runner for QtQuick.Effects; every source/build job declares the
 portal's GTK/GLib build dependencies. Terminal Fn exposes navigation/F1–F12
 without adding short key rows.
+
+
+## Direct OSK dismissal feature, 2026-10-22 UTC
+
+Issue#89 / draft PR93. Scope, implementation, CPU commands and exclusions are
+in [osk-direct-dismiss.md](osk-direct-dismiss.md); machine-readable source hashes
+in [the CPU checkpoint](evidence/issue89-cpu-checkpoint.json). Initial policy
+RED:4 failures. Final complete Qt suite:87 pass under offscreen software rendering
+and scratch HOME/config. Four Lua-query/wiring Python checks pass. Copy-only
+scratch installer byte matches all five runtime paths. qmllint exits0 with
+metadata warnings; not warning-free. Actual button component preview inspected.
+No live layer/touch, native build, VM or device deployment acceptance claimed.

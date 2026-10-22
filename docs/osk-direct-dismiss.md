@@ -44,3 +44,56 @@ and needs further measurements; no speculative tap setting change is selected.
   device acceptance is not claimed as #89 verification.
 
 AI-assisted feature implementation and verification.
+
+## Implementation and CPU checkpoint — 2026-10-22 UTC
+
+Implemented the button and no-focus Overlay layer. A read-only Lua query reads
+only mapped `osk` layers, emits numeric output IDs and output-local geometry,
+and excludes unmapped, orphaned and zero-sized layers. Shell monitor matching
+uses the observable Hyprland monitor collection. The watcher refreshes on layer
+changes plus a 500ms fallback while a touch layout is active. Desktop-only
+sessions do not poll. Unknown geometry/query errors remove the button.
+
+The 48px target sits 8px above the highest keyboard on its output and at least
+24px inside the screen edge, avoiding the existing side gesture input region.
+It uses the current status bar height as its top bound. If no such free rectangle
+exists it hides rather than covering keys/status controls; this is an explicit
+small-space limitation pending live acceptance. The touch target and layer share
+one policy constant. The glyph uses theme colours and a keyboard/down-chevron.
+
+Actual results:
+
+- Initial policy stub: four focused Qt failures (RED).
+- Final complete Qt suite:87 results passed,0 failed, offscreen software backend
+  with a scratch HOME/config. Includes actual button click, unchanged draft,
+  retained input focus and subsequent typing. This is a Qt component check,
+  not actual application/compositor focus acceptance.
+- Four Python checks pass, running the actual fixed query through a real Lua
+  interpreter against fixture layer objects. Mapped/unmapped, zero-size,
+  orphaned and multi-output cases covered. Not an upstream compositor test.
+- `qmllint` exits0 with metadata-resolution warnings for PanelWindow/margins,
+  BluetoothAdapter and QProcess::ExitStatus; it is not claimed warning-free.
+- Copy-only installer in a fresh scratch HOME produced byte-identical policy,
+  watcher, button, qmldir and shell entrypoint. No launcher executed.
+- Actual software-rendered button preview inspected: keyboard/down-chevron
+  visible, no clipping, 48px touch target. Private preview is not live evidence.
+
+[Machine-readable checkpoint](evidence/issue89-cpu-checkpoint.json) includes
+source hashes and explicitly records no live-device acceptance/native build.
+
+Reproduce CPU checks from the repository root (the installer creates no live
+session):
+
+```sh
+python3 -m unittest discover -s tests -p test_osk_dismiss.py -v
+scratch=$(mktemp -d)
+HOME="$scratch" XDG_CONFIG_HOME="$scratch/config" QT_QPA_PLATFORM=offscreen \
+  QT_QUICK_BACKEND=software QT_QPA_PLATFORMTHEME='' \
+  /usr/lib/qt6/bin/qmltestrunner -input tests/qml
+```
+
+Still draft: no new compositor startup, ASUS deployment/input, VM, native build
+or package transaction was performed. Next live acceptance must use a disposable
+text field, confirm actual query output and layer bounds, delivered touch,
+unchanged draft/focus, keyboard re-open and Phone/Tablet/Desktop controls, with
+session preservation and rollback. Prior #80 acceptance does not verify #89.
