@@ -35,20 +35,20 @@ Item {
         anchors.centerIn: parent
         scale: indicator.width / 24
         Rectangle {
-            x: 2; y: 6; width: 18; height: 12; radius: 3
+            x: 2; y: 6; width: 18; height: 12; radius: height / 4
             color: "transparent"
             border.width: 1.8
             border.color: Theme.text
             opacity: indicator.reported ? 1 : 0.35
         }
         Rectangle {
-            x: 22; y: 10; width: 1.8; height: 4; radius: 0.9
+            x: 22; y: 10; width: 1.8; height: 4; radius: Math.min(width, height) / 2
             color: Theme.text
             opacity: indicator.reported ? 1 : 0.35
         }
         Rectangle {
             objectName: "batteryFill"
-            x: 5; y: 9; width: indicator.reported ? 12 * indicator.percentage : 0; height: 6; radius: 1
+            x: 5; y: 9; width: indicator.reported ? 12 * indicator.percentage : 0; height: 6; radius: height / 6
             color: Theme.text
         }
         Canvas {

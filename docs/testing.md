@@ -2334,3 +2334,95 @@ restored 18/true/0, with empty configerrors. Ubuntu source CI now uses the
 supported 26.04 runner for QtQuick.Effects; every source/build job declares the
 portal's GTK/GLib build dependencies. Terminal Fn exposes navigation/F1–F12
 without adding short key rows.
+
+## Honest status indicators (#73), 2026-10-22
+
+Base: upstream `e52ff9e`; draft PR #88, branch `fix/honest-status-indicators`.
+This is presentation work on the existing communications and UPower backends,
+independent of #71/PR #87. PR #68 still owns native Wi-Fi measurement restoration;
+PR #54 overlaps signal assets/status presentation and needs reconciliation before
+integration. Neither backend PR is included here.
+
+Verified the installed Qt 6.11.2 / Quickshell UPower QML metadata: displayDevice,
+ready, isPresent, percentage, state and Charging/Discharging/Empty/FullyCharged/
+PendingCharge/PendingDischarge/Unknown enums. The shell translates those enums;
+presentation components remain service-independent and testable with Qt Quick.
+Directly importing the static Quickshell UPower plugin in qmltestrunner failed,
+so that dependency was kept at the existing shell boundary, not mocked as a
+live service. The JavaScript file's QML `.pragma library` is valid in Qt tests;
+the generic Node syntax hook does not recognize that directive.
+
+### Reproduction and result
+
+- RED: three Qt regressions failed on the original components: compact missing
+  cellular was accessible as connected; 0.55 truncated to 1; changing strength
+  left the image source unchanged. They passed after implementation.
+- Battery wiring RED against `git show origin/main:shell/shell.qml` found zero
+  ready-gated bindings instead of two. The same regression passes on this branch.
+- Cellular now requires the existing backend's available/enabled/registered
+  flags and valid reported signal. Missing, stale-negative or invalid values
+  cannot become a connected fallback glyph. Wi-Fi and cellular accept real
+  normalized strengths, use five levels (zero plus four nonzero bands), and
+  expose measured percentages to accessibility. No new Wi-Fi/backend polling.
+- Battery fill follows valid normalized percentage; the lightning bolt appears
+  only for actual Charging, not pending charge, full, discharging or unknown.
+  Missing/invalid readings show `?`, no fill/bolt, and an unavailable description.
+  Percentage and actual state are available via accessibility and hover detail,
+  including when Desktop hides percentage text. Both shell locations pass
+  UPower readiness/presence, percentage and state. Existing dimensions, click
+  routing and focus behavior are retained.
+
+### Actual rendered evidence
+
+![Before (left), after (right): software-rendered fixture inputs](evidence/issue73-status-before-after.png)
+
+These are actual Qt Quick captures, not device measurements or a compositor
+screenshot: 760×480 per side, default palette, compact and regular indicators,
+Qt offscreen platform with software Quick backend. The baseline was captured
+before changing production QML; the candidate was captured from the implemented
+components. Rows cover unavailable, 10/55/100 percent, actual charging, pending
+charge, zero and invalid data. The before fixture did not have a charging-state
+input; the candidate uses the translated state strings. Personally inspected
+both originals and the combined image: baseline compact radios invent reception,
+all baseline battery levels/charging share an empty outline, and invalid battery
+prints NaN%; candidate shows graded levels, crossed-out unavailable radios,
+question-mark unavailable batteries, and a bolt only on the charging row. No
+clipping or slot-size change observed. Pixel-image regression tests also check
+level/charging changes and identical noncharging/pending-charge battery pixels.
+
+Reproduce candidate capture from the repository root:
+
+```bash
+mkdir -p build
+QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
+  /usr/lib/qt6/bin/qmltestrunner -input tests/render/tst_status_indicators.qml
+# Output: build/status-indicators.png
+```
+
+### Safe checks and limits
+
+- Full `tests/qml` offscreen/software suite: 103 passed, zero failed/skipped,
+  including 27 focused status results and hover detail without focus capture.
+- Focused Python run: 26 tests, OK with one skipped (GObject metadata unavailable).
+  Modules: test_status_indicators, test_power, test_communications; selected
+  Workflows checks: install/uninstall preservation, qmldir completeness, colour
+  and shape token rules, install manifest cleanup and legacy-v2 cleanup.
+- QML lint for shell/greeter/login-preview and all components: exit 0. Metadata
+  warnings remain for PanelWindow, margins, BluetoothAdapter and QProcess exit
+  status in existing integration files. Changed presentation components lint
+  without warnings. Bash syntax checks and luac parse checks passed.
+- desktop-file-validate reported only the existing DesktopNames-key diagnostic
+  that check.sh explicitly filters. Fish and ShellCheck are unavailable.
+- `check.sh` was intentionally not run: its Hyprland --verify-config calls are
+  forbidden in this execution scope. The full Python suite was not run because
+  it includes broader runtime/service harnesses; the safe relevant subset above
+  was exercised directly. No VM/device deployment, compositor build/launch/config
+  verifier, plugin load, package install, desktop or personal-app test was used.
+- A Qt runner help probe without the offscreen/software environment aborted
+  before printing help. All actual Qt tests, captures and lint commands used
+  the required offscreen/software environment; no desktop result is claimed.
+
+Remaining acceptance: real ModemManager/UPower availability and charging
+transitions, RF signal accuracy, device hover/accessibility and Phone/Tablet
+compositor layout/touch validation. These were not exercised under the current
+restrictions. Keep this PR draft; no deployment or issue closure is implied.

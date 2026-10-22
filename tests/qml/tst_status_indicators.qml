@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtTest
 import "../../shell/components"
 import "../../shell/StatusPolicy.js" as StatusPolicy
@@ -48,6 +49,7 @@ TestCase {
         for (const symbol of ["wifi", "cellular"]) {
             const icon = createTemporaryObject(signalFactory, this, {symbol: symbol, strength: data.value});
             compare(icon.level, data.level);
+            tryCompare(icon.children[0], "status", Image.Ready);
             compare(icon.reported, data.level >= 0);
             compare(icon.children[1].visible, data.level < 0);
             verify(icon.Accessible.name.indexOf(data.level < 0 ? "unavailable" : "signal") >= 0);
@@ -106,6 +108,35 @@ TestCase {
         compare(findChild(battery, "batteryFill").width, 0);
         battery.present = true;
         compare(battery.charging, true);
+    }
+    function test_battery_pixels_change_with_level_and_charging() {
+        const battery = createTemporaryObject(batteryFactory, this, {present: true, percentage: 0.1, powerState: "discharging"});
+        wait(20);
+        const low = grabImage(battery);
+        battery.percentage = 1;
+        wait(20);
+        verify(!low.equals(grabImage(battery)), "Battery level must change visible pixels");
+        battery.percentage = 0.55;
+        wait(20);
+        const discharging = grabImage(battery);
+        battery.powerState = "charging";
+        wait(20);
+        verify(!discharging.equals(grabImage(battery)), "Charging must change visible pixels");
+        battery.powerState = "pending-charge";
+        wait(20);
+        verify(discharging.equals(grabImage(battery)), "Pending charge must not draw a charging bolt");
+        battery.present = false;
+        wait(20);
+        verify(!discharging.equals(grabImage(battery)), "Unavailable must not look charged");
+    }
+    function test_battery_hover_detail() {
+        const battery = createTemporaryObject(batteryFactory, this, {present: true, percentage: 0.55, powerState: "pending-charge"});
+        mouseMove(battery, battery.width / 2, battery.height / 2);
+        tryCompare(battery.ToolTip, "visible", true);
+        compare(battery.ToolTip.text, "Battery plugged in, not charging · 55%");
+        compare(battery.activeFocus, false);
+        mouseMove(this, width - 1, height - 1);
+        tryCompare(battery.ToolTip, "visible", false);
     }
     function test_strip_battery_wiring_and_clicks() {
         for (const compact of [true, false]) {
