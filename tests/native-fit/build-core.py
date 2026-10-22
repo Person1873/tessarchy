@@ -21,7 +21,7 @@ RELATIVE_UNITS = [
     "src/managers/screenshare/ScreenshareManager.cpp",
     "src/Compositor.cpp",
 ]
-SOURCE_FILES = [*RELATIVE_UNITS, "src/managers/eventLoop/EventLoopManager.hpp", "src/protocols/ImageCopyCapture.hpp", "src/render/GLRenderer.hpp", "src/render/Renderer.hpp", "src/managers/screenshare/ScreenshareManager.hpp", "src/Compositor.hpp"]
+SOURCE_FILES = [*RELATIVE_UNITS, "src/managers/eventLoop/EventLoopManager.hpp", "src/protocols/ImageCopyCapture.hpp", "src/protocols/ImageCaptureSource.hpp", "src/render/GLRenderer.hpp", "src/render/Renderer.hpp", "src/managers/screenshare/ScreenshareManager.hpp", "src/Compositor.hpp"]
 HEADERS = {
     "ScopedReadable.hpp": "src/managers/eventLoop/ScopedReadable.hpp",
     "TerminalDelivery.hpp": "src/helpers/TerminalDelivery.hpp",
@@ -69,7 +69,7 @@ def prepare(source, output):
         if destination.is_symlink():
             destination.unlink()
         shutil.copy2(source / relative, destination)
-    patch = "".join((PATCHES / name).read_text() for name in ("event-loop.patch", "terminal-delivery.patch", "renderer-retirement.patch", "cleanup-integration.patch"))
+    patch = "".join((PATCHES / name).read_text() for name in ("event-loop.patch", "terminal-delivery.patch", "renderer-retirement.patch", "cleanup-integration.patch", "child-lifetime.patch", "cursor-lifetime.patch"))
     for name, header in HEADERS.items():
         destination = mirror / header
         if (source / header).exists():
@@ -145,7 +145,7 @@ def main():
         raise RuntimeError("Original upstream source changed")
     receipt = {"unit_tests": tests, "test_hashes": {name: digest(ROOT / f"tests/native-fit/{name}.cpp") for name in tests}, "sanitizers": ["address", "undefined"],
                "header_hashes": {name: digest(PATCHES / name) for name in HEADERS},
-               "patch_hashes": {name: digest(PATCHES / name) for name in ("event-loop.patch", "terminal-delivery.patch", "renderer-retirement.patch", "cleanup-integration.patch")},
+               "patch_hashes": {name: digest(PATCHES / name) for name in ("event-loop.patch", "terminal-delivery.patch", "renderer-retirement.patch", "cleanup-integration.patch", "child-lifetime.patch", "cursor-lifetime.patch")},
                "overlay_source_hashes": {name: digest(output / "source" / name) for name in units} if source else {},
                "syntax_checked": checked, "original_source_hashes": before, "original_source_unchanged": before == after if source else None}
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")

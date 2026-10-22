@@ -1,5 +1,54 @@
 # Validation and manual acceptance
 
+## Native parent/frame ownership, 2026-10-22 — CPU protocol execution
+
+Added `child-lifetime.patch` and `cursor-lifetime.patch` after the cleanup patch.
+Ordinary frames retain their parent native state while parent protocol destruction
+detaches its listeners and immediately destroys its wire resource. Cursor frames
+are separate protocol owners with a shared native-state holder, independent of
+both parent resources. Frame destruction revokes only its own delivery. Cursor
+source-stop notification no longer erases its own native owner during emission;
+parent teardown detaches its source/monitor listeners before dropping ownership.
+Global shutdown still uses the distinct cancellation phase from the preceding
+cleanup checkpoint.
+
+Executed:
+
+```sh
+python3 tests/native-fit/verify-child-lifetime.py --source "$HYPRLAND_SOURCE"
+```
+
+- ASan/UBSan GREEN: eight ordinary parent/frame cases, sixteen cursor cases and a
+  source-stop/frame-replacement group. Cases vary capture before/after parent
+  destruction, ordinary request/server resource destruction, cursor parent
+  selection, source loss, frame destruction before completion, duplicate
+  completion and old completion after a replacement frame. Destroyed parent
+  resources disappear immediately; native state remains until the child dies.
+- The fixture compiles extracted production declarations, ordinary frame and
+  parent destruction methods, cursor constructor/frame methods and protocol
+  erase methods with the actual generated ext-image-copy-capture implementation.
+  Real libwayland-server socket dispatch and Hyprutils owners/signals are used.
+  Native capture/render objects and constraint generation are explicit CPU mocks;
+  this is not execution of the GPU/native capture stack.
+- Five scratch RED mutations each fail their intended assertion: ordinary parent
+  stop, weak parent retention, parent wire-resource retention, premature cursor
+  native reset and source-stop erasing the cursor capture parent. Nonzero exit
+  alone is not sufficient; the runner checks the named assertion text.
+- All six actual compositor translation units syntax-check with the complete
+  current overlay. Fifteen original source/generated-protocol inputs are hashed
+  before and after and unchanged. Current patch/header/test/runner/overlay hashes
+  were independently matched to the success receipt.
+- Receipt: `build/native-fit/child-lifetime/verification.json`; complete execution
+  log: `build/native-fit/child-lifetime-build.log`. The focused runner invalidates
+  the older core success receipt. Prior primitive/retirement/cleanup suites were
+  not rerun unchanged as progress.
+
+No compositor or GPU workload was started. Next implementation: focused CPU
+execution of full-fake/non-output-explicit-sync submission wiring, retaining
+fail-closed behavior when native fence/context validation fails. Actual driver,
+SHM-readback and compositor runtime acceptance remain unexecuted; packaged-launcher
+status remains separate from direct-child status.
+
 ## Theme picker layout fix, 2026-10-19
 
 Branch `feat/theme-extras` on `49728ce`. Executed by an agent in the running
