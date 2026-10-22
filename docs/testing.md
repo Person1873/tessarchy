@@ -2832,3 +2832,15 @@ Readback source SHA-256:
 - `shell/components/StatusIndicators.qml`: `2dd40e348acc2fdeecf78d797958b78db3657e88dc95988d17b8b14682fc8835`
 - `shell/components/qmldir`: `efb8db8e2bf32daba47496b33c442ff63239863bcadef970ae31f683229f1ab0`
 - Preserved `shell/components/TaskButton.qml`: `0cb48ad3d9bf470fee4ff025fb77895a3ab1102b481d4e7f7f197187ddbffc75`
+
+
+## Direct OSK dismissal feature, 2026-10-22 UTC
+
+Issue#89 / draft PR93. Scope, implementation, CPU commands and exclusions are
+in [osk-direct-dismiss.md](osk-direct-dismiss.md); machine-readable source hashes
+in [the CPU checkpoint](evidence/issue89-cpu-checkpoint.json). Initial policy
+RED:4 failures. Final complete Qt suite:87 pass under offscreen software rendering
+and scratch HOME/config. Four Lua-query/wiring Python checks pass. Copy-only
+scratch installer byte matches all five runtime paths. qmllint exits0 with
+metadata warnings; not warning-free. Actual button component preview inspected.
+No live layer/touch, native build, VM or device deployment acceptance claimed.
