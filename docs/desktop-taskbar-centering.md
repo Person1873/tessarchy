@@ -21,7 +21,9 @@ rather than 24, and the text follows the same downward displacement. A controlle
 layout reproduction, not proof of the device image provider's decoded size.
 
 Use a content Item with a full-width RowLayout anchored only by vertical centre.
-Let the row use its implicit height; do not horizontally centre a short group.
+Keep the row at least as tall as both its implicit height and the available
+content area; do not horizontally centre a short group. Keeping the existing
+content-area height for small/iconless rows also preserves their pixel rounding.
 This preserves icon dimensions while making top/bottom space symmetric.
 
 ## Acceptance
