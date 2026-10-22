@@ -1,32 +1,44 @@
-# Desktop taskbar selector centring
+# Desktop taskbar vertical centring (#71)
 
-Addresses #71 independently of oversized-window fitting and native compositor repair.
+## Confirmed scope
 
-## Scope
+Centre the application icon and title vertically within each Desktop task selector.
+Preserve the existing horizontal left alignment, padding, icon/title spacing,
+button dimensions, selected/disabled appearance, title elision and activation.
+No compositor, scaling, density, status-indicator or deployment changes.
 
-Centre the combined application icon and title within each Desktop task button. Preserve the existing button size, spacing, selected styling, focus policy, accessible name and window-activation action. Long titles must elide within the available width. Missing icons must not leave an empty icon column.
+The initial horizontal-centred implementation was a misinterpretation and is
+superseded. Its passing tests did not establish a fix for the reported defect.
+The original direct RowLayout has been restored before replacement testing.
 
-No compositor changes, application scaling, launcher redesign, device deployment or unrelated status-indicator work.
+## Reproduction and intended change
+
+A direct content RowLayout receives 28 logical pixels inside a 48-pixel button
+with 10-pixel top/bottom padding. When an image decodes to 36 pixels, Qt arranges
+its children against that larger minimum height: the image centre becomes 28
+rather than 24, and the text follows the same downward displacement. A controlled
+36-pixel image reproduces this geometry with the unchanged component. This is a
+layout reproduction, not proof of the device image provider's decoded size.
+
+Use a content Item with a full-width RowLayout anchored only by vertical centre.
+Let the row use its implicit height; do not horizontally centre a short group.
+This preserves icon dimensions while making top/bottom space symmetric.
 
 ## Acceptance
 
-- Short icon/title groups have equal horizontal space on both sides and are vertically centred.
-- Long titles elide without clipping or displacing the icon outside the button.
-- Iconless titles centre without a reserved icon gap.
-- Selected, disabled and ordinary states retain their geometry.
-- Focused Qt Quick regression tests exercise actual item geometry and title elision.
-- Inspect software-rendered evidence without changing the running desktop.
+- Focused regression fails on the original vertical defect before implementation.
+- Icon and title centres match the button centre within Qt rounding tolerance.
+- Icon/title left edges match the original padding and 8-pixel gap.
+- Cover normal and larger decoded images, iconless titles, multiple button widths,
+  ordinary/selected/disabled states, long-title elision and activation.
+- Exercise actual TaskStrip delegates within the Desktop-height row, not only
+  standalone buttons.
+- Inspect actual software-rendered before/after images before reporting success.
+- Record current regression/lint results and public revision in PR #87.
 
-## Verification
+## Coordination
 
-Scope published before implementation in `50c900e`.
-
-- Unchanged upstream: all 18 short-title centring cases fail (no QML warnings).
-- Fixed component: 23 Qt results pass, including centring, elision and activation.
-- Full Qt Quick suite: 99 passed; Python: 214 run, one skipped; website: four passed.
-- Changed-component QML lint and whitespace checks pass.
-- Actual offscreen software-rendered before/after evidence was inspected; see
-  [testing record](testing.md#desktop-taskbar-icontitle-centring-2026-10-22).
-
-No compositor, VM, device deployment or running-desktop changes. Native scaling
-and shutdown repair remain parked and are not dependencies of this fix.
+PR #87 remains draft. Scope was originally published before implementation in
+`50c900e`; the vertical-only correction is published before replacement coding.
+Scaling #77 and native shutdown repair remain parked. No live desktop, VM or
+physical-device changes are part of this correction.
