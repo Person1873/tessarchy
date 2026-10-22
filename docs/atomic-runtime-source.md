@@ -87,6 +87,52 @@ This is a filesystem/recipe control, not real transaction or watcher acceptance.
 The upstream reload API reference was also read: `reload(false)` attempts window
 reuse, not a process restart; actual generation activation still needs proof.
 
+## Real isolated pacman control, 2026-10-22 UTC
+
+`python3 scripts/probe-package-replacement.py` runs real pacman under fakeroot
+with private root/database/config/cache/log/GPG directories. All installed hooks
+are masked in a private hook directory; no host or device package is changed.
+
+Observed with three synthetic source files and three package versions:
+
+- Ordinary upgrade: inotify DELETE events for all three originals, followed by
+  CREATE/CLOSE_WRITE events; the selected source changed to version 2.
+- `NoUpgrade`: no original-file deletion during replacement, all three originals
+  stayed at version 1 and version 2 arrived as `.pacnew` files. A helper dropped
+  by version 3 also remained on disk. The private package DB advanced to version 3.
+
+This demonstrates that pacman **can** retain ownership while preserving active
+files. It does not provide activation: `.pacnew` content must be deliberately
+validated/promoted, dropped files cleaned up safely, and local edits preserved.
+Reboot-time promotion is a potentially simpler alternative to runtime generations;
+it changes the policy from live activation to activation on the next boot.
+No real Quickshell/Hyprland watcher was started by this probe.
+
+## Architecture comparison, 2026-10-22 UTC
+
+| Route | Active source/lazy reads | Interruption and rollback | Assessment |
+| --- | --- | --- | --- |
+| Ordinary package replacement plus post-transaction reload | Missing/mixed paths remain exposed to watchers and helper launches. | Post hooks are skipped on failure/interruption; a reload is not transaction rollback. | Insufficient for uninterrupted updates. |
+| Disable both reloaders around ordinary replacement | Suppresses parsing, not helper/asset reads or filesystem imports. | Requires independent restoration after a failed transaction; still no coherent old source tree. | Insufficient by itself. |
+| `NoUpgrade` plus controlled activation | Existing matching paths survive and replacements become `.pacnew`; newly introduced paths still install normally. | Needs staged-file validation, local-edit reconciliation, stale/unowned-file cleanup and a recoverable promotion boundary. | Real preservation mechanism, now reproduced; not a complete activation design. |
+| Package-owned sources, inactive-session updates | No Tessarchy consumer may remain active while package sources change. Session startup and updates need shared exclusion, not just a process check. | Failed/interrupted transactions must keep session admission blocked until repair/coherence checks. Downgrades run under the same guard. | Smallest defensible candidate **if recurring logout/offline updates are acceptable**. |
+| Retained runtime generations | Keeps a full old dependency/helper/asset closure readable while package payload changes. Both consumers need a proven activation interface. | Retaining the old tree enables source rollback; it does not roll back an interrupted package transaction or changed system libraries. | Candidate for uninterrupted updates, with additional lifecycle/retention machinery. Not mandatory merely because pacman owns files. |
+
+Source checks: libalpm 7.1.0 [`remove.c:589–595`](https://gitlab.archlinux.org/pacman/pacman/-/blob/v7.1.0/lib/libalpm/remove.c#L589-595),
+[`add.c:248–250,302–350`](https://gitlab.archlinux.org/pacman/pacman/-/blob/v7.1.0/lib/libalpm/add.c),
+[`trans.c:201–239`](https://gitlab.archlinux.org/pacman/pacman/-/blob/v7.1.0/lib/libalpm/trans.c),
+and `alpm-hooks(5)` / `pacman.conf(5)` were read. Lazy helper consumers include
+`CommunicationBackend.qml:49`, `RadioBackend.qml:10`, `PowerBackend.qml:17`, and
+`WeatherBackend.qml:11`; watcher suppression cannot prevent their file reads.
+
+**Policy boundary:** the accepted one-time first-adoption logout does not establish
+permission to require logout for every future update. Rebooting the reference
+device also does not make a later package transaction offline. The remaining
+owner decision is recurring inactive-session updates versus uninterrupted updates;
+no recurring-reboot policy or generation architecture has been adopted here.
+The isolated probe is not device/package acceptance, a running-watcher test, or
+an authorization to upgrade the reference device.
+
 ## Acceptance plan
 
 - RED: scratch-only file removal/replacement reproduces legacy missing sources;
