@@ -11,10 +11,11 @@ PR #68 (native Wi-Fi binding) and #54 (networking backend): neither is a depende
 this change preserves existing backend ownership and does not implement network
 configuration. Wi-Fi measurement remains a separate integration where unavailable.
 
-Acceptance: focused regression RED/GREEN, safe constituent checks, and actual
-before/after offscreen Qt Quick software rendering. No compositor verification,
-GPU/desktop activity, VM/device deployment, package installation or personal
-configuration changes. Hardware/service transition acceptance remains outstanding.
+Acceptance began with focused regression RED/GREEN, safe constituent checks,
+and actual before/after offscreen Qt Quick software rendering. The initial
+implementation checkpoint did not include deployment. Subsequent owner-authorized
+reference-device integration is recorded below; native compositor/GPU work and
+package installation remain outside this issue's deployment scope.
 
 Status: implemented in draft PR #88. Existing cellular device/service flags now
 gate reception; normalized signals select five levels without a fabricated
@@ -30,7 +31,30 @@ are unavailable; desktop validation has only the documented DesktopNames
 diagnostic. See [testing record](testing.md#honest-status-indicators-73-2026-10-22)
 and [before/after fixture capture](evidence/issue73-status-before-after.png).
 
-Next: owner review followed by separately authorized device/service transition
-acceptance. Native Wi-Fi measurement remains PR #68's separate integration;
-reconcile signal/status overlap with #54 when either branch is integrated.
-Keep this PR draft; nothing was deployed and #73 remains open.
+## Reference-device integration, 2026-10-22 UTC
+
+Integrated on the separate public `sync/status-20261022` branch with PR #87's
+vertical centring and the previously installed native Wi-Fi/app-lifetime changes.
+The complete installed source matched that integration except for the intended
+status changes. Full source and private preference backups were verified locally
+and remotely before deployment. Only 16 status source/assets were replaced,
+dependencies first and root last, using atomic replacement and preserved ownership.
+
+Actual integration checks: 151 offscreen/software Qt results passed; selected
+status/power/communications Python suites passed with one GObject skip. The live
+shell logged `Reloading configuration` then `Configuration Loaded`, with no new
+warnings/errors. Shell, compositor and existing application identities survived;
+compositor configerrors were empty and private preferences remained byte-identical.
+
+The real UPower display device reported 95% discharging before deployment and
+92% discharging at the post-deployment check; the inspected live bar showed 92%
+and a corresponding filled battery, without a charging bolt. The ModemManager
+service had no system-bus owner (the CLI was unavailable); cellular now renders
+unavailable rather than the old invented reception. This establishes service
+unavailability, not a hardware modem inventory or RF-strength test. Native Wi-Fi
+binding remains intact. Both captures were already in a touch layout; no layout,
+scaling or personal-app settings were changed.
+
+Physical charging/unplug transitions and modem RF acceptance remain outstanding.
+Keep this PR draft and #73 open pending owner review/upstream integration. See
+[device integration record](https://github.com/Person1873/tessarchy/blob/sync/status-20261022/docs/status-device-integration.md).
