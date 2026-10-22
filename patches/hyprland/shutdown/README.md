@@ -41,12 +41,32 @@ shutdown fix.
   status before retiring records. An early renderer destructor guard prevents
   member teardown with unresolved submissions.
 
-These changes do **not** yet make parent-session destruction preserve outstanding
-child-frame native state. The explicit-sync queue/drain is implemented, but its
-compositor cleanup call and dependency ordering are not wired yet. Unsupported
-explicit-sync and full-fake render branches remain unchanged; the implicit
-`glFinish`/`glFlush` path is not bounded shutdown acceptance. Additional transient
-resources and explicit framebuffer releases still need lifecycle integration.
+- `ShutdownSequence.hpp` and `cleanup-integration.patch`: compositor cleanup now
+  quiesces capture producers after plugin unload, cancels submitted delivery, then
+  drains with one deadline before explicit framebuffer release and dependency
+  teardown. Managed unique owners survive quiescence; stop/erase signals are not
+  emitted during global cancellation. Timers and internal producer listeners are
+  cancelled, and the lazy manager remains present but inert during client/monitor
+  teardown. Ordinary parent-resource destruction is a separate, unfinished path.
+- Submitted-work retirement has a checked-context release gate. Permission-snapshot
+  framebuffers transfer to the submission instead of calling `release()` while
+  their queued texture reads may still be pending. Full-fake and non-output-
+  explicit-sync rendering now attempt native-fence retirement as well; the old
+  unsupported `glFinish`/immediate-success branch is removed. Missing native fence
+  support quarantines ownership and makes shutdown fail rather than claiming a
+  bounded implicit drain. Existing synchronous SHM readback is not made bounded.
+- Cleanup failure, exceptions and recursive cleanup exit nonzero with `_Exit`
+  before unresolved owners unwind. Normal main cleanup and destructor fallback
+  use the same sequence, independent of the earlier `m_isShuttingDown` flag.
+  A destructor entered after the global compositor identity has disappeared
+  fails closed instead of invoking dependency callbacks through that identity.
+  The watchdog `end` marker moves after successful teardown. Packaged launcher
+  exit-status handling is still separate work.
+
+This is a source overlay and CPU-tested partial repair, not compositor runtime
+acceptance. Child-frame native state still needs to survive ordinary parent
+resource destruction. Native EGL/GL, driver behavior, SHM readback timing and
+protocol end-to-end lifetime cases have not been executed.
 
 ## Verify without starting a compositor
 
@@ -57,13 +77,16 @@ Hyprland source tree with `build/compile_commands.json`, then run:
 python3 "$CHECKOUT/tests/native-fit/build-core.py" --source "$HYPRLAND_SOURCE"
 python3 "$CHECKOUT/tests/native-fit/verify-core-controls.py"
 python3 "$CHECKOUT/tests/native-fit/verify-retirement-controls.py"
+python3 "$CHECKOUT/tests/native-fit/verify-shutdown-controls.py"
+python3 "$CHECKOUT/tests/native-fit/verify-shutdown-methods.py"
 ```
 
 The first command compiles and executes the real C++ primitives under ASan/UBSan,
 using libwayland-server event loops, eventfd and pipes. It then creates a private
 source overlay, applies the combined patch with `git apply --check`, and runs the
 actual configured compiler's syntax checks for `EventLoopManager.cpp`,
-`ImageCopyCapture.cpp`, `ScreenshareFrame.cpp` and `GLRenderer.cpp`. The eight patched input
+`ImageCopyCapture.cpp`, `ScreenshareFrame.cpp`, `GLRenderer.cpp`,
+`ScreenshareManager.cpp` and `Compositor.cpp`. The twelve patched input
 files are hashed before/after. This does not build/link the full compositor.
 
 Output, combined `native-shutdown.patch`, source/header/patch hashes and a success
@@ -77,34 +100,39 @@ fail the duplicate-delivery assertion. An unrelated error or compiler failure is
 not accepted as RED. Production header hashes must remain unchanged. Neither
 command launches Hyprland, a plugin, a GUI, or a GPU workload.
 
-Latest focused execution: 13 submitted-work cases passed under ASan/UBSan and
-both new retirement RED controls rejected their specific defects (cancellation
-releases GPU owners; ioctl failure treated as success). All four actual compositor
-translation units passed syntax checks; eight original files were hash-unchanged.
-Tests use real Wayland event loops and eventfd for scheduling with injected fence
-status, plus actual kernel rejection of eventfd/invalid FD as a sync_file. They do
-not create GPU fences or execute EGL/GL. Earlier 14 waiter and 8 terminal cases
-and their two RED controls were not rerun unchanged. Use `--test
-test-submitted-work` on build-core for the focused run. No full compositor link
-or runtime acceptance is claimed.
+Latest focused execution: 14 shutdown-sequence cases and the 13 submitted-work
+regressions passed under ASan/UBSan; the latter were rerun because their queue
+header changed. Two new GREEN/RED controls distinguish failed-drain fallthrough
+and bypassed explicit-release context validation; the two retirement controls
+also still reject their exact defects. All six actual translation units passed
+syntax checks, and twelve original input files were hash-unchanged.
+
+`verify-shutdown-methods.py` extracts the exact quiesce/release and context/retire
+method bodies from the verified overlay and compiles them against explicit CPU
+mocks. Four groups pass under ASan/UBSan with real Hyprutils unique/weak ownership;
+EGL binding, reset status and framebuffer release are mocked, not GPU evidence.
+The extraction and overlay source hashes are recorded separately. The sequence
+suite uses real Wayland scheduling and injected native-fence completion, plus
+actual kernel rejection of eventfd/invalid FD as sync_file.
+
+Reproduce this focused checkpoint with `--test test-shutdown-sequence --test
+test-submitted-work` on build-core, then the shutdown-controls, retirement-controls
+and shutdown-methods scripts above. Earlier scoped-readable/terminal cases and
+their controls were not rerun unchanged. No compositor, EGL/GL workload or full
+compositor link was executed.
 
 ## Continue implementation
 
-1. Wire the implemented renderer drain into compositor cleanup after producer
-   quiescence, before any dependent GL/Wayland teardown; retain failed owners and
-   propagate the failure without member unwinding. Cover unsupported explicit-sync
-   submissions, full-fake/transient render resources and explicit FB release paths.
-2. Preserve one absolute shutdown deadline and checked native fence status while
-   integrating cleanup. The current checked EGL drain is syntax-checked, not
-   executed. `glFinish` is not bounded.
-3. Separate ordinary parent-resource destruction from global shutdown; keep
-   submitted child frames valid across parent destruction, but revoke their
-   delivery when the frame itself is destroyed.
-4. Quiesce producers, detach stop/erase callbacks, retain unique session owners
-   through stop, and keep the lazy manager inert through dependency teardown.
-5. Propagate failed cleanup through both normal main and destructor fallback,
-   without unwinding unresolved GPU owners. Packaged launcher status preservation
-   is separate from the private harness's direct-child result.
+1. Preserve ordinary and cursor child-frame native state after parent resources
+   are destroyed, without invoking global cancellation. Frame destruction alone
+   revokes delivery. Cover this with actual protocol/native ownership CPU tests.
+2. Exercise full-fake/non-output-explicit-sync submission wiring with focused CPU
+   mocks; driver/native-fence availability and synchronous SHM readback remain
+   outside bounded runtime acceptance. A missing native fence must stay fail-closed.
+3. Expand teardown producer coverage beyond the capture manager and test native
+   protocol owner destruction/reentrancy against the new cleanup sequence.
+4. Propagate packaged-launcher child failure separately, retaining existing
+   safe-mode restart and lock policy. The private harness owns a direct child.
 
 Preserve existing plugin incoming-argument ownership and reverse-unhook fixes.
 Compositor launches remain disabled during this implementation stage.

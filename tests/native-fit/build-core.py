@@ -18,12 +18,15 @@ RELATIVE_UNITS = [
     "src/protocols/ImageCopyCapture.cpp",
     "src/managers/screenshare/ScreenshareFrame.cpp",
     "src/render/GLRenderer.cpp",
+    "src/managers/screenshare/ScreenshareManager.cpp",
+    "src/Compositor.cpp",
 ]
-SOURCE_FILES = [*RELATIVE_UNITS, "src/managers/eventLoop/EventLoopManager.hpp", "src/protocols/ImageCopyCapture.hpp", "src/render/GLRenderer.hpp", "src/render/Renderer.hpp"]
+SOURCE_FILES = [*RELATIVE_UNITS, "src/managers/eventLoop/EventLoopManager.hpp", "src/protocols/ImageCopyCapture.hpp", "src/render/GLRenderer.hpp", "src/render/Renderer.hpp", "src/managers/screenshare/ScreenshareManager.hpp", "src/Compositor.hpp"]
 HEADERS = {
     "ScopedReadable.hpp": "src/managers/eventLoop/ScopedReadable.hpp",
     "TerminalDelivery.hpp": "src/helpers/TerminalDelivery.hpp",
     "SubmittedWork.hpp": "src/managers/eventLoop/SubmittedWork.hpp",
+    "ShutdownSequence.hpp": "src/helpers/ShutdownSequence.hpp",
 }
 
 
@@ -66,7 +69,7 @@ def prepare(source, output):
         if destination.is_symlink():
             destination.unlink()
         shutil.copy2(source / relative, destination)
-    patch = "".join((PATCHES / name).read_text() for name in ("event-loop.patch", "terminal-delivery.patch", "renderer-retirement.patch"))
+    patch = "".join((PATCHES / name).read_text() for name in ("event-loop.patch", "terminal-delivery.patch", "renderer-retirement.patch", "cleanup-integration.patch"))
     for name, header in HEADERS.items():
         destination = mirror / header
         if (source / header).exists():
@@ -117,7 +120,7 @@ def syntax_check(source, mirror):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, help="Existing configured Hyprland source; never modified")
-    parser.add_argument("--test", action="append", choices=["test-scoped-readable", "test-terminal-delivery", "test-submitted-work"], help="Select focused primitive tests; default runs all")
+    parser.add_argument("--test", action="append", choices=["test-scoped-readable", "test-terminal-delivery", "test-submitted-work", "test-shutdown-sequence"], help="Select focused primitive tests; default runs all")
     args = parser.parse_args()
     output = ROOT / "build/native-fit/core-shutdown"
     output.mkdir(parents=True, exist_ok=True)
@@ -130,7 +133,7 @@ def main():
     before = {name: digest(source / name) for name in units} if source else {}
     flags = shlex.split(subprocess.check_output(["pkg-config", "--cflags", "--libs", "wayland-server", "hyprutils"], text=True))
     compiler = os.environ.get("CXX", "c++")
-    tests = args.test or ["test-scoped-readable", "test-terminal-delivery", "test-submitted-work"]
+    tests = args.test or ["test-scoped-readable", "test-terminal-delivery", "test-submitted-work", "test-shutdown-sequence"]
     for name in tests:
         binary = output / name
         run([compiler, "-std=c++23", "-Wall", "-Wextra", "-Werror", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer",
@@ -142,7 +145,8 @@ def main():
         raise RuntimeError("Original upstream source changed")
     receipt = {"unit_tests": tests, "test_hashes": {name: digest(ROOT / f"tests/native-fit/{name}.cpp") for name in tests}, "sanitizers": ["address", "undefined"],
                "header_hashes": {name: digest(PATCHES / name) for name in HEADERS},
-               "patch_hashes": {name: digest(PATCHES / name) for name in ("event-loop.patch", "terminal-delivery.patch", "renderer-retirement.patch")},
+               "patch_hashes": {name: digest(PATCHES / name) for name in ("event-loop.patch", "terminal-delivery.patch", "renderer-retirement.patch", "cleanup-integration.patch")},
+               "overlay_source_hashes": {name: digest(output / "source" / name) for name in units} if source else {},
                "syntax_checked": checked, "original_source_hashes": before, "original_source_unchanged": before == after if source else None}
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")
     print(json.dumps(receipt, indent=2), flush=True)

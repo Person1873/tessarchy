@@ -27,7 +27,7 @@ def main():
     flags = shlex.split(subprocess.check_output(["pkg-config", "--cflags", "--libs", "wayland-server", "hyprutils"], text=True))
     original = (HEADERS / "SubmittedWork.hpp").read_text()
     cases = [
-        ("cancellation-releases-gpu-owners", "            it->second->waiter.reset();\n        }\n\n        // Call only", "            it->second->waiter.reset();\n            m_state->records.erase(it);\n        }\n\n        // Call only", "registry.size() == 0 && q.size() == 1"),
+        ("cancellation-releases-gpu-owners", "            it->second->waiter.reset();\n        }\n\n        void cancelAllDelivery()", "            it->second->waiter.reset();\n            m_state->records.erase(it);\n        }\n\n        void cancelAllDelivery()", "registry.size() == 0 && q.size() == 1"),
         ("ioctl-error-is-success", "if (fd < 0 || ioctl(fd, SYNC_IOC_FILE_INFO, &info) < 0)\n            return EFence::ERROR;", "if (fd < 0 || ioctl(fd, SYNC_IOC_FILE_INFO, &info) < 0)\n            return EFence::COMPLETE;", "nativeFenceStatus(fd.get()) == EFence::ERROR"),
     ]
     results = []

@@ -7,6 +7,7 @@
 #include <functional>
 #include <linux/sync_file.h>
 #include <map>
+#include <vector>
 #include <memory>
 #include <sys/ioctl.h>
 
@@ -46,7 +47,10 @@ namespace NativeRetirement {
         using Wait = std::function<bool(int, Deadline)>;
         using Arm = std::function<CScopedReadableRegistry::SRegistration(Hyprutils::OS::CFileDescriptor, CScopedReadableRegistry::FCallback)>;
 
-        explicit CSubmittedWork(Probe probe = nativeFenceStatus) : m_state(std::make_shared<State>(std::move(probe))) {}
+        using BeforeRetire = std::function<bool(Payload&)>;
+
+        explicit CSubmittedWork(Probe probe = nativeFenceStatus, BeforeRetire beforeRetire = [](Payload&) { return true; }) :
+            m_state(std::make_shared<State>(std::move(probe), std::move(beforeRetire))) {}
         CSubmittedWork(const CSubmittedWork&) = delete;
         CSubmittedWork& operator=(const CSubmittedWork&) = delete;
         ~CSubmittedWork() {
@@ -89,6 +93,15 @@ namespace NativeRetirement {
             it->second->waiter.reset();
         }
 
+        void cancelAllDelivery() {
+            const auto state = m_state;
+            std::vector<std::function<void()>> detached;
+            for (auto& [id, record] : state->records) {
+                record->waiter.reset();
+                detached.emplace_back(std::move(record->done));
+            }
+        }
+
         // Call only with the actual rendering context and release dependencies alive.
         bool drain(Deadline deadline, const Wait& wait = waitNativeFence) {
             const auto state = m_state;
@@ -109,7 +122,8 @@ namespace NativeRetirement {
                         record.failed = true;
                     return false;
                 }
-                retire(state, id);
+                if (!retire(state, id))
+                    return false;
             }
             return true;
         }
@@ -131,8 +145,9 @@ namespace NativeRetirement {
                 payload(std::move(payload_)), fence(std::move(fence_)), done(std::move(done_)) {}
         };
         struct State {
-            explicit State(Probe probe_) : probe(std::move(probe_)) {}
+            explicit State(Probe probe_, BeforeRetire beforeRetire_) : probe(std::move(probe_)), beforeRetire(std::move(beforeRetire_)) {}
             Probe probe;
+            BeforeRetire beforeRetire;
             ID next = 1;
             std::map<ID, std::unique_ptr<Record>> records;
         };
@@ -151,8 +166,13 @@ namespace NativeRetirement {
             retire(state, id);
         }
 
-        static void retire(const std::shared_ptr<State>& state, ID id) {
+        static bool retire(const std::shared_ptr<State>& state, ID id) {
             const auto it = state->records.find(id);
+            // This release hook must not reenter the queue; failure retains the complete payload.
+            if (!state->beforeRetire(it->second->payload)) {
+                it->second->failed = true;
+                return false;
+            }
             auto taken = std::move(it->second);
             state->records.erase(it);
             taken->waiter.reset();
@@ -160,6 +180,7 @@ namespace NativeRetirement {
             taken.reset();
             if (done)
                 done();
+            return true;
         }
     };
 }
