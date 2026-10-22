@@ -40,3 +40,16 @@ Do not promote #80's earlier acceptance to evidence for this new feature. Native
 fitting/scaling work and parked tasks remain parked.
 
 AI-assisted implementation and verification.
+
+
+## Native query transport correction — 2026-10-22 UTC
+
+Merged the topic correction discovered during ASUS deployment: use `hyprctl
+repl`, because eval returns only ok rather than captured JSON. Rechecked this
+combined branch after the merge:162 Qt software results,71 workflow tests,
+20 lift-policy tests and five query/wiring tests pass. Both append-only testing
+records retained in the documentation merge conflict. Updated evidence hashes
+match this branch. The combined branch is not a byte-for-byte device install;
+see the separate sanitized ASUS deployment record for installed-path hashes and
+actual mapped-layer/rendering checks. Delivered input/mode-matrix acceptance
+still not established.
