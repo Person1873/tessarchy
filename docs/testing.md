@@ -2844,3 +2844,12 @@ and scratch HOME/config. Four Lua-query/wiring Python checks pass. Copy-only
 scratch installer byte matches all five runtime paths. qmllint exits0 with
 metadata warnings; not warning-free. Actual button component preview inspected.
 No live layer/touch, native build, VM or device deployment acceptance claimed.
+
+
+## OSK dismissal combined software checkpoint, 2026-10-22 UTC
+
+[Integration record](osk-dismiss-integration.md): public status baseline + PR93 +
+PR91, including PR79 ancestry. Qt software suite162 pass; workflow suite71 pass;
+Lua lift suite20 pass; dismiss query/wiring suite4 pass; session Lua parse passes.
+Resolved append-only docs conflict by preserving both records, Lua conflict by
+keeping split handlers and lift helpers. No deployment/live acceptance claimed.

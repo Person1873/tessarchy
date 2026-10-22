@@ -1,0 +1,20 @@
+{
+  "date_utc": "2026-10-22",
+  "kind": "Combined software checkpoint; not installed device state",
+  "branch": "sync/osk-dismiss-20261022",
+  "qt_software_results": 162,
+  "workflow_cases": 71,
+  "lift_policy_cases": 20,
+  "dismiss_query_cases": 4,
+  "all_listed_suites_passed": true,
+  "live_acceptance": false,
+  "new_native_build": false,
+  "source_sha256": {
+    "session/hyprland.lua": "b31b55ed6791b48d61ea210f8370e663376ba6c05f7931a25cfd79816100589b",
+    "shell/shell.qml": "4b7d088bc520ada84c2dcd2e55f0fce393671032372ceb12231df4ed3bb62828",
+    "shell/components/qmldir": "89068995fe7e5f33cdbe14f550282703c82f11efa1c98709260adabd9d613754",
+    "shell/OskDismissPolicy.js": "245829caf61f190d283817285ffa321facb5d5236b6195eb0f3c348e28ee1407",
+    "shell/components/OskWatcher.qml": "df8d91760046d4704c479db1798fe0d54771ed759ac74d2711f768f286d692d3",
+    "shell/components/OskDismissButton.qml": "3d1e0e6b8f483a421fa24773974885c1eb6b730f867397736896da85bdccc864"
+  }
+}
