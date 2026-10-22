@@ -92,8 +92,35 @@ HOME="$scratch" XDG_CONFIG_HOME="$scratch/config" QT_QPA_PLATFORM=offscreen \
   /usr/lib/qt6/bin/qmltestrunner -input tests/qml
 ```
 
-Still draft: no new compositor startup, ASUS deployment/input, VM, native build
-or package transaction was performed. Next live acceptance must use a disposable
-text field, confirm actual query output and layer bounds, delivered touch,
-unchanged draft/focus, keyboard re-open and Phone/Tablet/Desktop controls, with
-session preservation and rollback. Prior #80 acceptance does not verify #89.
+## ASUS deployment — 2026-10-22 UTC
+
+Deployed at the owner's request, integrating only the five runtime patch paths
+into the actual installed source rather than overwriting it with the topic
+branch. Full source/preferences backup verified before writes; dependencies and
+qmldir staged atomically before the root entrypoint, then normal live reload.
+This is per-file atomic replacement, not a whole-generation atomic deployment.
+
+The first native read caught a transport defect: `hyprctl eval` executes the
+query but returns only `ok`, not its printed JSON. Corrected the watcher to
+`hyprctl repl`, confirmed against native `evalRequest`/`CConfigManager::eval`
+source and actual ASUS JSON. The new wiring assertion failed before correction;
+all five Python checks and all87 Qt results pass after correction. Standalone
+Lua print tests alone had not covered the native IPC response contract.
+
+Actual compositor observations: mapped OSK at y704, dismiss layer at y648 with
+48x48 bounds, leaving an8px gap. Real button-only capture visually inspected:
+keyboard/down-chevron visible and unclipped. The query returned valid mapped
+layer JSON. Normal reload logged `Configuration Loaded`; compositor configuration
+errors empty. Original shell/compositor process start identities and both original
+application clients unchanged; shell service restart count0. Preferences and all
+unrelated installed source bytes unchanged. No service/compositor restart, input
+injection, application interaction or native/package build was performed.
+
+[Sanitized deployment evidence](evidence/issue89-asus-deployment.json) separates
+source/rendering acceptance from input acceptance. Private full backups and
+session metadata remain on-device/off-repository. Device-installed root/qmldir
+include preserved differences; their hashes are not topic-file hashes.
+
+Still draft: real delivered dismissal, application focus/draft/reopen and full
+Phone/Tablet/Desktop mode matrix have not been exercised in this deployment.
+The owner can dogfood the visible control; no personal-app input was injected.

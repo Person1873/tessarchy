@@ -29,7 +29,7 @@ Scope {
     }
     Process {
         id: query
-        command: ["hyprctl", "eval", Osk.query()]
+        command: ["hyprctl", "repl", Osk.query()]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
