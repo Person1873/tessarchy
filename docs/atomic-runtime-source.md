@@ -23,6 +23,14 @@ versions do not establish matching payload content across package releases.
 
 ## Bounded proposed implementation
 
+Pacman can own the installed program and source payload. Separating active
+runtime copies from that payload is the proposed design, not an established
+requirement of pacman. The scratch ownership control establishes exposure to
+missing files under removal/repopulation; it does not rule out a package-owned
+active-source design with transaction/reloader coordination. Such an alternative
+must also protect lazy imports, helpers and assets and handle failed transactions.
+The source review's absolute "must stop" wording overstates what was established.
+
 1. Package complete candidates plus content/compatibility manifests, separately
    from active watched source. Validate a coherent candidate before publication.
 2. Make actual copies into a non-pacman-owned, session deployment area. No active
@@ -46,7 +54,14 @@ Installed Quickshell metadata exposes `reload(bool)`, `watchFiles`,
 A successful copy, atomic symlink switch or mtime change is not an activation
 acknowledgment. Per-file atomic writes alone permit mixed-generation imports.
 
-## Migration decision required before implementation
+## Migration contract — accepted 2026-10-22 UTC
+
+Owner response to the first-adoption migration question:
+> Accept a one-time voluntary logout for first adoption
+
+This permits requiring a voluntary logout before the first package transaction
+that adopts protected runtime source. It does not authorize restarting the current
+device, compositor/GPU work, or native/VM/package acceptance tests.
 
 An already-running legacy session retains its original config pathname and
 environment. Updating a launcher or systemd environment does not retarget it;
@@ -58,7 +73,7 @@ new launch contract, then in-process live upgrades on subsequent sessions.
 Detect/refuse destructive upgrades of active legacy-owned sources, including
 plain pacman paths, rather than killing apps or claiming transparent migration.
 A zero-logout bridge is separate design work requiring actual package-manager
-proof. This migration trade-off needs owner agreement before implementation.
+proof. The owner accepted the voluntary first-adoption logout allowance above.
 No restart, package upgrade or runtime-path migration on the reference device.
 
 ## Executed ownership control, 2026-10-22 UTC
@@ -95,4 +110,5 @@ plugin build/load, scaling, OSK gesture or touchpad changes. No host/system or
 personal configuration changes. No native, VM or device package tests in this
 scope-publication checkpoint. Keep #75 and the draft PR open.
 
-AI-assisted source review and scope; implementation awaits the migration decision.
+AI-assisted source review and scope. The migration allowance is accepted; the
+active-source ownership architecture remains a proposal, not a proven necessity.
