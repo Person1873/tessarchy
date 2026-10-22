@@ -27,7 +27,7 @@
  
  using namespace Screenshare;
  
-@@ -11,7 +12,59 @@
+@@ -11,7 +12,72 @@
      ;
  }
  
@@ -36,20 +36,27 @@
 +        return;
 +    m_shutdown = true;
 +
-+    // Global cancellation is silent: emitting stopped can synchronously erase unique owners.
-+    for (auto& managed : m_managedSessions)
-+        managed->stoppedListener.reset();
-+    for (auto& frame : m_pendingFrames) {
-+        if (!frame)
-+            continue;
-+        frame->m_failed = true;
-+        frame->m_callback = {};
-+    }
++    // Mark every owner inert before destroying closures that can release or reenter peers.
 +    for (auto& session : m_sessions) {
 +        if (!session)
 +            continue;
 +        session->m_stopped = true;
 +        session->m_sharing = false;
++    }
++    for (auto& session : m_cursorSessions) {
++        if (session)
++            session->m_stopped = true;
++    }
++    for (auto& frame : m_pendingFrames) {
++        if (frame)
++            frame->m_failed = true;
++    }
++    // Global cancellation is silent: emitting stopped can synchronously erase unique owners.
++    for (auto& managed : m_managedSessions)
++        managed->stoppedListener.reset();
++    for (auto& session : m_sessions) {
++        if (!session)
++            continue;
 +        session->m_listeners = {};
 +        if (session->m_shareStopTimer)
 +            session->m_shareStopTimer->cancel();
@@ -58,9 +65,15 @@
 +    for (auto& session : m_cursorSessions) {
 +        if (!session)
 +            continue;
-+        session->m_stopped = true;
 +        session->m_listeners = {};
-+        session->m_pendingFrame = {};
++    }
++    for (auto& frame : m_pendingFrames) {
++        if (frame)
++            frame->m_callback = {};
++    }
++    for (auto& session : m_cursorSessions) {
++        if (session)
++            session->m_pendingFrame = {};
 +    }
 +}
 +

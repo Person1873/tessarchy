@@ -1,5 +1,50 @@
 # Validation and manual acceptance
 
+## Native shutdown cancellation reentrancy — CPU checkpoint
+
+Changed the production `quiesceForShutdown` overlay to mark every ordinary
+session, cursor session and pending frame inert before destroying any listener,
+timer or callback closure. The earlier interleaved order could destroy a pending
+frame's callback while its native session was still active. All producer listeners
+and timers now detach before pending completion closures are discarded. Managed
+unique owners remain retained until the existing checked-drain barrier completes.
+Ordinary parent/frame lifetime and normal eventfd/timeline behavior are unchanged.
+
+Executed `python3 tests/native-fit/verify-teardown-producers.py --source
+"$HYPRLAND_SOURCE"`:
+
+- 14 ASan/UBSan cases pass. Twelve exercise closure destruction at managed stop
+  listeners, ordinary listeners/timers, cursor listeners, ordinary completion and
+  cursor pending completion, with and without synchronous peer destruction.
+- Extracted actual manager quiesce/release methods run through the production
+  shutdown sequence, with real Hyprutils unique/weak owners and signal listeners,
+  real libwayland-server timers, and explicit CPU session/frame/framebuffer mocks.
+  Every closure observes all peers already stopped/failed. Recursive quiescence
+  is inert; signal emission and Wayland dispatch after cancellation do no work.
+- The success barrier retains managed owners and framebuffer resources through
+  the injected drain, releases framebuffers exactly once, then permits native
+  owner destruction after mocked dependency loss. Two subprocess cases reject
+  failed/throwing drains with exit 1; a pipe proves no explicit FB release,
+  native-owner destruction or dependency teardown occurred before fail-stop.
+- Three scratch RED controls delay ordinary-session stop, cursor stop and frame
+  failure marking past the first closure destruction. Each fails its exact
+  corresponding assertion, not an unrelated error or compiler failure.
+- Six actual compositor translation units syntax-check with the changed overlay;
+  thirteen original source inputs remain hash-identical. The current receipt
+  binds runner/test, extracted methods, overlay, patch and header hashes.
+
+Current receipt: `build/native-fit/teardown-producers/verification.json`; complete
+log: `build/native-fit/teardown-producers-build.log`. Older core success evidence
+is invalidated before preparation. Earlier unchanged primitive/retirement/render
+and protocol suites were not rerun as new progress. No compositor, config verifier,
+GUI/GPU workload, full compositor link, `check.sh`, VM/device or live changes ran.
+The timer/native resource model is CPU-only; this is not native fence/GPU proof.
+
+Next: execute actual generated protocol destruction paths together with the
+cleanup barrier, then expand other teardown-producer admission checks. Native
+fence availability, synchronous SHM-readback bounds and packaged-launcher exit
+status remain separate unaccepted work.
+
 ## Native render-submission wiring — CPU checkpoint
 
 Implemented a focused executable fixture for the actual overlaid

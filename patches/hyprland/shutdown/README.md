@@ -193,10 +193,37 @@ sync_file. Thirteen original source inputs remain unchanged. Current receipt:
 methods, tests, itself, patches, headers and overlay and invalidates stale core
 success evidence before preparing the overlay.
 
+## Cancellation reentrancy checkpoint
+
+```sh
+python3 "$CHECKOUT/tests/native-fit/verify-teardown-producers.py" --source "$HYPRLAND_SOURCE"
+```
+
+Production cancellation marks **all** ordinary/cursor owners stopped and all
+pending frames failed before listener/timer/callback destruction can release or
+reenter peers. Listener/timer detachment precedes completion-closure cancellation;
+managed unique owners remain retained through checked drain.
+
+Executed: 14 ASan/UBSan CPU cases run extracted actual manager quiesce/release
+methods through `CShutdownSequence`, with real Hyprutils unique/weak owners and
+signals plus actual Wayland timers. Twelve closure-phase/peer-destruction cases
+assert inert peers, recursive quiescence, cancelled timers, detached signals,
+pre-drain owner retention and exactly-once FB release before dependency loss.
+Two subprocess cases require failed/throwing drain exit 1 with no owner unwind,
+explicit FB release or dependency teardown. Native resources and drain outcomes
+are injected, not GL/GPU evidence. Three scratch controls delaying session stop,
+cursor stop and frame failure each fail the matching assertion.
+
+Six actual translation units syntax-check; thirteen original inputs remain
+unchanged. Current receipt: `build/native-fit/teardown-producers/verification.json`;
+complete log: `build/native-fit/teardown-producers-build.log`. Current runner/test,
+extracted method, header, patch and overlay hashes are recorded. Unchanged earlier
+suites were not rerun; the core success receipt is invalidated before preparation.
+
 ## Continue implementation
 
-1. Expand teardown producer coverage beyond the capture manager and test native
-   protocol owner destruction/reentrancy against the new cleanup sequence.
+1. Execute actual generated protocol owner destruction with the cleanup barrier,
+   then extend producer admission coverage beyond capture-manager cancellation.
 2. Repair packaged-launcher child failure separately, retaining existing
    safe-mode restart and lock policy. The private harness owns a direct child.
 3. Native driver/fence availability and synchronous SHM readback bounds remain
