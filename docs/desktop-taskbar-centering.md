@@ -19,4 +19,14 @@ No compositor changes, application scaling, launcher redesign, device deployment
 
 ## Verification
 
-Scope published before implementation. Actual execution results will be recorded in docs/testing.md and the PR body.
+Scope published before implementation in `50c900e`.
+
+- Unchanged upstream: all 18 short-title centring cases fail (no QML warnings).
+- Fixed component: 23 Qt results pass, including centring, elision and activation.
+- Full Qt Quick suite: 99 passed; Python: 214 run, one skipped; website: four passed.
+- Changed-component QML lint and whitespace checks pass.
+- Actual offscreen software-rendered before/after evidence was inspected; see
+  [testing record](testing.md#desktop-taskbar-icontitle-centring-2026-10-22).
+
+No compositor, VM, device deployment or running-desktop changes. Native scaling
+and shutdown repair remain parked and are not dependencies of this fix.

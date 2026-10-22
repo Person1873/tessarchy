@@ -2334,3 +2334,41 @@ restored 18/true/0, with empty configerrors. Ubuntu source CI now uses the
 supported 26.04 runner for QtQuick.Effects; every source/build job declares the
 portal's GTK/GLib build dependencies. Terminal Fn exposes navigation/F1–F12
 without adding short key rows.
+
+## Desktop taskbar icon/title centring, 2026-10-22
+
+Scope-first draft PR #87, branch `fix/desktop-taskbar-centering`, based on
+upstream `e52e7d3`. Addresses #71 without scaling or compositor changes.
+
+`TaskButton` previously stretched its content row across the available width;
+its filling text item left the visible icon/title group against the left padding.
+A centred wrapper now constrains that row to its natural width or the available
+width, whichever is smaller. Long titles retain right elision; empty icon sources
+reserve neither an icon column nor spacing. Button sizing, styling, accessible
+name, no-focus policy and activation behaviour are unchanged.
+
+Executed with Qt 6.11.2, `QT_QPA_PLATFORM=offscreen` and
+`QT_QUICK_BACKEND=software`:
+
+- RED: the unmodified upstream component fails all 18 short-title centring
+  cases across 150/210/240 px widths, icon/no-icon and ordinary/selected/disabled
+  states. The other five Qt results pass; there are no QML warnings.
+- GREEN: the same focused file returns 23 passed, zero failed, zero skipped:
+  21 test cases plus initialization/cleanup. This includes two long-title elision
+  cases and activation without stealing focus.
+- Complete Qt Quick suite: 99 passed, zero failed/skipped; no QML warnings.
+  Existing task-strip overflow, active-window scrolling and activation tests pass.
+- Python discovery: 214 tests run, one skipped, no failures. Website: four pass.
+- Changed-component `qmllint` and `git diff --check` return zero.
+- Inspected the actual software-rendered before/after capture below. Short
+  icon/title groups and iconless titles centre; long-title elision is unchanged;
+  selected/disabled styles remain aligned. The before component is copied from
+  the unmodified upstream source, not a recreation of its appearance.
+
+![Actual offscreen-rendered task buttons before and after](assets/taskbar-centering.png)
+
+Logs and capture harness are in ignored `build/taskbar-centering/`. No compositor,
+Hyprland config verifier, VM, device deployment or host desktop change was used.
+The full `scripts/check.sh` was not run because it includes the native config
+verifier; the checks above were executed separately. This is component-level
+rendering evidence, not a new desktop/device acceptance run.

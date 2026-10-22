@@ -17,23 +17,30 @@ Button {
     implicitHeight: 48
     padding: 10
     focusPolicy: Qt.NoFocus
-    contentItem: RowLayout {
-        spacing: 8
-        Image {
-            visible: control.iconSource !== ""
-            source: control.iconSource
-            sourceSize.width: 18
-            sourceSize.height: 18
-            Layout.alignment: Qt.AlignVCenter
-        }
-        Text {
-            Layout.fillWidth: true
-            textFormat: Text.PlainText
-            text: control.text
-            color: control.enabled ? Theme.text : Theme.muted
-            font.pixelSize: 13
-            elide: Text.ElideRight
-            verticalAlignment: Text.AlignVCenter
+    contentItem: Item {
+        implicitWidth: contentRow.implicitWidth
+        implicitHeight: contentRow.implicitHeight
+        RowLayout {
+            id: contentRow
+            anchors.centerIn: parent
+            width: Math.min(implicitWidth, parent.width)
+            spacing: 8
+            Image {
+                visible: control.iconSource !== ""
+                source: control.iconSource
+                sourceSize.width: 18
+                sourceSize.height: 18
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                Layout.fillWidth: true
+                textFormat: Text.PlainText
+                text: control.text
+                color: control.enabled ? Theme.text : Theme.muted
+                font.pixelSize: 13
+                elide: Text.ElideRight
+                verticalAlignment: Text.AlignVCenter
+            }
         }
     }
     background: Rectangle {
