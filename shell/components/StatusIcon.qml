@@ -1,37 +1,32 @@
 import QtQuick
 import QtQuick.Layouts
+import "../StatusPolicy.js" as StatusPolicy
 
 Item {
     id: indicator
     required property string symbol
     required property string label
-    // Negative means no backend/device; bind a real signal value here later.
+    // Strength is normalized; negative or invalid data is unavailable.
     property real strength: -1
     property bool uniform: false
-    // Mobile strip shows a steady medium signal when no radio backend reports
-    // a real value, instead of a crossed-out glyph.
-    property bool showFallback: false
-    property int fallbackLevel: 2
     signal clicked
-    readonly property bool reported: strength >= 0
-    readonly property bool fallback: !reported && showFallback
+    readonly property int level: StatusPolicy.signalLevel(strength)
+    readonly property bool reported: level >= 0
     Layout.preferredWidth: uniform ? 28 : 18
     Layout.preferredHeight: 48
-    Accessible.name: label + (reported || fallback ? " connected" : " unavailable")
+    Accessible.name: label + (reported ? " signal " + Math.round(strength * 100) + "%" : " unavailable")
     Accessible.role: Accessible.Button
     Image {
         anchors.centerIn: parent
         width: indicator.uniform ? 20 : 18
         height: width
-        source: indicator.fallback
-            ? "../icons/" + indicator.symbol + "-" + indicator.fallbackLevel + ".svg"
-            : "../icons/" + indicator.symbol + ".svg"
+        source: "../icons/" + indicator.symbol + "-level-" + Math.max(0, indicator.level) + ".svg"
         sourceSize.width: indicator.uniform ? 20 : 18
         sourceSize.height: indicator.uniform ? 20 : 18
-        opacity: indicator.uniform || indicator.reported || indicator.fallback ? 1 : 0.35
+        opacity: indicator.reported ? 1 : 0.35
     }
     Rectangle {
-        visible: !indicator.reported && !indicator.fallback
+        visible: !indicator.reported
         anchors.centerIn: parent
         width: 22
         height: 1.5
