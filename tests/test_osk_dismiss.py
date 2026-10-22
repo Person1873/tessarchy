@@ -42,6 +42,11 @@ class OskDismissQueryTests(unittest.TestCase):
         }''')
         self.assertEqual([r['monitor'] for r in rows], [0, 9])
 
+    def test_geometry_query_uses_repl_transport(self):
+        source = (ROOT / 'shell/components/OskWatcher.qml').read_text()
+        self.assertIn('command: ["hyprctl", "repl", Osk.query()]', source)
+        self.assertNotIn('command: ["hyprctl", "eval",', source)
+
     def test_shell_wiring_does_not_request_focus_or_navigation(self):
         source = (ROOT / 'shell/shell.qml').read_text()
         block = source.split('id: oskDismissLayer', 1)[1].split('// Gesture navigation:', 1)[0]
