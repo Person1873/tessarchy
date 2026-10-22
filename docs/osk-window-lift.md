@@ -3,7 +3,8 @@
 ## Scope published before implementation
 
 After a Phone/Tablet floating dialog receives a resize request, inspect its
-actual resulting geometry. If it remains too tall to clear the visible keyboard,
+compositor goal geometry, including later declared-minimum corrections. If it
+remains too tall to clear the visible keyboard,
 move that window upward beneath the status bar, leaving the bar above the app.
 Overflow beyond the status-bar height may place the top farther off-screen.
 Restore the policy-owned placement when the keyboard closes; hiding the keyboard
@@ -88,8 +89,36 @@ Sources:
 Detailed logs: ignored `build/osk-window-lift/`. [Aggregate evidence](evidence/issue80-lua-policy.json)
 records source hashes, exclusions and `compositor_or_device_acceptance: false`.
 
-Draft only: live client/compositor geometry, bar stacking, touch access and ASUS
-acceptance are **not verified**. No native build, compositor/GPU/VM exercise,
-package install, user config edit or device action. Do not close #80 on these tests.
+The software checkpoint above preceded separately authorized live acceptance;
+its `compositor_or_device_acceptance: false` describes that software run only.
+
+### Live feature acceptance — 2026-10-22 UTC
+
+Implemented feature, not a regression repair. On the ASUS, used a disposable
+native GTK3 dialog with a declared 850px minimum height, real Squeekboard and
+1920x1080 landscape output at scale 1. Integrated only this placement feature
+into backed-up installed Lua, preserving existing session changes; replaced the
+watched file atomically and reloaded configuration without restarting services.
+
+- Baseline bottom action was behind the keyboard. Candidate exposes the whole
+  action with 24px clearance; screenshot inspected, top bar preserved.
+- Keyboard-hide restoration, config-reload recovery and externally moved-dialog
+  preservation passed. The external-move control is not a physical finger drag.
+- A guarded temporary uinput direct-multitouch device targeted only the owned
+  dialog. GTK logged touch BEGIN/END and the actual bottom action activated.
+  This is delivered native input, not an invocation of the button callback.
+- Removed the virtual touchscreen, closed only the disposable fixture and hid
+  the keyboard. Original shell/compositor process identities, preferences and
+  monitor settings remained unchanged; no compositor configuration errors.
+- Private fixture initially logged early unmapped-coordinate callback errors;
+  later mapped bounds and delivered-input evidence are valid. Added an unmapped
+  guard afterward; that instrumentation-only guard was not rerun on the device.
+
+[Sanitized live evidence](evidence/issue80-asus-acceptance.json) is distinct from
+the software-model report. Raw device backups and connection details stay private.
+No native compositor build, package installation or shell restart was performed.
+No physical sensor retest is needed for this feature. Phone, other orientations/
+scales and Desktop were software-tested, not live-tested in this pass. PR remains
+draft and #80 open for upstream review; deployment does not imply upstream landing.
 
 AI-assisted implementation and verification.
