@@ -26,9 +26,44 @@ and workflow tests. Coordinate #78 keyboard reservations and #89 dismissal.
 PR83/#77 native fitting and shutdown remain parked and are not dependencies or
 authorization for native work. No equivalent open #80 implementation was found.
 
+## Verified mechanism and implementation
+
+Hyprland v0.56.2 `CWindow::commitWindow()` clamps floating-window geometry to
+client-declared minimum sizes via `clampWindowSize(minSize, maxSize)`.
+That correction preserves the window centre. Lua `window.size` and `window.at`
+read compositor **goal geometry**, not client buffers or configure acknowledgements.
+There is no exposed Lua client-commit/ack/size-change event. The fallback observes
+goal geometry every 150 ms while tracked dialogs and a mapped keyboard remain;
+it never interprets a timeout as acknowledgement and does not repeatedly resize.
+This can observe the declared-minimum correction, not arbitrary buffer overflow.
+
+`hl.get_layers({})` supplies mapped layer objects. Match monitor and namespace,
+then add the monitor origin to layer-local y. Squeekboard's upstream `src/panel.c`
+sets namespace `osk`. A layer-close callback precedes unmapping/reservation
+updates, so both keyboard presence and restoration are checked after the event.
+
+The existing resize/centre request runs first. If the later goal remains too
+tall, move that window so its bottom clears the keyboard. Track policy ownership,
+recognize centre-preserving minimum corrections, and leave later manual placement
+alone. Repeated events with unchanged bounds do not repeat resize requests.
+On hide, restore the original position when it still fits; otherwise constrain it
+to the current work area. A delayed initial pass also handles existing dialogs
+after config load, including an old off-screen placement whose dialog now fits.
+Reload cannot recover coordinates from the old Lua VM; that recovery constrains
+placement to the current work area when the keyboard hides. Manual placement
+made after recovery is still respected. No bar, reservation, native fitting or
+application settings change.
+
+Sources:
+- [Hyprland v0.56.2 Window.cpp](https://github.com/hyprwm/Hyprland/blob/v0.56.2/src/desktop/view/Window.cpp)
+- [Lua window binding](https://github.com/hyprwm/Hyprland/blob/v0.56.2/src/config/lua/objects/LuaWindow.cpp)
+- [Lua layer binding](https://github.com/hyprwm/Hyprland/blob/v0.56.2/src/config/lua/objects/LuaLayerSurface.cpp)
+- [Squeekboard panel](https://gitlab.gnome.org/World/Phosh/squeekboard/-/blob/main/src/panel.c)
+
 ## Verification
 
-- RED-first isolated Lua tests with an asynchronous/rejected resize model.
+- RED-first isolated Lua tests model a requested resize followed by a delayed
+  floating-commit minimum-size correction; they do not model raw client buffers.
 - Cover successful resize (no lift), minimum-height overflow, keyboard hide and
   repeated events, moved/closed windows, multi-output origins, rotation and scale.
 - Desktop/fullscreen/nonfloating controls must remain unchanged.
@@ -38,3 +73,23 @@ authorization for native work. No equivalent open #80 implementation was found.
   rather than inventing an API or claiming a synthetic model is live acceptance.
 - Actual compositor/touch/visual acceptance remains outstanding until separately
   exercised; source tests alone cannot establish the requested user behavior.
+
+### Software checkpoint — 2026-10-22 UTC
+
+`python3 scripts/probe-osk-window-lift.py` completed successfully:
+
+- Baseline includes its real Lua dependencies and passes two positive controls.
+- Baseline: 15 failing behavioral assertions in the 20-test suite; no setup errors.
+- Changed source: all 20 policy tests pass, including origin/rotation/scale subcases.
+- Existing workflows: 65 pass. The native portal-build test is explicitly excluded,
+  not counted as passed. This is not a full `scripts/check.sh` result.
+- `luac -p session/hyprland.lua` passes.
+
+Detailed logs: ignored `build/osk-window-lift/`. [Aggregate evidence](evidence/issue80-lua-policy.json)
+records source hashes, exclusions and `compositor_or_device_acceptance: false`.
+
+Draft only: live client/compositor geometry, bar stacking, touch access and ASUS
+acceptance are **not verified**. No native build, compositor/GPU/VM exercise,
+package install, user config edit or device action. Do not close #80 on these tests.
+
+AI-assisted implementation and verification.
