@@ -165,15 +165,42 @@ Current receipt: `build/native-fit/child-lifetime/verification.json`; full log:
 are checked. This focused run invalidates the older core success receipt rather
 than presenting unchanged primitive runs as new verification.
 
+## Render-submission wiring checkpoint
+
+```sh
+python3 "$CHECKOUT/tests/native-fit/verify-render-submission.py" --source "$HYPRLAND_SOURCE"
+```
+
+This focused runner extracts the exact current overlay `endRender` and
+`retireResources` methods, compiles/executes them under ASan/UBSan with real
+Hyprutils ownership and Wayland scheduling, then syntax-checks the six actual
+compositor translation units. No unchanged primitive suites run.
+
+Executed: 96 cases covering four render modes, output explicit-sync on/off,
+absent/invalid/valid mocked native-fence manager, rejected/accepted release
+context, and ordinary delivery/cancelled delivery. Assertions cover source and
+destination locks/storage, current/main/output/transient framebuffer retention,
+renderbuffer retention, explicit source release-point imports, output in-fences,
+exactly-once explicit FB release and failure quarantine. Four scratch RED controls
+reject Full Fake early return, implicit immediate success, omitted release-point
+import and discarded transient FB at named assertions.
+
+Successful fence status and GL/EGL operations are injected, not native-driver
+proof. Actual kernel ioctl independently rejects the scheduling eventfd as a
+sync_file. Thirteen original source inputs remain unchanged. Current receipt:
+`build/native-fit/render-submission/verification.json`; complete log:
+`build/native-fit/render-submission-build.log`. The runner hashes extracted
+methods, tests, itself, patches, headers and overlay and invalidates stale core
+success evidence before preparing the overlay.
+
 ## Continue implementation
 
-1. Exercise full-fake/non-output-explicit-sync submission wiring with focused CPU
-   mocks; driver/native-fence availability and synchronous SHM readback remain
-   outside bounded runtime acceptance. A missing native fence must stay fail-closed.
-2. Expand teardown producer coverage beyond the capture manager and test native
+1. Expand teardown producer coverage beyond the capture manager and test native
    protocol owner destruction/reentrancy against the new cleanup sequence.
-3. Propagate packaged-launcher child failure separately, retaining existing
+2. Repair packaged-launcher child failure separately, retaining existing
    safe-mode restart and lock policy. The private harness owns a direct child.
+3. Native driver/fence availability and synchronous SHM readback bounds remain
+   outside runtime acceptance. Missing native fence support stays fail-closed.
 
 Preserve existing plugin incoming-argument ownership and reverse-unhook fixes.
 Compositor launches remain disabled during this implementation stage.
