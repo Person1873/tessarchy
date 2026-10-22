@@ -91,6 +91,16 @@ def source_identity(root, run):
     result = {'kind': 'system' if root == Path('/usr/share/tessarchy') else 'custom',
               'files_sha256': hashes, 'excluded_files': excluded,
               'loaded_bytes_verified': False}
+    # git -C also searches parent directories. An enclosing unrelated checkout
+    # is not this selected source tree's Git identity.
+    toplevel = run(['git', '--no-optional-locks', '-C', str(root), 'rev-parse', '--show-toplevel'])
+    top_path = toplevel.get('stdout', '').strip()
+    try:
+        own_root = command_status(toplevel) == 'ok' and bool(top_path) and Path(top_path).resolve() == root
+    except (OSError, RuntimeError):
+        own_root = False
+    if not own_root:
+        return result
     revision = run(['git', '--no-optional-locks', '-C', str(root), 'rev-parse', 'HEAD'])
     text = revision.get('stdout', '').strip()
     if command_status(revision) == 'ok' and re.fullmatch(r'[0-9a-f]{40,64}', text):

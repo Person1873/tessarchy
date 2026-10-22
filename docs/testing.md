@@ -2355,3 +2355,23 @@ bytes, not proof of the QML bytes loaded by a prior reload.
 ASUS name resolution blocked its read-only attempt; no report/device changes.
 Actual report, exact helper hash, CPU totals and limits:
 `docs/evidence/runtime-identity-cpu.json`; usage: `docs/runtime-identity.md`.
+
+### Runtime/source identity Git-root review follow-up
+
+## Peer-review follow-up: Git root identity
+
+Read-only review found that `git -C source` can inherit a parent repository.
+A real isolated Git fixture reproduced this (24 focused cases run, one RED).
+The helper now requires `git rev-parse --show-toplevel` to resolve to the selected
+source root before including HEAD/tracked-change metadata. A source directory
+nested under an unrelated checkout no longer borrows that checkout's identity;
+an actual selected-root repository still reports its real metadata. Git commands
+retain `--no-optional-locks`, and the test uses isolated HOME/system/global Git
+configuration. This is agent review, followed by lead reproduction and fix.
+
+Final focused result:24 cases pass. Repository checks:238 Python run with one GI
+skip,76 Qt results and four website passes; available syntax/config/QML pass,
+optional fish/shellcheck absent. The corrected helper was re-exercised read-only
+on the existing VM: real source identified,126 source files hashed, process
+identity stable. No source/service/input/capture/VM lifecycle changes. Updated
+actual report and helper hash are in the evidence artifact.

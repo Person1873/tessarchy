@@ -67,7 +67,7 @@ are disabled. The script is developer-only; it is not installed or run at login.
 ## Implementation and actual verification
 
 The initial stub failed the 16-case RED run (1 assertion failure, 13 errors).
-The implemented helper passes 22 focused cases, including an actual subprocess
+The implemented helper passes 24 focused cases, including an actual subprocess
 failure/timeout and CLI-help execution. Controlled replies are tests, not device
 measurements.
 
@@ -86,3 +86,21 @@ tests run (one GI-dependent skip), 76 Qt results, four website tests and the
 available syntax/config checks. Fish syntax and shellcheck were unavailable.
 
 AI-assisted contribution.
+
+## Peer-review follow-up: Git root identity
+
+Read-only review found that `git -C source` can inherit a parent repository.
+A real isolated Git fixture reproduced this (24 focused cases run, one RED).
+The helper now requires `git rev-parse --show-toplevel` to resolve to the selected
+source root before including HEAD/tracked-change metadata. A source directory
+nested under an unrelated checkout no longer borrows that checkout's identity;
+an actual selected-root repository still reports its real metadata. Git commands
+retain `--no-optional-locks`, and the test uses isolated HOME/system/global Git
+configuration. This is agent review, followed by lead reproduction and fix.
+
+Final focused result:24 cases pass. Repository checks:238 Python run with one GI
+skip,76 Qt results and four website passes; available syntax/config/QML pass,
+optional fish/shellcheck absent. The corrected helper was re-exercised read-only
+on the existing VM: real source identified,126 source files hashed, process
+identity stable. No source/service/input/capture/VM lifecycle changes. Updated
+actual report and helper hash are in the evidence artifact.

@@ -180,6 +180,33 @@ class RuntimeIdentityTests(unittest.TestCase):
         self.assertIn('invoking session', report['monitors']['query_context'])
         self.assertFalse(report['source']['loaded_bytes_verified'])
 
+    def git_fixture(self, root):
+        import os
+        env = dict(PATH=os.environ['PATH'], HOME=str(self.base), GIT_CONFIG_NOSYSTEM='1',
+                   GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_SYSTEM=os.devnull,
+                   GIT_AUTHOR_NAME='Fixture', GIT_AUTHOR_EMAIL='fixture@example.invalid',
+                   GIT_COMMITTER_NAME='Fixture', GIT_COMMITTER_EMAIL='fixture@example.invalid')
+        subprocess.run(['git', '-C', str(root), 'init', '-q'], env=env, check=True,
+                       capture_output=True)
+        subprocess.run(['git', '-C', str(root), 'commit', '--allow-empty', '-qm', 'fixture'],
+                       env=env, check=True, capture_output=True)
+        def run(args):
+            if args[0] != 'git':
+                return self.fake_run(args)
+            result = subprocess.run(args, env=env, capture_output=True, text=True, timeout=3)
+            return {'status': 'ok' if result.returncode == 0 else 'failed', 'stdout': result.stdout}
+        return run
+
+    def test_nested_source_does_not_inherit_parent_repository_identity(self):
+        report = self.report(run=self.git_fixture(self.base))
+        self.assertNotIn('git_head', report['source'])
+        self.assertNotIn('git_tracked_changes', report['source'])
+
+    def test_source_root_repository_metadata_is_reported(self):
+        report = self.report(run=self.git_fixture(self.source))
+        self.assertRegex(report['source']['git_head'], r'^[0-9a-f]{40}$')
+        self.assertIs(report['source']['git_tracked_changes'], False)
+
     def test_real_command_wrapper_bounds_and_sanitizes_failure(self):
         result = identity.run_command([sys.executable, '-c', 'raise SystemExit(7)'])
         self.assertEqual(result['status'], 'failed')

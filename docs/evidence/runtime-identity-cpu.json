@@ -1,14 +1,14 @@
 {
   "date_utc": "2026-10-22",
-  "helper_sha256": "0bfbe3a6b13df1b506d79c97ec02fbd65d4ac64ce545ac38dbcc49fba7e7e2ca",
-  "focused_tests_run": 22,
+  "helper_sha256": "276da2e433425c0b6fceffd591e0f56f069f8eb5de20de0c952725b1b3dd65d6",
+  "focused_tests_run": 24,
   "focused_tests_failed": 0,
   "red_stub_run": {
     "tests": 16,
     "failures": 1,
     "errors": 13
   },
-  "python_tests_run": 236,
+  "python_tests_run": 238,
   "python_tests_skipped": 1,
   "qt_results_passed": 76,
   "website_tests_passed": 4,
@@ -17,7 +17,7 @@
   "available_repository_checks": "passed",
   "actual_existing_VM_read_only_report": {
     "schema": 1,
-    "date_utc": "2026-10-22T13:51:50.207717+00:00",
+    "date_utc": "2026-10-22T14:25:33.740611+00:00",
     "selection": {
       "method": "explicit",
       "status": "identified",
@@ -199,5 +199,16 @@
   "ASUS_check": "blocked-name-resolution; no device report or changes",
   "changes_to_guest_source_or_services": false,
   "capture_or_input": false,
-  "loaded_QML_bytes_verified": false
+  "loaded_QML_bytes_verified": false,
+  "review_followup": {
+    "finding": "selected source inherited parent Git identity",
+    "red_actual_git_tests_run": 24,
+    "red_failures": 1,
+    "resolution": "include Git metadata only when git show-toplevel resolves to selected source root",
+    "new_controls": [
+      "actual enclosing repository excluded",
+      "actual source-root repository retained"
+    ],
+    "final_actual_vm_rerun": "pass, stable identity, 126 source files"
+  }
 }
