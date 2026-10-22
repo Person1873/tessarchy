@@ -61,6 +61,17 @@ A zero-logout bridge is separate design work requiring actual package-manager
 proof. This migration trade-off needs owner agreement before implementation.
 No restart, package upgrade or runtime-path migration on the reference device.
 
+## Executed ownership control, 2026-10-22 UTC
+
+The actual `package()` recipes were run into a scratch package root. Their 153
+generated files were removed and repopulated without invoking pacman, Quickshell
+or Hyprland. All four selected QML/helper/Lua paths were absent during removal;
+all four actual retained-copy controls survived unchanged. Repopulation restored
+the original bytes. [Raw result](evidence/issue75-source-ownership.json).
+This is a filesystem/recipe control, not real transaction or watcher acceptance.
+The upstream reload API reference was also read: `reload(false)` attempts window
+reuse, not a process restart; actual generation activation still needs proof.
+
 ## Acceptance plan
 
 - RED: scratch-only file removal/replacement reproduces legacy missing sources;
